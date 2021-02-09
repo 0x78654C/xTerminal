@@ -14,7 +14,7 @@ namespace MakeDirecotry
         {
             try
             {
-               ;
+               
                 string input =args[0];              // geting  input        
                 string newlocation = File.ReadAllText(@".\Data\curDir.ini"); //get the new location
                 string locinput = newlocation + @"\" + input; //new location+input

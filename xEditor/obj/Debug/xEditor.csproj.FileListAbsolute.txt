@@ -1,0 +1,7 @@
+F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\xEditor.exe.config
+F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\xEditor.exe
+F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\xEditor.pdb
+F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.csprojAssemblyReference.cache
+F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.csproj.CoreCompileInputs.cache
+F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.exe
+F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.pdb

@@ -23,3 +23,10 @@ F:\MegaSync\Projects\Shell\Shell\obj\Debug\Shell.csproj.CoreCompileInputs.cache
 F:\MegaSync\Projects\Shell\Shell\obj\Debug\xTerminal.exe
 F:\MegaSync\Projects\Shell\Shell\obj\Debug\xTerminal.pdb
 F:\MegaSync\Projects\Shell\Shell\obj\Debug\Shell.csprojAssemblyReference.cache
+F:\twitch\Projects\xTerminal\Release\xTerminal.exe.config
+F:\twitch\Projects\xTerminal\Release\xTerminal.exe
+F:\twitch\Projects\xTerminal\Release\xTerminal.pdb
+F:\twitch\Projects\xTerminal\Shell\obj\Debug\Shell.csprojAssemblyReference.cache
+F:\twitch\Projects\xTerminal\Shell\obj\Debug\Shell.csproj.CoreCompileInputs.cache
+F:\twitch\Projects\xTerminal\Shell\obj\Debug\xTerminal.exe
+F:\twitch\Projects\xTerminal\Shell\obj\Debug\xTerminal.pdb

@@ -40,9 +40,11 @@ namespace Shell
             { "cat", @".\Tools\FileSystem\StringView.exe"  },
             { "del", @".\Tools\FileSystem\Delete.exe"  },
             { "mkdir", @".\Tools\FileSystem\MakeDirectory.exe"  },
+            { "mkfile", @".\Tools\FileSystem\MKFile.exe"  },
             { "speedtest", @".\Tools\netcoreapp3.1\TestNet.exe"  },
             { "email", @".\Tools\Network\eMailS.exe"  },
             { "wget", @".\Tools\Network\WGet.exe"  },
+            { "edit", @".\Tools\FileSystem\xEditor.exe"  },
             { "flappy", @".\Tools\Game\FlappyBirds.exe"  }
 
 
@@ -253,7 +255,9 @@ This is the full list of commands that can be used in xTerminal:
     del -- Deletes a file or folder without recover.
     reboot -- It force reboots the Windows OS.
     shutdown --  It force shutdown the Windows OS.
+    logoff -- It force logoff current user.
     mkdir -- It creates a directory in the curent place.
+    mkfile -- It creates a file in the curent place.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
     flappy -- Play Flappy Birds in console!
@@ -277,6 +281,7 @@ This is the full list of commands that can be used in xTerminal:
                         process.WaitForExit();
 
                     }
+                 
                     //shuting down the machine command
                     else if (input == "shutdown")
                     {
