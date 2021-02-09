@@ -1,0 +1,25 @@
+c:/users/will/documents/visual studio 2015/Projects/Shell/Shell/bin/Debug/Shell.exe.config
+c:/users/will/documents/visual studio 2015/Projects/Shell/Shell/bin/Debug/Shell.exe
+c:/users/will/documents/visual studio 2015/Projects/Shell/Shell/bin/Debug/Shell.pdb
+c:/users/will/documents/visual studio 2015/Projects/Shell/Shell/obj/Debug/Shell.exe
+c:/users/will/documents/visual studio 2015/Projects/Shell/Shell/obj/Debug/Shell.pdb
+C:/Users/will/OneDrive/Projects/Shell/Shell/bin/Debug/Shell.exe.config
+C:/Users/will/OneDrive/Projects/Shell/Shell/obj/Debug/Shell.exe
+C:/Users/will/OneDrive/Projects/Shell/Shell/obj/Debug/Shell.pdb
+F:/MegaSync/Projects/Shell/Shell/bin/Debug/Shell.exe.config
+F:/MegaSync/Projects/Shell/Shell/bin/Debug/Shell.exe
+F:/MegaSync/Projects/Shell/Shell/bin/Debug/Shell.pdb
+/home/xel/Projects/shell/Release/xTerminal.exe.config
+/home/xel/Projects/shell/Release/xTerminal.exe
+/home/xel/Projects/shell/Release/xTerminal.pdb
+/home/xel/Projects/shell/Shell/obj/Debug/Shell.csprojAssemblyReference.cache
+/home/xel/Projects/shell/Shell/obj/Debug/Shell.csproj.CoreCompileInputs.cache
+/home/xel/Projects/shell/Shell/obj/Debug/xTerminal.exe
+/home/xel/Projects/shell/Shell/obj/Debug/xTerminal.pdb
+F:\MegaSync\Projects\Shell\Release\xTerminal.exe.config
+F:\MegaSync\Projects\Shell\Release\xTerminal.exe
+F:\MegaSync\Projects\Shell\Release\xTerminal.pdb
+F:\MegaSync\Projects\Shell\Shell\obj\Debug\Shell.csproj.CoreCompileInputs.cache
+F:\MegaSync\Projects\Shell\Shell\obj\Debug\xTerminal.exe
+F:\MegaSync\Projects\Shell\Shell\obj\Debug\xTerminal.pdb
+F:\MegaSync\Projects\Shell\Shell\obj\Debug\Shell.csprojAssemblyReference.cache

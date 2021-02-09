@@ -1,0 +1,29 @@
+c:/Users/will/documents/visual studio 2015/Projects/Shell/Clear/bin/Debug/Clear.exe.config
+c:/Users/will/documents/visual studio 2015/Projects/Shell/Clear/bin/Debug/Clear.exe
+c:/Users/will/documents/visual studio 2015/Projects/Shell/Clear/bin/Debug/Clear.pdb
+c:/Users/will/documents/visual studio 2015/Projects/Shell/Clear/obj/Debug/Clear.exe
+c:/Users/will/documents/visual studio 2015/Projects/Shell/Clear/obj/Debug/Clear.pdb
+/home/xel/Projects/shell/Release/Tools/Clear.exe.config
+/home/xel/Projects/shell/Release/Tools/Clear.exe
+/home/xel/Projects/shell/Release/Tools/Clear.pdb
+/home/xel/Projects/shell/Clear/obj/Debug/Clear.csprojAssemblyReference.cache
+/home/xel/Projects/shell/Clear/obj/Debug/Clear.csproj.CoreCompileInputs.cache
+/home/xel/Projects/shell/Clear/obj/Debug/Clear.exe
+/home/xel/Projects/shell/Clear/obj/Debug/Clear.pdb
+F:\MegaSync\Projects\Shell\Release\Tools\Clear.exe.config
+F:\MegaSync\Projects\Shell\Release\Tools\Clear.exe
+F:\MegaSync\Projects\Shell\Release\Tools\Clear.pdb
+F:\MegaSync\Projects\Shell\Clear\obj\Debug\Clear.csproj.CoreCompileInputs.cache
+F:\MegaSync\Projects\Shell\Clear\obj\Debug\Clear.exe
+F:\MegaSync\Projects\Shell\Clear\obj\Debug\Clear.pdb
+F:\MegaSync\Projects\Shell\Clear\obj\Debug\Clear.csprojAssemblyReference.cache
+F:\MegaSync\Projects\Shell\Release\Tools\Internal\Clear.exe.config
+F:\MegaSync\Projects\Shell\Release\Tools\Internal\Clear.exe
+F:\MegaSync\Projects\Shell\Release\Tools\Internal\Clear.pdb
+F:\twitch\Projects\xTerminal\Release\Tools\Internal\Clear.exe.config
+F:\twitch\Projects\xTerminal\Release\Tools\Internal\Clear.exe
+F:\twitch\Projects\xTerminal\Release\Tools\Internal\Clear.pdb
+F:\twitch\Projects\xTerminal\Clear\obj\Debug\Clear.csprojAssemblyReference.cache
+F:\twitch\Projects\xTerminal\Clear\obj\Debug\Clear.csproj.CoreCompileInputs.cache
+F:\twitch\Projects\xTerminal\Clear\obj\Debug\Clear.exe
+F:\twitch\Projects\xTerminal\Clear\obj\Debug\Clear.pdb

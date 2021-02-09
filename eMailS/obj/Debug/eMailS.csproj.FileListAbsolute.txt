@@ -1,0 +1,7 @@
+F:\MegaSync\Projects\Shell\Release\Tools\eMailS.exe.config
+F:\MegaSync\Projects\Shell\Release\Tools\eMailS.exe
+F:\MegaSync\Projects\Shell\Release\Tools\eMailS.pdb
+F:\MegaSync\Projects\Shell\eMailS\obj\Debug\eMailS.csprojAssemblyReference.cache
+F:\MegaSync\Projects\Shell\eMailS\obj\Debug\eMailS.csproj.CoreCompileInputs.cache
+F:\MegaSync\Projects\Shell\eMailS\obj\Debug\eMailS.exe
+F:\MegaSync\Projects\Shell\eMailS\obj\Debug\eMailS.pdb

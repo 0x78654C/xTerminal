@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SpeedTest</name>
+    </assembly>
+    <members>
+        <member name="M:SpeedTest.ISpeedTestClient.GetSettings">
+            <summary>
+            Download SpeedTest.net settings
+            </summary>
+            <returns>SpeedTest.net settings</returns>
+        </member>
+        <member name="M:SpeedTest.ISpeedTestClient.TestServerLatency(SpeedTest.Models.Server,System.Int32)">
+            <summary>
+            Test latency (ping) to server
+            </summary>
+            <returns>Latency in milliseconds (ms)</returns>
+        </member>
+        <member name="M:SpeedTest.ISpeedTestClient.TestDownloadSpeed(SpeedTest.Models.Server,System.Int32,System.Int32)">
+            <summary>
+            Test download speed to server
+            </summary>
+            <returns>Download speed in Kbps</returns>
+        </member>
+        <member name="M:SpeedTest.ISpeedTestClient.TestUploadSpeed(SpeedTest.Models.Server,System.Int32,System.Int32)">
+            <summary>
+            Test upload speed to server
+            </summary>
+            <returns>Upload speed in Kbps</returns>
+        </member>
+        <member name="M:SpeedTest.SpeedTestClient.GetSettings">
+            <inheritdoc />
+            <exception cref="T:System.InvalidOperationException"></exception>
+        </member>
+        <member name="M:SpeedTest.SpeedTestClient.TestServerLatency(SpeedTest.Models.Server,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:SpeedTest.SpeedTestClient.TestDownloadSpeed(SpeedTest.Models.Server,System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:SpeedTest.SpeedTestClient.TestUploadSpeed(SpeedTest.Models.Server,System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

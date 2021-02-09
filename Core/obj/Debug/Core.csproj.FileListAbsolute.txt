@@ -1,0 +1,14 @@
+F:\MegaSync\Projects\Shell\Core\bin\Debug\Core.dll
+F:\MegaSync\Projects\Shell\Core\bin\Debug\Core.pdb
+F:\MegaSync\Projects\Shell\Core\obj\Debug\Core.csprojAssemblyReference.cache
+F:\MegaSync\Projects\Shell\Core\obj\Debug\Core.csproj.CoreCompileInputs.cache
+F:\MegaSync\Projects\Shell\Core\obj\Debug\Core.dll
+F:\MegaSync\Projects\Shell\Core\obj\Debug\Core.pdb
+F:\MegaSync\Projects\Shell\Release\Tools\Network\Core.dll
+F:\MegaSync\Projects\Shell\Release\Tools\Network\Core.pdb
+F:\twitch\Projects\xTerminal\Release\Tools\Network\Core.dll
+F:\twitch\Projects\xTerminal\Release\Tools\Network\Core.pdb
+F:\twitch\Projects\xTerminal\Core\obj\Debug\Core.csprojAssemblyReference.cache
+F:\twitch\Projects\xTerminal\Core\obj\Debug\Core.csproj.CoreCompileInputs.cache
+F:\twitch\Projects\xTerminal\Core\obj\Debug\Core.dll
+F:\twitch\Projects\xTerminal\Core\obj\Debug\Core.pdb

@@ -1,0 +1,9 @@
+F:\MegaSync\Projects\Shell\WGet\obj\Debug\WGet.csproj.CoreCompileInputs.cache
+F:\MegaSync\Projects\Shell\WGet\bin\Debug\WGet.exe.config
+F:\MegaSync\Projects\Shell\WGet\bin\Debug\WGet.exe
+F:\MegaSync\Projects\Shell\WGet\bin\Debug\WGet.pdb
+F:\MegaSync\Projects\Shell\WGet\obj\Debug\WGet.exe
+F:\MegaSync\Projects\Shell\WGet\obj\Debug\WGet.pdb
+F:\MegaSync\Projects\Shell\Release\Tools\Network\WGet.exe.config
+F:\MegaSync\Projects\Shell\Release\Tools\Network\WGet.exe
+F:\MegaSync\Projects\Shell\Release\Tools\Network\WGet.pdb
