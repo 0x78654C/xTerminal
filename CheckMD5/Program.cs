@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace CheckMD5
 {
@@ -16,7 +17,7 @@ namespace CheckMD5
         {
             try { 
 
-            string cDir = File.ReadAllText(@".\Data\curDir.ini");
+            string cDir = File.ReadAllText(FileSystem.CurrentLocation);
             
             string input = args[0];
        

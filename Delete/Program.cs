@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace Delete
 {
@@ -17,7 +18,7 @@ namespace Delete
             try
             {
                 string input = args[0];              // geting location input        
-                string newlocation = File.ReadAllText(@".\Data\curDir.ini"); //get the new location
+                string newlocation = File.ReadAllText(FileSystem.CurrentLocation); //get the new location
 
                 //checking the cureent locaiton in folder
                 if (input.Contains(":") && input.Contains(@"\"))

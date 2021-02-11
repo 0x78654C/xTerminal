@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Core;
 
 namespace xEditor
 {
@@ -15,7 +16,7 @@ namespace xEditor
         static void Main(string[] args)
         {
             string file=string.Empty;
-            string dlocation = File.ReadAllText(@".\Data\curDir.ini");
+            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
 
             try
             {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace ListDirectories
 {
@@ -12,7 +13,7 @@ namespace ListDirectories
     {
         static void Main(string[] args)
         {
-            string cDir = File.ReadAllText(@".\Data\curDir.ini");
+            string cDir = File.ReadAllText(FileSystem.CurrentLocation);
             if (Directory.Exists(cDir))
             {
                 var files = Directory.GetFiles(cDir);

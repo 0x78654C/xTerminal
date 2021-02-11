@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace CDirectory
 {
@@ -20,7 +21,7 @@ namespace CDirectory
             try
             {
                 nLocation = args[0];              // geting location input             
-                sLocation = File.ReadAllText(@".\Data\curDir.ini");// read location from ini
+                sLocation = File.ReadAllText(FileSystem.CurrentLocation);// read location from ini
 
                 string pathCombine = null;
                 if (nLocation != "")
@@ -31,7 +32,7 @@ namespace CDirectory
 
                         if (Directory.Exists(nLocation))
                         {
-                            File.WriteAllText(@".\Data\curDir.ini", nLocation);
+                            File.WriteAllText(FileSystem.CurrentLocation, nLocation);
 
                         }
                         else
@@ -52,7 +53,7 @@ namespace CDirectory
                             pathCombine = Path.Combine(sLocation, nLocation); // combine locations
                             if (Directory.Exists(pathCombine))
                             {
-                                File.WriteAllText(@".\Data\curDir.ini", pathCombine);
+                                File.WriteAllText(FileSystem.CurrentLocation, pathCombine);
 
                             }
                             else
@@ -65,12 +66,12 @@ namespace CDirectory
                 }
                 else
                 {
-                    File.WriteAllText(@".\Data\curDir.ini", llocation); //reset to current terminal locaton
+                    File.WriteAllText(FileSystem.CurrentLocation, llocation); //reset to current terminal locaton
                 }
             }
             catch
             {
-                File.WriteAllText(@".\Data\curDir.ini", llocation); //reset to current terminal locaton
+                File.WriteAllText(FileSystem.CurrentLocation, llocation); //reset to current terminal locaton
                 
             }
         }

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace Shell
 {
@@ -20,7 +21,7 @@ namespace Shell
             }
             //-------------------------------
 
-            File.WriteAllText(@"./Data/curDir.ini", Directory.GetCurrentDirectory());
+            File.WriteAllText(FileSystem.CurrentLocation, Directory.GetCurrentDirectory());
             Console.Title="xTerminal v1.0";//setting up the new title
             var shell = new Shell();
             shell.Run();//Running the shell

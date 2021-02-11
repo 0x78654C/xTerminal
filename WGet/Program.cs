@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Core;
 
 namespace WGet
 {
@@ -20,12 +21,11 @@ namespace WGet
 
         static void Main(string[] args)
         {
-            BackgroundWorker worker;
             WebClient client = new WebClient();
             MatchCollection match2;
             MatchCollection match;
             //reading current location(for test no, after i make dynamic)
-            string dlocation = File.ReadAllText(@".\Data\curDir.ini");
+            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
             string cLocation = Directory.GetCurrentDirectory();
    
             int parse;
@@ -64,7 +64,7 @@ namespace WGet
 
 
             }
-            catch (Exception e)
+            catch 
             {
                 url0 = args[0];
                 url = args[1];
@@ -77,9 +77,6 @@ namespace WGet
                 Console.WriteLine("Downloaded in " + url0 + fileUrl);
             }
 
-          //  worker = new BackgroundWorker();
-           // worker.DoWork += downloadWget;
-           // worker.RunWorkerAsync();
 
         }
 

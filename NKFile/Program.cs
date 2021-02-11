@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace NKFile
 {
@@ -11,7 +12,7 @@ namespace NKFile
     {
         static void Main(string[] args)
         {
-            string CLocation = File.ReadAllText(@".\Data\curDir.ini");
+            string CLocation = File.ReadAllText(FileSystem.CurrentLocation);
             string file;
             try
             {

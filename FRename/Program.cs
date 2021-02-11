@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace FRename
 {
@@ -16,7 +17,7 @@ namespace FRename
             {
 
                 //reading current location(for test no, after i make dynamic)
-                string dlocation = File.ReadAllText(@".\Data\curDir.ini");
+                string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
                 string cLocation = Directory.GetCurrentDirectory();
                 //we grab the file names for source and destination
                 string FileName = args[0];
