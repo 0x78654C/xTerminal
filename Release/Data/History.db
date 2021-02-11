@@ -232,3 +232,175 @@
 231|xe bar.txt
 232|cat bar.txt
 233|help
+234|help
+235|ls
+236|cd test
+237|ls
+238|cd test
+239|cd test
+240|cd test
+241|cd test
+242|cd test
+243|cd test
+244|ls
+245|clear
+246|ls
+247|edit bar.txt
+248|c:
+249|cd c:
+250|cd c:\
+251|ls
+252|help
+253|mkfile terminal_test.txt
+254|mkfile terminal test.txt 
+255|ls
+256|edit test.cat_copied
+257|ls
+258|cd
+259|cd test
+260|cd test
+261|ls
+262|cd
+263|mkdir "test 1"
+264|ls
+265|mkfile "coding scott.txt"
+266|ls
+267|edit "coding scott.txt"
+268|ls
+269|clear
+270|ls
+271|edit "coding scott.txt"
+272|cat "coding scott.xtxt"
+273|cat "coding scott.txt"
+274|														
+275|cmd
+276|	
+277|	
+278|	
+279|	
+280|daaaadasdasdasdasdasdasda
+281|aaaaa
+282|asdasd
+283|asdasd
+284|dasdasd
+285|sd
+286|s
+287|a
+288|d
+289|sdasd
+290|sddasdasdasd
+291|aaaa
+292|f
+293|ada
+294|aaaasdasd
+295|asd
+296|asd
+297|x
+298|asd
+299|asd
+300|asdsa
+301|dasdasdasda
+302|a
+303|sd
+304|as
+305|da
+306|sd
+307|sa
+308|da
+309|ew
+310|ax
+311|sadasd
+312|da
+313|d
+314|d
+315|sd
+316|s
+317|as
+318|s
+319|a
+320|d	
+321|s
+322|sd				
+323|sdasd
+324|asd
+325|sd
+326|a
+327|asdsadasd
+328|asd
+329|sd
+330|sd
+331|sd
+332|s
+333|a
+334|d
+335|	
+336|asd
+337|sd
+338|d	
+339|ad
+340|d
+341|a
+342|ad
+343|cd
+344|ssssssss
+345|ssss
+346|a
+347|a
+348|a
+349|e
+350|asd
+351|asd
+352|as
+353|d
+354|ASD
+355|SA
+356|DA
+357|SD
+358|AS
+359|D
+360|asd
+361|asd
+362|asd
+363|a
+364|sd
+365|asd
+366|	
+367|asd
+368|asd
+369|	
+370|as
+371|da
+372|sd
+373|	
+374|asd
+375|a
+376|da
+377|ds
+378|	
+379|asd
+380|as
+381|d
+382|	
+383|asd
+384|asd
+385|asd
+386|as
+387|da
+388|sda
+389|d
+390|								
+391|	
+392|	
+393|	
+394|aa									
+395|hest	
+396|"e
+397|	
+398|	
+399|	
+400|asdad 	
+401|as
+402|adad	
+403|asdasd	
+404|asdasd	
+405|"						"

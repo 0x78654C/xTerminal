@@ -7,3 +7,11 @@ F:\MegaSync\Projects\Shell\WGet\obj\Debug\WGet.pdb
 F:\MegaSync\Projects\Shell\Release\Tools\Network\WGet.exe.config
 F:\MegaSync\Projects\Shell\Release\Tools\Network\WGet.exe
 F:\MegaSync\Projects\Shell\Release\Tools\Network\WGet.pdb
+F:\twitch\Projects\xTerminal\Release\Tools\Network\WGet.exe.config
+F:\twitch\Projects\xTerminal\Release\Tools\Network\WGet.exe
+F:\twitch\Projects\xTerminal\Release\Tools\Network\WGet.pdb
+F:\twitch\Projects\xTerminal\WGet\obj\Debug\WGet.csprojAssemblyReference.cache
+F:\twitch\Projects\xTerminal\WGet\obj\Debug\WGet.csproj.CoreCompileInputs.cache
+F:\twitch\Projects\xTerminal\WGet\obj\Debug\WGet.csproj.CopyComplete
+F:\twitch\Projects\xTerminal\WGet\obj\Debug\WGet.exe
+F:\twitch\Projects\xTerminal\WGet\obj\Debug\WGet.pdb

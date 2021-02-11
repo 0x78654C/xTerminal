@@ -22,3 +22,4 @@ F:\twitch\Projects\xTerminal\CheckMD5\obj\Debug\CheckMD5.csprojAssemblyReference
 F:\twitch\Projects\xTerminal\CheckMD5\obj\Debug\CheckMD5.csproj.CoreCompileInputs.cache
 F:\twitch\Projects\xTerminal\CheckMD5\obj\Debug\CheckMD5.exe
 F:\twitch\Projects\xTerminal\CheckMD5\obj\Debug\CheckMD5.pdb
+F:\twitch\Projects\xTerminal\CheckMD5\obj\Debug\CheckMD5.csproj.CopyComplete

@@ -22,3 +22,4 @@ F:\twitch\Projects\xTerminal\Delete\obj\Debug\Delete.csprojAssemblyReference.cac
 F:\twitch\Projects\xTerminal\Delete\obj\Debug\Delete.csproj.CoreCompileInputs.cache
 F:\twitch\Projects\xTerminal\Delete\obj\Debug\Delete.exe
 F:\twitch\Projects\xTerminal\Delete\obj\Debug\Delete.pdb
+F:\twitch\Projects\xTerminal\Delete\obj\Debug\Delete.csproj.CopyComplete

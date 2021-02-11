@@ -5,3 +5,4 @@ F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.csprojAssemblyReference.c
 F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.csproj.CoreCompileInputs.cache
 F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.exe
 F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.pdb
+F:\twitch\Projects\xTerminal\xEditor\obj\Debug\xEditor.csproj.CopyComplete

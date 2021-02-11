@@ -22,3 +22,4 @@ F:\twitch\Projects\xTerminal\MakeDirecotry\obj\Debug\MakeDirecotry.csprojAssembl
 F:\twitch\Projects\xTerminal\MakeDirecotry\obj\Debug\MakeDirecotry.csproj.CoreCompileInputs.cache
 F:\twitch\Projects\xTerminal\MakeDirecotry\obj\Debug\MakeDirectory.exe
 F:\twitch\Projects\xTerminal\MakeDirecotry\obj\Debug\MakeDirectory.pdb
+F:\twitch\Projects\xTerminal\MakeDirecotry\obj\Debug\MakeDirecotry.csproj.CopyComplete

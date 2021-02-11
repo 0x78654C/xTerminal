@@ -22,3 +22,4 @@ F:\twitch\Projects\xTerminal\CDirectory\obj\Debug\CDirectory.csprojAssemblyRefer
 F:\twitch\Projects\xTerminal\CDirectory\obj\Debug\CDirectory.csproj.CoreCompileInputs.cache
 F:\twitch\Projects\xTerminal\CDirectory\obj\Debug\CDirectory.exe
 F:\twitch\Projects\xTerminal\CDirectory\obj\Debug\CDirectory.pdb
+F:\twitch\Projects\xTerminal\CDirectory\obj\Debug\CDirectory.csproj.CopyComplete

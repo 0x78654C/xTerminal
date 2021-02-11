@@ -33,3 +33,4 @@ F:\twitch\Projects\xTerminal\ListDirectories\obj\Debug\ListDirectories.csprojAss
 F:\twitch\Projects\xTerminal\ListDirectories\obj\Debug\ListDirectories.csproj.CoreCompileInputs.cache
 F:\twitch\Projects\xTerminal\ListDirectories\obj\Debug\ListDirectories.exe
 F:\twitch\Projects\xTerminal\ListDirectories\obj\Debug\ListDirectories.pdb
+F:\twitch\Projects\xTerminal\ListDirectories\obj\Debug\ListDirectories.csproj.CopyComplete

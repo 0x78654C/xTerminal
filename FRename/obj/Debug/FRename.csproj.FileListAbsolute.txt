@@ -12,3 +12,4 @@ F:\twitch\Projects\xTerminal\FRename\obj\Debug\FRename.csprojAssemblyReference.c
 F:\twitch\Projects\xTerminal\FRename\obj\Debug\FRename.csproj.CoreCompileInputs.cache
 F:\twitch\Projects\xTerminal\FRename\obj\Debug\FRename.exe
 F:\twitch\Projects\xTerminal\FRename\obj\Debug\FRename.pdb
+F:\twitch\Projects\xTerminal\FRename\obj\Debug\FRename.csproj.CopyComplete
