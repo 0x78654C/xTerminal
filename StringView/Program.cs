@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core;
 
 namespace StringView
 {
@@ -13,7 +14,7 @@ namespace StringView
         static void Main(string[] args)
         {
 
-            string cDir = File.ReadAllText(@".\Data\curDir.ini");
+            string cDir = File.ReadAllText(FileSystem.CurrentLocation);
          
             try
             {
