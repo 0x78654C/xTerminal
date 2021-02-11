@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -9,6 +10,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
+using System.Windows.Forms;
+using Core;
 
 namespace Shell
 {
@@ -20,7 +24,8 @@ namespace Shell
         string AccountName = Environment.UserName;     //extract current loged username
         string ComputerName = Environment.MachineName; //extract machine name
                                                        //---------------------------------------
-                                                       //Checking data directory
+        BackgroundWorker woker;                        //Declare backgroudwoker for key input listener
+ 
 
         //-------------------------------
         //Define the shell commands 
@@ -53,6 +58,51 @@ namespace Shell
         //-----------------------
 
 
+        private static void KeyDown(KeyEventArgs e)
+        {
+
+            e.Handled = true;
+            if (e.KeyCode.ToString() =="Tab")
+            {
+                //string cDir = File.ReadAllText(FileSystem.CurrentLocation);
+                //if (Directory.Exists(cDir))
+                //{
+                //    var files = Directory.GetFiles(cDir);
+                //    var directories = Directory.GetDirectories(cDir);
+
+                //    foreach (var dir in directories)
+                //    {
+                //        Console.Write(dir);
+                //    }
+                //    foreach (var file in files)
+                //    {
+                //        Console.Write(file);
+                //    }
+                //}
+                //else
+                //{
+                //    Console.Write($"Directory '{cDir}' dose not exist!");
+                //}
+                Console.Write(" hello");
+            
+            e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// On press key intercept
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Woker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            InterceptKeys.SetupHook(KeyDown);
+            InterceptKeys.ReleaseHook();
+            
+
+        }
+
+
         //Entry pint of shell
 
         public void Run()
@@ -70,6 +120,16 @@ namespace Shell
             string oID = null;
             int ioID = 0;
             int uPcount = 0;
+
+
+   
+            //stoped for future workd
+            //woker = new BackgroundWorker();
+            //woker.DoWork += Woker_DoWork;
+            //woker.RunWorkerAsync();
+
+            //----------------------------
+
 
             //creating history file if not exist
             if (!File.Exists(_historyFile))
@@ -90,18 +150,14 @@ namespace Shell
 
             do
             {
+             
+             
                 //reading current location
-                dlocation = File.ReadAllText(@".\Data\curDir.ini");
+                dlocation = File.ReadAllText(FileSystem.CurrentLocation);
 
-                if (dlocation == Directory.GetCurrentDirectory())
-                {
-                    Console.Write(AccountName + "@" + ComputerName + " $ ");
-                }
-                else
-                {
-                    Console.Write(AccountName + "@" + ComputerName + $" ({dlocation})" + " $ ");//display new drectory location
-
-                }
+                Console.Write(AccountName + "@" + ComputerName + $" ({dlocation})" + " $ ");
+                
+           
 
                 //reading user imput
                 input = Console.ReadLine();
@@ -346,6 +402,8 @@ This is the full list of commands that can be used in xTerminal:
 
 
         }
+
+
         //------------------
 
         //process execute 
@@ -419,6 +477,41 @@ This is the full list of commands that can be used in xTerminal:
 
     }
 
+    class KeyInputs
+    {
+
+        public void Run()
+        {
+            while (true)
+            {
+                HandleInput();
+            }
+        }
+
+        private  void HandleInput()
+        {
+            var character = Console.ReadKey();
+            //if ((ConsoleModifiers.Control & character.Modifiers) != 0 &&
+            //     character.Key == ConsoleKey.S)
+            //{
+
+        if (character.Key == ConsoleKey.Tab)
+            {
+                  string CurrentLine = Console.ReadLine();
+                if (CurrentLine.Contains("\t"))
+                {
+                    CurrentLine = CurrentLine.Replace("\t", "");
+                    string[] SplitLine = CurrentLine.Split(' ');
+                    Console.WriteLine("|test");
+                    
+                    //Console.WriteLine("test");
+                }
+            }
+
+
+        }
+
+    }
 
 
 }
