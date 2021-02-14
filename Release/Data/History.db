@@ -82,3 +82,26 @@
 81|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
 82|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
 83|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+84|ls
+85|cp tools
+86|cp c
+87|cp c:\
+88|cd c:\
+89|cd python
+90|cd c:\
+91|cp python
+92|ls
+93|cp Tools
+94|cp c:\python
+95|cd c:\
+96|cp python
+97|cp c:\python
+98|cp c:\python
+99|cd c:\
+100|ls
+101|cp c:\Reserve.img
+102|cp Tools
+103|cp tools
+104|cp tools
+105|cp tools
+106|cp tools

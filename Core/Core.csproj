@@ -47,7 +47,6 @@
     <Compile Include="FileSystem.cs" />
     <Compile Include="InterceptKeys.cs" />
     <Compile Include="NetWork.cs" />
-    <Compile Include="ProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

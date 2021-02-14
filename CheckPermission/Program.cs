@@ -16,44 +16,85 @@ namespace CheckPermission
          */
         static void Main(string[] args)
         {
-
-            string input;
+            string CurrentLocation = File.ReadAllText(FileSystem.CurrentLocation);
+            string input="";
             try
             {
                 string tabs = "\t";
                 input = args[0];
-                if (Directory.Exists(input))
+                if (input.Contains(@"\"))
                 {
-                    DirectoryInfo dInfo = new DirectoryInfo(input);
-                    DirectorySecurity dSecurity = dInfo.GetAccessControl();
-                    AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
-                    foreach (FileSystemAccessRule ace in acl)
+                    if (Directory.Exists(input))
                     {
-                        Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
-                        Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
-                        Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
-                        Console.WriteLine("{0}Inherited: {1}", tabs, ace.IsInherited);
-                        Console.WriteLine();
+                        DirectoryInfo dInfo = new DirectoryInfo(input);
+                        DirectorySecurity dSecurity = dInfo.GetAccessControl();
+                        AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
+                        Console.WriteLine("Permissions of directory: " + input);
+                        foreach (FileSystemAccessRule ace in acl)
+                        {
+
+                            Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
+                            Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
+                            Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
+                            Console.WriteLine("{0}Inherited: {1}", tabs, ace.IsInherited);
+                            Console.WriteLine();
+                        }
+                    }
+                    else
+                    {
+                        FileInfo dInfo = new FileInfo(input);
+                        FileSecurity dSecurity = dInfo.GetAccessControl();
+                        AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
+                        Console.WriteLine("Permissions of file: " + input);
+                        foreach (FileSystemAccessRule ace in acl)
+                        {
+                            Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
+                            Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
+                            Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
+                            Console.WriteLine("{0}Inherited: {1}", tabs, ace.IsInherited);
+                            Console.WriteLine();
+                        }
                     }
                 }
                 else
                 {
-                   FileInfo dInfo = new FileInfo(input);
-                    FileSecurity dSecurity = dInfo.GetAccessControl();
-                    AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
-                    foreach (FileSystemAccessRule ace in acl)
+                    if (Directory.Exists(CurrentLocation+@"\"+ input))
                     {
-                        Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
-                        Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
-                        Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
-                        Console.WriteLine("{0}Inherited: {1}", tabs, ace.IsInherited);
-                        Console.WriteLine();
+                        DirectoryInfo dInfo = new DirectoryInfo(CurrentLocation + @"\" + input);
+                        DirectorySecurity dSecurity = dInfo.GetAccessControl();
+                        AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
+                        Console.WriteLine("Permissions of directory: " + CurrentLocation + @"\" + input);
+                        foreach (FileSystemAccessRule ace in acl)
+                        {
+                           
+                            Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
+                            Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
+                            Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
+                            Console.WriteLine("{0}Inherited: {1}", tabs, ace.IsInherited);
+                            Console.WriteLine();
+                        }
+                    }
+                    else
+                    {
+                        FileInfo dInfo = new FileInfo(CurrentLocation + @"\" + input);
+                        FileSecurity dSecurity = dInfo.GetAccessControl();
+                        AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
+                        Console.WriteLine("Permissions of file: " + CurrentLocation + @"\" + input);
+                        foreach (FileSystemAccessRule ace in acl)
+                        {
+                            Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
+                            Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
+                            Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
+                            Console.WriteLine("{0}Inherited: {1}", tabs, ace.IsInherited);
+                            Console.WriteLine();
+                        }
                     }
                 }
             }
             catch(Exception e)
             {
-                Console.WriteLine("Check Permission error: "+e.ToString());              
+                Console.WriteLine("Check Permission error: "+e.ToString());
+                
             }
         }
     }
