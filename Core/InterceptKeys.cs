@@ -61,11 +61,13 @@ namespace Core
                 _hookID = SetHook(_proc);
                 Application.Run();
                 UnhookWindowsHookEx(_hookID);
+                OnKeyDown = null;
             });
         }
 
         public static void ReleaseHook()
         {
+            
             Application.Exit();
         }
     }
