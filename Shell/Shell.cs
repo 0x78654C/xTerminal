@@ -23,12 +23,6 @@ namespace Shell
         public static string dlocation = null;
         static string AccountName = Environment.UserName;    //extract current loged username
         static string ComputerName = Environment.MachineName; //extract machine name
-        static string keyStrokes;                            //current key stroke string
-        static List<string> listChars = new List<string>(); //list of input characters
-        static List<string> listCurrentDir = new List<string>();//list of directories and files
-        static int countList = 0;                        //index for directory/file listing
-        static int cList = 0;                            //PageUp key execution counter
-        static string line = "";                         //output the line from final list
         BackgroundWorker woker;                         //Declare backgroudwoker for key input listener
 
         string input = null;
@@ -81,7 +75,7 @@ namespace Shell
        //Userd for key event check listing files and directories to be suggested for autocomplete
         private static void KeyDown(KeyEventArgs e)
         {
-            Console.WriteLine(e.KeyCode);
+            
             //check if keycode is PageUp key presed and use for execution command
             if (e.KeyCode == Keys.PageUp)
             {
