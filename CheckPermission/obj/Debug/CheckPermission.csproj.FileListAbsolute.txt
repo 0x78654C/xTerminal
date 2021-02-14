@@ -1,0 +1,8 @@
+F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\CheckPermission.exe.config
+F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\CheckPermission.exe
+F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\CheckPermission.pdb
+F:\twitch\Projects\xTerminal\CheckPermission\obj\Debug\CheckPermission.csprojAssemblyReference.cache
+F:\twitch\Projects\xTerminal\CheckPermission\obj\Debug\CheckPermission.csproj.CoreCompileInputs.cache
+F:\twitch\Projects\xTerminal\CheckPermission\obj\Debug\CheckPermission.exe
+F:\twitch\Projects\xTerminal\CheckPermission\obj\Debug\CheckPermission.pdb
+F:\twitch\Projects\xTerminal\CheckPermission\obj\Debug\CheckPermission.csproj.CopyComplete

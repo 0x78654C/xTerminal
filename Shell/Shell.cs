@@ -21,11 +21,16 @@ namespace Shell
     {
         //declaring variables
         public static string dlocation = null;
-        string AccountName = Environment.UserName;     //extract current loged username
-        string ComputerName = Environment.MachineName; //extract machine name
-                                                       //---------------------------------------
-        BackgroundWorker woker;                        //Declare backgroudwoker for key input listener
- 
+        static string AccountName = Environment.UserName;    //extract current loged username
+        static string ComputerName = Environment.MachineName; //extract machine name
+        static string keyStrokes;                            //current key stroke string
+        static List<string> listChars = new List<string>(); //list of input characters
+        static List<string> listCurrentDir = new List<string>();//list of directories and files
+        static int countList = 0;                        //index for directory/file listing
+        static int cList = 0;                            //PageUp key execution counter
+        static string line = "";                         //output the line from final list
+        BackgroundWorker woker;                         //Declare backgroudwoker for key input listener
+
 
         //-------------------------------
         //Define the shell commands 
@@ -50,6 +55,7 @@ namespace Shell
             { "email", @".\Tools\Network\eMailS.exe"  },
             { "wget", @".\Tools\Network\WGet.exe"  },
             { "edit", @".\Tools\FileSystem\xEditor.exe"  },
+            { "cp", @".\Tools\FileSystem\CheckPermission.exe"  },
             { "flappy", @".\Tools\Game\FlappyBirds.exe"  }
 
 
@@ -58,37 +64,126 @@ namespace Shell
         //-----------------------
 
 
+       /*
+       //Userd for key event check listing files and directories to be suggested for autocomplete
         private static void KeyDown(KeyEventArgs e)
         {
 
-            e.Handled = true;
-            if (e.KeyCode.ToString() =="Tab")
-            {
-                //string cDir = File.ReadAllText(FileSystem.CurrentLocation);
-                //if (Directory.Exists(cDir))
-                //{
-                //    var files = Directory.GetFiles(cDir);
-                //    var directories = Directory.GetDirectories(cDir);
 
-                //    foreach (var dir in directories)
-                //    {
-                //        Console.Write(dir);
-                //    }
-                //    foreach (var file in files)
-                //    {
-                //        Console.Write(file);
-                //    }
-                //}
-                //else
-                //{
-                //    Console.Write($"Directory '{cDir}' dose not exist!");
-                //}
-                Console.Write(" hello");
-            
-            e.Handled = true;
+            //test : output key string format
+            //Console.WriteLine(e.KeyCode);
+            //-------------------------
+
+            //we read every char in line
+            keyStrokes = e.KeyCode.ToString();
+
+            //add chars to list
+            if (e.KeyCode != Keys.Delete && e.KeyCode != Keys.Back && e.KeyCode != Keys.Enter && e.KeyCode != Keys.Capital && e.KeyCode != Keys.Left && e.KeyCode != Keys.Right)
+                listChars.Add(keyStrokes);
+
+            //compbine chars
+            string outPutChars = string.Join("", listChars);
+
+            //clean the output for space and tab
+            outPutChars = outPutChars.Replace("Space", " ");
+            outPutChars = outPutChars.Replace("LShiftKey", "");
+
+
+
+            //check if keycode is PageUp key presed and use for execution command
+            if (e.KeyCode == Keys.PageUp)
+            {
+                //read current location
+                string cDir = File.ReadAllText(FileSystem.CurrentLocation);
+
+                if (Directory.Exists(cDir))
+                {
+                    //get list of files and directoriles
+                    var files = Directory.GetFiles(cDir);
+                    var directories = Directory.GetDirectories(cDir);
+                                       //---------------------------
+
+                    foreach (var dir in directories)
+                    {
+                        //increment counter for indexing directories
+                        countList++;
+
+                        //replace separator for spliting (seems is illegal if I use normal on)
+                        string d = dir.Replace(@"\", "/");
+
+                        //we count the number of separators
+                        MatchCollection matchDir = Regex.Matches(d, "/");
+                        int parseDir = matchDir.Count;
+
+                        //we split every line by separator
+                        string[] dirs = d.Split('/');
+
+                        //we add to list the last part
+                        listCurrentDir.Add(dirs[parseDir]);
+
+                    }
+                    foreach (var file in files)
+                    {
+                        //increment counter for indexing files
+                        countList++;
+
+                        //replace separator for spliting (seems is illegal if I use normal on)
+                        string f = file.Replace(@"\", "/");
+
+                        //we count the number of separators
+                        MatchCollection matchDir = Regex.Matches(f, @"/");
+                        int parseFile = matchDir.Count;
+
+                        //we split every line by separator
+                        string[] fS = f.Split('/');
+
+                        //we add to list the last part
+                        listCurrentDir.Add(fS[parseFile]);
+                    }
+                }
+                else
+                {
+                    Console.Write($"Directory '{cDir}' dose not exist!");
+                }
+
+
+                //we increment the PageUp key execution
+                cList++;
+
+                //check if index of files/directories is bigger than key execution count
+                if (countList >= cList)
+                {
+
+                    //save the next lines from list
+                    line = listCurrentDir.Skip(cList - 1).Take(1).First();
+
+
+                    Console.WriteLine(line);
+                }
+                else
+                {
+                    //clear PaguUp key execution counter if is bigger than countList
+                    cList = 0;
+
+                    //clear index counter
+                    countList = 0;
+
+
+                    line = listCurrentDir.Skip(cList - 1).Take(1).First();
+
+
+                    //we clear the list
+                    listChars.Clear();
+                    listCurrentDir.Clear();
+                    //----------------
+                }
+
+
+
+                e.Handled = false;
             }
         }
-
+       
         /// <summary>
         /// On press key intercept
         /// </summary>
@@ -98,12 +193,12 @@ namespace Shell
         {
             InterceptKeys.SetupHook(KeyDown);
             InterceptKeys.ReleaseHook();
-            
+
 
         }
+       */
 
-
-        //Entry pint of shell
+        //Entry point of shell
 
         public void Run()
         {
@@ -121,14 +216,13 @@ namespace Shell
             int ioID = 0;
             int uPcount = 0;
 
-
-   
-            //stoped for future workd
-            //woker = new BackgroundWorker();
-            //woker.DoWork += Woker_DoWork;
-            //woker.RunWorkerAsync();
-
-            //----------------------------
+            /*
+            //start key event press listen and file/folder listing
+            woker = new BackgroundWorker();
+            woker.DoWork += Woker_DoWork;
+            woker.RunWorkerAsync();
+            //TODO: will see if use
+             */
 
 
             //creating history file if not exist
@@ -150,14 +244,12 @@ namespace Shell
 
             do
             {
-             
-             
+
+
                 //reading current location
                 dlocation = File.ReadAllText(FileSystem.CurrentLocation);
 
                 Console.Write(AccountName + "@" + ComputerName + $" ({dlocation})" + " $ ");
-                
-           
 
                 //reading user imput
                 input = Console.ReadLine();
@@ -315,8 +407,10 @@ This is the full list of commands that can be used in xTerminal:
     mkdir -- It creates a directory in the curent place.
     mkfile -- It creates a file in the curent place.
     edit -- Opens a file in Notepad(for now).
+    cp -- Check file/folder permissions.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
+    chistory -- Clears the current history of commands!
     flappy -- Play Flappy Birds in console!
  
 
@@ -338,7 +432,7 @@ This is the full list of commands that can be used in xTerminal:
                         process.WaitForExit();
 
                     }
-                 
+
                     //shuting down the machine command
                     else if (input == "shutdown")
                     {
@@ -369,6 +463,20 @@ This is the full list of commands that can be used in xTerminal:
                         process.WaitForExit();
                     }
 
+                    //Clear command history file
+                    else if (input == "chistory")
+                    {
+                        if (File.Exists(_historyFile))
+                        {
+                            File.WriteAllText(_historyFile, string.Empty);
+                            Console.WriteLine("Command history log cleared!");
+                        }
+                        else
+                        {
+                            Console.WriteLine("File '"+_historyFile+"' dose not exist!");
+                        }
+                    }
+
                     else
                     {
                         if (input.Contains(" "))
@@ -382,7 +490,6 @@ This is the full list of commands that can be used in xTerminal:
                             if (_ch == 1)// check one space char in input
                             {
                                 ExecuteWithArgs(dInput[0], dInput[1]); //execute commands with 1 arg
-
                             }
                             else if (_ch == 2)// check one space char in input
                             {
@@ -398,8 +505,6 @@ This is the full list of commands that can be used in xTerminal:
 
 
             } while (input != "exit");
-
-
 
         }
 
@@ -474,45 +579,7 @@ This is the full list of commands that can be used in xTerminal:
         }
         //------------------------
 
-
     }
-
-    class KeyInputs
-    {
-
-        public void Run()
-        {
-            while (true)
-            {
-                HandleInput();
-            }
-        }
-
-        private  void HandleInput()
-        {
-            var character = Console.ReadKey();
-            //if ((ConsoleModifiers.Control & character.Modifiers) != 0 &&
-            //     character.Key == ConsoleKey.S)
-            //{
-
-        if (character.Key == ConsoleKey.Tab)
-            {
-                  string CurrentLine = Console.ReadLine();
-                if (CurrentLine.Contains("\t"))
-                {
-                    CurrentLine = CurrentLine.Replace("\t", "");
-                    string[] SplitLine = CurrentLine.Split(' ');
-                    Console.WriteLine("|test");
-                    
-                    //Console.WriteLine("test");
-                }
-            }
-
-
-        }
-
-    }
-
 
 }
 

@@ -5,3 +5,4 @@ F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.csproj.CoreCompileInputs.ca
 F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.csproj.CopyComplete
 F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.exe
 F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.pdb
+F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.csprojAssemblyReference.cache

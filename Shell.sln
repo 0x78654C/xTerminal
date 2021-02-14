@@ -47,6 +47,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xEditor", "xEditor\xEditor.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MKFile", "NKFile\MKFile.csproj", "{E2D8A15A-A054-47D6-9614-DA8006901518}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckPermission", "CheckPermission\CheckPermission.csproj", "{AF0019A8-74E0-4C33-ADF5-F91566FE3B2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +143,10 @@ Global
 		{E2D8A15A-A054-47D6-9614-DA8006901518}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2D8A15A-A054-47D6-9614-DA8006901518}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2D8A15A-A054-47D6-9614-DA8006901518}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF0019A8-74E0-4C33-ADF5-F91566FE3B2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF0019A8-74E0-4C33-ADF5-F91566FE3B2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF0019A8-74E0-4C33-ADF5-F91566FE3B2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF0019A8-74E0-4C33-ADF5-F91566FE3B2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

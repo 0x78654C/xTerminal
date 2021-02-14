@@ -46,9 +46,9 @@ namespace WGet
                     int parse2 = match2.Count;
                     string[] parseUrl2 = pUrl[1].Split('/');
                     string fileUrl2 = parseUrl2[parse2];
-
                     Console.WriteLine("Downloading " + pUrl[0] + fileUrl2 + " ......");
-                    client.DownloadFile(url, pUrl[0] + fileUrl);
+                    var source = new Uri(url);
+                    client.DownloadFile(source, pUrl[0] + fileUrl);
                     Console.WriteLine("Downloaded in " + pUrl[0] + fileUrl);
                 }
                 else
@@ -58,7 +58,8 @@ namespace WGet
                     parseUrl = url.Split('/');
                     fileUrl = parseUrl[parse];
                     Console.WriteLine("Downloading " + dlocation + @"\" + fileUrl + " ......");
-                    client.DownloadFile(url, dlocation + @"\" + fileUrl);
+                    var source = new Uri(url);
+                    client.DownloadFile(source, dlocation + @"\" + fileUrl);
                     Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
                 }
 
@@ -73,12 +74,19 @@ namespace WGet
                 parseUrl = url.Split('/');
                 fileUrl = parseUrl[parse];
                 Console.WriteLine("Downloading " + url0 + fileUrl + " ......");
-                client.DownloadFile(url, url0 + fileUrl);
+                var source = new Uri(url0);
+                client.DownloadFile(source, url0 + fileUrl);
                 Console.WriteLine("Downloaded in " + url0 + fileUrl);
             }
 
 
         }
+        private static void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
+            // report progress
+            Console.WriteLine("'{0}' downloaded {1} of {2} bytes. {3}% complete",(string)e.UserState, e.BytesReceived, e.TotalBytesToReceive, e.ProgressPercentage);
+        }
 
     }
+
 }

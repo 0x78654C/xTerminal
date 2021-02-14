@@ -1,406 +1,84 @@
 0|0
-1|cmd
-2|ps
-3|cd
-4|cd
-5|bl bal alda
-6|ls
-7|clear
-8|celar
+1|ls
+2|cd test
+3|ls
+4|clear
+5|ls
+6|cat foo
+7|cat foo.txt
+8|clar
 9|clear
-10|cmd
-11|xdel
-12|cd c:
-13|cd
-14|cd:
-15|cd c:
+10|ispeed
+11|speedtest
+12|clear
+13|help
+14|ls
+15|ls
 16|ls
-17|cd c:
-18|cd c:
-19|cd
-20|claear
-21|clear
-22|c:
-23|cd c:
-24|cd c:
-25|cd c:
-26|cd c
-27|cd c:\
-28|cd python
-29|ls
-30|cd doc
-31|clear
-32|cd f:
-33|cd f:
-34|f:\
-35|cd
-36|cd
-37|cd
-38|cd
-39|cd
-40|f:
-41|cd f:\
-42|cd f:\
+17|ls
+18|ls
+19|cp test
+20|ls
+21|ls
+22|clear
+23|ls
+24|cp Core.dll
+25|ls
+26|clear
+27|cp asdasdasd
+28|clear
+29|cd test
+30|ls
+31|cd
+32|ls
+33|cp Core.dll
+34|cp test
+35|ls
+36|cp Tools
+37|cp F:\twitch\Projects\xTerminal\Release\Tools
+38|clear
+39|ls
+40|ls
+41|help
+42|clear
 43|ls
-44|clear
-45|cd twitch
+44|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+45|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
 46|ls
-47|cd Projects
-48|ls
-49|cat dl.cs
-50|clear
-51|ls
-52|cd
-53|clear
-54|ispeed
-55|clear
-56|cmd
-57|powershell
-58|ps
-59|clear
-60|ls
-61|clear
-62|help
-63|ls
-64|cd test
-65|ls
-66|fcopy editor.bat editor2.bat
-67|fcopy F:\MegaSync\Projects\Shell\Release\test\editor.bat F:\MegaSync\Projects\Shell\Release\test\editor2.bat
-68|fmove F:\MegaSync\Projects\Shell\Release\test\editor2.bat F:\MegaSync\Projects\Shell\Release\test\editor3.bat
-69|fmove F:\MegaSync\Projects\Shell\Release\test\editor2.bat_copied F:\MegaSync\Projects\Shell\Release\test\editor3.bat
-70|claer
-71|clear
-72|help
-73|mkdir Scott
-74|cd Scoot
-75|cd Scott
-76|fmove F:\MegaSync\Projects\Shell\Release\test\editor3.bat_moved F:\MegaSync\Projects\Shell\Release\test\Scott\editor3.bat
-77|ls
-78|ls
-79|fcopy F:\MegaSync\Projects\Shell\Release\test\Scott\editor3.bat_moved F:\MegaSync\Projects\Shell\Release\test\Scott\editor4.bat
-80|fcopy F:\MegaSync\Projects\Shell\Release\test\Scott\editor3.bat_moved F:\MegaSync\Projects\Shell\Release\test\Scott\editor4.bat
-81|fcopy F:\MegaSync\Projects\Shell\Release\test\Scott\editor3.bat_moved F:\MegaSync\Projects\Shell\Release\test\Scott\editor45.bat
-82|clear
-83|flappy
-84|clear
-85|cd test
-86|ls
-87|frename F:\MegaSync\Projects\Shell\Release\test\editor.bat F:\MegaSync\Projects\Shell\Release\test\editor_renamed.bat
-88|ls
-89|help
-90|cd test
-91|ls
-92|frename test.txt test2.txt
-93|ls
-94|frename test3.txt test2.txt
-95|frename test3.txt test2.txt
-96|frename test3.txt test2.txt
-97|ls
-98|frename F:\MegaSync\Projects\Shell\Release\test\test2.txt F:\MegaSync\Projects\Shell\Release\test\test3.txt
-99|ls
-100|frename test3.txt to test4.txt
-101|ls
-102|frename test3.txt test4.txt
-103|ls
-104|ls
-105|wget https://stackoverflow.com/questions/307688/how-to-download-a-file-from-a-url-in-c
-106|wget https://stackoverflow.com/questions/307688/how-to-download-a-file-from-a-url-in-c
-107|wget -o https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-108|cd test
-109|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-110|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-111|wget -d https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-112|ls
-113|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-114|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-115|ls
-116|cd
-117|cd
-118|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-119|wget     worker = new BackgroundWorker(); https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-120|                worker.DoWork += downloadWget;
-121|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-122|ls
-123|cd test
-124|ls
-125|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-126|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-127|ls
-128|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-129|clear
-130|cd
-131|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-132|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-133|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-134|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-135|wget F:\MegaSync\Projects\Shell\Release\test\test\ https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-136|wget F:\MegaSync\Projects\Shell\Release\test\test\ https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-137|wget F:\MegaSync\Projects\Shell\Release\test\test\ https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-138|wget F:\MegaSync\Projects\Shell\Release\test\test\ https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-139|wget F:\MegaSync\Projects\Shell\Release\test\test\ https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-140|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-141|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-142|ls
-143|ls
-144|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-145|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-146|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-147|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-148|speedtest
-149|help
-150|https://github.com/JoyMoe/SpeedTest.Net
-151|flappy
-152|ssh
-153|help
-154|help
-155|wget F:\MegaSync\Projects\Shell\Release\test\test https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-156|ls
-157|clear
-158|xe
-159|cd test
-160|xe
-161|xe
-162|xe
-163|xe
-164|xe
-165|xe
-166|xe
-167|xe
-168|xe
-169|xe
-170|xe
-171|xe
-172|xe
-173|xe
-174|xe
-175|xe
-176|xe
-177|xe
-178|clear
-179|xe
-180|xe
-181|xe
-182|xe
-183|clear
-184|xe
-185|xe
-186|xe
-187|xe
-188|clear
-189|xe
-190|clear
-191|xe
-192|das
-193|da
-194|sd
-195|as
-196|d
-197|xe
-198|xe
-199|xe
-200|xe
-201|xe
-202|xe
-203|vi
-204|vi
-205|edit
-206|edit
-207|ls
-208|cd test
-209|s
-210|ls
-211|edit foo.text
-212|edit
-213|edit foo.txt
-214|edit
-215|xe
-216|xe
-217|xe
-218|cd test
-219|ls
-220|xe foo.txt
-221|xe foo.txt
-222|xe foo.txt
-223|xe foo.txt
-224|xe foo.txt
-225|cd test
-226|mkfile bar.txt
-227|cd test
-228|mkfile bar.txt
-229|ls
-230|edit bar.txt
-231|xe bar.txt
-232|cat bar.txt
-233|help
-234|help
-235|ls
-236|cd test
-237|ls
-238|cd test
-239|cd test
-240|cd test
-241|cd test
-242|cd test
-243|cd test
-244|ls
-245|clear
-246|ls
-247|edit bar.txt
-248|c:
-249|cd c:
-250|cd c:\
-251|ls
-252|help
-253|mkfile terminal_test.txt
-254|mkfile terminal test.txt 
-255|ls
-256|edit test.cat_copied
-257|ls
-258|cd
-259|cd test
-260|cd test
-261|ls
-262|cd
-263|mkdir "test 1"
-264|ls
-265|mkfile "coding scott.txt"
-266|ls
-267|edit "coding scott.txt"
-268|ls
-269|clear
-270|ls
-271|edit "coding scott.txt"
-272|cat "coding scott.xtxt"
-273|cat "coding scott.txt"
-274|														
-275|cmd
-276|	
-277|	
-278|	
-279|	
-280|daaaadasdasdasdasdasdasda
-281|aaaaa
-282|asdasd
-283|asdasd
-284|dasdasd
-285|sd
-286|s
-287|a
-288|d
-289|sdasd
-290|sddasdasdasd
-291|aaaa
-292|f
-293|ada
-294|aaaasdasd
-295|asd
-296|asd
-297|x
-298|asd
-299|asd
-300|asdsa
-301|dasdasdasda
-302|a
-303|sd
-304|as
-305|da
-306|sd
-307|sa
-308|da
-309|ew
-310|ax
-311|sadasd
-312|da
-313|d
-314|d
-315|sd
-316|s
-317|as
-318|s
-319|a
-320|d	
-321|s
-322|sd				
-323|sdasd
-324|asd
-325|sd
-326|a
-327|asdsadasd
-328|asd
-329|sd
-330|sd
-331|sd
-332|s
-333|a
-334|d
-335|	
-336|asd
-337|sd
-338|d	
-339|ad
-340|d
-341|a
-342|ad
-343|cd
-344|ssssssss
-345|ssss
-346|a
-347|a
-348|a
-349|e
-350|asd
-351|asd
-352|as
-353|d
-354|ASD
-355|SA
-356|DA
-357|SD
-358|AS
-359|D
-360|asd
-361|asd
-362|asd
-363|a
-364|sd
-365|asd
-366|	
-367|asd
-368|asd
-369|	
-370|as
-371|da
-372|sd
-373|	
-374|asd
-375|a
-376|da
-377|ds
-378|	
-379|asd
-380|as
-381|d
-382|	
-383|asd
-384|asd
-385|asd
-386|as
-387|da
-388|sda
-389|d
-390|								
-391|	
-392|	
-393|	
-394|aa									
-395|hest	
-396|"e
-397|	
-398|	
-399|	
-400|asdad 	
-401|as
-402|adad	
-403|asdasd	
-404|asdasd	
-405|"						"
+47|ls
+48|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+49|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+50|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+51|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+52|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+53|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+54|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+55|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+56|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+57|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+58|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+59|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+60|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+61|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+62|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+63|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+64|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+65|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+66|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+67|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+68|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+69|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+70|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+71|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+72|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+73|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+74|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+75|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+76|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zi
+77|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+78|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zi
+79|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+80|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+81|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+82|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
+83|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
