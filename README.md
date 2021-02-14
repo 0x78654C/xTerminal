@@ -28,7 +28,7 @@ This is the full list of commands that can be used in xTerminal:
     logoff -- It force logoff current user.
     mkdir -- It creates a directory in the curent place.
     mkfile -- It creates a file in the curent place.
-    edit -- Opens a file in Notepad(for now).
+    edit -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set "Path to editor"
     cp -- Check file/folder permissions.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
