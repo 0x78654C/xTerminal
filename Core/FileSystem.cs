@@ -8,9 +8,7 @@ namespace Core
 {
     public class FileSystem
     {
-        public static string CurrentLocation = @".\Data\curDir.ini"; //Current Location fie path
-
-        
-
+        public static string CurrentLocation = @".\Data\curDir.ini"; //Current Location file path
+        public static string EditorPath = @".\Data\cEditor.ini"; //Current editor file path
     }
 }
