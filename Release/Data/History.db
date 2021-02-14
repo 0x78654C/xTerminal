@@ -1,107 +1,14 @@
 0|0
-1|ls
-2|cd test
-3|ls
-4|clear
+1|cd data
+2|cat history.db
+3|ada
+4|ada
 5|ls
-6|cat foo
-7|cat foo.txt
-8|clar
-9|clear
-10|ispeed
-11|speedtest
-12|clear
-13|help
-14|ls
-15|ls
-16|ls
-17|ls
-18|ls
-19|cp test
-20|ls
-21|ls
-22|clear
-23|ls
-24|cp Core.dll
-25|ls
-26|clear
-27|cp asdasdasd
-28|clear
-29|cd test
-30|ls
-31|cd
-32|ls
-33|cp Core.dll
-34|cp test
-35|ls
-36|cp Tools
-37|cp F:\twitch\Projects\xTerminal\Release\Tools
-38|clear
-39|ls
-40|ls
-41|help
-42|clear
-43|ls
-44|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-45|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-46|ls
-47|ls
-48|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-49|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-50|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-51|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-52|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-53|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-54|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-55|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-56|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-57|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-58|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-59|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-60|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-61|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-62|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-63|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-64|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-65|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-66|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-67|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-68|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-69|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-70|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-71|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-72|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-73|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-74|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-75|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-76|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zi
-77|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-78|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zi
-79|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-80|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-81|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-82|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-83|wget https://www.dotpdn.com/files/paint.net.4.2.15.install.zip
-84|ls
-85|cp tools
-86|cp c
-87|cp c:\
-88|cd c:\
-89|cd python
-90|cd c:\
-91|cp python
-92|ls
-93|cp Tools
-94|cp c:\python
-95|cd c:\
-96|cp python
-97|cp c:\python
-98|cp c:\python
-99|cd c:\
-100|ls
-101|cp c:\Reserve.img
-102|cp Tools
-103|cp tools
-104|cp tools
-105|cp tools
-106|cp tools
+6|ls
+7|ls
+8|cd data
+9|cat history.db
+10|clear
+11|asd
+12|asd
+13|asd
