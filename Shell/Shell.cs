@@ -31,6 +31,19 @@ namespace Shell
         static string line = "";                         //output the line from final list
         BackgroundWorker woker;                         //Declare backgroudwoker for key input listener
 
+        string input = null;
+        static string _historyFile = Directory.GetCurrentDirectory() + @"\Data\History.db";
+        static string count = null;
+        static string[] hLines = null;
+        static string hContent = null;
+       static  string[] pLines = null;
+        static string cID = null;
+        static int iID = 0;
+        static string[] cContent = null;
+        static string[] clines = null;
+        static string oID = null;
+        static int ioID = 0;
+       static int uPcount = 0;
 
         //-------------------------------
         //Define the shell commands 
@@ -64,124 +77,77 @@ namespace Shell
         //-----------------------
 
 
-       /*
+       
        //Userd for key event check listing files and directories to be suggested for autocomplete
         private static void KeyDown(KeyEventArgs e)
         {
-
-
-            //test : output key string format
-            //Console.WriteLine(e.KeyCode);
-            //-------------------------
-
-            //we read every char in line
-            keyStrokes = e.KeyCode.ToString();
-
-            //add chars to list
-            if (e.KeyCode != Keys.Delete && e.KeyCode != Keys.Back && e.KeyCode != Keys.Enter && e.KeyCode != Keys.Capital && e.KeyCode != Keys.Left && e.KeyCode != Keys.Right)
-                listChars.Add(keyStrokes);
-
-            //compbine chars
-            string outPutChars = string.Join("", listChars);
-
-            //clean the output for space and tab
-            outPutChars = outPutChars.Replace("Space", " ");
-            outPutChars = outPutChars.Replace("LShiftKey", "");
-
-
-
+            Console.WriteLine(e.KeyCode);
             //check if keycode is PageUp key presed and use for execution command
             if (e.KeyCode == Keys.PageUp)
             {
-                //read current location
-                string cDir = File.ReadAllText(FileSystem.CurrentLocation);
-
-                if (Directory.Exists(cDir))
+                if (File.Exists(_historyFile))
                 {
-                    //get list of files and directoriles
-                    var files = Directory.GetFiles(cDir);
-                    var directories = Directory.GetDirectories(cDir);
-                                       //---------------------------
-
-                    foreach (var dir in directories)
+                    //checking ioID is grater than 0(since id 0 is dummy line and is not needed )
+                    //and lower or equal to maximum count of lines                    
+                    if (ioID > 0 && ioID <= uPcount)
                     {
-                        //increment counter for indexing directories
-                        countList++;
+                        //returning the line determinated by the inceremented ioID
+                        string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
 
-                        //replace separator for spliting (seems is illegal if I use normal on)
-                        string d = dir.Replace(@"\", "/");
+                        //parsing the line
+                        string[] parseCommands = readCommands.Split('|');
 
-                        //we count the number of separators
-                        MatchCollection matchDir = Regex.Matches(d, "/");
-                        int parseDir = matchDir.Count;
+                        //returning the part of line after the char '|'
+                        //from the parsed line so we don't display the id of line
+                        string outCommand = parseCommands[1];
 
-                        //we split every line by separator
-                        string[] dirs = d.Split('/');
+                        //output the final parsed line
+                        Console.Write("\n\r{0}+\n",outCommand);
 
-                        //we add to list the last part
-                        listCurrentDir.Add(dirs[parseDir]);
-
-                    }
-                    foreach (var file in files)
-                    {
-                        //increment counter for indexing files
-                        countList++;
-
-                        //replace separator for spliting (seems is illegal if I use normal on)
-                        string f = file.Replace(@"\", "/");
-
-                        //we count the number of separators
-                        MatchCollection matchDir = Regex.Matches(f, @"/");
-                        int parseFile = matchDir.Count;
-
-                        //we split every line by separator
-                        string[] fS = f.Split('/');
-
-                        //we add to list the last part
-                        listCurrentDir.Add(fS[parseFile]);
+                        //decrement the ioID by 1
+                        ioID--;
                     }
                 }
-                else
-                {
-                    Console.Write($"Directory '{cDir}' dose not exist!");
-                }
 
 
-                //we increment the PageUp key execution
-                cList++;
-
-                //check if index of files/directories is bigger than key execution count
-                if (countList >= cList)
-                {
-
-                    //save the next lines from list
-                    line = listCurrentDir.Skip(cList - 1).Take(1).First();
-
-
-                    Console.WriteLine(line);
-                }
-                else
-                {
-                    //clear PaguUp key execution counter if is bigger than countList
-                    cList = 0;
-
-                    //clear index counter
-                    countList = 0;
-
-
-                    line = listCurrentDir.Skip(cList - 1).Take(1).First();
-
-
-                    //we clear the list
-                    listChars.Clear();
-                    listCurrentDir.Clear();
-                    //----------------
-                }
-
-
-
-                e.Handled = false;
             }
+
+            else if (e.KeyCode == Keys.PageDown)
+            {
+                if (File.Exists(_historyFile))
+                {
+                    //checking id ioID is lower and not equal than maximum count of lines
+                    if (uPcount > ioID && ioID != uPcount)
+                    {
+                        //incrementing ioID by 1
+                        ioID++;
+
+                        //returning the line determinated by the inceremented ioID
+                        string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
+
+                        //parsing the line
+                        string[] parseCommands = readCommands.Split('|');
+
+                        //returning the part of line after the char '|'
+                        //from the parsed line so we don't display the id of line
+                        string outCommand = parseCommands[1];
+
+                        //output the final parsed line
+                        Console.Write("\n\r{0}+\n", outCommand);
+
+                    }
+                    else
+                    {
+                        //restoring ioID to the maximum numbers of lines
+                        ioID = uPcount;
+
+                    }
+             
+                }
+            }
+
+            e.Handled = true;
+            
         }
        
         /// <summary>
@@ -193,36 +159,18 @@ namespace Shell
         {
             InterceptKeys.SetupHook(KeyDown);
             InterceptKeys.ReleaseHook();
-
-
         }
-       */
+       
 
         //Entry point of shell
 
         public void Run()
         {
-            string input = null;
-            string _historyFile = Directory.GetCurrentDirectory() + @"\Data\History.db";
-            string count = null;
-            string[] hLines = null;
-            string hContent = null;
-            string[] pLines = null;
-            string cID = null;
-            int iID = 0;
-            string[] cContent = null;
-            string[] clines = null;
-            string oID = null;
-            int ioID = 0;
-            int uPcount = 0;
-
-            /*
-            //start key event press listen and file/folder listing
+           
             woker = new BackgroundWorker();
             woker.DoWork += Woker_DoWork;
             woker.RunWorkerAsync();
-            //TODO: will see if use
-             */
+          
 
 
             //creating history file if not exist
@@ -377,7 +325,7 @@ namespace Shell
                     #endregion
 
 
-                    //rebooting the machine command
+                    //help command
 
                     if (input == "help")
                     {
@@ -406,7 +354,7 @@ This is the full list of commands that can be used in xTerminal:
     logoff -- It force logoff current user.
     mkdir -- It creates a directory in the curent place.
     mkfile -- It creates a file in the curent place.
-    edit -- Opens a file in Notepad(for now).
+    edit -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
     cp -- Check file/folder permissions.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
@@ -418,6 +366,7 @@ This is the full list of commands that can be used in xTerminal:
 
                         Console.WriteLine(helpMGS);
                     }
+                    //rebooting the machine command
                     else if (input == "reboot")
                     {
                         var process = new Process();
@@ -476,7 +425,32 @@ This is the full list of commands that can be used in xTerminal:
                             Console.WriteLine("File '"+_historyFile+"' dose not exist!");
                         }
                     }
+                    //editor set
+                    else if (input.Contains("edit set"))
+                    {
+                        string[] dInput = input.Split(' ');
+                        //counting the spaces in input command
+                        string _ck = Regex.Matches(input, " ").Count.ToString();
+                        int _ch = Int32.Parse(_ck);
 
+                        if (_ch > 1)
+                        {
+                            if (input.Contains(@"\"))
+                            {
+                                string[] cInput = input.Split('"');
+                                ExecuteWithArgs2(dInput[0], dInput[1], "\"" + @cInput[1] + "\""); //execute commands with 2 arg
+                            }
+                            else
+                            {
+
+                                ExecuteWithArgs2(dInput[0], dInput[1], dInput[2]); //execute commands with 1 arg
+                            }
+                        }
+                        else
+                        {
+                            ExecuteWithArgs(dInput[0], dInput[1]); //execute commands with 1 arg
+                        }
+                    }
                     else
                     {
                         if (input.Contains(" "))
@@ -528,7 +502,7 @@ This is the full list of commands that can be used in xTerminal:
                 return 0;
             }
 
-            Console.WriteLine($"xTerminal command '{input}' not found");
+           // Console.WriteLine($"xTerminal command '{input}' not found");
             return 1;
         }
         //------------------------
@@ -578,7 +552,7 @@ This is the full list of commands that can be used in xTerminal:
             return 1;
         }
         //------------------------
-
+        
     }
 
 }
