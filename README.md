@@ -29,12 +29,16 @@ This is the full list of commands that can be used in xTerminal:
     mkdir -- It creates a directory in the curent place.
     mkfile -- It creates a file in the curent place.
     edit -- Opens a file in Notepad(for now).
+    cp -- Check file/folder permissions.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
+    chistory -- Clears the current history of commands!
     flappy -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
 
 
 Requirements:
 .NET Core 2.0
+
 .NET Standard 2.0
+
 .NET Framework 4.7.2
