@@ -81,11 +81,7 @@ namespace WGet
 
 
         }
-        private static void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-        {
-            // report progress
-            Console.WriteLine("'{0}' downloaded {1} of {2} bytes. {3}% complete",(string)e.UserState, e.BytesReceived, e.TotalBytesToReceive, e.ProgressPercentage);
-        }
+ 
 
     }
 

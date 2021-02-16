@@ -28,7 +28,7 @@ namespace NKFile
             }
             catch
             {
-                Console.WriteLine("File was not created. Check parameters!");
+                Console.WriteLine("You must type the file name!");
             }
         }
     }

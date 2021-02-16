@@ -96,7 +96,8 @@ namespace Shell
                         string outCommand = parseCommands[1];
 
                         //output the final parsed line
-                        Console.Write("\n\r{0}+\n",outCommand);
+                      
+                        Console.Write("\n{0}",outCommand);
 
                         //decrement the ioID by 1
                         ioID--;
@@ -127,7 +128,7 @@ namespace Shell
                         string outCommand = parseCommands[1];
 
                         //output the final parsed line
-                        Console.Write("\n\r{0}+\n", outCommand);
+                        Console.Write("\n{0}", outCommand);
 
                     }
                     else
@@ -496,7 +497,6 @@ This is the full list of commands that can be used in xTerminal:
                 return 0;
             }
 
-           // Console.WriteLine($"xTerminal command '{input}' not found");
             return 1;
         }
         //------------------------
@@ -519,7 +519,6 @@ This is the full list of commands that can be used in xTerminal:
                 return 0;
             }
 
-            Console.WriteLine($"xTerminal command '{input}' not found");
             return 1;
         }
         //------------------------
@@ -542,7 +541,6 @@ This is the full list of commands that can be used in xTerminal:
                 return 0;
             }
 
-            Console.WriteLine($"xTerminal Command '{input}' not found");
             return 1;
         }
         //------------------------

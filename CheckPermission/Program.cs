@@ -91,9 +91,9 @@ namespace CheckPermission
                     }
                 }
             }
-            catch(Exception e)
+            catch
             {
-                Console.WriteLine("Check Permission error: "+e.ToString());
+                Console.WriteLine("You must type the file/directory name!");
                 
             }
         }

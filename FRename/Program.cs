@@ -49,9 +49,9 @@ namespace FRename
                     }
                 }
             }
-            catch (Exception e)
+            catch 
             {
-                Console.WriteLine("Error: " + e.ToString() + Environment.NewLine);
+                Console.WriteLine("You must type the file name!");
             }
         }
     }

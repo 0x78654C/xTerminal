@@ -72,9 +72,9 @@ namespace FMove
                     Console.WriteLine("MD5 dose not match! File was not moved." + Environment.NewLine);
                 }
             }
-            catch (Exception e)
+            catch 
             {
-                Console.WriteLine("Error: " + e.ToString() + Environment.NewLine);
+                Console.WriteLine("Command should look like this: fmove source_file target_file");
             }
         }
 

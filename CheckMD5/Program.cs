@@ -30,7 +30,7 @@ namespace CheckMD5
                             using (var stream = File.OpenRead(input))
                             {
                                 var hash = md5.ComputeHash(stream);
-                                Console.WriteLine(BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
+                                Console.WriteLine("MD5 of "+input+": "+BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
 
                             }
                         }
@@ -49,7 +49,7 @@ namespace CheckMD5
                             using (var stream = File.OpenRead(cDir + @"\" + input))
                             {
                                 var hash = md5.ComputeHash(stream);
-                                Console.WriteLine(BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
+                                Console.WriteLine("MD5 of " + input + ": " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
 
                             }
                         }
@@ -60,9 +60,9 @@ namespace CheckMD5
                     }
                 }
             }
-            catch (Exception e)
+            catch 
             {
-                Console.WriteLine("Error: "+e.ToString());
+                Console.WriteLine("Error: Have you typed the file name?");
             }
         }
 

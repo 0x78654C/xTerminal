@@ -44,9 +44,9 @@ namespace MakeDirecotry
                         Console.WriteLine("Something went wrong. Check path maybe!");
                     }
                 }
-            }catch(Exception e)
+            }catch
             {
-                Console.WriteLine("Error: "+e.ToString());
+                Console.WriteLine("You must type the directory name!");
             }
         }
     }

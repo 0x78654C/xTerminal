@@ -79,9 +79,9 @@ namespace FCopy
                 }
 
             }
-            catch (Exception e)
+            catch 
             {
-                Console.WriteLine("Error: " + e.ToString() + Environment.NewLine);
+                Console.WriteLine("Command should look like this: fcopy source_file target_file");
             }
         }
         public class ConsoleSpiner
