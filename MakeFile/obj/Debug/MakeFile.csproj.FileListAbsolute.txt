@@ -1,7 +1,0 @@
-F:\MegaSync\Projects\Shell\Release\Tools\MakeFile.exe.config
-F:\MegaSync\Projects\Shell\Release\Tools\MakeFile.exe
-F:\MegaSync\Projects\Shell\Release\Tools\MakeFile.pdb
-F:\MegaSync\Projects\Shell\MakeFile\obj\Debug\MakeFile.csprojAssemblyReference.cache
-F:\MegaSync\Projects\Shell\MakeFile\obj\Debug\MakeFile.csproj.CoreCompileInputs.cache
-F:\MegaSync\Projects\Shell\MakeFile\obj\Debug\MakeFile.exe
-F:\MegaSync\Projects\Shell\MakeFile\obj\Debug\MakeFile.pdb

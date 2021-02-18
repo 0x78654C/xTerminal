@@ -1,8 +1,0 @@
-F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\MKFile.exe.config
-F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\MKFile.exe
-F:\twitch\Projects\xTerminal\Release\Tools\FileSystem\MKFile.pdb
-F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.csproj.CoreCompileInputs.cache
-F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.csproj.CopyComplete
-F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.exe
-F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.pdb
-F:\twitch\Projects\xTerminal\NKFile\obj\Debug\MKFile.csprojAssemblyReference.cache

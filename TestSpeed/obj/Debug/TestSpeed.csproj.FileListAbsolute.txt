@@ -1,7 +1,0 @@
-F:\MegaSync\Projects\Shell\TestSpeed\obj\Debug\TestSpeed.csprojAssemblyReference.cache
-F:\MegaSync\Projects\Shell\TestSpeed\obj\Debug\TestSpeed.csproj.CoreCompileInputs.cache
-F:\MegaSync\Projects\Shell\Release\Tools\TestNet.exe.config
-F:\MegaSync\Projects\Shell\Release\Tools\TestNet.exe
-F:\MegaSync\Projects\Shell\Release\Tools\TestNet.pdb
-F:\MegaSync\Projects\Shell\TestSpeed\obj\Debug\TestNet.exe
-F:\MegaSync\Projects\Shell\TestSpeed\obj\Debug\TestNet.pdb
