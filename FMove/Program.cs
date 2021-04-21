@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Core;
 
 namespace FMove
 {
@@ -15,37 +16,74 @@ namespace FMove
         {
 
             Console.WriteLine(" ");
+            //reading current location(for test no, after i make dynamic)
+            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
+            string cLocation = Directory.GetCurrentDirectory();
+
+            string md5Source = null;
+            string md5Destination = null;
+            string Source = null;
+            string Destination = null;
             try
             {
-                string md5Source = null;
-                string md5Destination = null;
-                string Source = null;
-                string Destination = null;
-                Source =args[0];
 
-                //Grabing source file md5
+                Source = args[0];
+
+                if (!Source.Contains(":") || !Source.Contains(@"\"))
+                {
+
+                    Source = dlocation + "\\" + Source;
+
+                }
                 using (var md5 = MD5.Create())
                 {
-                    using (var stream = File.OpenRead(Source))
+                    if (File.Exists(Source))
                     {
-                        var hash = md5.ComputeHash(stream);
-                        md5Source = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        using (var stream = File.OpenRead(Source))
+                        {
+                            var hash = md5.ComputeHash(stream);
+                            md5Source = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
 
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                        Environment.Exit(-1);
                     }
                 }
 
-;
-                Destination = args[1] + "_moved";
-                Console.WriteLine("Moving files...");
+
+
+
+                Destination = args[1];
+                if (!Destination.Contains(":") || !Destination.Contains(@"\"))
+                {
+                    Destination = dlocation + "\\" + Destination;
+                }
+
+                //copy module
                 if (File.Exists(Source))
                 {
-                    File.Copy(Source, Destination);
+                    if (!File.Exists(Destination))
+                    {
+                        Console.WriteLine("Moveing files...\r\n");
+                        File.Copy(Source, Destination);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Destination file '{Destination}' already exist!" + Environment.NewLine);
+                        Environment.Exit(-1);
+
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($" File '{Source}' dose not exist!" + Environment.NewLine);
-                }
+                    Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                    Environment.Exit(-1);
 
+                }
+                //-------------------------
                 //Grabing destination file md5
                 using (var md5 = MD5.Create())
                 {
@@ -56,6 +94,9 @@ namespace FMove
 
                     }
                 }
+
+
+
                 Thread.Sleep(1000);
                 if (md5Source == md5Destination)
                 {
@@ -63,6 +104,7 @@ namespace FMove
                     Console.WriteLine(Destination + " | MD5: " + md5Destination);
                     File.Delete(Source);
                     Console.WriteLine("MD5 match! File was moved OK!" + Environment.NewLine);
+
                 }
                 else
                 {
@@ -70,11 +112,28 @@ namespace FMove
                     Console.WriteLine(Destination + " | MD5: " + md5Destination);
                     File.Delete(Destination);
                     Console.WriteLine("MD5 dose not match! File was not moved." + Environment.NewLine);
+
                 }
+
             }
-            catch 
+            catch (Exception x)
             {
-                Console.WriteLine("Command should look like this: fmove source_file target_file");
+                if (x.ToString().Contains("already exists"))
+                {
+                    if (File.Exists(Destination))
+                    {
+                        Console.WriteLine("\r\nFile '" + Destination + "' already exits");
+                    }
+                    if (Directory.Exists(Destination))
+                    {
+                        Console.WriteLine("\r\nDirectory '" + Destination + "' already exits");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Command should look like this: fmove source_file target_file");
+                    Console.WriteLine(x.ToString());
+                }
             }
         }
 
