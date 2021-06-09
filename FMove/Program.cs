@@ -20,8 +20,8 @@ namespace FMove
             string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
             string cLocation = Directory.GetCurrentDirectory();
 
-            string md5Source = null;
-            string md5Destination = null;
+            string crcSource = null;
+            string crcDestination = null;
             string Source = null;
             string Destination = null;
             try
@@ -35,14 +35,14 @@ namespace FMove
                     Source = dlocation + "\\" + Source;
 
                 }
-                using (var md5 = MD5.Create())
+                using (var crc = Crc32.Create())
                 {
                     if (File.Exists(Source))
                     {
                         using (var stream = File.OpenRead(Source))
                         {
-                            var hash = md5.ComputeHash(stream);
-                            md5Source = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                            var hash = crc.ComputeHash(stream);
+                            crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
 
                         }
                     }
@@ -84,34 +84,34 @@ namespace FMove
 
                 }
                 //-------------------------
-                //Grabing destination file md5
-                using (var md5 = MD5.Create())
+                //Grabing destination file crc
+                using (var crc = Crc32.Create())
                 {
                     using (var stream = File.OpenRead(Destination))
                     {
-                        var hash = md5.ComputeHash(stream);
-                        md5Destination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        var hash = crc.ComputeHash(stream);
+                        crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
 
                     }
                 }
 
 
 
-                Thread.Sleep(1000);
-                if (md5Source == md5Destination)
+                Console.WriteLine("Verifying file...\r\n");
+                if (crcSource == crcDestination)
                 {
-                    Console.WriteLine(Source + " | MD5: " + md5Source);
-                    Console.WriteLine(Destination + " | MD5: " + md5Destination);
+                    Console.WriteLine(Source + " | CRC: " + crcSource);
+                    Console.WriteLine(Destination + " | CRC: " + crcDestination);
                     File.Delete(Source);
-                    Console.WriteLine("MD5 match! File was moved OK!" + Environment.NewLine);
+                    Console.WriteLine("CRC match! File was moved OK!" + Environment.NewLine);
 
                 }
                 else
                 {
-                    Console.WriteLine(Source + " | MD5: " + md5Source);
-                    Console.WriteLine(Destination + " | MD5: " + md5Destination);
+                    Console.WriteLine(Source + " | CRC: " + crcSource);
+                    Console.WriteLine(Destination + " | CRC: " + crcDestination);
                     File.Delete(Destination);
-                    Console.WriteLine("MD5 dose not match! File was not moved." + Environment.NewLine);
+                    Console.WriteLine("CRC dose not match! File was not moved." + Environment.NewLine);
 
                 }
 
