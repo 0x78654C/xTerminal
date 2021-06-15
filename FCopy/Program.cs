@@ -32,27 +32,43 @@ namespace FCopy
             int countFilesD = 0;
             string[] files;
             string[] dfiles;
-            string cmdType=null;
+            string cmdType = null;
             string codeBase = Assembly.GetExecutingAssembly().GetName().Name;
+            double sizeSourceFiles = 0;
+            double sizeDestinationFiles = 0;
 
             Console.WriteLine("\n\r");
             try
             {
-                files = Directory.GetFiles(dlocation);;
+                files = Directory.GetFiles(dlocation);
+  
                 Source = args[0];
-                //copy all with and without args
-                if (Source.StartsWith("-ca") || Source.StartsWith("-ma"))
+                cmdType = Source;
+                try
                 {
-                     cmdType = Source;
-                    try
-                    {
-                        NewPath = args[1];
-                    }
-                    catch
-                    {
-                        NewPath = dlocation;
-                    }
-                    
+                    NewPath = args[1];
+                }
+                catch
+                {
+                    NewPath = dlocation;
+                }
+
+
+                if (Source.StartsWith("-h"))
+                {
+                    Console.WriteLine(@"Usage:
+ Ex 1: fcopy <source_file> <destination_file>
+ Ex 2: fcopy -ca <destination_directory> -- copy all files in a specific directory
+ Ex 3: fcopy -ca  -- copy source files in same directory
+");
+                    Environment.Exit(-1);
+
+                }
+
+                //copy all with and without args
+                if (Source.StartsWith("-ca"))
+                {
+
                     dfiles = Directory.GetFiles(NewPath);
                     string dFilesList = string.Join("", dfiles);
 
@@ -60,10 +76,10 @@ namespace FCopy
                     {
                         foreach (var file in dfiles)
                         {
-                            
+
                             if (!file.Contains(") - ") && !file.Contains(codeBase))
                             {
-                               
+
                                 int FileCount = 0;
                                 int woIndex = 0;
                                 int wIndex = 0;
@@ -97,7 +113,8 @@ namespace FCopy
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource);
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source));
+                                            sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
                                         }
                                     }
                                     else
@@ -193,7 +210,8 @@ namespace FCopy
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination);
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination +" | Size: "+ FileSystem.GetFileSize(Destination));
+                                        sizeDestinationFiles += FileSystem.GetFixedFileSize(Destination);
                                     }
                                 }
                                 //--------------------------------
@@ -201,16 +219,7 @@ namespace FCopy
 
                                 if (crcSource == crcDestination)
                                 {
-                                    if (cmdType.StartsWith("-ca"))
-                                    {
-                                        FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
-
-                                    }
-                                    else if (cmdType.StartsWith("-ma"))
-                                    {
-                                        File.Delete(Source);
-                                        FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
-                                    }
+                                    FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
                                 }
                                 else
                                 {
@@ -225,7 +234,7 @@ namespace FCopy
                     {
                         foreach (var file in files)
                         {
-                            
+
                             if (!file.Contains(") - "))
                             {
                                 int FileCount = 0;
@@ -264,7 +273,8 @@ namespace FCopy
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource);
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source));
+                                            sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
                                         }
                                     }
                                     else
@@ -291,7 +301,7 @@ namespace FCopy
                                 {
                                     if (!File.Exists(Destination))
                                     {
-                                        
+
                                         File.Copy(Source, Destination);
                                     }
                                     else
@@ -309,7 +319,7 @@ namespace FCopy
                                                 fileNameSplit2 = fileNameSplit2.Replace("(", "");
                                                 fileNameSplit = fileNameSplit.Split('-')[1].Trim();
                                                 Destination = NewPath + "\\(" + FileCount + ") - " + fileNameSplit;
-                                                
+
                                                 if (!File.Exists(Destination))
                                                 {
                                                     File.Copy(Source, Destination);
@@ -333,7 +343,7 @@ namespace FCopy
                                                         fileNameSplit2 = fileNameSplit2.Replace("(", "");
                                                         fileNameSplit = fileNameSplit.Split('-')[1].Trim();
                                                         Destination = NewPath + "\\(" + FileCount + ") - " + fileNameSplit;
-                                                        
+
                                                         if (!File.Exists(Destination))
                                                         {
                                                             File.Copy(Source, Destination);
@@ -343,7 +353,7 @@ namespace FCopy
                                             }
                                             else
                                             {
-                                                
+
                                                 File.Copy(Source, Destination);
                                             }
                                         }
@@ -363,7 +373,8 @@ namespace FCopy
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination);
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination));
+                                        sizeDestinationFiles += FileSystem.GetFixedFileSize(Destination);
                                     }
                                 }
                                 //--------------------------------
@@ -371,21 +382,12 @@ namespace FCopy
 
                                 if (crcSource == crcDestination)
                                 {
-                                    if (cmdType.StartsWith("-ca"))
-                                    {
-                                        FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
-
-                                    }
-                                    else if (cmdType.StartsWith("-ma"))
-                                    {
-                                        File.Delete(Source);
-                                        FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
-                                    }
+                                    FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
                                 }
                                 else
                                 {
                                     File.Delete(Destination);
-                                    FileSystem.ColorConsoleLine(ConsoleColor.Red, "CRC dose not match! File was not copied/moved." + Environment.NewLine);
+                                    FileSystem.ColorConsoleLine(ConsoleColor.Red, "CRC dose not match! File was not copied." + Environment.NewLine);
                                     FilesErrorCopy.Add(Source);
                                 }
                             }
@@ -394,7 +396,7 @@ namespace FCopy
                 }
                 else
                 {
-                    
+
                     if (!Source.Contains(":") || !Source.Contains(@"\"))
                     {
                         Source = dlocation + "\\" + Source;
@@ -407,7 +409,8 @@ namespace FCopy
                             {
                                 var hash = crc32.ComputeHash(stream);
                                 crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                Console.WriteLine("Source File: "+Source + " | CRC: " + crcSource);
+                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource+" | Size: "+FileSystem.GetFileSize(Source));
+                                sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
                             }
                         }
                         else
@@ -418,6 +421,7 @@ namespace FCopy
                     }
 
                     Destination = args[1];
+
                     if (!Destination.Contains(":") || !Destination.Contains(@"\"))
                     {
                         Destination = dlocation + "\\" + Destination;
@@ -428,7 +432,7 @@ namespace FCopy
                     {
                         if (!File.Exists(Destination))
                         {
-                            
+
                             File.Copy(Source, Destination);
                         }
                         else
@@ -454,69 +458,58 @@ namespace FCopy
                         }
                     }
 
-                  
                     if (crcSource == crcDestination)
                     {
-                        if (cmdType.StartsWith("-ca"))
-                        {
-                            FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
-
-                        }else if (cmdType.StartsWith("-ma"))
-                        {
-                            File.Delete(Source);
-                            FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
-                        }
+                        FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
+                        Console.WriteLine(FileSystem.GetFileSize(Destination));
                     }
                     else
                     {
                         File.Delete(Destination);
-                        FileSystem.ColorConsoleLine(ConsoleColor.Red, "CRC dose not match! File was not copied/moved." + Environment.NewLine);                        
+                        FileSystem.ColorConsoleLine(ConsoleColor.Red, "CRC dose not match! File was not copied." + Environment.NewLine);
                         FilesErrorCopy.Add(Source);
                     }
                 }
             }
             catch (Exception x)
             {
-                if (x.ToString().Contains("is being used by another process"))
+                if (x.Message.Contains("is being used by another process"))
                 {
                     Console.WriteLine("\r\nError: File '" + Destination + "' is being used by another process. Terminated!");
                 }
                 else
                 {
-                 
+
                     Console.WriteLine("Command should look like this: fcopy source_file target_file");
                 }
 
             }
-
-            string ErrorCopy = string.Join("\n\r", FilesErrorCopy);
-            files = Directory.GetFiles(dlocation);
-            countFilesS = files.Count();
-            dfiles = Directory.GetFiles(NewPath);
-            countFilesD = dfiles.Count();
-
-            if (!string.IsNullOrWhiteSpace(ErrorCopy))
+            if (cmdType.StartsWith("-ca"))
             {
-                FileSystem.ColorConsoleLine(ConsoleColor.Red, "List of files not copied/moved. CRC missmatch:\n\r" + ErrorCopy + Environment.NewLine);
-                Console.WriteLine("Total Files Source Directory: "+countFilesS.ToString());
-                Console.WriteLine("Total Files Destination Directory: "+countFilesD.ToString() + "\n\r");
-            }
-            else
-            {
-                if (cmdType.StartsWith("-ca"))
+                string ErrorCopy = string.Join("\n\r", FilesErrorCopy);
+                files = Directory.GetFiles(dlocation);
+                countFilesS = files.Count();
+                dfiles = Directory.GetFiles(NewPath);
+                countFilesD = dfiles.Count();
+
+                double sizeSourceRound = Math.Round(sizeSourceFiles, 2); 
+                double sizeDestinationRound = Math.Round(sizeDestinationFiles, 2); 
+
+                if (!string.IsNullOrWhiteSpace(ErrorCopy))
                 {
-                    FileSystem.ColorConsoleLine(ConsoleColor.Cyan, "\n\r----- All files are copied -----\n\r");
+                    FileSystem.ColorConsoleLine(ConsoleColor.Red, "List of files not copied/moved. CRC missmatch:\n\r" + ErrorCopy + Environment.NewLine);
+                    Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() +" | Total Size: "+ sizeSourceRound +" MB");
+                    Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
                 }
                 else
                 {
-                    FileSystem.ColorConsoleLine(ConsoleColor.Cyan, "\n\r----- All files are moved -----\n\r");
+                    FileSystem.ColorConsoleLine(ConsoleColor.Cyan, "\n\r----- All files are copied -----\n\r");
+                    Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() + " | Total Size: " + sizeSourceRound + " MB");
+                    Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
                 }
-                Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString());
-                Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString()+"\n\r");
             }
         }
-       
+
     }
-  
+
 }
- 
