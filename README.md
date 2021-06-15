@@ -16,9 +16,9 @@ This is the full list of commands that can be used in xTerminal:
     md5 -- Chceks the md5 checksum of a file.
     extip -- Displays the current external IP address.
     wget -- Download files from a specific website.
-    fcopy -- Copies a file with md5 checksum control.
+    fcopy -- Copies a file with CRC checksum control.
     frename -- Renames a file in a specific directory(s).
-    fmove -- Moves a file with md5 checksum contorl.
+    fmove -- Moves a file with CRC checksum contorl.
     cmd --  Opens Windows Command Promt.
     ps -- Opens Windowns Powershell.
     cat -- Displays the content of a file.
