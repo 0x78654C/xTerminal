@@ -49,6 +49,7 @@ namespace Shell
             { "ispeed", @".\Tools\Network\InternetSpeed.exe" },
             { "md5", @".\Tools\FileSystem\CheckMD5.exe"  },
             { "fcopy", @".\Tools\FileSystem\FCopy.exe"  },
+            { "fmove", @".\Tools\FileSystem\FMove.exe"  },
             { "frename", @".\Tools\FileSystem\FRename.exe"  },
             { "cmd", "cmd"  },
             { "ps", "powershell"  },
@@ -337,6 +338,7 @@ This is the full list of commands that can be used in xTerminal:
     extip -- Displays the current external IP address.
     wget -- Download files from a specific website.
     fcopy -- Copies a file with CRC checksum control.
+    fmove -- Moves a file with md5 checksum contorl.
     frename -- Renames a file in a specific directory(s).
     cmd --  Opens Windows Command Promt.
     ps -- Opens Windowns Powershell.
