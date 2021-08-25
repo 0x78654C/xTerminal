@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using Core;
+using System;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Core;
 
 namespace WGet
 {
@@ -15,74 +13,101 @@ namespace WGet
     {
         /*WGet command*/
 
-
-        private static string url;
-        private static string url0;
+        // Declare global variables
+        private static string s_urlFirst;
+        private static string s_urlSecond;
+        private static Stopwatch s_stopWatch;
+        private static TimeSpan s_timeSpan;
+        private static readonly WebClient s_client = new WebClient();
+        private static MatchCollection s_match2;
+        private static MatchCollection s_match;
 
         static void Main(string[] args)
         {
-            WebClient client = new WebClient();
-            MatchCollection match2;
-            MatchCollection match;
-            //reading current location(for test no, after i make dynamic)
-            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
-            string cLocation = Directory.GetCurrentDirectory();
-   
-            int parse;
-            string[] parseUrl;
-            string fileUrl = string.Empty;
-
+            s_timeSpan = new TimeSpan();
+            s_stopWatch = new Stopwatch();
+            
             try
             {
+                s_urlFirst = args[0];  //url input
 
-                url = args[0];  //url input
-
-                if (url.Contains(@"\"))
+                if (s_urlFirst.Contains(@"\"))
                 {
-                    string[] pUrl = url.Split(' ');
-                    Console.WriteLine("Dir: "+pUrl[0]);
-                    Console.WriteLine("url: " + pUrl[1]);
-                    match2 = Regex.Matches(pUrl[1], "/");
-                    int parse2 = match2.Count;
-                    string[] parseUrl2 = pUrl[1].Split('/');
-                    string fileUrl2 = parseUrl2[parse2];
-                    Console.WriteLine("Downloading " + pUrl[0] + fileUrl2 + " ......");
-                    var source = new Uri(url);
-                    client.DownloadFile(source, pUrl[0] + fileUrl);
-                    Console.WriteLine("Downloaded in " + pUrl[0] + fileUrl);
+                    s_urlSecond = args[1];
+                    DownloadFile(s_urlSecond, s_urlFirst);
                 }
                 else
                 {
-                    match = Regex.Matches(url, "/");
-                    parse = match.Count;
-                    parseUrl = url.Split('/');
-                    fileUrl = parseUrl[parse];
-                    Console.WriteLine("Downloading " + dlocation + @"\" + fileUrl + " ......");
-                    var source = new Uri(url);
-                    client.DownloadFile(source, dlocation + @"\" + fileUrl);
-                    Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
+                    DownloadFile(s_urlFirst);
                 }
-
-
             }
-            catch 
+            catch (Exception e)
             {
-                url0 = args[0];
-                url = args[1];
-                match = Regex.Matches(url, "/");
-                parse = match.Count;
-                parseUrl = url.Split('/');
-                fileUrl = parseUrl[parse];
-                Console.WriteLine("Downloading " + url0 + fileUrl + " ......");
-                var source = new Uri(url0);
-                client.DownloadFile(source, url0 + fileUrl);
-                Console.WriteLine("Downloaded in " + url0 + fileUrl);
+                Console.WriteLine($"Error: {e.Message}");             
             }
-
-
         }
- 
 
+        // Download file in current directory
+        private static void DownloadFile(string urlData)
+        {
+            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
+            int parse;
+            string[] parseUrl;
+            string fileUrl;
+            s_timeSpan = new TimeSpan();
+            s_stopWatch = new Stopwatch();
+            s_match = Regex.Matches(urlData, "/");
+            parse = s_match.Count;
+            parseUrl = urlData.Split('/');
+            fileUrl = parseUrl[parse];
+            Console.WriteLine("Downloading " + dlocation + @"\" + fileUrl + " ......");
+            var source = new Uri(urlData);
+            s_stopWatch.Start();
+            s_client.DownloadFile(source, dlocation + @"\" + fileUrl);
+            s_stopWatch.Stop();
+            s_timeSpan = s_stopWatch.Elapsed;
+            Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
+            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds ");
+        }
+
+        // Download file in other directory
+        private static void DownloadFile(string urlData, string savePath)
+        {
+            if (!Directory.Exists(savePath))
+            {
+                Console.WriteLine($"Directory: {savePath} does not exist!");
+                return;
+            }
+            
+            if (!CheckDirectoryAccess(savePath))
+            {
+                return;
+            }
+            
+            s_match2 = Regex.Matches(urlData, "/");
+            int parse2 = s_match2.Count;
+            string[] parseUrl2 = urlData.Split('/');
+            string fileUrl2 = parseUrl2[parse2];
+            Console.WriteLine("Downloading " + savePath + @"\" + fileUrl2 + " ......");
+            var source = new Uri(urlData);
+            s_stopWatch.Start();
+            s_client.DownloadFile(source, savePath + @"\" + fileUrl2);
+            s_stopWatch.Stop();
+            s_timeSpan = s_stopWatch.Elapsed;
+            Console.WriteLine("Downloaded in " + savePath + @"\" + fileUrl2);
+            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds ");
+        }
+
+        // Check if a directory has protected access.
+        private static bool CheckDirectoryAccess(string directory)
+        {
+            var d = new DirectoryInfo(directory).GetAccessControl();
+            if (d.AreAccessRulesProtected)
+            {
+                Console.WriteLine($"Access to the path: {directory} is denied!");
+                return false;
+            }
+            return true;
+        }
     }
-
 }
