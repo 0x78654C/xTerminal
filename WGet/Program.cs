@@ -3,10 +3,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using System.Text.RegularExpressions;
-
+using CheckType = Core.FileSystem.CheckType;
 namespace WGet
 {
     class Program
@@ -38,7 +36,7 @@ namespace WGet
                 }
                 else
                 {
-                    DownloadFile(s_urlFirst);
+                  DownloadFile(s_urlFirst);
                 }
             }
             catch (Exception e)
@@ -50,7 +48,7 @@ namespace WGet
         // Download file in current directory
         private static void DownloadFile(string urlData)
         {
-            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
+            string dlocation = File.ReadAllText(FileSystem.currentLocation);
             int parse;
             string[] parseUrl;
             string fileUrl;
@@ -79,7 +77,7 @@ namespace WGet
                 return;
             }
             
-            if (!CheckDirectoryAccess(savePath))
+            if (!FileSystem.CheckPermission(savePath,CheckType.Directory))
             {
                 return;
             }
@@ -96,18 +94,6 @@ namespace WGet
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + savePath + @"\" + fileUrl2);
             Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds ");
-        }
-
-        // Check if a directory has protected access.
-        private static bool CheckDirectoryAccess(string directory)
-        {
-            var d = new DirectoryInfo(directory).GetAccessControl();
-            if (d.AreAccessRulesProtected)
-            {
-                Console.WriteLine($"Access to the path: {directory} is denied!");
-                return false;
-            }
-            return true;
         }
     }
 }
