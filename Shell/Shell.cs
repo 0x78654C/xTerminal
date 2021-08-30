@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -182,11 +183,9 @@ namespace Shell
             do
             {
 
-
                 //reading current location
                 dlocation = File.ReadAllText(GlobalVariables.currentLocation);
-
-                Console.Write(AccountName + "@" + ComputerName + $" ({dlocation})" + " $ ");
+                SetConsoleUserConnected(dlocation);
 
                 //reading user imput
                 input = Console.ReadLine();
@@ -539,7 +538,24 @@ This is the full list of commands that can be used in xTerminal:
         }
         //------------------------
 
+        // We set the name of the current user logged in and machine on console.
+        private static void SetConsoleUserConnected(string currentLocation)
+        {
+            if (currentLocation.Contains(GlobalVariables.rootPath) && currentLocation.Length == 3)
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{AccountName }@{ComputerName}");
+                FileSystem.ColorConsoleText(ConsoleColor.White, ":");
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
+                FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+            }
+            else
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{AccountName }@{ComputerName}");
+                FileSystem.ColorConsoleText(ConsoleColor.White, ":");
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{dlocation}~");
+                FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+            }
+        }
     }
-
 }
 
