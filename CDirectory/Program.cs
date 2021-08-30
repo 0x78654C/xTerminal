@@ -22,20 +22,16 @@ namespace CDirectory
                 string pathCombine = null;
                 if (nLocation != "")
                 {
-
                     if (nLocation.Length == 3 && nLocation.EndsWith(@":\")) //check root path
                     {
-
                         if (Directory.Exists(nLocation))
                         {
                             File.WriteAllText(GlobalVariables.currentLocation, nLocation);
-
                         }
                         else
                         {
                             Console.WriteLine($"Directory '{nLocation}'\\ dose not exist!");
                         }
-
                     }
                     else
                     {
@@ -45,30 +41,25 @@ namespace CDirectory
                         }
                         else
                         {
-
                             pathCombine = Path.Combine(sLocation, nLocation); // combine locations
                             if (Directory.Exists(pathCombine))
                             {
                                 File.WriteAllText(GlobalVariables.currentLocation, pathCombine);
-
                             }
                             else
                             {
                                 Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
                             }
                         }
-
                     }
+                    return;
                 }
-                else
-                {
-                    File.WriteAllText(GlobalVariables.currentLocation, llocation); //reset to current terminal locaton
-                }
+
+                File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath); //reset to current terminal locaton
             }
             catch
             {
-                File.WriteAllText(GlobalVariables.currentLocation, llocation); //reset to current terminal locaton
-
+                File.WriteAllText(GlobalVariables.currentLocation,GlobalVariables.rootPath); //reset to current terminal locaton
             }
         }
     }
