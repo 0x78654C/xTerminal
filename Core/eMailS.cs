@@ -1,87 +1,96 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Mail;
 using System.Text;
 
 namespace Core
 {
-    //Library for sending emails (gmail, yahoo, microsoft all)
+    //Class for sending emails (gmail, yahoo, microsoft all)
 
     public class eMailS
     {
         /// <summary>
         /// MailSend function. Works only with gmail, microsoft(all), and yahoo!
         /// </summary>
-        /// <param name="mailFrom"></param>
-        /// <param name="pass"></param>
-        /// <param name="mailTo"></param>
-        /// <param name="titile"></param>
-        /// <param name="body"></param>
-        public static void MailSend(string mailFrom,string fromName, string pass, string mailTo, string titile, string body)
+        /// <param name="senderEmail">Senders email address.</param>
+        /// <param name="senderName">Senders name.</param>
+        /// <param name="senderPassword">Senders password.</param>
+        /// <param name="receiverEmail">Receivers email address.</param>
+        /// <param name="emailSubject">Mail Subject.</param>
+        /// <param name="emailBody">Mail Body.</param>
+        public static void MailSend(string senderEmail, string senderName, string senderPassword, string receiverEmail, string emailSubject, string emailBody)
         {
             try
             {
                 string _date = DateTime.Now.ToString("yyyy MM dd HH:MM:ss");
                 if (NetWork.inetCK())
                 {
-
-
-                    string _smtp = "";
                     int port = 587;
-                    if (mailFrom.Contains("@gmail."))
+                    string _smtp = SmtpCheck(senderEmail);
+                    if(_smtp== "No valid SMTP Server")
                     {
-                        _smtp = "smtp.gmail.com";               
+                        Console.WriteLine($"[{_date}] No valid SMTP Server. Accepted email clients are: Microsoft(live, hotmail, outlook), Yahoo and Gmail!");
+                        return;
                     }
-                    if (mailFrom.Contains("@yahoo."))
-                    {
-                        _smtp = "smtp.mail.yahoo.com";
-
-                    }
-                    if (mailFrom.Contains("@live.") || mailFrom.Contains("@hotmail.") || mailFrom.Contains("@outlook."))
-                    {
-                        _smtp = "smtp.live.com";
-
-                    }
-
-                    //---------------------------
-                    System.Net.Mail.MailMessage msg = new System.Net.Mail.MailMessage(); //create the message
-                    msg.To.Add(mailTo);
-                    msg.From = new MailAddress(mailFrom, fromName,Encoding.UTF8);//can be modified with name
-                    msg.Subject = titile;//MachineName.ToString();
-                    msg.SubjectEncoding = System.Text.Encoding.UTF8;
-                    msg.Body = body;
-                    msg.BodyEncoding = System.Text.Encoding.UTF8;
+                 
+                    MailMessage msg = new MailMessage(); //create the message
+                    msg.To.Add(receiverEmail);
+                    msg.From = new MailAddress(senderEmail, senderName, Encoding.UTF8);
+                    msg.Subject = emailSubject;
+                    msg.SubjectEncoding = Encoding.UTF8;
+                    msg.Body = emailBody;
+                    msg.BodyEncoding = Encoding.UTF8;
                     msg.IsBodyHtml = false;
                     msg.Priority = MailPriority.Normal;
                     SmtpClient client = new SmtpClient();
-                    client.Credentials = new System.Net.NetworkCredential(mailFrom, pass);
+                    client.Credentials = new System.Net.NetworkCredential(senderEmail, senderPassword);
                     client.Port = port;
-
                     client.Host = _smtp;
                     client.EnableSsl = true;
 
                     try
                     {
                         client.Send(msg);
-                        Console.WriteLine("[" + _date + "]" + "Email sent to " + mailTo);
-
+                        Console.WriteLine($"[{_date}] Email sent to " + receiverEmail);
                     }
                     catch (Exception e)
                     {
-
                         Console.WriteLine("Error: " + e.ToString());
-
                     }
                 }
                 else
                 {
-                    Console.WriteLine("[" + _date + "]" + "No internet connection!");
+                    Console.WriteLine($"[{_date}] No internet connection!");
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Console.WriteLine("Error: " + e.ToString());
             }
+        }
 
+        // We check for proper email client. 
+        // Accepted are Microsoft, Yahoo, Gmail.
+        private static string SmtpCheck(string senderEmail)
+        {
+            string smtpServer;
+
+            if (senderEmail.Contains("@gmail."))
+            {
+                smtpServer = "smtp.gmail.com";
+            }
+            else if (senderEmail.Contains("@yahoo."))
+            {
+                smtpServer = "smtp.mail.yahoo.com";
+            }
+            else if (senderEmail.Contains("@live.") || senderEmail.Contains("@hotmail.") || senderEmail.Contains("@outlook."))
+            {
+                smtpServer = "smtp.live.com";
+            }
+            else
+            {
+                smtpServer = "No valid SMTP Server";
+            }
+            return smtpServer;
         }
     }
 }
