@@ -32,9 +32,7 @@ namespace xEditor
                         process.StartInfo = new ProcessStartInfo(cEditor)
                         {
                             UseShellExecute = false,
-                            Arguments = 
-                            
-                            + @"\" + file
+                            Arguments = dlocation + @"\" + file
 
                         };
 
