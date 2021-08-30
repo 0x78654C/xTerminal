@@ -41,17 +41,28 @@ namespace Core
         }
 
         /// <summary>
-        /// Change color of a specific line
+        /// Change color of a specific line in console.
         /// </summary>
         /// <param name="color"></param>
         /// <param name="text"></param>
-        public static void ColorConsoleLine(ConsoleColor color, string text)
+        public static void ColorConsoleTextLine(ConsoleColor color, string text)
         {
             Console.ForegroundColor = color;
             Console.WriteLine(text);
             Console.ForegroundColor = ConsoleColor.Gray;
         }
 
+        /// <summary>
+        /// Change color of a specific text in console.
+        /// </summary>
+        /// <param name="color"></param>
+        /// <param name="text"></param>
+        public static void ColorConsoleText(ConsoleColor color, string text)
+        {
+            Console.ForegroundColor = color;
+            Console.Write(text);
+            Console.ForegroundColor = ConsoleColor.Gray;
+        }
 
         /// <summary>
         /// Check write permission to a directory or file.
