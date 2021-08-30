@@ -1,26 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Text;
+﻿using System.Net.NetworkInformation;
 
 namespace Core
 {
+    /*Network class for check Ping and Internet connection.*/
     public class NetWork
     {
+
         /// <summary>
         /// Verifies if IP is up or not
         /// </summary>
-        /// <param name="ip"></param>
+        /// <param name="ipAddress"></param>
         /// <returns>verifies if IP is up or not</returns>
 
-        public static bool pingH(string ip)
+        public static bool PingHost(string ipAddress)
         {
             bool pingable = false;
             Ping pinger = null;
             try
             {
                 pinger = new Ping();
-                PingReply reply = pinger.Send(ip);
+                PingReply reply = pinger.Send(ipAddress);
                 pingable = reply.Status == IPStatus.Success;
 
             }
@@ -43,16 +42,9 @@ namespace Core
         /// Checking internet connection with Google DNS 8.8.8.8
         /// </summary>
         /// <returns></returns>
-        public static bool inetCK()
+        public static bool IntertCheck()
         {
-            if (pingH("8.8.8.8") == false)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return PingHost("8.8.8.8");
         }
     }
 }
