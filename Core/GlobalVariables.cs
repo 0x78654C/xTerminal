@@ -7,8 +7,9 @@ namespace Core
     /// </summary>
     public class GlobalVariables
     {
-        public static string currentLocation = @".\Data\curDir.ini";                              // Current Location file path
-        public static string editorPath = @".\Data\cEditor.ini";                                  // Current editor file path
+        public static string currentLocation = Environment.CurrentDirectory + @"\Data\curDir.ini";                              // Current Location file path
+        public static string editorPath = Environment.CurrentDirectory + @"\Data\cEditor.ini";                                  // Current editor file path
         public static string rootPath= "C:\\";  // Get current users profile folder path.
+        public static string terminalTitle= "xTerminal v1.0";  // Terminal title
     }
 }
