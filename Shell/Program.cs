@@ -17,7 +17,7 @@ namespace Shell
             //-------------------------------
 
             File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath);
-            Console.Title = "xTerminal v1.0";//setting up the new title
+            Console.Title = GlobalVariables.terminalTitle;//setting up the new title
             var shell = new Shell();
             shell.Run();//Running the shell
 
