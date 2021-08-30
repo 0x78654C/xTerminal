@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Core;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace StringView
 {
@@ -14,8 +10,8 @@ namespace StringView
         static void Main(string[] args)
         {
 
-            string cDir = File.ReadAllText(FileSystem.CurrentLocation);
-         
+            string cDir = File.ReadAllText(GlobalVariables.currentLocation);
+
             try
             {
                 string input = args[0];
@@ -45,10 +41,10 @@ namespace StringView
                     }
                 }
             }
-            catch 
+            catch
             {
                 Console.WriteLine("You must type the file name!");
             }
-        }      
+        }
     }
 }

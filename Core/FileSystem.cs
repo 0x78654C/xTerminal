@@ -6,9 +6,7 @@ namespace Core
 {
     public class FileSystem
     {
-        public static string currentLocation = @".\Data\curDir.ini"; //Current Location file path
-        public static string editorPath = @".\Data\cEditor.ini"; //Current editor file path
-        private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };
+        private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };  // Array with types of store data
 
 
         /// <summary>

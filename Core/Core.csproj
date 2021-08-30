@@ -46,6 +46,7 @@
     <Compile Include="Crc32.cs" />
     <Compile Include="eMailS.cs" />
     <Compile Include="FileSystem.cs" />
+    <Compile Include="GlobalVariables.cs" />
     <Compile Include="InterceptKeys.cs" />
     <Compile Include="NetWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

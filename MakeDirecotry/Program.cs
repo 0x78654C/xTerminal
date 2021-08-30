@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Core;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace MakeDirecotry
 {
@@ -15,9 +11,9 @@ namespace MakeDirecotry
         {
             try
             {
-               
-                string input =args[0];              // geting  input        
-                string newlocation = File.ReadAllText(FileSystem.CurrentLocation); //get the new location
+
+                string input = args[0];              // geting  input        
+                string newlocation = File.ReadAllText(GlobalVariables.currentLocation); //get the new location
                 string locinput = newlocation + @"\" + input; //new location+input
                 if (input.Contains(":") && input.Contains(@"\"))
                 {
@@ -44,7 +40,8 @@ namespace MakeDirecotry
                         Console.WriteLine("Something went wrong. Check path maybe!");
                     }
                 }
-            }catch
+            }
+            catch
             {
                 Console.WriteLine("You must type the directory name!");
             }

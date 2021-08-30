@@ -24,13 +24,13 @@ namespace SpeedTest.Tests
                 Assert.True(settings.Servers[i - 1].Distance.CompareTo(settings.Servers[i].Distance) <= 0);
             }
         }
-        
+
         [Fact]
         public void Should_return_settings_with_filtered_server_list_by_ignored_ids()
         {
             var settings = _speedTestClientClient.GetSettings();
 
-            var ignoredIds = settings.ServerConfig.IgnoreIds.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries);
+            var ignoredIds = settings.ServerConfig.IgnoreIds.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
 
             var servers = settings.Servers.Where(s => ignoredIds.Contains(s.Id.ToString(CultureInfo.InvariantCulture)));
             Assert.Empty(servers);

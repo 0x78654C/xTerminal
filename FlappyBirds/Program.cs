@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
 using System.IO;
+using System.Threading;
 
 namespace FlappyBirds
 {
@@ -269,7 +265,7 @@ namespace FlappyBirds
                     Console.ForegroundColor = ConsoleColor.Gray;
                     keypress = Console.ReadKey(true);
                     if (keypress.Key == ConsoleKey.D1)
-                    Console.WriteLine();
+                        Console.WriteLine();
                     Console.WriteLine();
                     Console.WriteLine();
                     Environment.Exit(0);

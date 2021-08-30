@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Core;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace FRename
 {
@@ -17,7 +13,7 @@ namespace FRename
             {
 
                 //reading current location(for test no, after i make dynamic)
-                string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
+                string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
                 string cLocation = Directory.GetCurrentDirectory();
                 //we grab the file names for source and destination
                 string FileName = args[0];
@@ -49,7 +45,7 @@ namespace FRename
                     }
                 }
             }
-            catch 
+            catch
             {
                 Console.WriteLine("You must type the file name!");
             }

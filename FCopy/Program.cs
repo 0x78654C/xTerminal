@@ -1,16 +1,10 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-
-using System.Threading.Tasks;
-using Core;
 
 namespace FCopy
 {
@@ -21,7 +15,7 @@ namespace FCopy
         {
             Console.WriteLine(" ");
 
-            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
+            string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
             string crcSource = null;
             string crcDestination = null;
             string Source = null;
@@ -41,7 +35,7 @@ namespace FCopy
             try
             {
                 files = Directory.GetFiles(dlocation);
-  
+
                 Source = args[0];
                 cmdType = Source;
                 try
@@ -113,8 +107,8 @@ namespace FCopy
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source));
-                                            sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source,false));
+                                            sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                                         }
                                     }
                                     else
@@ -210,8 +204,8 @@ namespace FCopy
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination +" | Size: "+ FileSystem.GetFileSize(Destination));
-                                        sizeDestinationFiles += FileSystem.GetFixedFileSize(Destination);
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination,false));
+                                        sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
                                     }
                                 }
                                 //--------------------------------
@@ -273,8 +267,8 @@ namespace FCopy
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source));
-                                            sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source,false));
+                                            sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                                         }
                                     }
                                     else
@@ -373,8 +367,8 @@ namespace FCopy
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination));
-                                        sizeDestinationFiles += FileSystem.GetFixedFileSize(Destination);
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination,false));
+                                        sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
                                     }
                                 }
                                 //--------------------------------
@@ -409,8 +403,8 @@ namespace FCopy
                             {
                                 var hash = crc32.ComputeHash(stream);
                                 crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource+" | Size: "+FileSystem.GetFileSize(Source));
-                                sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
+                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source,false));
+                                sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source,true));
                             }
                         }
                         else
@@ -461,7 +455,7 @@ namespace FCopy
                     if (crcSource == crcDestination)
                     {
                         FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
-                        Console.WriteLine(FileSystem.GetFileSize(Destination));
+                        Console.WriteLine(FileSystem.GetFileSize(Destination,false));
                     }
                     else
                     {
@@ -492,13 +486,13 @@ namespace FCopy
                 dfiles = Directory.GetFiles(NewPath);
                 countFilesD = dfiles.Count();
 
-                double sizeSourceRound = Math.Round(sizeSourceFiles, 2); 
-                double sizeDestinationRound = Math.Round(sizeDestinationFiles, 2); 
+                double sizeSourceRound = Math.Round(sizeSourceFiles, 2);
+                double sizeDestinationRound = Math.Round(sizeDestinationFiles, 2);
 
                 if (!string.IsNullOrWhiteSpace(ErrorCopy))
                 {
                     FileSystem.ColorConsoleLine(ConsoleColor.Red, "List of files not copied/moved. CRC missmatch:\n\r" + ErrorCopy + Environment.NewLine);
-                    Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() +" | Total Size: "+ sizeSourceRound +" MB");
+                    Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() + " | Total Size: " + sizeSourceRound + " MB");
                     Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
                 }
                 else

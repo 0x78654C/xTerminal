@@ -48,7 +48,7 @@ namespace WGet
         // Download file in current directory
         private static void DownloadFile(string urlData)
         {
-            string dlocation = File.ReadAllText(FileSystem.currentLocation);
+            string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
             int parse;
             string[] parseUrl;
             string fileUrl;

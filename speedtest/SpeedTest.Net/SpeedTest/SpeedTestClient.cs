@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpeedTest.Models;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -7,7 +8,6 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using SpeedTest.Models;
 
 namespace SpeedTest
 {
@@ -86,7 +86,7 @@ namespace SpeedTest
                 }
                 finally
                 {
-                    timer.Stop();    
+                    timer.Stop();
                 }
 
                 if (!testString.StartsWith("test=test"))
@@ -109,7 +109,7 @@ namespace SpeedTest
                 return data.Length;
             }, simultaneousDownloads);
         }
-        
+
         /// <inheritdoc />
         public double TestUploadSpeed(Server server, int simultaneousUploads = 2, int retryCount = 2)
         {
@@ -159,9 +159,9 @@ namespace SpeedTest
             var random = new Random();
             var result = new List<string>();
 
-            for (var sizeCounter = 1; sizeCounter < MaxUploadSize+1; sizeCounter++)
+            for (var sizeCounter = 1; sizeCounter < MaxUploadSize + 1; sizeCounter++)
             {
-                var size = sizeCounter*200*1024;
+                var size = sizeCounter * 200 * 1024;
                 var builder = new StringBuilder(size);
 
                 builder.AppendFormat("content{0}=", sizeCounter);

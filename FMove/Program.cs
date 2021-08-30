@@ -1,14 +1,10 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Core;
 
 namespace FMove
 {
@@ -16,9 +12,9 @@ namespace FMove
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(" ");                                       
+            Console.WriteLine(" ");
 
-            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
+            string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
             string crcSource = null;
             string crcDestination = null;
             string Source = null;
@@ -111,8 +107,8 @@ namespace FMove
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source));
-                                            sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source,false));
+                                            sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                                         }
                                     }
                                     else
@@ -208,8 +204,8 @@ namespace FMove
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination));
-                                        sizeDestinationFiles += FileSystem.GetFixedFileSize(Destination);
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination,false));
+                                        sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
                                     }
                                 }
                                 //--------------------------------
@@ -271,8 +267,8 @@ namespace FMove
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source));
-                                            sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source,false));
+                                            sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                                         }
                                     }
                                     else
@@ -371,8 +367,8 @@ namespace FMove
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination));
-                                        sizeDestinationFiles += FileSystem.GetFixedFileSize(Destination);
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination,false));
+                                        sizeDestinationFiles += Double.Parse( FileSystem.GetFileSize(Destination,true));
                                     }
                                 }
                                 //--------------------------------
@@ -408,8 +404,8 @@ namespace FMove
                             {
                                 var hash = crc32.ComputeHash(stream);
                                 crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source));
-                                sizeSourceFiles += FileSystem.GetFixedFileSize(Source);
+                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source,false));
+                                sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                             }
                         }
                         else
@@ -453,8 +449,8 @@ namespace FMove
                         {
                             var hash = crc32.ComputeHash(stream);
                             crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                            Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination));
-                            sizeDestinationFiles += FileSystem.GetFixedFileSize(Destination);
+                            Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination,false));
+                            sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
                         }
                     }
 

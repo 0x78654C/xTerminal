@@ -1,12 +1,12 @@
-﻿using System;
+﻿using SpeedTest.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using SpeedTest.Models;
 
 namespace SpeedTest.Client
 {
     class Program
-    { 
+    {
         //checking internet speed for download, upload, latency via speedtest.net
         private static SpeedTestClient client;
         private static Settings settings;

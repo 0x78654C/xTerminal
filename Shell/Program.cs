@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using Core;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace Shell
 {
-    
+
     class Program
     {
         static void Main(string[] args)
@@ -21,8 +16,8 @@ namespace Shell
             }
             //-------------------------------
 
-            File.WriteAllText(FileSystem.CurrentLocation, Directory.GetCurrentDirectory());
-            Console.Title="xTerminal v1.0";//setting up the new title
+            File.WriteAllText(GlobalVariables.currentLocation, Directory.GetCurrentDirectory());
+            Console.Title = "xTerminal v1.0";//setting up the new title
             var shell = new Shell();
             shell.Run();//Running the shell
 

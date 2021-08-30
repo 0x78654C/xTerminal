@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Core;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace NKFile
 {
@@ -12,14 +8,14 @@ namespace NKFile
     {
         static void Main(string[] args)
         {
-            string CLocation = File.ReadAllText(FileSystem.CurrentLocation);
+            string CLocation = File.ReadAllText(GlobalVariables.currentLocation);
             string file;
             try
             {
                 file = args[0];
                 if (Directory.Exists(CLocation))
                 {
-                    File.Create(CLocation+@"\"+ file);
+                    File.Create(CLocation + @"\" + file);
                 }
                 else
                 {

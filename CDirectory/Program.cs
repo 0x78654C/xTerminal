@@ -1,11 +1,7 @@
 ﻿
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Core;
+using System;
+using System.IO;
 
 namespace CDirectory
 {
@@ -21,7 +17,7 @@ namespace CDirectory
             try
             {
                 nLocation = args[0];              // geting location input             
-                sLocation = File.ReadAllText(FileSystem.CurrentLocation);// read location from ini
+                sLocation = File.ReadAllText(GlobalVariables.currentLocation);// read location from ini
 
                 string pathCombine = null;
                 if (nLocation != "")
@@ -32,7 +28,7 @@ namespace CDirectory
 
                         if (Directory.Exists(nLocation))
                         {
-                            File.WriteAllText(FileSystem.CurrentLocation, nLocation);
+                            File.WriteAllText(GlobalVariables.currentLocation, nLocation);
 
                         }
                         else
@@ -53,7 +49,7 @@ namespace CDirectory
                             pathCombine = Path.Combine(sLocation, nLocation); // combine locations
                             if (Directory.Exists(pathCombine))
                             {
-                                File.WriteAllText(FileSystem.CurrentLocation, pathCombine);
+                                File.WriteAllText(GlobalVariables.currentLocation, pathCombine);
 
                             }
                             else
@@ -66,13 +62,13 @@ namespace CDirectory
                 }
                 else
                 {
-                    File.WriteAllText(FileSystem.CurrentLocation, llocation); //reset to current terminal locaton
+                    File.WriteAllText(GlobalVariables.currentLocation, llocation); //reset to current terminal locaton
                 }
             }
             catch
             {
-                File.WriteAllText(FileSystem.CurrentLocation, llocation); //reset to current terminal locaton
-                
+                File.WriteAllText(GlobalVariables.currentLocation, llocation); //reset to current terminal locaton
+
             }
         }
     }

@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="5.0.1" />
   </ItemGroup>
 
   <ItemGroup>

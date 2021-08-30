@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace eMail
 {
@@ -23,7 +20,7 @@ namespace eMail
         /// <returns></returns>
         private static string GetHiddenConsoleInput()
         {
-                        StringBuilder input = new StringBuilder();
+            StringBuilder input = new StringBuilder();
             while (true)
             {
                 var key = Console.ReadKey(true);
@@ -61,8 +58,9 @@ namespace eMail
             //sending the mail
             try
             {
-                Core.eMailS.MailSend(mailFrom,mailName, mailPass, mailTo, mailTitle, mailBody);
-            }catch(Exception e)
+                Core.eMailS.MailSend(mailFrom, mailName, mailPass, mailTo, mailTitle, mailBody);
+            }
+            catch (Exception e)
             {
                 Console.WriteLine("Error: " + e.ToString());
             }

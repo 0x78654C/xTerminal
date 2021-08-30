@@ -1,18 +1,12 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
 using System.Windows.Forms;
-using Core;
 
 namespace Shell
 {
@@ -30,14 +24,14 @@ namespace Shell
         static string count = null;
         static string[] hLines = null;
         static string hContent = null;
-       static  string[] pLines = null;
+        static string[] pLines = null;
         static string cID = null;
         static int iID = 0;
         static string[] cContent = null;
         static string[] clines = null;
         static string oID = null;
         static int ioID = 0;
-       static int uPcount = 0;
+        static int uPcount = 0;
 
         //-------------------------------
         //Define the shell commands 
@@ -71,11 +65,11 @@ namespace Shell
         //-----------------------
 
 
-       
-       //Userd for key event check listing files and directories to be suggested for autocomplete
+
+        //Userd for key event check listing files and directories to be suggested for autocomplete
         private static void KeyDown(KeyEventArgs e)
         {
-            
+
             //check if keycode is PageUp key presed and use for execution command
             if (e.KeyCode == Keys.PageUp)
             {
@@ -96,8 +90,8 @@ namespace Shell
                         string outCommand = parseCommands[1];
 
                         //output the final parsed line
-                      
-                        Console.Write("\n{0}",outCommand);
+
+                        Console.Write("\n{0}", outCommand);
 
                         //decrement the ioID by 1
                         ioID--;
@@ -137,14 +131,14 @@ namespace Shell
                         ioID = uPcount;
 
                     }
-             
+
                 }
             }
 
             e.Handled = true;
-            
+
         }
-       
+
         /// <summary>
         /// On press key intercept
         /// </summary>
@@ -155,17 +149,17 @@ namespace Shell
             InterceptKeys.SetupHook(KeyDown);
             InterceptKeys.ReleaseHook();
         }
-       
+
 
         //Entry point of shell
 
         public void Run()
         {
-           
+
             woker = new BackgroundWorker();
             woker.DoWork += Woker_DoWork;
             woker.RunWorkerAsync();
-          
+
 
 
             //creating history file if not exist
@@ -190,7 +184,7 @@ namespace Shell
 
 
                 //reading current location
-                dlocation = File.ReadAllText(FileSystem.CurrentLocation);
+                dlocation = File.ReadAllText(GlobalVariables.currentLocation);
 
                 Console.Write(AccountName + "@" + ComputerName + $" ({dlocation})" + " $ ");
 
@@ -417,7 +411,7 @@ This is the full list of commands that can be used in xTerminal:
                         }
                         else
                         {
-                            Console.WriteLine("File '"+_historyFile+"' dose not exist!");
+                            Console.WriteLine("File '" + _historyFile + "' dose not exist!");
                         }
                     }
                     //editor set
@@ -544,7 +538,7 @@ This is the full list of commands that can be used in xTerminal:
             return 1;
         }
         //------------------------
-        
+
     }
 
 }

@@ -22,7 +22,7 @@ namespace Core
             try
             {
                 string _date = DateTime.Now.ToString("yyyy MM dd HH:MM:ss");
-                if (NetWork.inetCK())
+                if (NetWork.IntertCheck())
                 {
                     int port = 587;
                     string _smtp = SmtpCheck(senderEmail);

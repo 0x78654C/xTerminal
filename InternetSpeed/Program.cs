@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace InternetSpeed
 {
@@ -16,7 +12,7 @@ namespace InternetSpeed
             Console.WriteLine("*******************************************");
             Console.WriteLine(" ");
 
-            if (Core.NetWork.inetCK()) //check internet connection
+            if (Core.NetWork.IntertCheck()) //check internet connection
             {
                 // Create Object Of WebClient
                 System.Net.WebClient wc = new System.Net.WebClient();
@@ -36,7 +32,7 @@ namespace InternetSpeed
             else
             {
 
-                 Console.WriteLine("No internet connection!");             
+                Console.WriteLine("No internet connection!");
             }
         }
     }

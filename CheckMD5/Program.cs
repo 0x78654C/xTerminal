@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Core;
+using System;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace CheckMD5
 {
@@ -15,12 +11,13 @@ namespace CheckMD5
 
         static void Main(string[] args)
         {
-            try { 
+            try
+            {
 
-            string cDir = File.ReadAllText(FileSystem.CurrentLocation);
-            
-            string input = args[0];
-       
+                string cDir = File.ReadAllText(GlobalVariables.currentLocation);
+
+                string input = args[0];
+
                 if (input.Contains(":") && input.Contains(@"\"))
                 {
                     if (File.Exists(input))
@@ -30,7 +27,7 @@ namespace CheckMD5
                             using (var stream = File.OpenRead(input))
                             {
                                 var hash = md5.ComputeHash(stream);
-                                Console.WriteLine("MD5 of "+input+": "+BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
+                                Console.WriteLine("MD5 of " + input + ": " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
 
                             }
                         }
@@ -60,7 +57,7 @@ namespace CheckMD5
                     }
                 }
             }
-            catch 
+            catch
             {
                 Console.WriteLine("Error: Have you typed the file name?");
             }

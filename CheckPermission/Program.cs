@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Core;
+using System;
 using System.IO;
-using System.Linq;
 using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace CheckPermission
 {
@@ -16,8 +12,8 @@ namespace CheckPermission
          */
         static void Main(string[] args)
         {
-            string CurrentLocation = File.ReadAllText(FileSystem.CurrentLocation);
-            string input="";
+            string currentLocation = File.ReadAllText(GlobalVariables.currentLocation);
+            string input = "";
             try
             {
                 string tabs = "\t";
@@ -58,15 +54,15 @@ namespace CheckPermission
                 }
                 else
                 {
-                    if (Directory.Exists(CurrentLocation+@"\"+ input))
+                    if (Directory.Exists(currentLocation + @"\" + input))
                     {
-                        DirectoryInfo dInfo = new DirectoryInfo(CurrentLocation + @"\" + input);
+                        DirectoryInfo dInfo = new DirectoryInfo(currentLocation + @"\" + input);
                         DirectorySecurity dSecurity = dInfo.GetAccessControl();
                         AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
-                        Console.WriteLine("Permissions of directory: " + CurrentLocation + @"\" + input);
+                        Console.WriteLine("Permissions of directory: " + currentLocation + @"\" + input);
                         foreach (FileSystemAccessRule ace in acl)
                         {
-                           
+
                             Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
                             Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
                             Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
@@ -76,10 +72,10 @@ namespace CheckPermission
                     }
                     else
                     {
-                        FileInfo dInfo = new FileInfo(CurrentLocation + @"\" + input);
+                        FileInfo dInfo = new FileInfo(currentLocation + @"\" + input);
                         FileSecurity dSecurity = dInfo.GetAccessControl();
                         AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
-                        Console.WriteLine("Permissions of file: " + CurrentLocation + @"\" + input);
+                        Console.WriteLine("Permissions of file: " + currentLocation + @"\" + input);
                         foreach (FileSystemAccessRule ace in acl)
                         {
                             Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
@@ -94,7 +90,7 @@ namespace CheckPermission
             catch
             {
                 Console.WriteLine("You must type the file/directory name!");
-                
+
             }
         }
     }

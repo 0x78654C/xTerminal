@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.Threading.Tasks;
+﻿using Core;
+using System;
 using System.Diagnostics;
-using Core;
+using System.IO;
 
 namespace xEditor
 {
@@ -15,15 +10,15 @@ namespace xEditor
         /*Text editor opener*/
         static void Main(string[] args)
         {
-            string file=string.Empty;
-            string set = string.Empty;
-            string dlocation = File.ReadAllText(FileSystem.CurrentLocation);
-            
-            if (!File.Exists(FileSystem.EditorPath))
+            string file = string.Empty;
+            string set;
+            string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
+
+            if (!File.Exists(GlobalVariables.editorPath))
             {
-                File.WriteAllText(FileSystem.EditorPath, "notepad");
+                File.WriteAllText(GlobalVariables.editorPath, "notepad");
             }
-            string cEditor = File.ReadAllText(FileSystem.EditorPath);
+            string cEditor = File.ReadAllText(GlobalVariables.editorPath);
             try
             {
                 file = args[0];
@@ -46,7 +41,7 @@ namespace xEditor
                     }
                     else
                     {
-                    
+
                         var process = new Process();
                         process.StartInfo = new ProcessStartInfo("notepad")
                         {
@@ -61,7 +56,7 @@ namespace xEditor
                 }
                 else
                 {
-                    File.WriteAllText(FileSystem.EditorPath, @set);
+                    File.WriteAllText(GlobalVariables.editorPath, @set);
                     Console.WriteLine("Your New editor is: " + @set);
                 }
 
@@ -103,8 +98,6 @@ namespace xEditor
                     process.WaitForExit();
                 }
             }
-
         }
     }
-  
 }
