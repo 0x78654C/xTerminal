@@ -479,9 +479,22 @@ This is the full list of commands that can be used in xTerminal:
             if (Aliases.Keys.Contains(input))
             {
                 var process = new Process();
+
+                if (input == "cmd" || input == "ps")
+                {
+                    process.StartInfo = new ProcessStartInfo(Aliases[input])
+                    {
+                        UseShellExecute = false,
+                        WorkingDirectory=dlocation
+                    };
+
+                    process.Start();
+                    process.WaitForExit();
+                    return 0;
+                }
                 process.StartInfo = new ProcessStartInfo(Aliases[input])
                 {
-                    UseShellExecute = false
+                    UseShellExecute = false,
                 };
 
                 process.Start();
@@ -554,6 +567,7 @@ This is the full list of commands that can be used in xTerminal:
                 FileSystem.ColorConsoleText(ConsoleColor.White, ":");
                 FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{dlocation}~");
                 FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+                Console.Title = $"{GlobalVariables.terminalTitle} | {dlocation}";//setting up the new title
             }
         }
     }
