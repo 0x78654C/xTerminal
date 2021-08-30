@@ -214,12 +214,12 @@ namespace FMove
                                 if (crcSource == crcDestination)
                                 {
                                     File.Delete(Source);
-                                    FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
                                 }
                                 else
                                 {
                                     File.Delete(Destination);
-                                    FileSystem.ColorConsoleLine(ConsoleColor.Red, "CRC dose not match! File was not moved." + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC dose not match! File was not moved." + Environment.NewLine);
                                     FilesErrorCopy.Add(Source);
                                 }
                             }
@@ -377,12 +377,12 @@ namespace FMove
                                 if (crcSource == crcDestination)
                                 {
                                     File.Delete(Source);
-                                    FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
                                 }
                                 else
                                 {
                                     File.Delete(Destination);
-                                    FileSystem.ColorConsoleLine(ConsoleColor.Red, "CRC dose not match! File was not moved." + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC dose not match! File was not moved." + Environment.NewLine);
                                     FilesErrorCopy.Add(Source);
                                 }
                             }
@@ -457,12 +457,12 @@ namespace FMove
                     if (crcSource == crcDestination)
                     {
                         File.Delete(Source);
-                        FileSystem.ColorConsoleLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
                     }
                     else
                     {
                         File.Delete(Destination);
-                        FileSystem.ColorConsoleLine(ConsoleColor.Red, "CRC dose not match! File was not moved." + Environment.NewLine);
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC dose not match! File was not moved." + Environment.NewLine);
                         FilesErrorCopy.Add(Source);
                     }
                 }
@@ -492,13 +492,13 @@ namespace FMove
 
                 if (!string.IsNullOrWhiteSpace(ErrorCopy))
                 {
-                    FileSystem.ColorConsoleLine(ConsoleColor.Red, "List of files not moved. CRC missmatch:\n\r" + ErrorCopy + Environment.NewLine);
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "List of files not moved. CRC missmatch:\n\r" + ErrorCopy + Environment.NewLine);
                     Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() + " | Total Size: " + sizeSourceRound + " MB");
                     Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
                 }
                 else
                 {
-                    FileSystem.ColorConsoleLine(ConsoleColor.Cyan, "\n\r----- All files are moved -----\n\r");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Cyan, "\n\r----- All files are moved -----\n\r");
                     Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() + " | Total Size: " + sizeSourceRound + " MB");
                     Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
                 }
