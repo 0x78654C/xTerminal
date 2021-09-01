@@ -13,6 +13,7 @@ This is the full list of commands that can be used in xTerminal:
     clear --  Cleares the console.
     cd -- Sets the currnet directory.
     ispeed -- Checks the internet speed with Google.
+    icheck -- Checks if a Domain or IP address is online.
     md5 -- Chceks the md5 checksum of a file.
     extip -- Displays the current external IP address.
     wget -- Download files from a specific website.
