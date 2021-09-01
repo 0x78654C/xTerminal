@@ -34,6 +34,12 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Windows\assembly\GAC_MSIL\System.Management.Automation\1.0.0.0__31bf3856ad364e35\System.Management.Automation.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Management.Instrumentation" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -47,6 +53,7 @@
     <Compile Include="eMailS.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="GlobalVariables.cs" />
+    <Compile Include="Hardware\PowerShell.cs" />
     <Compile Include="InterceptKeys.cs" />
     <Compile Include="NetWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

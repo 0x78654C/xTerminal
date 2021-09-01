@@ -56,6 +56,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A1EAD925
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreTest", "CoreTest\CoreTest.csproj", "{474E7420-971C-48B6-BD4E-2EF728553BB1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hardware", "Hardware", "{46747B61-BEEE-4997-9D3C-F00C4A456C50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BiosInfo", "BiosInfo\BiosInfo.csproj", "{43936482-8CEA-4ECC-A6EE-E205A9F3DB1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -154,12 +158,17 @@ Global
 		{474E7420-971C-48B6-BD4E-2EF728553BB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{474E7420-971C-48B6-BD4E-2EF728553BB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{474E7420-971C-48B6-BD4E-2EF728553BB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43936482-8CEA-4ECC-A6EE-E205A9F3DB1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43936482-8CEA-4ECC-A6EE-E205A9F3DB1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43936482-8CEA-4ECC-A6EE-E205A9F3DB1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43936482-8CEA-4ECC-A6EE-E205A9F3DB1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{474E7420-971C-48B6-BD4E-2EF728553BB1} = {A1EAD925-720A-47B1-8C42-45A629CDAEE0}
+		{43936482-8CEA-4ECC-A6EE-E205A9F3DB1C} = {46747B61-BEEE-4997-9D3C-F00C4A456C50}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CD324BBB-96BC-4EE3-AE43-BB27E6D7016A}
