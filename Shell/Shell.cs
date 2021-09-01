@@ -58,6 +58,7 @@ namespace Shell
             { "wget", @".\Tools\Network\WGet.exe"  },
             { "edit", @".\Tools\FileSystem\xEditor.exe"  },
             { "cp", @".\Tools\FileSystem\CheckPermission.exe"  },
+            { "bios", @".\Tools\Hardware\BiosInfo.exe"  },
             { "flappy", @".\Tools\Game\FlappyBirds.exe"  }
 
 
@@ -340,6 +341,7 @@ This is the full list of commands that can be used in xTerminal:
     reboot -- It force reboots the Windows OS.
     shutdown --  It force shutdown the Windows OS.
     logoff -- It force logoff current user.
+    bios -- Displays BIOS information on local machine or remote.
     mkdir -- It creates a directory in the curent place.
     mkfile -- It creates a file in the curent place.
     edit -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
