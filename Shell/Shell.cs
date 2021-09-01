@@ -201,25 +201,36 @@ namespace Shell
                 {
                     if (File.Exists(_historyFile))
                     {
-                        //checking ioID is grater than 0(since id 0 is dummy line and is not needed )
-                        //and lower or equal to maximum count of lines                    
-                        if (ioID > 0 && ioID <= uPcount)
+
+                        //check if are commands in list
+                        string fileRead = File.ReadAllText(_historyFile);
+                        if (fileRead.Length == 0)
                         {
-                            //returning the line determinated by the inceremented ioID
-                            string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
+                            Console.WriteLine("No commands in list!");
+                        }
+                        else
+                        {
 
-                            //parsing the line
-                            string[] parseCommands = readCommands.Split('|');
+                            //checking ioID is grater than 0(since id 0 is dummy line and is not needed )
+                            //and lower or equal to maximum count of lines
+                            if (ioID > 0 && ioID <= uPcount)
+                            {
+                                //returning the line determinated by the inceremented ioID
+                                string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
 
-                            //returning the part of line after the char '|'
-                            //from the parsed line so we don't display the id of line
-                            string outCommand = parseCommands[1];
+                                //parsing the line
+                                string[] parseCommands = readCommands.Split('|');
 
-                            //output the final parsed line
-                            Console.WriteLine(outCommand);
+                                //returning the part of line after the char '|'
+                                //from the parsed line so we don't display the id of line
+                                string outCommand = parseCommands[1];
 
-                            //decrement the ioID by 1
-                            ioID--;
+                                //output the final parsed line
+                                Console.WriteLine(outCommand);
+
+                                //decrement the ioID by 1
+                                ioID--;
+                            }
                         }
                     }
                 }
@@ -228,31 +239,41 @@ namespace Shell
                 {
                     if (File.Exists(_historyFile))
                     {
-                        //checking id ioID is lower and not equal than maximum count of lines
-                        if (uPcount > ioID && ioID != uPcount)
+                        //check if are commands in list
+                        string fileRead = File.ReadAllText(_historyFile);
+                        if (fileRead.Length == 0)
                         {
-                            //incrementing ioID by 1
-                            ioID++;
-
-                            //returning the line determinated by the inceremented ioID
-                            string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
-
-                            //parsing the line
-                            string[] parseCommands = readCommands.Split('|');
-
-                            //returning the part of line after the char '|'
-                            //from the parsed line so we don't display the id of line
-                            string outCommand = parseCommands[1];
-
-                            //output the final parsed line
-                            Console.WriteLine(outCommand);
-
+                            Console.WriteLine("No commands in list!");
                         }
                         else
                         {
-                            //restoring ioID to the maximum numbers of lines
-                            ioID = uPcount;
 
+                            //checking id ioID is lower and not equal than maximum count of lines
+                            if (uPcount > ioID && ioID != uPcount)
+                            {
+                                //incrementing ioID by 1
+                                ioID++;
+
+                                //returning the line determinated by the inceremented ioID
+                                string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
+
+                                //parsing the line
+                                string[] parseCommands = readCommands.Split('|');
+
+                                //returning the part of line after the char '|'
+                                //from the parsed line so we don't display the id of line
+                                string outCommand = parseCommands[1];
+
+                                //output the final parsed line
+                                Console.WriteLine(outCommand);
+
+                            }
+                            else
+                            {
+                                //restoring ioID to the maximum numbers of lines
+                                ioID = uPcount;
+
+                            }
                         }
                     }
                 }
