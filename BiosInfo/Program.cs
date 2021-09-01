@@ -24,7 +24,7 @@ namespace BiosInfo
             }
             catch(Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Type bios -h for help.");
             }
         }
 
