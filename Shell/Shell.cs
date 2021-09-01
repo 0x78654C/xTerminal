@@ -42,6 +42,7 @@ namespace Shell
             { "clear", @".\Tools\Internal\Clear.exe" },
             { "extip", @".\Tools\Network\Externalip.exe" },
             { "ispeed", @".\Tools\Network\InternetSpeed.exe" },
+            { "icheck", @".\Tools\Network\CheckDomain.exe" },
             { "md5", @".\Tools\FileSystem\CheckMD5.exe"  },
             { "fcopy", @".\Tools\FileSystem\FCopy.exe"  },
             { "fmove", @".\Tools\FileSystem\FMove.exe"  },
@@ -328,6 +329,7 @@ This is the full list of commands that can be used in xTerminal:
     clear --  Cleares the console.
     cd -- Sets the currnet directory.
     ispeed -- Checks the internet speed with Google.
+    icheck -- Checks if a Domain or IP address is online.
     md5 -- Chceks the MD5 checksum of a file.
     extip -- Displays the current external IP address.
     wget -- Download files from a specific website.
@@ -487,7 +489,7 @@ This is the full list of commands that can be used in xTerminal:
                     process.StartInfo = new ProcessStartInfo(Aliases[input])
                     {
                         UseShellExecute = false,
-                        WorkingDirectory=dlocation
+                        WorkingDirectory = dlocation
                     };
 
                     process.Start();
