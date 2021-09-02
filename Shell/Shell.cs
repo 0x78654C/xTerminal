@@ -60,6 +60,7 @@ namespace Shell
             { "edit", @".\Tools\FileSystem\xEditor.exe"  },
             { "cp", @".\Tools\FileSystem\CheckPermission.exe"  },
             { "bios", @".\Tools\Hardware\BiosInfo.exe"  },
+            { "sinfo", @".\Tools\Hardware\sdc.exe"  },
             { "flappy", @".\Tools\Game\FlappyBirds.exe"  }
 
 
