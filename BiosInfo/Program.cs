@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management;
 using System.Text;
 using System.Threading.Tasks;
 using bios = Core.Hardware.PowerShell;
 using ping = Core.NetWork;
+using wmi = Core.Hardware.WMIDetails;
 
 namespace BiosInfo
 {
@@ -22,9 +24,9 @@ namespace BiosInfo
                 string input = args[0];
                 BiosInformation(input);
             }
-            catch(Exception e)
+            catch
             {
-                Console.WriteLine("Type bios -h for help.");
+                BiosInformation("");
             }
         }
 
@@ -34,19 +36,11 @@ namespace BiosInfo
         /// <param name="commandType"></param>
         private static void BiosInformation(string commandType)
         {
-            string biosInfo = "get-wmiobject -class win32_bios";
-            string sytemBiosInfo = "get-wmiobject -class win32_systembios";
             string pc;
 
             switch (commandType)
             {
-                case "-s":
-                    Console.WriteLine(bios.RunPowerShellScript(biosInfo));
-                    break;
-                case "-l":
-                    Console.WriteLine(bios.RunPowerShellScript(sytemBiosInfo));
-                    break;
-                case "-rs":
+                case "-r":
                     Console.Write("Type remote PC name or IP: ");
                     pc = Console.ReadLine();
                     if (!ping.PingHost(pc))
@@ -54,25 +48,13 @@ namespace BiosInfo
                         Console.WriteLine($"{pc} is offline!");
                         return;
                     }
-                    string biosInfoRemote = $"get-wmiobject -class win32_bios -computername {pc}";
-                    Console.WriteLine(bios.RunPowerShellScript(biosInfoRemote));
-                    break;
-                case "-ls":
-                    Console.Write("Type remote PC name or IP: ");
-                    pc = Console.ReadLine();
-                    if (!ping.PingHost(pc))
-                    {
-                        Console.WriteLine($"{pc} is offline!");
-                        return;
-                    }
-                    string biosSytemInfoRemote = $"get-wmiobject -class win32_systembios -computername {pc}";
-                    Console.WriteLine(bios.RunPowerShellScript(biosSytemInfoRemote));
+                    Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\"+pc+@"\root\cimv2"));
                     break;
                 case "-h":
                     Console.WriteLine(HelpCommand());
                     break;
                 default:
-                    Console.WriteLine("Wrong command. Type bios -h for help.");
+                    Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2"));
                     break;
             }
         }
@@ -81,11 +63,9 @@ namespace BiosInfo
         private static string HelpCommand()
         {
             string help = @"Bios info grabber commands list:
-  -s  : Displays BIOS information.
-  -l  : Displays BIOS configuration.
-  -rs : Displays BIOS information on a remote pc.
-  -rl : Displays BIOS configration on a remote pc.
-  -h  : Displays this message.";
+  bios      : Displays BIOS information.
+  bios -r   : Displays BIOS information on a remote pc.
+  bios -h   : Displays this message.";
             return help;
         }
     }
