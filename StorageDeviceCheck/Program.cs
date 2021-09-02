@@ -31,7 +31,11 @@ namespace StorageDeviceCheck
                         Console.WriteLine($"{pc} is offline!");
                         return;
                     }
-                    Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", @"\\"+pc+@"\root\cimv2"));
+                    Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", @"\\" + pc + @"\root\cimv2"));
+                }
+                else if (args[0] == "-h") 
+                {
+                    Console.WriteLine(HelpCommand());
                 }
             }
             catch
@@ -39,7 +43,14 @@ namespace StorageDeviceCheck
                 Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", @"\\.\root\cimv2"));
             }
         }
-
+        private static string HelpCommand()
+        {
+            string help = @"Storage devices info grabber commands list:
+  sinfo      : Displays Storage devices information.
+  sinfo -r   : Displays Storage devices information on a remote pc.
+  sinfo -h   : Displays this message.";
+            return help;
+        }
         /* for future use
          * 
         private static string GetStorageInfo()
