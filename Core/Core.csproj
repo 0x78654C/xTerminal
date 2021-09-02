@@ -54,6 +54,7 @@
     <Compile Include="FileSystem.cs" />
     <Compile Include="GlobalVariables.cs" />
     <Compile Include="Hardware\PowerShell.cs" />
+    <Compile Include="Hardware\WMIDetails.cs" />
     <Compile Include="InterceptKeys.cs" />
     <Compile Include="NetWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
