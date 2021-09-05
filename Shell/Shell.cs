@@ -352,13 +352,13 @@ This is the full list of commands that can be used in xTerminal:
     cd -- Sets the currnet directory.
     ispeed -- Checks the internet speed with Google.
     icheck -- Checks if a Domain or IP address is online.
-    md5 -- Chceks the MD5 checksum of a file.
+    md5 -- Checks the MD5 checksum of a file.
     extip -- Displays the current external IP address.
     wget -- Download files from a specific website.
     fcopy -- Copies a file with CRC checksum control.
-    fmove -- Moves a file with md5 checksum contorl.
+    fmove -- Moves a file with md5 checksum control.
     frename -- Renames a file in a specific directory(s).
-    cmd --  Opens Windows Command Promt.
+    cmd --  Opens Windows Command Prompt.
     ps -- Opens Windowns Powershell.
     cat -- Displays the content of a file.
     del -- Deletes a file or folder without recover.
@@ -367,8 +367,8 @@ This is the full list of commands that can be used in xTerminal:
     logoff -- It force logoff current user.
     bios -- Displays BIOS information on local machine or remote.
     sinfo -- Displays Storage devices information on local machine or remote.
-    mkdir -- It creates a directory in the curent place.
-    mkfile -- It creates a file in the curent place.
+    mkdir -- It creates a directory in the current place.
+    mkfile -- It creates a file in the current place.
     edit -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
     cp -- Check file/folder permissions.
     speedtest -- Makes an internet speed test based on speedtest.net API.
