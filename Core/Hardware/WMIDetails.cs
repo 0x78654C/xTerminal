@@ -31,7 +31,6 @@ namespace Core.Hardware
                     }
 
                     sb.AppendLine($"{item.Name}: {FormatOutputValue(wmi_HD[item.Name]) }");
-
                 }
 
                 sb.AppendLine(Environment.NewLine + string.Join("", Enumerable.Range(1, 30).Select(t => '-')) + Environment.NewLine);
@@ -45,7 +44,7 @@ namespace Core.Hardware
         /// <param name="query">WMI querry</param>
         /// <param name="scope">Scope definition</param>
         /// <param name="itemName">Output item name</param>
-        /// <returns></returns>
+        /// <returns>string</returns>
         public static string GetWMIDetails(string query, string[] itemName, string scope = null)
         {
             ManagementObjectSearcher moSearcher = scope == null ? new ManagementObjectSearcher(query) : new ManagementObjectSearcher(scope, query);
@@ -57,8 +56,16 @@ namespace Core.Hardware
                     if (wmi_HD[item] == null || string.IsNullOrWhiteSpace(wmi_HD[item].ToString()))
                     {
                         continue;
-                    }             
-                        sb.AppendLine($"{item}: {FormatOutputValue(wmi_HD[item]) }");                           
+                    }
+                    if (item.Contains("Size"))
+                    {
+                        sb.AppendLine($"{item}: {FormatOutputValue(wmi_HD[item])} bytes");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"{item}: {FormatOutputValue(wmi_HD[item]) }");
+                    }
+
                 }
 
                 sb.AppendLine(Environment.NewLine + string.Join("", Enumerable.Range(1, 30).Select(t => '-')) + Environment.NewLine);
