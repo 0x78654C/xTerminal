@@ -14,6 +14,7 @@ namespace StorageDeviceCheck
 {
     class Program
     {
+        private static string[] s_itemNames = {"Model","SerialNumber","Size","MediaType" };
         /// <summary>
         /// Check Storeage device information (HDD,USB .. etc) localy or remote.
         /// </summary>
@@ -31,7 +32,7 @@ namespace StorageDeviceCheck
                         Console.WriteLine($"{pc} is offline!");
                         return;
                     }
-                    Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", @"\\" + pc + @"\root\cimv2"));
+                    Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive",s_itemNames, @"\\" + pc + @"\root\cimv2"));
                 }
                 else if (args[0] == "-h") 
                 {
@@ -40,7 +41,7 @@ namespace StorageDeviceCheck
             }
             catch
             {
-                Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", @"\\.\root\cimv2"));
+                Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\.\root\cimv2"));
             }
         }
         private static string HelpCommand()
@@ -50,26 +51,6 @@ namespace StorageDeviceCheck
   sinfo -r   : Displays Storage devices information on a remote pc.
   sinfo -h   : Displays this message.";
             return help;
-        }
-        /* for future use
-         * 
-        private static string GetStorageInfo()
-        {
-            string infOutput=string.Empty;
-           
-            ManagementObjectSearcher moSearcher = new
-    ManagementObjectSearcher("SELECT * FROM win32_diskdrive");
-
-            foreach (ManagementObject wmi_HD in moSearcher.Get())
-            {
-                infOutput += "Model: "+wmi_HD["Model"].ToString()+Environment.NewLine;
-                infOutput += "Serial Number: " + wmi_HD["SerialNumber"].ToString() + Environment.NewLine;
-                infOutput += "Size: " + wmi_HD["Size"].ToString() + Environment.NewLine;
-                infOutput += "Media Type: " + wmi_HD["MediaType"].ToString() + Environment.NewLine;
-                infOutput += Environment.NewLine;
-            }
-            return infOutput;
-        }
-        */
+        }       
     }
 }
