@@ -39,6 +39,33 @@ namespace Core.Hardware
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Outputs WMI class details 
+        /// </summary>
+        /// <param name="query">WMI querry</param>
+        /// <param name="scope">Scope definition</param>
+        /// <param name="itemName">Output item name</param>
+        /// <returns></returns>
+        public static string GetWMIDetails(string query, string[] itemName, string scope = null)
+        {
+            ManagementObjectSearcher moSearcher = scope == null ? new ManagementObjectSearcher(query) : new ManagementObjectSearcher(scope, query);
+            StringBuilder sb = new StringBuilder();
+            foreach (ManagementObject wmi_HD in moSearcher.Get())
+            {
+                foreach (var item in itemName)
+                {
+                    if (wmi_HD[item] == null || string.IsNullOrWhiteSpace(wmi_HD[item].ToString()))
+                    {
+                        continue;
+                    }             
+                        sb.AppendLine($"{item}: {FormatOutputValue(wmi_HD[item]) }");                           
+                }
+
+                sb.AppendLine(Environment.NewLine + string.Join("", Enumerable.Range(1, 30).Select(t => '-')) + Environment.NewLine);
+            }
+            return sb.ToString();
+        }
+
         private static string FormatOutputValue(object item)
         {
             var value = item.ToString();
