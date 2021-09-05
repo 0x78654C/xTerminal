@@ -21,7 +21,7 @@ This is the full list of commands that can be used in xTerminal:
     frename -- Renames a file in a specific directory(s).
     fmove -- Moves a file with CRC checksum contorl.
     cmd --  Opens Windows Command Promt.
-    ps -- Opens Windowns Powershell.
+    ps -- Opens Windows Powershell.
     cat -- Displays the content of a file.
     del -- Deletes a file or folder without recover.
     reboot -- It force reboots the Windows OS.
