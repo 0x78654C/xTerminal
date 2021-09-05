@@ -21,7 +21,7 @@ namespace Shell
         BackgroundWorker woker;                         //Declare backgroudwoker for key input listener
 
         string input = null;
-        static string _historyFile = Directory.GetCurrentDirectory() + @"\Data\History.db";
+        static readonly string _historyFile = Directory.GetCurrentDirectory() + @"\Data\History.db";
         static string count = null;
         static string[] hLines = null;
         static string hContent = null;
@@ -62,9 +62,6 @@ namespace Shell
             { "bios", @".\Tools\Hardware\BiosInfo.exe"  },
             { "sinfo", @".\Tools\Hardware\sdc.exe"  },
             { "flappy", @".\Tools\Game\FlappyBirds.exe"  }
-
-
-
         };
         //-----------------------
 
