@@ -23,9 +23,9 @@ namespace Core
                 pingable = reply.Status == IPStatus.Success;
 
             }
-            catch (PingException)
+            catch (PingException p)
             {
-
+                FileSystem.ErrorWriteLine(p.Message);
             }
             finally
             {

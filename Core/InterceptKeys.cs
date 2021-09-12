@@ -63,7 +63,6 @@ namespace Core
 
         public static void ReleaseHook()
         {
-
             Application.Exit();
         }
     }

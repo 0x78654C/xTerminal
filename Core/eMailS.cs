@@ -54,7 +54,7 @@ namespace Core
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Error: " + e.ToString());
+                        FileSystem.ErrorWriteLine(e.Message);
                     }
                 }
                 else
@@ -64,7 +64,7 @@ namespace Core
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error: " + e.ToString());
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
 
