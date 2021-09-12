@@ -13,9 +13,7 @@ namespace CheckMD5
         {
             try
             {
-
                 string cDir = File.ReadAllText(GlobalVariables.currentLocation);
-
                 string input = args[0];
 
                 if (input.Contains(":") && input.Contains(@"\"))
@@ -28,7 +26,6 @@ namespace CheckMD5
                             {
                                 var hash = md5.ComputeHash(stream);
                                 Console.WriteLine("MD5 of " + input + ": " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
-
                             }
                         }
                     }
@@ -57,9 +54,9 @@ namespace CheckMD5
                     }
                 }
             }
-            catch
+            catch(Exception e)
             {
-                Console.WriteLine("Error: Have you typed the file name?");
+                FileSystem.ErrorWriteLine($"{e.Message} Have you typed the file name?");
             }
         }
 

@@ -87,10 +87,9 @@ namespace CheckPermission
                     }
                 }
             }
-            catch
+            catch(Exception e)
             {
-                Console.WriteLine("You must type the file/directory name!");
-
+                FileSystem.ErrorWriteLine($"{e.Message} You must type the file/directory name!");
             }
         }
     }

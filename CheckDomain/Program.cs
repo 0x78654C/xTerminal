@@ -1,4 +1,5 @@
 ﻿using System;
+using Core;
 using ping = Core.NetWork;
 
 namespace CheckDomain
@@ -23,7 +24,7 @@ namespace CheckDomain
             }
             catch
             {
-                Console.WriteLine("You must specify a domain or an IP address to check . Ex.: icheck google.com");
+                FileSystem.ErrorWriteLine("You must specify a domain or an IP address to check . Ex.: icheck google.com");
             }
         }
     }
