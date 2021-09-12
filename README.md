@@ -8,8 +8,7 @@ For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 This is the full list of commands that can be used in xTerminal:
 
     ls -- List directories and files on a directory.
-    ku -- Displays used commands (backword)
-    kd -- Displays used commands (forward)
+    hcmd -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     clear --  Cleares the console.
     cd -- Sets the currnet directory.
     ispeed -- Checks the internet speed with Google.
