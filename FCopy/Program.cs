@@ -448,14 +448,13 @@ namespace FCopy
                         {
                             var hash = crc32.ComputeHash(stream);
                             crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                            Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination);
+                            Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination +" | Size: "+ FileSystem.GetFileSize(Destination, false));
                         }
                     }
 
                     if (crcSource == crcDestination)
                     {
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "CRC match! File was copied OK!" + Environment.NewLine);
-                        Console.WriteLine(FileSystem.GetFileSize(Destination,false));
                     }
                     else
                     {
