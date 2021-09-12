@@ -103,5 +103,17 @@ namespace Core
             Directory,
             File
         }
+
+        /// <summary>
+        /// Write error output in color Red.
+        /// </summary>
+        /// <param name="text"></param>
+        public static void ErrorWriteLine(string text)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Error: {text}");
+            Console.ForegroundColor = ConsoleColor.Gray;
+        }
+
     }
 }
