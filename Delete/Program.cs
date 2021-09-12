@@ -35,9 +35,9 @@ namespace Delete
                             Console.WriteLine("File " + input + " deleted!");
                         }
                     }
-                    catch (Exception)
+                    catch
                     {
-                        Console.WriteLine("Directory/file " + input + " dose not exist!");
+                        FileSystem.ErrorWriteLine("Directory/file " + input + " dose not exist!");
                     }
                 }
                 else
@@ -58,9 +58,9 @@ namespace Delete
                             Console.WriteLine("File " + newlocation + @"\" + input + " deleted!");
                         }
                     }
-                    catch (Exception)
+                    catch
                     {
-                        Console.WriteLine("Directory/file " + newlocation + @"\" + input + " dose not exist!");
+                        FileSystem.ErrorWriteLine("Directory/file " + newlocation + @"\" + input + " dose not exist!");
                     }
                 }
             }
