@@ -7,7 +7,10 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using SystemCmd = Core.Commands.SystemCommands;
 
 namespace Shell
 {
@@ -16,23 +19,21 @@ namespace Shell
     {
         //declaring variables
         public static string dlocation = null;
-        static string AccountName = Environment.UserName;    //extract current loged username
-        static string ComputerName = Environment.MachineName; //extract machine name
-        BackgroundWorker woker;                         //Declare backgroudwoker for key input listener
-
-        string input = null;
-        static readonly string _historyFile = Directory.GetCurrentDirectory() + @"\Data\History.db";
-        static string count = null;
-        static string[] hLines = null;
-        static string hContent = null;
-        static string[] pLines = null;
-        static string cID = null;
-        static int iID = 0;
-        static string[] cContent = null;
-        static string[] clines = null;
-        static string oID = null;
-        static int ioID = 0;
-        static int uPcount = 0;
+        private static readonly string s_accountName = Environment.UserName;    //extract current loged username
+        private static readonly string s_computerName = Environment.MachineName; //extract machine name
+        private static string s_input = null;
+        private static string s_historyFile = Directory.GetCurrentDirectory() + @"\Data\History.db";
+        private static string s_count = null;
+        private static string[] s_hLines = null;
+        private static string s_hContent = null;
+        private static string[] s_pLines = null;
+        private static string s_cID = null;
+        private static int s_iID = 0;
+        private static string[] s_cContent = null;
+        private static string[] s_clines = null;
+        private static string s_oID = null;
+        private static int s_ioID = 0;
+        private static int s_uPcount;
 
         //-------------------------------
         //Define the shell commands 
@@ -65,91 +66,69 @@ namespace Shell
         };
         //-----------------------
 
-
-
-        //Userd for key event check listing files and directories to be suggested for autocomplete
-        private static void KeyDown(KeyEventArgs e)
+        // We check if history file has any data in it.
+        private static bool CheckHistoryFileLength(string historyFileName)
         {
-
-            //check if keycode is PageUp key presed and use for execution command
-            if (e.KeyCode == Keys.PageUp)
+            if (!File.Exists(historyFileName))
             {
-                if (File.Exists(_historyFile))
-                {
-                    //checking ioID is grater than 0(since id 0 is dummy line and is not needed )
-                    //and lower or equal to maximum count of lines                    
-                    if (ioID > 0 && ioID <= uPcount)
-                    {
-                        //returning the line determinated by the inceremented ioID
-                        string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
-
-                        //parsing the line
-                        string[] parseCommands = readCommands.Split('|');
-
-                        //returning the part of line after the char '|'
-                        //from the parsed line so we don't display the id of line
-                        string outCommand = parseCommands[1];
-
-                        //output the final parsed line
-
-                        Console.Write("\n{0}", outCommand);
-
-                        //decrement the ioID by 1
-                        ioID--;
-                    }
-                }
-
-
+                Console.WriteLine("History file not exists!");
+                return false;
             }
-
-            else if (e.KeyCode == Keys.PageDown)
+            using (StringReader stringReader = new StringReader(historyFileName))
             {
-                if (File.Exists(_historyFile))
+                string historFileData = stringReader.ReadToEnd();
+                if (historFileData.Length > 0)
                 {
-                    //checking id ioID is lower and not equal than maximum count of lines
-                    if (uPcount > ioID && ioID != uPcount)
-                    {
-                        //incrementing ioID by 1
-                        ioID++;
-
-                        //returning the line determinated by the inceremented ioID
-                        string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
-
-                        //parsing the line
-                        string[] parseCommands = readCommands.Split('|');
-
-                        //returning the part of line after the char '|'
-                        //from the parsed line so we don't display the id of line
-                        string outCommand = parseCommands[1];
-
-                        //output the final parsed line
-                        Console.Write("\n{0}", outCommand);
-
-                    }
-                    else
-                    {
-                        //restoring ioID to the maximum numbers of lines
-                        ioID = uPcount;
-
-                    }
-
+                    return true;
                 }
+                Console.WriteLine("No commands in list!");
+                return false;
             }
-
-            e.Handled = true;
-
         }
 
         /// <summary>
-        /// On press key intercept
+        /// Output the commands from history.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Woker_DoWork(object sender, DoWorkEventArgs e)
+        /// <param name="historyFileName">Path to history command file.</param>
+        /// <param name="linesNumber">Number of commnands to be displayed.</param>
+        private static void OutputHistoryCommands(string historyFileName, int linesNumber)
         {
-            InterceptKeys.SetupHook(KeyDown);
-            InterceptKeys.ReleaseHook();
+            if (CheckHistoryFileLength(historyFileName) == false)
+            {
+                return;
+            }
+
+            if (linesNumber > 100)
+            {
+                Console.WriteLine("Only 100 commands can be displayed!");
+                return;
+            }
+
+            int index = 1;
+            string line;
+            var lines = File.ReadLines(historyFileName);
+            int countLines = lines.Count();
+
+            do
+            {
+                line = lines.Skip(countLines - index).FirstOrDefault();
+                if (line == null)
+                {
+                    index++;
+                    continue;
+                }
+                line = line.Split('|').Skip(1).FirstOrDefault();
+                if (line != null)
+                {
+                    FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
+                }
+                index++;
+
+            } while (index != linesNumber + 1);
         }
+
+
 
 
         //Entry point of shell
@@ -157,194 +136,76 @@ namespace Shell
         public void Run()
         {
 
-            woker = new BackgroundWorker();
-            woker.DoWork += Woker_DoWork;
-            woker.RunWorkerAsync();
-
-
-
             //creating history file if not exist
-            if (!File.Exists(_historyFile))
+            if (!File.Exists(s_historyFile))
             {
-                File.WriteAllText(_historyFile, "0|0" + Environment.NewLine);
+                File.WriteAllText(s_historyFile, "0|0" + Environment.NewLine);
             }
 
             //Reading lines and count
-            cContent = File.ReadAllLines(_historyFile);
+            s_cContent = File.ReadAllLines(s_historyFile);
 
-            foreach (var line in cContent)
+            foreach (var line in s_cContent)
             {
-                clines = line.Split('|');
-                oID = clines[0];
-                ioID = Convert.ToInt32(oID);
-                uPcount = ioID;
+                s_clines = line.Split('|');
+                s_oID = s_clines[0];
+                s_ioID = Convert.ToInt32(s_oID);
+                s_uPcount = s_ioID;
             }
 
+
+            // We loop unti exit commands is hit
             do
             {
-
                 //reading current location
                 dlocation = File.ReadAllText(GlobalVariables.currentLocation);
-                SetConsoleUserConnected(dlocation);
+                SetConsoleUserConnected(dlocation, s_accountName, s_computerName);
 
                 //reading user imput
-                input = Console.ReadLine();
+                s_input = Console.ReadLine();
 
                 //cleaning input
-                input.Trim();
+                s_input.Trim();
 
-                #region History showing on key up and down
-                //show the commands from last line to first line
-                if (input == "ku")
+                // History commands display.
+                if (s_input.StartsWith("hcmd"))
                 {
-                    if (File.Exists(_historyFile))
+                    try
                     {
+                        string cmd = s_input.Split(' ').Skip(1).FirstOrDefault();
 
-                        //check if are commands in list
-                        string fileRead = File.ReadAllText(_historyFile);
-                        if (fileRead.Length == 0)
+                        if (Int32.TryParse(cmd, out var position))
                         {
-                            Console.WriteLine("No commands in list!");
+                            OutputHistoryCommands(s_historyFile, position);
                         }
                         else
                         {
-
-                            //checking ioID is grater than 0(since id 0 is dummy line and is not needed )
-                            //and lower or equal to maximum count of lines
-                            if (ioID > 0 && ioID <= uPcount)
-                            {
-                                //returning the line determinated by the inceremented ioID
-                                string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
-
-                                //parsing the line
-                                string[] parseCommands = readCommands.Split('|');
-
-                                //returning the part of line after the char '|'
-                                //from the parsed line so we don't display the id of line
-                                string outCommand = parseCommands[1];
-
-                                //output the final parsed line
-                                Console.WriteLine(outCommand);
-
-                                //decrement the ioID by 1
-                                ioID--;
-                            }
+                            OutputHistoryCommands(s_historyFile, 1);
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        FileSystem.ErrorWriteLine($"Error: {e.Message}");
                     }
                 }
-                //go back to last command from last point of 'ku' used
-                else if (input == "kd")
+
+
+                if (File.Exists(s_historyFile))
                 {
-                    if (File.Exists(_historyFile))
-                    {
-                        //check if are commands in list
-                        string fileRead = File.ReadAllText(_historyFile);
-                        if (fileRead.Length == 0)
-                        {
-                            Console.WriteLine("No commands in list!");
-                        }
-                        else
-                        {
 
-                            //checking id ioID is lower and not equal than maximum count of lines
-                            if (uPcount > ioID && ioID != uPcount)
-                            {
-                                //incrementing ioID by 1
-                                ioID++;
 
-                                //returning the line determinated by the inceremented ioID
-                                string readCommands = File.ReadLines(_historyFile).Skip(ioID).Take(1).First();
-
-                                //parsing the line
-                                string[] parseCommands = readCommands.Split('|');
-
-                                //returning the part of line after the char '|'
-                                //from the parsed line so we don't display the id of line
-                                string outCommand = parseCommands[1];
-
-                                //output the final parsed line
-                                Console.WriteLine(outCommand);
-
-                            }
-                            else
-                            {
-                                //restoring ioID to the maximum numbers of lines
-                                ioID = uPcount;
-
-                            }
-                        }
-                    }
-                }
-                #endregion
-                else
-                {
-                    #region Command History save and execute
-                    if (File.Exists(_historyFile))
-                    {
-                        //reading file content
-                        hContent = File.ReadAllText(_historyFile);
-
-                        //cheking if file is empy
-                        if (hContent == string.Empty)
-                        {
-                            //writing dummy line if file is emtpy
-                            File.WriteAllText(_historyFile, "0|0" + Environment.NewLine);
-                        }
-                        hLines = File.ReadAllLines(_historyFile); //reading lines from file
-                        foreach (var line in hLines)
-                        {
-                            //parsing every line
-                            pLines = line.Split('|');
-
-                            //reading first string until space to determinate the last id
-                            cID = pLines[0];
-
-                            //convert first string to int                       
-                            iID = Convert.ToInt32(cID);
-                        }
-                        if (input != string.Empty) //checking if input is empty to not write blank commands
-                        {
-                            //increment value for new saved comnad
-                            iID++;
-
-                            //converting int back to string to be saved 
-                            count = Convert.ToString(iID);
-
-                            //writing command with id to file
-                            File.AppendAllText(_historyFile, count + "|" + input + Environment.NewLine);
-                        }
-                    }
-                    //reading all lines for count save
-                    cContent = File.ReadAllLines(_historyFile);
-
-                    foreach (var line in cContent)
-                    {
-                        //spliting the lines to get id's
-                        clines = line.Split('|');
-
-                        //reading first part with id's
-                        oID = clines[0];
-
-                        //converting to int32 for future use
-                        ioID = Convert.ToInt32(oID);
-                        uPcount = ioID;
-
-                    }
-
-                    #endregion
-
+                    WriteHistoryCommandFile(s_historyFile, s_input);
 
                     //help command
 
-                    if (input == "help")
+                    if (s_input == "help")
                     {
                         string helpMGS = @"
 xTerminal v1.0 Copyright @ 2020 0x078654c
 This is the full list of commands that can be used in xTerminal:
 
     ls -- List directories and files on a directory.
-    ku -- Displays used commands (backword)
-    kd -- Displays used commands (forward)
+    hcmd -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     clear --  Cleares the console.
     cd -- Sets the currnet directory.
     ispeed -- Checks the internet speed with Google.
@@ -379,98 +240,48 @@ This is the full list of commands that can be used in xTerminal:
                         Console.WriteLine(helpMGS);
                     }
                     //rebooting the machine command
-                    else if (input == "reboot")
+                    else if (s_input == "reboot")
                     {
-                        var process = new Process();
-                        process.StartInfo = new ProcessStartInfo("cmd.exe")
-                        {
-                            UseShellExecute = false,
-                            Arguments = "/c shutdown /r /f /t 1"
-
-                        };
-
-                        process.Start();
-                        process.WaitForExit();
-
+                        SystemCmd.RebootCmd();
                     }
 
                     //shuting down the machine command
-                    else if (input == "shutdown")
+                    else if (s_input == "shutdown")
                     {
-                        var process = new Process();
-                        process.StartInfo = new ProcessStartInfo("cmd.exe")
-                        {
-                            UseShellExecute = false,
-                            Arguments = "/c shutdown /s /f /t 1"
-
-                        };
-
-                        process.Start();
-                        process.WaitForExit();
-
+                        SystemCmd.ShutDownCmd();
                     }
                     //log off the machine command
-                    else if (input == "logoff")
+                    else if (s_input == "logoff")
                     {
-                        var process = new Process();
-                        process.StartInfo = new ProcessStartInfo("cmd.exe")
-                        {
-                            UseShellExecute = false,
-                            Arguments = "/c shutdown /l /f"
-
-                        };
-
-                        process.Start();
-                        process.WaitForExit();
+                        SystemCmd.LogoffCmd();
                     }
 
                     //Clear command history file
-                    else if (input == "chistory")
+                    else if (s_input == "chistory")
                     {
-                        if (File.Exists(_historyFile))
+                        if (File.Exists(s_historyFile))
                         {
-                            File.WriteAllText(_historyFile, string.Empty);
+                            File.WriteAllText(s_historyFile, string.Empty);
                             Console.WriteLine("Command history log cleared!");
                         }
                         else
                         {
-                            Console.WriteLine("File '" + _historyFile + "' dose not exist!");
+                            Console.WriteLine("File '" + s_historyFile + "' dose not exist!");
                         }
                     }
                     //editor set
-                    else if (input.Contains("edit set"))
+                    else if (s_input.Contains("edit set"))
                     {
-                        string[] dInput = input.Split(' ');
-                        //counting the spaces in input command
-                        string _ck = Regex.Matches(input, " ").Count.ToString();
-                        int _ch = Int32.Parse(_ck);
-
-                        if (_ch > 1)
-                        {
-                            if (input.Contains(@"\"))
-                            {
-                                string[] cInput = input.Split('"');
-                                ExecuteWithArgs2(dInput[0], dInput[1], "\"" + @cInput[1] + "\""); //execute commands with 2 arg
-                            }
-                            else
-                            {
-
-                                ExecuteWithArgs2(dInput[0], dInput[1], dInput[2]); //execute commands with 1 arg
-                            }
-                        }
-                        else
-                        {
-                            ExecuteWithArgs(dInput[0], dInput[1]); //execute commands with 1 arg
-                        }
+                        SetTextEditor(s_input);
                     }
                     else
                     {
-                        if (input.Contains(" "))
+                        if (s_input.Contains(" "))
                         {
-                            string[] dInput = input.Split(' ');
+                            string[] dInput = s_input.Split(' ');
 
                             //counting the spaces in input command
-                            string _ck = Regex.Matches(input, " ").Count.ToString();
+                            string _ck = Regex.Matches(s_input, " ").Count.ToString();
                             int _ch = Int32.Parse(_ck);
 
                             if (_ch == 1)// check one space char in input
@@ -484,13 +295,13 @@ This is the full list of commands that can be used in xTerminal:
                         }
                         else
                         {
-                            Execute(input); //run simple command
+                            Execute(s_input); //run simple command
                         }
                     }
                 }
 
 
-            } while (input != "exit");
+            } while (s_input != "exit");
 
         }
 
@@ -498,7 +309,7 @@ This is the full list of commands that can be used in xTerminal:
         //------------------
 
         //process execute 
-        public int Execute(string input)
+        public void Execute(string input)
         {
             if (Aliases.Keys.Contains(input))
             {
@@ -514,7 +325,7 @@ This is the full list of commands that can be used in xTerminal:
 
                     process.Start();
                     process.WaitForExit();
-                    return 0;
+                    return;
                 }
                 process.StartInfo = new ProcessStartInfo(Aliases[input])
                 {
@@ -524,10 +335,10 @@ This is the full list of commands that can be used in xTerminal:
                 process.Start();
                 process.WaitForExit();
 
-                return 0;
+                return;
             }
 
-            return 1;
+            // return 1;
         }
         //------------------------
 
@@ -576,22 +387,117 @@ This is the full list of commands that can be used in xTerminal:
         //------------------------
 
         // We set the name of the current user logged in and machine on console.
-        private static void SetConsoleUserConnected(string currentLocation)
+        private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName)
         {
             if (currentLocation.Contains(GlobalVariables.rootPath) && currentLocation.Length == 3)
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{AccountName }@{ComputerName}");
+                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}");
                 FileSystem.ColorConsoleText(ConsoleColor.White, ":");
                 FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
                 FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
             }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{AccountName }@{ComputerName}");
+                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}");
                 FileSystem.ColorConsoleText(ConsoleColor.White, ":");
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{dlocation}~");
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{currentLocation}~");
                 FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
-                Console.Title = $"{GlobalVariables.terminalTitle} | {dlocation}";//setting up the new title
+                Console.Title = $"{GlobalVariables.terminalTitle} | {currentLocation}";//setting up the new title
+            }
+        }
+
+        /// <summary>
+        /// Write terminal input commands to history file. 
+        /// </summary>
+        /// <param name="historyFile"></param>
+        /// <param name="commandInput"></param>
+        private void WriteHistoryCommandFile(string historyFile, string commandInput)
+        {
+            //reading file content
+            s_hContent = File.ReadAllText(historyFile);
+
+            //cheking if file is empy
+            if (s_hContent == string.Empty)
+            {
+                //writing dummy line if file is emtpy
+                File.WriteAllText(historyFile, "0|0" + Environment.NewLine);
+            }
+            s_hLines = File.ReadAllLines(historyFile); //reading lines from file
+            foreach (var line in s_hLines)
+            {
+                //parsing every line
+                s_pLines = line.Split('|');
+
+                //reading first string until space to determinate the last id
+                s_cID = s_pLines[0];
+
+                //convert first string to int                       
+                s_iID = Convert.ToInt32(s_cID);
+            }
+            // Checking if input is empty or starts with 'hcmd' for history display. If true do not write in.
+            if ((commandInput != string.Empty) && (!commandInput.StartsWith("hcmd")))
+            {
+                //increment value for new saved comnad
+                s_iID++;
+
+                //converting int back to string to be saved 
+                s_count = Convert.ToString(s_iID);
+
+                //writing command with id to file
+                File.AppendAllText(historyFile, s_count + "|" + commandInput + Environment.NewLine);
+            }
+
+            //reading all lines for count save
+            s_cContent = File.ReadAllLines(historyFile);
+
+            foreach (var line in s_cContent)
+            {
+                //spliting the lines to get id's
+                s_clines = line.Split('|');
+
+                //reading first part with id's
+                s_oID = s_clines[0];
+
+                //converting to int32 for future use
+                s_ioID = Convert.ToInt32(s_oID);
+                s_uPcount = s_ioID;
+            }
+
+        }
+
+
+        /// <summary>
+        /// Set specific text editor for 'edit' command.
+        /// </summary>
+        /// <param name="inputCommand"></param>
+        private void SetTextEditor(string inputCommand)
+        {
+            string[] dInput = inputCommand.Split(' ');
+            //counting the spaces in input command
+            string _ck = Regex.Matches(inputCommand, " ").Count.ToString();
+            int _ch = Int32.Parse(_ck);
+            try {
+                if (_ch > 1)
+                {
+                    if (inputCommand.Contains(@"\"))
+                    {
+                        string[] cInput = inputCommand.Split('"');
+                        ExecuteWithArgs2(dInput[0], dInput[1], "\"" + @cInput[1] + "\""); //execute commands with 2 arg
+                    }
+                    else
+                    {
+
+                        ExecuteWithArgs2(dInput[0], dInput[1], dInput[2]); //execute commands with 1 arg
+                    }
+                }
+                else
+                {
+                    ExecuteWithArgs(dInput[0], dInput[1]); //execute commands with 1 arg
+                }
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine($"{e.Message} Check command. The path must be between double commas!");
             }
         }
     }
