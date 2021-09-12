@@ -20,7 +20,6 @@ namespace Shell
             Console.Title = GlobalVariables.terminalTitle;//setting up the new title
             var shell = new Shell();
             shell.Run();//Running the shell
-
         }
     }
 
