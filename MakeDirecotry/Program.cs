@@ -43,7 +43,7 @@ namespace MakeDirecotry
             }
             catch
             {
-                Console.WriteLine("You must type the directory name!");
+                FileSystem.ErrorWriteLine("You must type the directory name!");
             }
         }
     }

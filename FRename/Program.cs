@@ -47,7 +47,7 @@ namespace FRename
             }
             catch
             {
-                Console.WriteLine("You must type the file name!");
+                FileSystem.ErrorWriteLine("You must type the file name!");
             }
         }
     }
