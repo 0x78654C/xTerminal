@@ -41,6 +41,46 @@ namespace Core
         }
 
         /// <summary>
+        /// Return size of a directory.
+        /// </summary>
+        /// <param name="info">Directory info of a specificic path directory.</param>
+        /// <returns>string</returns>
+        public static string GetDirSize(DirectoryInfo info)
+        {
+            int order = 0;
+            double length = DirectorySize(info);
+            while (length >= 1024 && order < s_sizes.Length - 1)
+            {
+                order++;
+                length /= 1024;
+            }
+            return String.Format("{0:0.##} {1}", length, s_sizes[order]);
+        }
+
+        /// <summary>
+        /// Grab size in bytes from every file in a directory and sub directory.
+        /// </summary>
+        /// <param name="directoryInfo"></param>
+        /// <returns></returns>
+        private static double DirectorySize(DirectoryInfo directoryInfo)
+        {
+            double size = 0;
+
+            FileInfo[] fileInfos = directoryInfo.GetFiles();
+            foreach (var fileInfo in fileInfos)
+            {
+                size += fileInfo.Length;
+            }
+
+            DirectoryInfo[] directoryInfos = directoryInfo.GetDirectories();
+            foreach (var dirInfo in directoryInfos)
+            {
+                size += DirectorySize(dirInfo);
+            }
+            return size;
+        }
+
+        /// <summary>
         /// Change color of a specific line in console.
         /// </summary>
         /// <param name="color"></param>
