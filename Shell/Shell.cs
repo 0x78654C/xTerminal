@@ -189,6 +189,21 @@ namespace Shell
                     }
                 }
 
+                // Start application commnad
+
+                if (s_input.StartsWith("start"))
+                {
+                    s_input = s_input.Replace("start ", "");
+                    if (s_input.Contains(@"\"))
+                    {
+                        StartApplication(s_input);
+                    }
+                    else
+                    {
+                        StartApplication(dlocation + @"\\" + s_input);
+                    }
+                }
+
 
                 if (File.Exists(s_historyFile))
                 {
@@ -232,6 +247,7 @@ This is the full list of commands that can be used in xTerminal:
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
     chistory -- Clears the current history of commands!
+    start -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe
     flappy -- Play Flappy Birds in console!
  
 
@@ -286,16 +302,16 @@ This is the full list of commands that can be used in xTerminal:
 
                             if (_ch == 1)// check one space char in input
                             {
-                                ExecuteWithArgs(dInput[0], dInput[1]); //execute commands with 1 arg
+                                ExecuteWithArgs(dInput[0], dInput[1], true); //execute commands with 1 arg
                             }
                             else if (_ch == 2)// check one space char in input
                             {
-                                ExecuteWithArgs2(dInput[0], dInput[1], dInput[2]); //execute commands with 2 args
+                                ExecuteWithArgs2(dInput[0], dInput[1], dInput[2], true); //execute commands with 2 args
                             }
                         }
                         else
                         {
-                            Execute(s_input); //run simple command
+                            Execute(s_input, true); //run simple command
                         }
                     }
                 }
@@ -309,7 +325,7 @@ This is the full list of commands that can be used in xTerminal:
         //------------------
 
         //process execute 
-        public void Execute(string input)
+        public void Execute(string input, bool waitForExit)
         {
             if (Aliases.Keys.Contains(input))
             {
@@ -333,8 +349,10 @@ This is the full list of commands that can be used in xTerminal:
                 };
 
                 process.Start();
-                process.WaitForExit();
-
+                if (waitForExit)
+                {
+                    process.WaitForExit();
+                }
                 return;
             }
 
@@ -342,8 +360,21 @@ This is the full list of commands that can be used in xTerminal:
         }
         //------------------------
 
+        //process execute 
+        public void ProcessExecute(string input, string arguments)
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo(input)
+            {
+                Arguments = arguments
+            };
+
+            process.Start();
+            return;
+        }
+
         //process execute  with 1 arg
-        public int ExecuteWithArgs(string input, string args)
+        public int ExecuteWithArgs(string input, string args, bool waitForExit)
         {
             if (Aliases.Keys.Contains(input))
             {
@@ -355,8 +386,10 @@ This is the full list of commands that can be used in xTerminal:
                 };
 
                 process.Start();
-                process.WaitForExit();
-
+                if (waitForExit)
+                {
+                    process.WaitForExit();
+                }
                 return 0;
             }
 
@@ -365,7 +398,7 @@ This is the full list of commands that can be used in xTerminal:
         //------------------------
 
         //process execute  with 2 arg
-        public int ExecuteWithArgs2(string input, string args, string args2)
+        public int ExecuteWithArgs2(string input, string args, string args2, bool waitForExit)
         {
             if (Aliases.Keys.Contains(input))
             {
@@ -377,8 +410,10 @@ This is the full list of commands that can be used in xTerminal:
                 };
 
                 process.Start();
-                process.WaitForExit();
-
+                if (waitForExit)
+                {
+                    process.WaitForExit();
+                }
                 return 0;
             }
 
@@ -476,28 +511,62 @@ This is the full list of commands that can be used in xTerminal:
             //counting the spaces in input command
             string _ck = Regex.Matches(inputCommand, " ").Count.ToString();
             int _ch = Int32.Parse(_ck);
-            try {
+            try
+            {
                 if (_ch > 1)
                 {
                     if (inputCommand.Contains(@"\"))
                     {
                         string[] cInput = inputCommand.Split('"');
-                        ExecuteWithArgs2(dInput[0], dInput[1], "\"" + @cInput[1] + "\""); //execute commands with 2 arg
+                        ExecuteWithArgs2(dInput[0], dInput[1], "\"" + @cInput[1] + "\"", true); //execute commands with 1 arg
                     }
                     else
                     {
 
-                        ExecuteWithArgs2(dInput[0], dInput[1], dInput[2]); //execute commands with 1 arg
+                        ExecuteWithArgs2(dInput[0], dInput[1], dInput[2], true); //execute commands with 2 arg
                     }
                 }
                 else
                 {
-                    ExecuteWithArgs(dInput[0], dInput[1]); //execute commands with 1 arg
+                    ExecuteWithArgs(dInput[0], dInput[1], true); //execute commands with 1 arg
                 }
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message} Check command. The path must be between double commas!");
+            }
+        }
+
+        private void StartApplication(string inputCommand)
+        {
+            string[] dInput = inputCommand.Split(' ');
+            string _ck = Regex.Matches(inputCommand, " ").Count.ToString();
+            int _ch = Int32.Parse(_ck);
+            try
+            {
+                if (_ch == 1)
+                {
+                    if (!File.Exists(dInput[0]))
+                    {
+                        FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
+                        return;
+                    }
+                    ProcessExecute(dInput[0], dInput[1]); //execute commands with 2 arg
+                }
+                else
+                {
+                    if (!File.Exists(dInput[0]))
+                    {
+                        FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
+                        return;
+                    }
+                    ProcessExecute(inputCommand, "");
+                }
+
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
     }

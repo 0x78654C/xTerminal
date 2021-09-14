@@ -37,6 +37,7 @@ This is the full list of commands that can be used in xTerminal:
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
     chistory -- Clears the current history of commands!
+    start -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe
     flappy -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
 
 
