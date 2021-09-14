@@ -19,7 +19,7 @@ namespace NKFile
                 }
                 else
                 {
-                    Console.WriteLine("Directory dose not exist!");
+                    FileSystem.ErrorWriteLine("Directory dose not exist!");
                 }
             }
             catch

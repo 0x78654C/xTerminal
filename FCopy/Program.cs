@@ -468,12 +468,12 @@ namespace FCopy
             {
                 if (x.Message.Contains("is being used by another process"))
                 {
-                    Console.WriteLine("\r\nError: File '" + Destination + "' is being used by another process. Terminated!");
+                    FileSystem.ErrorWriteLine("File '" + Destination + "' is being used by another process. Terminated!");
                 }
                 else
                 {
 
-                    Console.WriteLine("Command should look like this: fcopy source_file target_file");
+                    FileSystem.ErrorWriteLine("Command should look like this: fcopy source_file target_file");
                 }
 
             }

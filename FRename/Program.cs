@@ -29,7 +29,7 @@ namespace FRename
                     }
                     else
                     {
-                        Console.WriteLine("File " + FileName + " dose not exist!");
+                        FileSystem.ErrorWriteLine("File " + FileName + " dose not exist!");
                     }
                 }
                 else
@@ -41,7 +41,7 @@ namespace FRename
                     }
                     else
                     {
-                        Console.WriteLine("File " + dlocation + @"\" + FileName + " dose not exist!");
+                        FileSystem.ErrorWriteLine("File " + dlocation + @"\" + FileName + " dose not exist!");
                     }
                 }
             }

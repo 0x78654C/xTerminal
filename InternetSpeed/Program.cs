@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core;
+using System;
 
 namespace InternetSpeed
 {
@@ -31,8 +32,7 @@ namespace InternetSpeed
             }
             else
             {
-
-                Console.WriteLine("No internet connection!");
+                FileSystem.ErrorWriteLine("No internet connection!");
             }
         }
     }

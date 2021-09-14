@@ -37,7 +37,7 @@ namespace StringView
                     }
                     else
                     {
-                        Console.WriteLine("File " + cDir + @"\" + input + " dose not exist!");
+                        FileSystem.ErrorWriteLine("File " + cDir + @"\" + input + " dose not exist!");
                     }
                 }
             }

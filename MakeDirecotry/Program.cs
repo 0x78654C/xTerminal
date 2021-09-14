@@ -24,7 +24,7 @@ namespace MakeDirecotry
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("Something went wrong. Check path maybe!");
+                        FileSystem.ErrorWriteLine("Something went wrong. Check path maybe!");
                     }
                 }
                 else
@@ -37,7 +37,7 @@ namespace MakeDirecotry
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("Something went wrong. Check path maybe!");
+                        FileSystem.ErrorWriteLine("Something went wrong. Check path maybe!");
                     }
                 }
             }
