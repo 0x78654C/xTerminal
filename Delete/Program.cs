@@ -10,7 +10,6 @@ namespace Delete
         static void Main(string[] args)
         {
 
-
             try
             {
                 string input = args[0];              // geting location input        
@@ -66,7 +65,7 @@ namespace Delete
             }
             catch
             {
-                Console.WriteLine("You must type the file/directory name!");
+                FileSystem.ErrorWriteLine("You must type the file/directory name!");
             }
         }
     }
