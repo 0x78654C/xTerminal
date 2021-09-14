@@ -204,7 +204,7 @@ namespace Shell
 xTerminal v1.0 Copyright @ 2020 0x078654c
 This is the full list of commands that can be used in xTerminal:
 
-    ls -- List directories and files on a directory.
+    ls -- List directories and files on a directory. (ls -s for size display)
     hcmd -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     clear --  Cleares the console.
     cd -- Sets the currnet directory.
