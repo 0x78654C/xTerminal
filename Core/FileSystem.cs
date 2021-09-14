@@ -75,7 +75,10 @@ namespace Core
             DirectoryInfo[] directoryInfos = directoryInfo.GetDirectories();
             foreach (var dirInfo in directoryInfos)
             {
-                size += DirectorySize(dirInfo);
+                if (CheckPermission(dirInfo.FullName, CheckType.Directory)==true)
+                {
+                    size += DirectorySize(dirInfo);
+                }
             }
             return size;
         }
@@ -115,13 +118,20 @@ namespace Core
             switch (checkType)
             {
                 case CheckType.Directory:
-                    var dirInfo = new DirectoryInfo(path).GetAccessControl();
-                    if (dirInfo.AreAccessRulesProtected)
+                    try
                     {
-                        Console.WriteLine($"Access to the path: {path} is denied!");
+                        var dirInfo = new DirectoryInfo(path).GetAccessControl();
+                        if (dirInfo.AreAccessRulesProtected)
+                        {
+                            Console.WriteLine($"Access to the path: {path} is denied!");
+                            return false;
+                        }
+                        return true;
+                    }
+                    catch
+                    {
                         return false;
                     }
-                    return true;
                
                 case CheckType.File:
                     var fileInfo = new FileInfo(path).GetAccessControl();
