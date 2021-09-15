@@ -165,7 +165,7 @@ namespace Shell
                 s_input = Console.ReadLine();
 
                 //cleaning input
-                s_input.Trim();
+                s_input = s_input.Trim();
 
                 // History commands display.
                 if (s_input.StartsWith("hcmd"))
