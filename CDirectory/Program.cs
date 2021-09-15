@@ -2,55 +2,64 @@
 using Core;
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace CDirectory
 {
     class Program
     {
-        private static string nLocation = string.Empty;
-        private static string llocation = string.Empty;
-        private static string sLocation = string.Empty;
+        private static string s_newLocation = string.Empty;
+        private static string s_currentLocation = string.Empty;
+
+
         /*Setting up the current directory*/
+
         static void Main(string[] args)
         {
-            llocation = Directory.GetCurrentDirectory(); // get current location 
             try
             {
-                nLocation = args[0];              // geting location input             
-                sLocation = File.ReadAllText(GlobalVariables.currentLocation);// read location from ini
-
+                s_newLocation = args[0];              // geting location input             
+                s_currentLocation = File.ReadAllText(GlobalVariables.currentLocation);// read location from ini
                 string pathCombine = null;
-                if (nLocation != "")
+                if (s_newLocation != "")
                 {
-                    if (nLocation.Length == 3 && nLocation.EndsWith(@":\")) //check root path
+                    if (s_newLocation.Length >= 2 && s_newLocation.EndsWith(":")) //check root path
                     {
-                        if (Directory.Exists(nLocation))
+                        if (Directory.Exists(s_newLocation))
                         {
-                            File.WriteAllText(GlobalVariables.currentLocation, nLocation);
+                            File.WriteAllText(GlobalVariables.currentLocation, s_newLocation + "\\");
+                            return;
+                        }
+                        Console.WriteLine($"Directory '{s_newLocation}'\\ dose not exist!");
+                    }
+                    else if (s_newLocation == "..")
+                    {
+                        int parseLocation = Regex.Matches(s_currentLocation, @"\\").Count;
+                        if (s_currentLocation.Length != 3)
+                        {
+                            string lastDirectory = s_currentLocation.Split('\\')[parseLocation];
+                            if (parseLocation == 1)
+                            {
+                                File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath);
+                                return;
+                            }
+                            s_currentLocation = s_currentLocation.Replace("\\" + lastDirectory, "");
+                            File.WriteAllText(GlobalVariables.currentLocation, s_currentLocation);
                         }
                         else
                         {
-                            Console.WriteLine($"Directory '{nLocation}'\\ dose not exist!");
+                            File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath); //reset to current terminal locaton
                         }
                     }
                     else
                     {
-                        if (nLocation.Length < 3)
+                        pathCombine = Path.Combine(s_currentLocation, s_newLocation); // combine locations
+                        if (Directory.Exists(pathCombine))
                         {
-                            Console.WriteLine(@"Root directory must contain ':\' at the end!");
+                            File.WriteAllText(GlobalVariables.currentLocation, pathCombine);
+                            return;
                         }
-                        else
-                        {
-                            pathCombine = Path.Combine(sLocation, nLocation); // combine locations
-                            if (Directory.Exists(pathCombine))
-                            {
-                                File.WriteAllText(GlobalVariables.currentLocation, pathCombine);
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
-                            }
-                        }
+                        Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
                     }
                     return;
                 }
@@ -59,7 +68,7 @@ namespace CDirectory
             }
             catch
             {
-                File.WriteAllText(GlobalVariables.currentLocation,GlobalVariables.rootPath); //reset to current terminal locaton
+                File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath); //reset to current terminal locaton
             }
         }
     }
