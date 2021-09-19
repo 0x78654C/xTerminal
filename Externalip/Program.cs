@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Text.RegularExpressions;
+using Core;
 
 namespace Externalip
 {
@@ -19,7 +20,7 @@ namespace Externalip
                              .Matches(blackshit)[0].ToString();
                 Console.WriteLine("Your external IP address is: " + blackshit);
             }
-            catch { Console.WriteLine("Canno't verify external IP. Check your internet connection!"); }
+            catch { FileSystem.ErrorWriteLine("Canno't verify external IP. Check your internet connection!"); }
         }
     }
 }
