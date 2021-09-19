@@ -9,7 +9,8 @@ For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
 This is the full list of commands that can be used in xTerminal:
 
-    ls -- List directories and files on a directory. (ls -s for size display, ls -c for count files and directories (subdirs too))
+    ls -- List directories and files on a directory. (ls -s for size display, ls -c for count files and directories (subdirs too)
+          ls -hl text  : highlight specific files/directories with that text)
     hcmd -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     clear --  Cleares the console.
     cd -- Sets the currnet directory. (cd .. for parent directory)
