@@ -70,7 +70,7 @@ namespace WGet
         //Download file directly in root path
         private static void DoWork_Download(object sender, DoWorkEventArgs e)
         {
-            string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
+            string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
             int parse;
             string[] parseUrl;
             string fileUrl;

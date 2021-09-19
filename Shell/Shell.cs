@@ -22,7 +22,9 @@ namespace Shell
         private static readonly string s_accountName = Environment.UserName;    //extract current loged username
         private static readonly string s_computerName = Environment.MachineName; //extract machine name
         private static string s_input = null;
-        private static string s_historyFile = Directory.GetCurrentDirectory() + @"\Data\History.db";
+        private static string s_historyFilePath = $"C:\\Users\\{s_accountName}\\AppData\\Local\\xTerminal";
+        private static List<string> s_listReg = new List<string>() { "CurrentDirectory"};
+        private static string s_historyFile = s_historyFilePath + "\\History.db";
         private static string s_count = null;
         private static string[] s_hLines = null;
         private static string s_hContent = null;
@@ -93,6 +95,7 @@ namespace Shell
         /// <param name="linesNumber">Number of commnands to be displayed.</param>
         private static void OutputHistoryCommands(string historyFileName, int linesNumber)
         {
+           
             if (CheckHistoryFileLength(historyFileName) == false)
             {
                 return;
@@ -135,6 +138,14 @@ namespace Shell
 
         public void Run()
         {
+            // Check if current path subkey exists in registry. 
+            RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
+
+            // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
+            if (!Directory.Exists(s_historyFilePath))
+            {
+                Directory.CreateDirectory(s_historyFilePath);
+            }
 
             //creating history file if not exist
             if (!File.Exists(s_historyFile))
@@ -158,7 +169,13 @@ namespace Shell
             do
             {
                 //reading current location
-                dlocation = File.ReadAllText(GlobalVariables.currentLocation);
+                dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                if (dlocation == "")
+                {
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, @"C:\");
+                }
+
+                // We se the color and user loged in on console.
                 SetConsoleUserConnected(dlocation, s_accountName, s_computerName);
 
                 //reading user imput

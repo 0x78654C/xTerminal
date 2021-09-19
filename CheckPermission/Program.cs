@@ -12,7 +12,7 @@ namespace CheckPermission
          */
         static void Main(string[] args)
         {
-            string currentLocation = File.ReadAllText(GlobalVariables.currentLocation);
+            string currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
             string input = "";
             try
             {

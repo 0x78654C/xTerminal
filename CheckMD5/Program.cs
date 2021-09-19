@@ -13,7 +13,7 @@ namespace CheckMD5
         {
             try
             {
-                string cDir = File.ReadAllText(GlobalVariables.currentLocation);
+                string cDir = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
                 string input = args[0];
 
                 if (input.Contains(":") && input.Contains(@"\"))

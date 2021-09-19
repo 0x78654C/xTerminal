@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Core;
 
 namespace eMail
 {
@@ -62,7 +63,7 @@ namespace eMail
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error: " + e.ToString());
+                FileSystem.ErrorWriteLine(e.ToString());
             }
             //----------------------
         }

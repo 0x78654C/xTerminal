@@ -12,7 +12,7 @@ namespace ListDirectories
         {
             try
             {
-                s_currentDirectory = File.ReadAllText(GlobalVariables.currentLocation);
+                s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
 
                 if (args[0] == "-s")
                 {

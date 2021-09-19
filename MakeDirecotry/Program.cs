@@ -13,7 +13,7 @@ namespace MakeDirecotry
             {
 
                 string input = args[0];              // geting  input        
-                string newlocation = File.ReadAllText(GlobalVariables.currentLocation); //get the new location
+                string newlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);; //get the new location
                 string locinput = newlocation + @"\" + input; //new location+input
                 if (input.Contains(":") && input.Contains(@"\"))
                 {

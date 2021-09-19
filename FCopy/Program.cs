@@ -15,7 +15,7 @@ namespace FCopy
         {
             Console.WriteLine(" ");
 
-            string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
+            string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
             string crcSource = null;
             string crcDestination = null;
             string Source = null;

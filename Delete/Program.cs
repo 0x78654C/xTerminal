@@ -13,7 +13,7 @@ namespace Delete
             try
             {
                 string input = args[0];              // geting location input        
-                string newlocation = File.ReadAllText(GlobalVariables.currentLocation); //get the new location
+                string newlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);; //get the new location
 
                 //checking the cureent locaiton in folder
                 if (input.Contains(":") && input.Contains(@"\"))

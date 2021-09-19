@@ -1,5 +1,6 @@
 ﻿using Core;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
@@ -12,13 +13,16 @@ namespace xEditor
         {
             string file = string.Empty;
             string set;
-            string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
+      
+            string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
 
-            if (!File.Exists(GlobalVariables.editorPath))
+
+            string cEditor = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor);
+            if (cEditor == "")
             {
-                File.WriteAllText(GlobalVariables.editorPath, "notepad");
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, "notepad");
             }
-            string cEditor = File.ReadAllText(GlobalVariables.editorPath);
+
             try
             {
                 file = args[0];
@@ -56,7 +60,7 @@ namespace xEditor
                 }
                 else
                 {
-                    File.WriteAllText(GlobalVariables.editorPath, @set);
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, @set);
                     Console.WriteLine("Your New editor is: " + @set);
                 }
 

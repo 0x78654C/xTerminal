@@ -10,7 +10,7 @@ namespace StringView
         static void Main(string[] args)
         {
 
-            string cDir = File.ReadAllText(GlobalVariables.currentLocation);
+            string cDir = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
 
             try
             {

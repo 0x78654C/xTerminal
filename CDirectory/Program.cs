@@ -19,7 +19,7 @@ namespace CDirectory
             try
             {
                 s_newLocation = args[0];              // geting location input             
-                s_currentLocation = File.ReadAllText(GlobalVariables.currentLocation);// read location from ini
+                s_currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); // read location from ini
                 string pathCombine = null;
                 if (s_newLocation != "")
                 {
@@ -27,7 +27,7 @@ namespace CDirectory
                     {
                         if (Directory.Exists(s_newLocation))
                         {
-                            File.WriteAllText(GlobalVariables.currentLocation, s_newLocation + "\\");
+                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, s_newLocation + "\\");
                             return;
                         }
                         Console.WriteLine($"Directory '{s_newLocation}'\\ dose not exist!");
@@ -40,15 +40,16 @@ namespace CDirectory
                             string lastDirectory = s_currentLocation.Split('\\')[parseLocation];
                             if (parseLocation == 1)
                             {
-                                File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath);
+                                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
                                 return;
                             }
                             s_currentLocation = s_currentLocation.Replace("\\" + lastDirectory, "");
-                            File.WriteAllText(GlobalVariables.currentLocation, s_currentLocation);
+                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, s_currentLocation);
                         }
                         else
                         {
                             File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath); //reset to current terminal locaton
+                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
                         }
                     }
                     else
@@ -56,7 +57,7 @@ namespace CDirectory
                         pathCombine = Path.Combine(s_currentLocation, s_newLocation); // combine locations
                         if (Directory.Exists(pathCombine))
                         {
-                            File.WriteAllText(GlobalVariables.currentLocation, pathCombine);
+                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathCombine);
                             return;
                         }
                         Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
@@ -64,11 +65,11 @@ namespace CDirectory
                     return;
                 }
 
-                File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath); //reset to current terminal locaton
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
             }
             catch
             {
-                File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath); //reset to current terminal locaton
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
             }
         }
     }

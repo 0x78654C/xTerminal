@@ -13,7 +13,7 @@ namespace FRename
             {
 
                 //reading current location(for test no, after i make dynamic)
-                string dlocation = File.ReadAllText(GlobalVariables.currentLocation);
+                string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
                 string cLocation = Directory.GetCurrentDirectory();
                 //we grab the file names for source and destination
                 string FileName = args[0];

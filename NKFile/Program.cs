@@ -8,7 +8,7 @@ namespace NKFile
     {
         static void Main(string[] args)
         {
-            string CLocation = File.ReadAllText(GlobalVariables.currentLocation);
+            string CLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
             string file;
             try
             {
