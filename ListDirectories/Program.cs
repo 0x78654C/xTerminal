@@ -16,32 +16,42 @@ namespace ListDirectories
 
                 if (args[0] == "-s")
                 {
-                    ListDirFile(true,false,"");
+                    ListDirFile(true, false, "");
                     return;
                 }
                 else if (args[0] == "-c")
                 {
-                    int files = Directory.GetFiles(s_currentDirectory, "*.*", SearchOption.AllDirectories).Length;
-                    var directories = Directory.GetDirectories(s_currentDirectory, "*", SearchOption.AllDirectories).Length;
-                    Console.WriteLine($"Conting total directories/subdirectories and files on current location....\n");
-                    Console.WriteLine($"Total directories/subdirectories: {directories}");
-                    Console.WriteLine($"Total files (include subdirectories): {files}");
-                    return;
-                }else if (args[0] == "-hl")
+                    try
+                    {
+                        int files = Directory.GetFiles(s_currentDirectory, "*.*", SearchOption.AllDirectories).Length;
+                        var directories = Directory.GetDirectories(s_currentDirectory, "*", SearchOption.AllDirectories).Length;
+                        Console.WriteLine($"Conting total directories/subdirectories and files on current location....\n");
+                        Console.WriteLine($"Total directories/subdirectories: {directories}");
+                        Console.WriteLine($"Total files (include subdirectories): {files}");
+                        return;
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+                        FileSystem.ErrorWriteLine("You need administrator rights to run command in this place! Some directories/files cannot be accesd!");
+                        return;
+                    }
+                }
+                else if (args[0] == "-hl")
                 {
                     try
                     {
                         string higlightedText = args[1];
                         ListDirFile(false, true, higlightedText);
                     }
-                    catch 
+                    catch
                     {
                         FileSystem.ErrorWriteLine("Check command. You must provide a text to highlight!");
                     }
                     return;
                 }
 
-                ListDirFile(false,false,"");
+                ListDirFile(false, false, "");
             }
             catch
             {
@@ -62,7 +72,7 @@ namespace ListDirectories
                 foreach (var dir in directories)
                 {
                     directoryInfo = new DirectoryInfo(dir);
-                    if (highlight && highLightText.Length >0)
+                    if (highlight && highLightText.Length > 0)
                     {
                         if (directoryInfo.Name.ToLower().Contains(highLightText.ToLower()))
                         {
@@ -84,7 +94,7 @@ namespace ListDirectories
                     fileInfo = new FileInfo(file);
                     if (sizeCheck)
                     {
-                        if (highlight && highLightText.Length>0)
+                        if (highlight && highLightText.Length > 0)
                         {
                             if (fileInfo.Name.ToLower().Contains(highLightText.ToLower()))
                             {
@@ -103,7 +113,7 @@ namespace ListDirectories
                     }
                     else
                     {
-                        if (highlight && highLightText.Length>0)
+                        if (highlight && highLightText.Length > 0)
                         {
 
                             if (fileInfo.Name.ToLower().Contains(highLightText.ToLower()))
