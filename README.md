@@ -43,6 +43,7 @@ This is the full list of commands that can be used in xTerminal:
 
 
 Requirements:
+
 .NET Core 2.0
 
 .NET Standard 2.0
