@@ -140,6 +140,8 @@ namespace Shell
         {
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
+            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, @"C:\"); // write root path of c
+
 
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
             if (!Directory.Exists(s_historyFilePath))
