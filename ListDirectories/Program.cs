@@ -32,7 +32,7 @@ namespace ListDirectories
                     }
                     catch
                     {
-                        FileSystem.ErrorWriteLine("You need administrator rights to run command in this place! Some directories/files cannot be accesd!");
+                        FileSystem.ErrorWriteLine("You need administrator rights to run command in this place! Some directories/files cannot be accessed!");
                     }
                     return;
                 }
@@ -49,12 +49,14 @@ namespace ListDirectories
                     }
                     return;
                 }
-
-                ListDirFile(false, false, "");
             }
-            catch
+            catch (IndexOutOfRangeException)
             {
                 ListDirFile(false, false, "");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                FileSystem.ErrorWriteLine("You need administrator rights to run full command in this place! Some directories/files cannot be accessed!");
             }
         }
 
