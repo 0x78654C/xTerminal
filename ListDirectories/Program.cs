@@ -12,7 +12,7 @@ namespace ListDirectories
         {
             try
             {
-                s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
+                s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
 
                 if (args[0] == "-s")
                 {
@@ -23,19 +23,18 @@ namespace ListDirectories
                 {
                     try
                     {
-                        int files = Directory.GetFiles(s_currentDirectory, "*.*", SearchOption.AllDirectories).Length;
-                        var directories = Directory.GetDirectories(s_currentDirectory, "*", SearchOption.AllDirectories).Length;
+                        var files = Directory.GetFiles(s_currentDirectory, "*.*", SearchOption.AllDirectories);
+                        var directories = Directory.GetDirectories(s_currentDirectory, "*", SearchOption.AllDirectories);
                         Console.WriteLine($"Conting total directories/subdirectories and files on current location....\n");
                         Console.WriteLine($"Total directories/subdirectories: {directories}");
                         Console.WriteLine($"Total files (include subdirectories): {files}");
                         return;
                     }
-                    catch(Exception e)
+                    catch
                     {
-                        Console.WriteLine(e.ToString());
                         FileSystem.ErrorWriteLine("You need administrator rights to run command in this place! Some directories/files cannot be accesd!");
-                        return;
                     }
+                    return;
                 }
                 else if (args[0] == "-hl")
                 {
@@ -86,7 +85,6 @@ namespace ListDirectories
                     else
                     {
                         FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
-
                     }
                 }
                 foreach (var file in files)
