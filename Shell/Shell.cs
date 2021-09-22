@@ -244,20 +244,22 @@ namespace Shell
 xTerminal v1.0 Copyright @ 2020 0x078654c
 This is the full list of commands that can be used in xTerminal:
 
-    ls -- List directories and files on a directory. (ls -s for size display)
+    ls -- List directories and files on a directory. (ls -s for size display, ls -c for count files and directories (subdirs too)
+          ls -hl text  : highlight specific files/directories with that text)
     hcmd -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     clear --  Cleares the console.
-    cd -- Sets the currnet directory.
+    cd -- Sets the currnet directory. (cd .. for parent directory)
     ispeed -- Checks the internet speed with Google.
     icheck -- Checks if a Domain or IP address is online.
-    md5 -- Checks the MD5 checksum of a file.
+    md5 -- Checks the md5 checksum of a file.
     extip -- Displays the current external IP address.
+    ifconfig -- Display onboard Network Interface Cards configguration (Ethernet and Wireless)
     wget -- Download files from a specific website.
     fcopy -- Copies a file with CRC checksum control.
-    fmove -- Moves a file with md5 checksum control.
     frename -- Renames a file in a specific directory(s).
+    fmove -- Moves a file with CRC checksum control.
     cmd --  Opens Windows Command Prompt.
-    ps -- Opens Windowns Powershell.
+    ps -- Opens Windows Powershell.
     cat -- Displays the content of a file.
     del -- Deletes a file or folder without recover.
     reboot -- It force reboots the Windows OS.
