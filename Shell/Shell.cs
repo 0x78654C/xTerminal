@@ -360,11 +360,13 @@ This is the full list of commands that can be used in xTerminal:
                     if (File.Exists(Aliases[input]))
                     {
                         process.Start();
+
+                        if(waitForExit)
+                            process.WaitForExit();
                     }
                     else
                     {
                         Console.WriteLine("Couldn't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
-                        process.WaitForExit();
                     }
                     return;
                 }
