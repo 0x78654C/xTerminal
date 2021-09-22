@@ -223,6 +223,12 @@ namespace Shell
                     }
                 }
 
+                // Output NIC's configuration
+                if (s_input == "ifconfig")
+                {
+                    string nicsInfo = NetWork.ShowNicConfiguragion();
+                    Console.WriteLine(nicsInfo);
+                }
 
                 if (File.Exists(s_historyFile))
                 {
