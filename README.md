@@ -18,6 +18,7 @@ This is the full list of commands that can be used in xTerminal:
     icheck -- Checks if a Domain or IP address is online.
     md5 -- Checks the md5 checksum of a file.
     extip -- Displays the current external IP address.
+    ifconfig -- Display onboard Network Interface Cards configguration (Ethernet and Wireless)
     wget -- Download files from a specific website.
     fcopy -- Copies a file with CRC checksum control.
     frename -- Renames a file in a specific directory(s).
