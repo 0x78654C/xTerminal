@@ -363,7 +363,7 @@ This is the full list of commands that can be used in xTerminal:
                     }
                     else
                     {
-                        Console.WriteLine("Couln't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
+                        Console.WriteLine("Couldn't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
                         process.WaitForExit();
                     }
                     return;
@@ -382,7 +382,7 @@ This is the full list of commands that can be used in xTerminal:
                 }
                 else
                 {
-                    Console.WriteLine("Couln't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
+                    Console.WriteLine("Couldn't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
                 }
                 return;
             }
@@ -402,7 +402,7 @@ This is the full list of commands that can be used in xTerminal:
             if (File.Exists(input))
                 process.Start();
             else
-                Console.WriteLine("Couln't find file \"{0}\" to execute", input);
+                Console.WriteLine("Couldn't find file \"{0}\" to execute", input);
             return;
         }
 
@@ -427,7 +427,7 @@ This is the full list of commands that can be used in xTerminal:
                     }
                 }
                 else
-                    Console.WriteLine("Couln't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
+                    Console.WriteLine("Couldn't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
     
                 return 0;
             }
@@ -455,7 +455,7 @@ This is the full list of commands that can be used in xTerminal:
                         process.WaitForExit();
                     }
                 }else
-                    Console.WriteLine("Couln't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
+                    Console.WriteLine("Couldn't find file \"{0}\" to execute. Reinstalling should fix the issue ", Aliases[input]);
                 return 0;
             }
 
