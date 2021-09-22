@@ -1,4 +1,5 @@
-﻿using System.Net.NetworkInformation;
+﻿using System.Linq;
+using System.Net.NetworkInformation;
 
 namespace Core
 {
@@ -45,6 +46,37 @@ namespace Core
         public static bool IntertCheck()
         {
             return PingHost("8.8.8.8");
+        }
+
+        /// <summary>
+        /// Output NIC's configuration (Ethernet and Wireless).
+        /// </summary>
+        /// <returns>string</returns>
+        public static string ShowNicConfiguragion()
+        {
+            string nicOuptut = string.Empty;
+            foreach(NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                foreach(UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
+                {
+                    IPInterfaceProperties iPInterface = networkInterface.GetIPProperties();
+                    IPAddressCollection dnsAddresses = iPInterface.DnsAddresses;
+                    foreach (var dnsAddress in dnsAddresses)
+                    {
+                        if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                        {
+                            var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
+                            nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
+                            nicOuptut += $"Description: ".PadRight(15, ' ') + $"{networkInterface.Description}\n";
+                            nicOuptut += $"IP Address: ".PadRight(15, ' ') + $"{ unicastIPAddress.Address} \n";
+                            nicOuptut += $"MAC Address: ".PadRight(15, ' ') + $"{mac}\n";
+                            nicOuptut += $"MASK: ".PadRight(15, ' ') + $"{ unicastIPAddress.IPv4Mask}\n";
+                            nicOuptut += $"DNS: ".PadRight(15, ' ') + $"{dnsAddress}\n";
+                        }
+                    }
+                }
+            }
+            return nicOuptut;
         }
     }
 }
