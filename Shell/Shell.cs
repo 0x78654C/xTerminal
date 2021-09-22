@@ -406,7 +406,7 @@ This is the full list of commands that can be used in xTerminal:
             return;
         }
 
-
+        //process execute  with 1 arg
         public int ExecuteWithArgs(string input, string args, bool waitForExit)
         {
             if (Aliases.Keys.Contains(input))
