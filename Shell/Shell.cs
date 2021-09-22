@@ -241,7 +241,7 @@ namespace Shell
                     if (s_input == "help")
                     {
                         string helpMGS = @"
-xTerminal v1.0 Copyright @ 2020 0x078654c
+xTerminal v1.0 Copyright @ 2020-2021 0x078654c
 This is the full list of commands that can be used in xTerminal:
 
     ls -- List directories and files on a directory. (ls -s for size display)
@@ -363,21 +363,29 @@ This is the full list of commands that can be used in xTerminal:
                         UseShellExecute = false,
                         WorkingDirectory = dlocation
                     };
+                    if (File.Exists(Aliases[input]))
+                    {
+                        process.Start();
 
-                    process.Start();
-                    process.WaitForExit();
+                        if(waitForExit)
+                            process.WaitForExit();
+                    }
+                    else
+                        FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
                     return;
                 }
                 process.StartInfo = new ProcessStartInfo(Aliases[input])
                 {
                     UseShellExecute = false,
                 };
-
-                process.Start();
-                if (waitForExit)
+                if (File.Exists(Aliases[input]))
                 {
-                    process.WaitForExit();
+                    process.Start();
+                    if (waitForExit)
+                        process.WaitForExit();
                 }
+                else
+                    FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
                 return;
             }
 
@@ -393,8 +401,10 @@ This is the full list of commands that can be used in xTerminal:
             {
                 Arguments = arguments
             };
-
-            process.Start();
+            if (File.Exists(input))
+                process.Start();
+            else
+                FileSystem.ErrorWriteLine($"Couldn't find file \"{input}\" to execute");
             return;
         }
 
@@ -410,11 +420,15 @@ This is the full list of commands that can be used in xTerminal:
                     Arguments = args
                 };
 
-                process.Start();
-                if (waitForExit)
+                if (File.Exists(Aliases[input]))
                 {
-                    process.WaitForExit();
+                    process.Start();
+                    if (waitForExit)
+                        process.WaitForExit();
                 }
+                else
+                    FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
+    
                 return 0;
             }
 
@@ -433,12 +447,14 @@ This is the full list of commands that can be used in xTerminal:
                     UseShellExecute = false,
                     Arguments = args + " " + args2
                 };
-
-                process.Start();
-                if (waitForExit)
+                if (File.Exists(Aliases[input]))
                 {
-                    process.WaitForExit();
+                    process.Start();
+                    if (waitForExit)
+                        process.WaitForExit();
                 }
+                else
+                    FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
                 return 0;
             }
 
