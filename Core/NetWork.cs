@@ -55,25 +55,42 @@ namespace Core
         public static string ShowNicConfiguragion()
         {
             string nicOuptut = string.Empty;
-            foreach(NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+            string ipAddress = string.Empty;
+            string gateway = string.Empty;
+            string mask = string.Empty;
+            string dnsAddr = string.Empty;
+            
+            foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
             {
-                foreach(UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
+                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                 {
+                    foreach (GatewayIPAddressInformation gatewayIPAddress in networkInterface.GetIPProperties().GatewayAddresses)
+                    {
+                        if (gatewayIPAddress.Address.ToString().Trim().Length > 2)
+                        {
+                            gateway += "".PadRight(15, ' ') + gatewayIPAddress.Address.ToString() + "\n";
+                        }
+                    }
+                    foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
+                    {
+                        ipAddress += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
+                        mask += "".PadRight(15, ' ') + unicastIPAddress.IPv4Mask + "\n";
+                    }
                     IPInterfaceProperties iPInterface = networkInterface.GetIPProperties();
                     IPAddressCollection dnsAddresses = iPInterface.DnsAddresses;
                     foreach (var dnsAddress in dnsAddresses)
                     {
-                        if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-                        {
-                            var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
-                            nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
-                            nicOuptut += $"Description: ".PadRight(15, ' ') + $"{networkInterface.Description}\n";
-                            nicOuptut += $"IP Address: ".PadRight(15, ' ') + $"{ unicastIPAddress.Address} \n";
-                            nicOuptut += $"MAC Address: ".PadRight(15, ' ') + $"{mac}\n";
-                            nicOuptut += $"MASK: ".PadRight(15, ' ') + $"{ unicastIPAddress.IPv4Mask}\n";
-                            nicOuptut += $"DNS: ".PadRight(15, ' ') + $"{dnsAddress}\n";
-                        }
+                        dnsAddr += "".PadRight(15, ' ') + dnsAddress + "\n";
                     }
+
+                    var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
+                    nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
+                    nicOuptut += $"Description:".PadRight(15, ' ') +$"{ networkInterface.Description}\n";
+                    nicOuptut += $"IP Address: \n{ ipAddress} \n";
+                    nicOuptut += $"MASK: \n{ mask}\n";
+                    nicOuptut += $"Gateway: \n{gateway}\n";
+                    nicOuptut += $"MAC Address: ".PadRight(15, ' ')+$"{mac}\n";
+                    nicOuptut += $"DNS: \n{dnsAddr}\n";
                 }
             }
             return nicOuptut;
