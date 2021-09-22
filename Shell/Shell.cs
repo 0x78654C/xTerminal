@@ -144,12 +144,15 @@ namespace Shell
 
 
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
+
+
             if (!Directory.Exists(s_historyFilePath))
             {
                 Directory.CreateDirectory(s_historyFilePath);
             }
 
             //creating history file if not exist
+            // Output NIC's configuration
             if (!File.Exists(s_historyFile))
             {
                 File.WriteAllText(s_historyFile, "0|0" + Environment.NewLine);
@@ -223,6 +226,8 @@ namespace Shell
                     }
                 }
 
+                if (s_input == "ifconfig")
+                    Console.WriteLine(NetWork.ShowNicConfiguragion());
 
                 if (File.Exists(s_historyFile))
                 {
