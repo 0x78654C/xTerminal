@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CatCommand.cs" />
     <Compile Include="Commands\SystemCommands.cs" />
     <Compile Include="Crc32.cs" />
     <Compile Include="eMailS.cs" />
