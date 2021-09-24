@@ -321,27 +321,17 @@ This is the full list of commands that can be used in xTerminal:
                         if (s_input.Contains(" "))
                         {
                             string[] dInput = s_input.Split(' ');
-
-                            //counting the spaces in input command
-                            string _ck = Regex.Matches(s_input, " ").Count.ToString();
-                            int _ch = Int32.Parse(_ck);
-
-                            if (_ch == 1)// check one space char in input
-                            {
-                                ExecuteWithArgs(dInput[0], dInput[1], true); //execute commands with 1 arg
-                            }
-                            else if (_ch == 2)// check one space char in input
-                            {
-                                ExecuteWithArgs2(dInput[0], dInput[1], dInput[2], true); //execute commands with 2 args
-                            }
+                            string arg = s_input.Replace(dInput[0], "");
+                            Execute(dInput[0], arg, true); //run simple command                          
                         }
                         else
                         {
-                            Execute(s_input, true); //run simple command
+                            string[] dInput = s_input.Split(' ');
+                            string arg = s_input.Replace(dInput[0], "");
+                            Execute(dInput[0], arg, true); //run simple command
                         }
                     }
                 }
-
 
             } while (s_input != "exit");
 
@@ -351,7 +341,7 @@ This is the full list of commands that can be used in xTerminal:
         //------------------
 
         //process execute 
-        public void Execute(string input, bool waitForExit)
+        public void Execute(string input, string args, bool waitForExit)
         {
             if (Aliases.Keys.Contains(input))
             {
@@ -372,6 +362,7 @@ This is the full list of commands that can be used in xTerminal:
                 process.StartInfo = new ProcessStartInfo(Aliases[input])
                 {
                     UseShellExecute = false,
+                    Arguments = args
                 };
                 if (File.Exists(Aliases[input]))
                 {
@@ -402,60 +393,6 @@ This is the full list of commands that can be used in xTerminal:
                 FileSystem.ErrorWriteLine($"Couldn't find file \"{input}\" to execute");
             return;
         }
-
-        //process execute  with 1 arg
-        public int ExecuteWithArgs(string input, string args, bool waitForExit)
-        {
-            if (Aliases.Keys.Contains(input))
-            {
-                var process = new Process();
-                process.StartInfo = new ProcessStartInfo(Aliases[input])
-                {
-                    UseShellExecute = false,
-                    Arguments = args
-                };
-
-                if (File.Exists(Aliases[input]))
-                {
-                    process.Start();
-                    if (waitForExit)
-                        process.WaitForExit();
-                }
-                else
-                    FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
-
-                return 0;
-            }
-
-            return 1;
-        }
-        //------------------------
-
-        //process execute  with 2 arg
-        public int ExecuteWithArgs2(string input, string args, string args2, bool waitForExit)
-        {
-            if (Aliases.Keys.Contains(input))
-            {
-                var process = new Process();
-                process.StartInfo = new ProcessStartInfo(Aliases[input])
-                {
-                    UseShellExecute = false,
-                    Arguments = args + " " + args2
-                };
-                if (File.Exists(Aliases[input]))
-                {
-                    process.Start();
-                    if (waitForExit)
-                        process.WaitForExit();
-                }
-                else
-                    FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
-                return 0;
-            }
-
-            return 1;
-        }
-        //------------------------
 
         // We set the name of the current user logged in and machine on console.
         private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName)
@@ -547,24 +484,18 @@ This is the full list of commands that can be used in xTerminal:
             //counting the spaces in input command
             string _ck = Regex.Matches(inputCommand, " ").Count.ToString();
             int _ch = Int32.Parse(_ck);
+
             try
             {
-                if (_ch > 1)
+                if (inputCommand.Contains(@"\"))
                 {
-                    if (inputCommand.Contains(@"\"))
-                    {
-                        string[] cInput = inputCommand.Split('"');
-                        ExecuteWithArgs2(dInput[0], dInput[1], "\"" + @cInput[1] + "\"", true); //execute commands with 1 arg
-                    }
-                    else
-                    {
-
-                        ExecuteWithArgs2(dInput[0], dInput[1], dInput[2], true); //execute commands with 2 arg
-                    }
+                    string arg = inputCommand.Replace(dInput[0], "");
+                    Execute(dInput[0], arg, true); //run simple command    
                 }
                 else
                 {
-                    ExecuteWithArgs(dInput[0], dInput[1], true); //execute commands with 1 arg
+                    string arg = inputCommand.Replace(dInput[0], "");
+                    Execute(dInput[0], arg, true); //run simple commandg
                 }
             }
             catch (Exception e)
