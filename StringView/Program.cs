@@ -1,50 +1,61 @@
 ﻿using Core;
 using System;
-using System.IO;
-
 namespace StringView
 {
     /*Cat function */
     class Program
     {
+        private static readonly string s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+        private static string s_helpMessage = @"
+    -s   : Output lines containing a provided text from a file.
+    -so  : Saves the lines containing a provided text from a file.
+    -sm  : Output lines containing a provided text from multiple fies.
+    -smo : Saves the lines containing a provided text from mutiple files in current path location.
+";
         static void Main(string[] args)
         {
-
-            string cDir = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);;
-
             try
             {
                 string input = args[0];
-                string output = null;
-                if (input.Contains(":") && input.Contains(@"\"))
+                if (input == "-s")
                 {
-                    if (File.Exists(input))
-                    {
-                        output = File.ReadAllText(input);
-                        Console.WriteLine(output);
-                    }
-                    else
-                    {
-                        Console.WriteLine("File " + input + " dose not exist!");
-                    }
+                    string fileName = args[2];
+                    string searchString = args[1];
+                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(searchString, s_currentDirectory,fileName,""));
+                }else if (input =="-so")
+                {
+                    string fileName = args[2];
+                    string searchString = args[1];
+                    string saveToFile = args[3];
+                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(searchString, s_currentDirectory, fileName, saveToFile));
+                }
+                else if (input == "-sm")
+                {
+                    string fileName = args[2];
+                    string searchString = args[1];
+                    Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName, ""));
+                }
+                else if (input == "-smo")
+                {
+                    string fileName = args[2];
+                    string searchString = args[1];
+                    string saveToFile = args[3];
+                    Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName, saveToFile));
+                }
+                else if (input == "-h")
+                {
+                    Console.WriteLine(s_helpMessage);
                 }
                 else
                 {
-                    if (File.Exists(cDir + @"\" + input))
-                    {
-                        output = File.ReadAllText(cDir + @"\" + input);
-                        Console.WriteLine(output);
-                    }
-                    else
-                    {
-                        FileSystem.ErrorWriteLine("File " + cDir + @"\" + input + " dose not exist!");
-                    }
+                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(input, s_currentDirectory));
                 }
             }
-            catch
+            catch(Exception e)
             {
-                FileSystem.ErrorWriteLine("You must type the file name!");
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
+
     }
 }
