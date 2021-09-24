@@ -22,9 +22,9 @@ namespace NKFile
                     FileSystem.ErrorWriteLine("Directory dose not exist!");
                 }
             }
-            catch
+            catch(Exception e)
             {
-                FileSystem.ErrorWriteLine("You must type the file name!");
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
     }
