@@ -364,15 +364,9 @@ This is the full list of commands that can be used in xTerminal:
                         UseShellExecute = false,
                         WorkingDirectory = dlocation
                     };
-                    if (File.Exists(Aliases[input]))
-                    {
-                        process.Start();
-
-                        if (waitForExit)
-                            process.WaitForExit();
-                    }
-                    else
-                        FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
+                    process.Start();
+                    if (waitForExit)
+                        process.WaitForExit();
                     return;
                 }
                 process.StartInfo = new ProcessStartInfo(Aliases[input])
