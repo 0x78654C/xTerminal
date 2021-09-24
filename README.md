@@ -25,7 +25,11 @@ This is the full list of commands that can be used in xTerminal:
     fmove -- Moves a file with CRC checksum control.
     cmd --  Opens Windows Command Prompt.
     ps -- Opens Windows Powershell.
-    cat -- Displays the content of a file.
+    cat -- Displays the content of a file. Can use following parameters:
+           -s   : Output lines containing a provided text from a file.
+           -so  : Saves the lines containing a provided text from a file.
+           -sm  : Output lines containing a provided text from multiple fies.
+           -smo : Saves the lines containing a provided text from mutiple files in current path location.
     del -- Deletes a file or folder without recover.
     reboot -- It force reboots the Windows OS.
     shutdown --  It force shutdown the Windows OS.
