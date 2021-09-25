@@ -1,14 +1,11 @@
 ﻿using Core;
 using System;
-using System.Linq;
 
 namespace StringView
 {
     /*Cat function */
     class Program
     {
-        private static string[] MultiFileTypes = { "-s", "-so" };
-        private static string[] SingleFileypes = { "-sm", "-smo" };
         private static readonly string s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
 
         private static string s_helpMessage = @"
@@ -23,30 +20,37 @@ namespace StringView
         {
             try
             {
-                if (args == null || args.Length < 3)
-                {
-                    throw new Exception("Unexpected number of arguments " + s_helpMessage);
-                }
-
-
-                var input = args[0];
-                var fileName = args[2];
-                var searchString = args[1];
-                if (SingleFileypes.Contains(input))
-                {
-                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory,searchString , input == "-s" ? "" : args[3]));
-                }
-                else if (MultiFileTypes.Contains(input))
-                {
-                    Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), input == "-sm" ? "" : args[3]));
-                }
-                else if (input == "-h")
-                {
-                    Console.WriteLine(s_helpMessage);
-                }
-                else
+                string input = args[0];
+                if (args.Length == 1)
                 {
                     Console.WriteLine(Core.Commands.CatCommand.FileOutput(input, s_currentDirectory));
+                }
+
+                string fileName = args[2];
+                string searchString = args[1];
+                switch (input)
+                {
+                    case "-s":
+                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
+                        break;
+                    case "-so":
+                        {
+                            string saveToFile = args[3];
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
+                            break;
+                        }
+                    case "-sm":
+                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), ""));
+                        break;
+                    case "-smo":
+                        {
+                            string saveToFile = args[3];
+                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile));
+                            break;
+                        }
+                    case "-h":
+                        Console.WriteLine(s_helpMessage);
+                        break;
                 }
             }
             catch (Exception e)
