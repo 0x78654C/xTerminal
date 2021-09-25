@@ -7,121 +7,54 @@ using System.IO;
 
 namespace Core.Commands
 {
-    public class CatCommand
+    public static class CatCommand
     {
 
         /// <summary>
-        /// Output to console a file as string.
-        /// </summary>
-        /// <param name="input">File name.</param>
-        /// <param name="currentDir">Current location.</param>
-        public static string FileOutput(string input, string currentDir)
-        {
-            string output = string.Empty;
-            if (input.Contains(":") && input.Contains(@"\"))
-            {
-                if (File.Exists(input))
-                {
-                    using (StreamReader streamReader = new StreamReader(input))
-                    {
-                        output += streamReader.ReadToEnd();
-                        streamReader.Close();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("File " + input + " dose not exist!");
-                }
-            }
-            else
-            {
-                if (File.Exists(currentDir + @"\" + input))
-                {
-                    Console.WriteLine(currentDir + @"\" + input);
-                    using (StreamReader streamReader = new StreamReader(currentDir + @"\" + input))
-                    {
-                        output += streamReader.ReadToEnd();
-                        streamReader.Close();
-                    }
-                }
-                else
-                {
-                    FileSystem.ErrorWriteLine("File " + currentDir + @"\" + input + " dose not exist!");
-                }
-            }
-            return output;
-        }
-
-        /// <summary>
-        /// Output to console specific lines from a file containging a specific string.
+        /// Output to console specific lines from a file containing a specific string.
         /// </summary>
         /// <param name="searchString"> Search parameter. </param>
         /// <param name="currentDir">Current directory. </param>
         /// <param name="input"> File name to search in. </param>
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <returns>string</returns>
-        public static string FileOutput(string searchString, string currentDir, string input, string savedFile)
+        public static string FileOutput(string input, string currentDir, string searchString = null, string savedFile = null)
         {
-            string output = string.Empty;
-           
-            if (input.Contains(":") && input.Contains(@"\"))
+            var output = new StringBuilder();
+            input = SanitizePath(input, currentDir);
+
+            if (!File.Exists(input))
             {
-                if (File.Exists(input))
+                Console.WriteLine("File " + input + " dose not exist!");
+                return output.ToString();
+            }
+
+            using (var streamReader = new StreamReader(input))
+            {
+                string line;
+                while ((line = streamReader.ReadLine()) != null)
                 {
-                    using (StreamReader streamReader = new StreamReader(input))
+                    if (string.IsNullOrWhiteSpace(searchString))
                     {
-                        string line;
-                        while ((line = streamReader.ReadLine()) != null)
-                        {
-                            if (line.ToLower().Contains(searchString.ToLower()))
-                            {
-                                output += line + Environment.NewLine;
-                            }
-                        }
-                        streamReader.Close();
+                        output.AppendLine(line);
+                        continue;
+                    }
+
+                    if (line.ToLower().Contains(searchString.ToLower()))
+                    {
+                        output.AppendLine(line);
                     }
                 }
-                else
-                {
-                    Console.WriteLine("File " + input + " dose not exist!");
-                }
+
+                streamReader.Close();
             }
-            else
+
+            if (!string.IsNullOrEmpty(savedFile))
             {
-                if (File.Exists(currentDir + @"\" + input))
-                {
-                    using (StreamReader streamReader = new StreamReader(currentDir + @"\" + input))
-                    {
-                        string line;
-                        while ((line = streamReader.ReadLine()) != null)
-                        {
-                            if (line.ToLower().Contains(searchString.ToLower()))
-                            {
-                                output += line + Environment.NewLine;
-                            }
-                        }
-                        streamReader.Close();
-                    }
-                }
-                else
-                {
-                    FileSystem.ErrorWriteLine("File " + currentDir + @"\" + input + " dose not exist!");
-                }
+                return SaveFileOutput(savedFile, currentDir, output.ToString());
             }
-            if (savedFile.Length > 0)
-            {
-                if (savedFile.Contains(":") && savedFile.Contains(@"\"))
-                {
-                    File.WriteAllText(savedFile, output);
-                    output = $"Data saved in {savedFile}";
-                }
-                else
-                {
-                    File.WriteAllText(currentDir + @"\" + savedFile, output);
-                    output = $"Data saved in {savedFile}";
-                }
-            }
-            return output;
+
+            return output.ToString();
         }
 
         /// <summary>
@@ -129,52 +62,44 @@ namespace Core.Commands
         /// </summary>
         /// <param name="searchString"> Search parameter. </param>
         /// <param name="currentDir">Current directory. </param>
-        /// <param name="input"> File name to search in. </param>
+        /// <param name="paths"> File names to search in. </param>
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <returns>string</returns>
-        public static string MultiFileOutput(string searchString, string currentDir, string input, string savedFile)
+        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile)
         {
-            string[] files = input.Split(' ').ToArray();
+            StringBuilder output = new StringBuilder();
             
-            string output = string.Empty;
-            foreach (var file in files)
+            foreach (var file in paths)
             {
-                if (File.Exists(currentDir + @"\" + file))
+                var nFile = SanitizePath(file, currentDir);
+                if (!File.Exists(nFile))
                 {
-                    output += $"---------------- {file} ----------------\n";
-                    using (StreamReader streamReader = new StreamReader(currentDir + @"\" + file))
-                    {
-                        string line;
-                        while ((line = streamReader.ReadLine()) != null)
-                        {
-                            if (line.ToLower().Contains(searchString.ToLower()))
-                            {
-                                output += line + Environment.NewLine;
-                            }
-                        }
-                        streamReader.Close();
-                    }
-                    output +=Environment.NewLine;
+                    FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
+                    continue;
                 }
-                else
-                {
-                    FileSystem.ErrorWriteLine("File " + currentDir + @"\" + file + " dose not exist!");
-                }
+
+                output.AppendLine($"---------------- {nFile} ----------------");
+                output.AppendLine(FileOutput(nFile, currentDir, searchString));
             }
-            if (savedFile.Length > 0)
+            
+            if (!string.IsNullOrEmpty(savedFile))
             {
-                if (savedFile.Contains(":") && savedFile.Contains(@"\"))
-                {
-                    File.WriteAllText(savedFile, output);
-                    output = $"Data saved in {savedFile}";
-                }
-                else
-                {
-                    File.WriteAllText(currentDir + @"\" + savedFile, output);
-                    output = $"Data saved in {savedFile}";
-                }
+                return SaveFileOutput(savedFile, currentDir, output.ToString());
             }
-            return output;
+            
+            return output.ToString();
+        }
+        
+        private static string SaveFileOutput(string path, string currentDir, string contents)
+        {
+            path = SanitizePath(path, currentDir);
+            File.WriteAllText(path, contents);
+            return $"Data saved in {path}";
+        }
+        
+        private static string SanitizePath(string path, string currentDir)
+        {
+            return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}\{path}";
         }
     }
 }
