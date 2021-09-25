@@ -75,7 +75,7 @@ namespace Core
             DirectoryInfo[] directoryInfos = directoryInfo.GetDirectories();
             foreach (var dirInfo in directoryInfos)
             {
-                if (CheckPermission(dirInfo.FullName, CheckType.Directory)==true)
+                if (CheckPermission(dirInfo.FullName, CheckType.Directory) == true)
                 {
                     size += DirectorySize(dirInfo);
                 }
@@ -132,7 +132,7 @@ namespace Core
                     {
                         return false;
                     }
-               
+
                 case CheckType.File:
                     var fileInfo = new FileInfo(path).GetAccessControl();
                     if (fileInfo.AreAccessRulesProtected)
@@ -141,7 +141,7 @@ namespace Core
                         return false;
                     }
                     return true;
-                
+
                 default:
                     return false;
             }
@@ -165,5 +165,18 @@ namespace Core
             Console.ForegroundColor = ConsoleColor.Gray;
         }
 
+        /// <summary>
+        /// Opens a directory in Windows Explorer.
+        /// </summary>
+        /// <param name="dirPath"></param>
+        public static void OpenCurrentDiretory(string dirPath)
+        {
+            if (Directory.Exists(dirPath))
+            {
+                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath,false);
+                return;
+            }
+            Console.WriteLine($"Directory '{dirPath}' does not exist!");
+        }
     }
 }
