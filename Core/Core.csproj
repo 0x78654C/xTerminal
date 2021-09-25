@@ -61,6 +61,7 @@
     <Compile Include="NetWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Registry.cs" />
+    <Compile Include="SystemTools\ProcessStart.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
