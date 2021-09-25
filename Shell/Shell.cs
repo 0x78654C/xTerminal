@@ -1,15 +1,10 @@
 ﻿using Core;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using SystemCmd = Core.Commands.SystemCommands;
 
 namespace Shell
@@ -252,6 +247,7 @@ This is the full list of commands that can be used in xTerminal:
     start -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe
     clear --  Cleares the console.
     cd -- Sets the currnet directory. (cd .. for parent directory)
+    odir -- Open current directory with Windows Explorer
     ps -- Opens Windows Powershell.
     cmd --  Opens Windows Command Prompt.
     reboot -- It force reboots the Windows OS.
@@ -310,7 +306,11 @@ This is the full list of commands that can be used in xTerminal:
                     {
                         SystemCmd.LogoffCmd();
                     }
-
+                    // Open current directory in Windows Explorer.
+                    else if (s_input == "odir")
+                    {
+                        FileSystem.OpenCurrentDiretory(dlocation);
+                    }
                     //Clear command history file
                     else if (s_input == "chistory")
                     {
@@ -391,21 +391,6 @@ This is the full list of commands that can be used in xTerminal:
             // return 1;
         }
         //------------------------
-
-        //process execute 
-        public void ProcessExecute(string input, string arguments)
-        {
-            var process = new Process();
-            process.StartInfo = new ProcessStartInfo(input)
-            {
-                Arguments = arguments
-            };
-            if (File.Exists(input))
-                process.Start();
-            else
-                FileSystem.ErrorWriteLine($"Couldn't find file \"{input}\" to execute");
-            return;
-        }
 
         // We set the name of the current user logged in and machine on console.
         private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName)
@@ -531,7 +516,7 @@ This is the full list of commands that can be used in xTerminal:
                         FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
                         return;
                     }
-                    ProcessExecute(dInput[0], dInput[1]); //execute commands with 2 arg
+                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1],true); //execute commands with 2 arg
                 }
                 else
                 {
@@ -540,7 +525,7 @@ This is the full list of commands that can be used in xTerminal:
                         FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
                         return;
                     }
-                    ProcessExecute(inputCommand, "");
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, "",true);
                 }
 
             }
