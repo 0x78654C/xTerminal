@@ -68,16 +68,18 @@ namespace Core.Commands
         public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile)
         {
             StringBuilder output = new StringBuilder();
+            
             foreach (var file in paths)
             {
-                if (!File.Exists(file))
+                var nFile = SanitizePath(file, currentDir);
+                if (!File.Exists(nFile))
                 {
-                    FileSystem.ErrorWriteLine("File " + currentDir + @"\" + file + " dose not exist!");
+                    FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
                     continue;
                 }
 
-                output.AppendLine($"---------------- {file} ----------------");
-                output.AppendLine(FileOutput(file, currentDir, searchString));
+                output.AppendLine($"---------------- {nFile} ----------------");
+                output.AppendLine(FileOutput(nFile, currentDir, searchString));
             }
             
             if (!string.IsNullOrEmpty(savedFile))
