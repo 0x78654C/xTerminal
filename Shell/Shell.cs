@@ -262,6 +262,7 @@ This is the full list of commands that can be used in xTerminal:
 
 ---------------------- File System ---------------------
     cat -- Displays the content of a file. Can use following parameters:
+           -h   : Displays this message.
            -s   : Output lines containing a provided text from a file.
            -so  : Saves the lines containing a provided text from a file.
            -sm  : Output lines containing a provided text from multiple fies.
