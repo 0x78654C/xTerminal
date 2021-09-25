@@ -62,10 +62,10 @@ namespace Core.Commands
         /// </summary>
         /// <param name="searchString"> Search parameter. </param>
         /// <param name="currentDir">Current directory. </param>
-        /// <param name="input"> File name to search in. </param>
+        /// <param name="paths"> File names to search in. </param>
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <returns>string</returns>
-        public static string MultiFileOutput(string searchString, string currentDir, string[] paths, string savedFile)
+        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile)
         {
             StringBuilder output = new StringBuilder();
             foreach (var file in paths)
