@@ -1,46 +1,43 @@
 ﻿using Core;
 using System;
+using System.Linq;
+
 namespace StringView
 {
     /*Cat function */
     class Program
     {
+        private static string[] MultiFileTypes = { "-s", "-so" };
+        private static string[] SingleFileypes = { "-sm", "-smo" };
         private static readonly string s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+
         private static string s_helpMessage = @"
     -s   : Output lines containing a provided text from a file.
     -so  : Saves the lines containing a provided text from a file.
     -sm  : Output lines containing a provided text from multiple fies.
     -smo : Saves the lines containing a provided text from mutiple files in current path location.
 ";
+
         static void Main(string[] args)
         {
             try
             {
-                string input = args[0];
-                if (input == "-s")
+                if (args == null || args.Length < 3)
                 {
-                    string fileName = args[2];
-                    string searchString = args[1];
-                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(searchString, s_currentDirectory,fileName,""));
-                }else if (input =="-so")
-                {
-                    string fileName = args[2];
-                    string searchString = args[1];
-                    string saveToFile = args[3];
-                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(searchString, s_currentDirectory, fileName, saveToFile));
+                    throw new Exception("Unexpected number of arguments " + s_helpMessage);
                 }
-                else if (input == "-sm")
+
+
+                var input = args[0];
+                var fileName = args[2];
+                var searchString = args[1];
+                if (SingleFileypes.Contains(input))
                 {
-                    string fileName = args[2];
-                    string searchString = args[1];
-                    Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName, ""));
+                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory,searchString , input == "-s" ? "" : args[3]));
                 }
-                else if (input == "-smo")
+                else if (MultiFileTypes.Contains(input))
                 {
-                    string fileName = args[2];
-                    string searchString = args[1];
-                    string saveToFile = args[3];
-                    Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName, saveToFile));
+                    Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), input == "-sm" ? "" : args[3]));
                 }
                 else if (input == "-h")
                 {
@@ -51,11 +48,10 @@ namespace StringView
                     Console.WriteLine(Core.Commands.CatCommand.FileOutput(input, s_currentDirectory));
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }
         }
-
     }
 }
