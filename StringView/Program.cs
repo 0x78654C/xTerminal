@@ -7,10 +7,11 @@ namespace StringView
     {
         private static readonly string s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
         private static string s_helpMessage = @"
+    -h   : Displays this message.
     -s   : Output lines containing a provided text from a file.
     -so  : Saves the lines containing a provided text from a file.
     -sm  : Output lines containing a provided text from multiple fies.
-    -smo : Saves the lines containing a provided text from mutiple files in current path location.
+    -smo : Saves the lines containing a provided text from multiple files in current path location.
 ";
         static void Main(string[] args)
         {
