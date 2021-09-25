@@ -24,6 +24,7 @@ namespace StringView
                 if (args.Length == 1)
                 {
                     Console.WriteLine(Core.Commands.CatCommand.FileOutput(input, s_currentDirectory));
+                    return;
                 }
 
                 string fileName = args[2];
