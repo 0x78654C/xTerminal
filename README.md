@@ -9,7 +9,7 @@ For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
 This is the full list of commands that can be used in xTerminal:
     
- ----------------------- System -----------------------
+    ----------------------- System -----------------------
     ls -- List directories and files on a directory. (ls -s for size display, ls -c for count files and directories (subdirs too)
           ls -hl text  : highlight specific files/directories with that text)
     hcmd -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
@@ -26,7 +26,7 @@ This is the full list of commands that can be used in xTerminal:
     bios -- Displays BIOS information on local machine or remote.
     sinfo -- Displays Storage devices information on local machine or remote.
 
-  ---------------------- File System ---------------------
+    ---------------------- File System ---------------------
     cat -- Displays the content of a file. Can use following parameters:
            -h   : Displays this message.
            -s   : Output lines containing a provided text from a file.
@@ -43,7 +43,7 @@ This is the full list of commands that can be used in xTerminal:
     cp -- Check file/folder permissions.
     md5 -- Checks the md5 checksum of a file.
 
-  ---------------------- Networking ----------------------
+    ---------------------- Networking ----------------------
     ifconfig -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
     ispeed -- Checks the internet speed with Google.
     icheck -- Checks if a Domain or IP address is online.
@@ -52,7 +52,7 @@ This is the full list of commands that can be used in xTerminal:
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email -- Email sender client for Microsoft (all), Yahoo, Gmail!
     
-  ------------------------ Games -------------------------
+    ------------------------ Games -------------------------
     flappy -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
 
 
