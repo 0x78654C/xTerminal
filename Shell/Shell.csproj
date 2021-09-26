@@ -36,7 +36,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>shell_beta.ico</ApplicationIcon>
+    <ApplicationIcon>logo_t.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -61,6 +61,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="logo_t.ico" />
     <Content Include="shell_beta.ico" />
   </ItemGroup>
   <ItemGroup>
