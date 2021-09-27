@@ -8,6 +8,7 @@ This is a simple terminal in C#  based on https://github.com/willharrison/Progra
 For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
 This is the full list of commands that can be used in xTerminal:
+
     ------------------------ System ------------------------
     ls        -- List directories and files on a directory. Can use following parameters:
                  -s  : Displays size of files in current directory.
