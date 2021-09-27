@@ -36,7 +36,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>logo_t.ico</ApplicationIcon>
+    <ApplicationIcon>xIcon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -63,6 +63,7 @@
   <ItemGroup>
     <Content Include="logo_t.ico" />
     <Content Include="shell_beta.ico" />
+    <Content Include="xIcon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
