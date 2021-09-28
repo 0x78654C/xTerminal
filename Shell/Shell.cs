@@ -211,13 +211,30 @@ namespace Shell
                 if (s_input.StartsWith("start"))
                 {
                     s_input = s_input.Replace("start ", "");
+                    string param = s_input.Split(' ').First();
                     if (s_input.Contains(@"\"))
                     {
-                        StartApplication(s_input);
+                        if (param == "-u")
+                        {
+                            s_input = s_input.Replace("-u ", "");
+                            StartApplication(s_input, true);
+                        }
+                        else
+                        {
+                            StartApplication(s_input, false);
+                        }
                     }
                     else
                     {
-                        StartApplication(dlocation + @"\\" + s_input);
+                        if (param == "-u")
+                        {
+                            s_input = s_input.Replace("-u ", "");
+                            StartApplication(dlocation + @"\\" + s_input, true);
+                        }
+                        else
+                        {
+                            StartApplication(dlocation + @"\\" + s_input, false);
+                        }
                     }
                 }
 
@@ -245,7 +262,8 @@ This is the full list of commands that can be used in xTerminal:
                  -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl higlighted_text
     hcmd      -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe
+    start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe. Can use following parameter:
+                 -u  : Start with different user.
     clear     --  Cleares the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory)
     odir      -- Open current directory with Windows Explorer
@@ -348,7 +366,6 @@ This is the full list of commands that can be used in xTerminal:
                 }
 
             } while (s_input != "exit");
-
         }
 
 
@@ -481,8 +498,6 @@ This is the full list of commands that can be used in xTerminal:
         {
             string[] dInput = inputCommand.Split(' ');
             //counting the spaces in input command
-            string _ck = Regex.Matches(inputCommand, " ").Count.ToString();
-            int _ch = Int32.Parse(_ck);
 
             try
             {
@@ -503,13 +518,14 @@ This is the full list of commands that can be used in xTerminal:
             }
         }
 
-        private void StartApplication(string inputCommand)
+        private void StartApplication(string inputCommand, bool admin)
         {
-            string[] dInput = inputCommand.Split(' ');
-            string _ck = Regex.Matches(inputCommand, " ").Count.ToString();
-            int _ch = Int32.Parse(_ck);
+
             try
             {
+                string[] dInput = inputCommand.Split(' ');
+                int _ch = Regex.Matches(inputCommand, " ").Count;
+
                 if (_ch == 1)
                 {
                     if (!File.Exists(dInput[0]))
@@ -517,7 +533,12 @@ This is the full list of commands that can be used in xTerminal:
                         FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
                         return;
                     }
-                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1],true); //execute commands with 2 arg
+                    if (admin)
+                    {
+                        Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1], true, true);
+                        return;
+                    }
+                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1], true, false); 
                 }
                 else
                 {
@@ -526,7 +547,12 @@ This is the full list of commands that can be used in xTerminal:
                         FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
                         return;
                     }
-                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, "",true);
+                    if (admin)
+                    {
+                        Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], "", true, true);
+                        return;
+                    }
+                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], "", true, false);
                 }
 
             }

@@ -16,7 +16,8 @@ This is the full list of commands that can be used in xTerminal:
                  -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl higlighted_text
     hcmd      -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe
+    start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe. Can use following parameter:
+                 -u  : Start with different user.
     clear     --  Cleares the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory)
     odir      -- Open current directory with Windows Explorer
