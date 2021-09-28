@@ -46,6 +46,7 @@
     <Compile Include="ITerminalCommand.cs" />
     <Compile Include="TerminalCommands\ListDirectories.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TerminalCommands\NetworkInterfaceCheck.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">

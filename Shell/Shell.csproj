@@ -66,6 +66,10 @@
     <Content Include="xIcon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Commands\Commands.csproj">
+      <Project>{ae8425c8-0f5b-4d39-85ee-d12941ff4e65}</Project>
+      <Name>Commands</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{589bcb52-0184-4c70-bd85-095c0755f536}</Project>
       <Name>Core</Name>

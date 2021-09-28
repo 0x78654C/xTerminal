@@ -3,6 +3,6 @@
     public interface ITerminalCommand
     {
         string Name { get; }
-        void Execute(string[] args);
+        void Execute(string args);
     }
 }

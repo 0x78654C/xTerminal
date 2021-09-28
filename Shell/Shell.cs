@@ -206,7 +206,15 @@ namespace Shell
                     }
                 }
 
-                // Start application commnad
+                // New command implementation by Scott
+               
+                var c = Commands.CommandRepository.GetCommand(s_input);
+                if (c != null)
+                {
+                    c.Execute(s_input);
+                }
+                
+                //----------------------------------------
 
                 if (s_input.StartsWith("start"))
                 {
@@ -237,9 +245,6 @@ namespace Shell
                         }
                     }
                 }
-
-                if (s_input == "ifconfig")
-                    Console.WriteLine(NetWork.ShowNicConfiguragion());
 
                 if (File.Exists(s_historyFile))
                 {

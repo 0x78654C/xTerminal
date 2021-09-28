@@ -14,6 +14,7 @@ namespace Commands
         static CommandRepository()
         {
             s_terminalCommands.Add(new ListDirectories());
+            s_terminalCommands.Add(new NetworkInterfaceCheck());
         }
 
         public static ITerminalCommand GetCommand(string[] args)

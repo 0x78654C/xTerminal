@@ -11,15 +11,16 @@ namespace Commands.TerminalCommands
 
         public string Name => "ls";
 
-        public void Execute(string[] args)
+        public void Execute(string args)
         {
             try
             {
+                string[] arg = args.Split(' ');
                 // This will be an empty string if there is no highlight text parameter passed
-                string highlightSearchText = args.ParameterAfter("-hl");
+                string highlightSearchText = arg.ParameterAfter("-hl");
 
                 // If the user passed "-hl" parameter without a search text parameter, report an error.
-                if (args.ContainsParameter("-hl") &&
+                if (arg.ContainsParameter("-hl") &&
                     string.IsNullOrWhiteSpace(highlightSearchText))
                 {
                     FileSystem.ErrorWriteLine("Check command. You must provide a text to highlight!");
@@ -31,9 +32,9 @@ namespace Commands.TerminalCommands
                     RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
 
                 // Display directory and file information
-                DisplayCurrentDirectoryFiles(args.ContainsParameter("-s"), highlightSearchText);
+                DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText);
 
-                if (args.ContainsParameter("-c"))
+                if (arg.ContainsParameter("-c"))
                 {
                     DisplaySubDirectoryAndFileCounts();
                 }
