@@ -270,7 +270,7 @@ This is the full list of commands that can be used in xTerminal:
     ps        -- Opens Windows Powershell.
     cmd       --  Opens Windows Command Prompt.
     reboot    -- It force reboots the Windows OS.
-    shutdown  --  It force shutdown the Windows OS.
+    shutdown  -- It force shutdown the Windows OS.
     logoff    -- It force logoff current user.
     bios      -- Displays BIOS information on local machine or remote.
     sinfo     -- Displays Storage devices information on local machine or remote.
