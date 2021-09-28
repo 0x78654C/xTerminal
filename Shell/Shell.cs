@@ -184,27 +184,27 @@ namespace Shell
                 //cleaning input
                 s_input = s_input.Trim();
 
-                // History commands display.
-                if (s_input.StartsWith("hcmd"))
-                {
-                    try
-                    {
-                        string cmd = s_input.Split(' ').Skip(1).FirstOrDefault();
+                //// History commands display.
+                //if (s_input.StartsWith("hcmd"))
+                //{
+                //    try
+                //    {
+                //        string cmd = s_input.Split(' ').Skip(1).FirstOrDefault();
 
-                        if (Int32.TryParse(cmd, out var position))
-                        {
-                            OutputHistoryCommands(s_historyFile, position);
-                        }
-                        else
-                        {
-                            OutputHistoryCommands(s_historyFile, 1);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        FileSystem.ErrorWriteLine($"Error: {e.Message}");
-                    }
-                }
+                //        if (Int32.TryParse(cmd, out var position))
+                //        {
+                //            OutputHistoryCommands(s_historyFile, position);
+                //        }
+                //        else
+                //        {
+                //            OutputHistoryCommands(s_historyFile, 1);
+                //        }
+                //    }
+                //    catch (Exception e)
+                //    {
+                //        FileSystem.ErrorWriteLine($"Error: {e.Message}");
+                //    }
+                //}
 
                 // New command implementation by Scott
                
@@ -212,39 +212,38 @@ namespace Shell
                 if (c != null)
                 {
                     c.Execute(s_input);
-                }
-                
+                }               
                 //----------------------------------------
 
-                if (s_input.StartsWith("start"))
-                {
-                    s_input = s_input.Replace("start ", "");
-                    string param = s_input.Split(' ').First();
-                    if (s_input.Contains(@"\"))
-                    {
-                        if (param == "-u")
-                        {
-                            s_input = s_input.Replace("-u ", "");
-                            StartApplication(s_input, true);
-                        }
-                        else
-                        {
-                            StartApplication(s_input, false);
-                        }
-                    }
-                    else
-                    {
-                        if (param == "-u")
-                        {
-                            s_input = s_input.Replace("-u ", "");
-                            StartApplication(dlocation + @"\\" + s_input, true);
-                        }
-                        else
-                        {
-                            StartApplication(dlocation + @"\\" + s_input, false);
-                        }
-                    }
-                }
+                //if (s_input.StartsWith("start"))
+                //{
+                //    s_input = s_input.Replace("start ", "");
+                //    string param = s_input.Split(' ').First();
+                //    if (s_input.Contains(@"\"))
+                //    {
+                //        if (param == "-u")
+                //        {
+                //            s_input = s_input.Replace("-u ", "");
+                //            StartApplication(s_input, true);
+                //        }
+                //        else
+                //        {
+                //            StartApplication(s_input, false);
+                //        }
+                //    }
+                //    else
+                //    {
+                //        if (param == "-u")
+                //        {
+                //            s_input = s_input.Replace("-u ", "");
+                //            StartApplication(dlocation + @"\\" + s_input, true);
+                //        }
+                //        else
+                //        {
+                //            StartApplication(dlocation + @"\\" + s_input, false);
+                //        }
+                //    }
+                //}
 
                 if (File.Exists(s_historyFile))
                 {
