@@ -12,13 +12,25 @@ namespace Core.SystemTools
         /// <param name="input">File name.</param>
         /// <param name="arguments">Specific file arguments.</param>
         /// <param name="fileCheck">Check file if exists before process exection. </param>
-        public static void ProcessExecute(string input, string arguments, bool fileCheck)
+        /// <param name="asAdmin">Run as different user.</param>
+        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin)
         {
             var process = new Process();
-            process.StartInfo = new ProcessStartInfo(input)
+            if (asAdmin)
             {
-                Arguments = arguments
-            };
+                process.StartInfo = new ProcessStartInfo(input)
+                {
+                    Arguments = arguments,
+                    Verb = "runas"
+                };
+            }
+            else
+            {
+                process.StartInfo = new ProcessStartInfo(input)
+                {
+                    Arguments = arguments
+                };
+            }
 
             if (fileCheck)
             {
