@@ -68,6 +68,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageDeviceCheck", "Stora
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "media", "media", "{ABA9CB1A-C453-45DA-BBBA-6D6F91F0AE5B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commands", "Commands\Commands.csproj", "{AE8425C8-0F5B-4D39-85EE-D12941FF4E65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -178,6 +180,10 @@ Global
 		{FCC724FA-E7B0-4982-816A-F5BFBCCBCBE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCC724FA-E7B0-4982-816A-F5BFBCCBCBE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FCC724FA-E7B0-4982-816A-F5BFBCCBCBE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE8425C8-0F5B-4D39-85EE-D12941FF4E65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE8425C8-0F5B-4D39-85EE-D12941FF4E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE8425C8-0F5B-4D39-85EE-D12941FF4E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE8425C8-0F5B-4D39-85EE-D12941FF4E65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
