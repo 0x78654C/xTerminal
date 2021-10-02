@@ -16,6 +16,7 @@ namespace Commands
             s_terminalCommands.Add(new ListDirectories());
             s_terminalCommands.Add(new NetworkInterfaceCheck());
             s_terminalCommands.Add(new StartProccess());
+            s_terminalCommands.Add(new Help());
             s_terminalCommands.Add(new CommandHistory());
         }
 
