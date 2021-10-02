@@ -124,7 +124,7 @@ namespace Commands.TerminalCommands
         private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
         {
             return displaySizes 
-                ? fileInfo.Name.PadRight(50, ' ') + $"Size: {fileInfo.Length}" 
+                ? fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName+"\\"+fileInfo.Name, false)}" 
                 : fileInfo.Name;
         }
 
