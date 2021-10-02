@@ -60,7 +60,6 @@ namespace Commands.TerminalCommands
         /// <param name="linesNumber">Number of commnands to be displayed.</param>
         private static void OutputHistoryCommands(string historyFileName, int linesNumber)
         {
-
             if (CheckHistoryFileLength(historyFileName) == false)
             {
                 return;
