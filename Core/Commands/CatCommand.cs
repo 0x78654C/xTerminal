@@ -20,6 +20,7 @@ namespace Core.Commands
         {
             var output = new StringBuilder();
             input = SanitizePath(input, currentDir);
+            int lineCount = 0;
 
             if (!File.Exists(input))
             {
@@ -32,6 +33,7 @@ namespace Core.Commands
                 string line;
                 while ((line = streamReader.ReadLine()) != null)
                 {
+                    lineCount++;
                     if (string.IsNullOrWhiteSpace(searchString))
                     {
                         output.AppendLine(line);
@@ -40,7 +42,7 @@ namespace Core.Commands
 
                     if (line.ToLower().Contains(searchString.ToLower()))
                     {
-                        output.AppendLine(line);
+                        output.AppendLine($"Line {lineCount} : {line}");
                     }
                 }
 
@@ -51,9 +53,10 @@ namespace Core.Commands
             {
                 return SaveFileOutput(savedFile, currentDir, output.ToString());
             }
-
+         
             return output.ToString();
         }
+
 
         /// <summary>
         /// Output to console lines that contains a specific string.
@@ -62,22 +65,41 @@ namespace Core.Commands
         /// <param name="currentDir">Current directory. </param>
         /// <param name="paths"> File names to search in. </param>
         /// <param name="savedFile"> File name where to store the result data. </param>
+        /// <param name="searchAll"> Search in all files from current directory. </param>
         /// <returns>string</returns>
-        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile)
+        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile, bool searchAll)
         {
             StringBuilder output = new StringBuilder();
-
-            foreach (var file in paths)
+            if (searchAll)
             {
-                var nFile = SanitizePath(file, currentDir);
-                if (!File.Exists(nFile))
+                string[] files = Directory.GetFiles(currentDir);
+                foreach (var file in files)
                 {
-                    FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
-                    continue;
-                }
+                   // var nFile = SanitizePath(file, currentDir);
+                    if (!File.Exists(file))
+                    {
+                        FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
+                        continue;
+                    }
 
-                output.AppendLine($"---------------- {nFile} ----------------");
-                output.AppendLine(FileOutput(nFile, currentDir, searchString));
+                    output.AppendLine($"---------------- {file} ----------------");
+                    output.AppendLine(FileOutput(file, currentDir, searchString));
+                }
+            }
+            else
+            {
+                foreach (var file in paths)
+                {
+                    var nFile = SanitizePath(file, currentDir);
+                    if (!File.Exists(nFile))
+                    {
+                        FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
+                        continue;
+                    }
+
+                    output.AppendLine($"---------------- {nFile} ----------------");
+                    output.AppendLine(FileOutput(nFile, currentDir, searchString));
+                }
             }
 
             if (!string.IsNullOrEmpty(savedFile))
