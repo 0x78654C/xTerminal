@@ -48,10 +48,12 @@
     <Compile Include="CommandRepository.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="ITerminalCommand.cs" />
-    <Compile Include="TerminalCommands\CommandHistory.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\ClearHistory.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\CommandHistory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\BiosInfo.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\CheckPermission.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\CurrentDirectory.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\OpenDirectory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
     <Compile Include="TerminalCommands\DirFiles\Delete.cs" />
     <Compile Include="TerminalCommands\DirFiles\Editor.cs" />
@@ -63,16 +65,16 @@
     <Compile Include="TerminalCommands\DirFiles\MD5Check.cs" />
     <Compile Include="TerminalCommands\DirFiles\StringView.cs" />
     <Compile Include="TerminalCommands\Games\FlappyBirds.cs" />
-    <Compile Include="TerminalCommands\Help.cs" />
-    <Compile Include="TerminalCommands\ListDirectories.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\Help.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\ListDirectories.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TerminalCommands\NetworkInterfaceCheck.cs" />
+    <Compile Include="TerminalCommands\Network\NetworkInterfaceCheck.cs" />
     <Compile Include="TerminalCommands\Network\CheckDomain.cs" />
     <Compile Include="TerminalCommands\Network\EmailClient.cs" />
     <Compile Include="TerminalCommands\Network\ExternalIp.cs" />
     <Compile Include="TerminalCommands\Network\InternetSpeed.cs" />
     <Compile Include="TerminalCommands\Network\WGet.cs" />
-    <Compile Include="TerminalCommands\StartProccess.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\StartProccess.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\Clear.cs" />
   </ItemGroup>
   <ItemGroup>

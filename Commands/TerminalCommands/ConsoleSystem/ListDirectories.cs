@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Core;
 
-namespace Commands.TerminalCommands
+namespace Commands.TerminalCommands.ConsoleSystem
 {
     public class ListDirectories : ITerminalCommand
     {

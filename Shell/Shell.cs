@@ -42,26 +42,6 @@ namespace Shell
         };
         //-----------------------
 
-        // We check if history file has any data in it.
-        private static bool CheckHistoryFileLength(string historyFileName)
-        {
-            if (!File.Exists(historyFileName))
-            {
-                Console.WriteLine("History file not exists!");
-                return false;
-            }
-            using (StringReader stringReader = new StringReader(historyFileName))
-            {
-                string historFileData = stringReader.ReadToEnd();
-                if (historFileData.Length > 0)
-                {
-                    return true;
-                }
-                Console.WriteLine("No commands in list!");
-                return false;
-            }
-        }
-
 
         //Entry point of shell
 
@@ -152,24 +132,6 @@ namespace Shell
                     else if (s_input == "logoff")
                     {
                         SystemCmd.LogoffCmd();
-                    }
-                    // Open current directory in Windows Explorer.
-                    else if (s_input == "odir")
-                    {
-                        FileSystem.OpenCurrentDiretory(dlocation);
-                    }
-                    //Clear command history file
-                    else if (s_input == "chistory")
-                    {
-                        if (File.Exists(s_historyFile))
-                        {
-                            File.WriteAllText(s_historyFile, string.Empty);
-                            Console.WriteLine("Command history log cleared!");
-                        }
-                        else
-                        {
-                            Console.WriteLine("File '" + s_historyFile + "' dose not exist!");
-                        }
                     }
                     else if (s_input.Contains("speedtest"))
                     {

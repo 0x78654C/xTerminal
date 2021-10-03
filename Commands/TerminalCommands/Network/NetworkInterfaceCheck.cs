@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Core;
 
-namespace Commands.TerminalCommands
+namespace Commands.TerminalCommands.Network
 {
    public class NetworkInterfaceCheck : ITerminalCommand
     {

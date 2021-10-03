@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Core;
 
-namespace Commands.TerminalCommands
+namespace Commands.TerminalCommands.ConsoleSystem
 {
     public class StartProccess : ITerminalCommand
     {

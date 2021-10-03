@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Commands.TerminalCommands;
 
 namespace Commands
 {
@@ -14,19 +13,21 @@ namespace Commands
         static CommandRepository()
         {
             // System Commands
-            s_terminalCommands.Add(new ListDirectories());
-            s_terminalCommands.Add(new StartProccess());
-            s_terminalCommands.Add(new Help());
-            s_terminalCommands.Add(new CommandHistory());
+            s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.ListDirectories());
+            s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.StartProccess());
+            s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.Help());
+            s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.CommandHistory());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.Clear());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.Clear());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.CurrentDirectory());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.CheckPermission());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.BiosInfo());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.StorageInfo());
+            s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.OpenDirectory());
+            s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.ClearHistory());
 
             // Network Commands
-            s_terminalCommands.Add(new NetworkInterfaceCheck());
+            s_terminalCommands.Add(new TerminalCommands.Network.NetworkInterfaceCheck());
             s_terminalCommands.Add(new TerminalCommands.Network.ExternalIp());
             s_terminalCommands.Add(new TerminalCommands.Network.InternetSpeed());
             s_terminalCommands.Add(new TerminalCommands.Network.CheckDomain());
