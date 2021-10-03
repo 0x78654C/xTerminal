@@ -13,8 +13,10 @@ namespace Commands.TerminalCommands.DirFiles
     -h   : Displays this message.
     -s   : Output lines containing a provided text from a file.
     -so  : Saves the lines containing a provided text from a file.
-    -sm  : Output lines containing a provided text from multiple fies.
-    -smo : Saves the lines containing a provided text from multiple files in current path location.
+    -sa  : Output lines containing a provided text from all files in current directory.
+    -sao : Saves the lines containing a provided text from all files in current directory.
+    -sm  : Output lines containing a provided text from multiple fies in current directory.
+    -smo : Saves the lines containing a provided text from multiple files in current directory.
 ";
 
 
@@ -25,6 +27,9 @@ namespace Commands.TerminalCommands.DirFiles
                 s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
                 arg = arg.Replace("cat ", "");
                 string[] input = arg.Split(' ');
+                string searchString;
+                string fileName;
+                string saveToFile;
                 if (input.Length == 1)
                 {
                     if (input[0].Contains("-h"))
@@ -35,28 +40,48 @@ namespace Commands.TerminalCommands.DirFiles
                     Console.WriteLine(Core.Commands.CatCommand.FileOutput(input[0], s_currentDirectory));
                     return;
                 }
-
-                string fileName = input[2];
-                fileName = fileName.Replace(";", " ");
-                string searchString = input[1];
+;
                 switch (input[0])
                 {
                     case "-s":
+                        fileName = input[2];
+                        fileName = fileName.Replace(";", " ");
+                        searchString = input[1];
                         Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
+                        break;
+                    case "-sa":
+                        searchString = input[1];
+                        fileName = "";
+                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true)); ;
+                        break;
+                    case "-sao":
+                        searchString = input[1];
+                        fileName = "";
+                        saveToFile = input[2];
+                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true)); ;
                         break;
                     case "-so":
                         {
-                            string saveToFile = input[3];
+                            fileName = input[2];
+                            fileName = fileName.Replace(";", " ");
+                            searchString = input[1];
+                            saveToFile = input[3];
                             Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
                             break;
                         }
                     case "-sm":
-                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), ""));
+                        fileName = input[2];
+                        fileName = fileName.Replace(";", " ");
+                        searchString = input[1];
+                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "",false));
                         break;
                     case "-smo":
                         {
-                            string saveToFile = input[3];
-                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile));
+                            fileName = input[2];
+                            fileName = fileName.Replace(";", " ");
+                            searchString = input[1];
+                            saveToFile = input[3];
+                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile,false));
                             break;
                         }
                 }
