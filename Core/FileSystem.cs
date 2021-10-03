@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.IO;
 
 namespace Core
@@ -173,7 +172,7 @@ namespace Core
         {
             if (Directory.Exists(dirPath))
             {
-                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath,false,false);
+                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath, false, false);
                 return;
             }
             Console.WriteLine($"Directory '{dirPath}' does not exist!");

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
+﻿using Core;
+using System;
 
 namespace Commands.TerminalCommands.Network
 {
-   public class NetworkInterfaceCheck : ITerminalCommand
+    public class NetworkInterfaceCheck : ITerminalCommand
     {
         public string Name => "ifconfig";
 

@@ -1,5 +1,5 @@
-﻿using System;
-using Core;
+﻿using Core;
+using System;
 using ping = Core.NetWork;
 
 namespace Commands.TerminalCommands.Network

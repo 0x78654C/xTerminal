@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using Core;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -13,7 +13,7 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "fmove";
 
-        public void Execute (string arg)
+        public void Execute(string arg)
         {
 
             Console.WriteLine(" ");

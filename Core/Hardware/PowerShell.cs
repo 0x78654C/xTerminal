@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Management;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
-using System.Management.Instrumentation;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Core.Hardware
 {
@@ -41,7 +36,7 @@ namespace Core.Hardware
 
                 return stringBuilder.ToString();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return e.Message;
             }

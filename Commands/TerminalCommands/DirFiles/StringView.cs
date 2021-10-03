@@ -1,5 +1,5 @@
-﻿using System;
-using Core;
+﻿using Core;
+using System;
 
 namespace Commands.TerminalCommands.DirFiles
 {
@@ -37,7 +37,7 @@ namespace Commands.TerminalCommands.DirFiles
                 }
 
                 string fileName = input[2];
-                fileName = fileName.Replace(";"," ");
+                fileName = fileName.Replace(";", " ");
                 string searchString = input[1];
                 switch (input[0])
                 {

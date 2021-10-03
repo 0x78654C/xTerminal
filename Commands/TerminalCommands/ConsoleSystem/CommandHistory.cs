@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.IO;
 using System.Linq;
-using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -16,7 +16,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
-                string cmd =args.Split(' ').Skip(1).FirstOrDefault();
+                string cmd = args.Split(' ').Skip(1).FirstOrDefault();
 
                 if (Int32.TryParse(cmd, out var position))
                 {

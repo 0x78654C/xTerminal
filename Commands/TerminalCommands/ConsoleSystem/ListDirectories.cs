@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.IO;
 using System.Linq;
-using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -78,7 +78,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             if (displaySizes)
             {
-                string currentDirectorySize = 
+                string currentDirectorySize =
                     FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
 
                 Console.WriteLine("---------------------------------------------\n");
@@ -123,8 +123,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
         {
-            return displaySizes 
-                ? fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName+"\\"+fileInfo.Name, false)}" 
+            return displaySizes
+                ? fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}"
                 : fileInfo.Name;
         }
 

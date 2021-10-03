@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Commands.TerminalCommands.DirFiles
 {
-    public  class MakeDirectory : ITerminalCommand
+    public class MakeDirectory : ITerminalCommand
     {
         public string Name => "mkdir";
         public void Execute(string arg)

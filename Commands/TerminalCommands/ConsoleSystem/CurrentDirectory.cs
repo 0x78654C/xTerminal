@@ -6,14 +6,14 @@ using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
-    public class CurrentDirectory: ITerminalCommand
+    public class CurrentDirectory : ITerminalCommand
     {
         private static string s_newLocation = string.Empty;
         private static string s_currentLocation = string.Empty;
 
         public string Name => "cd";
 
-        public void Execute (string arg)
+        public void Execute(string arg)
         {
 
             try

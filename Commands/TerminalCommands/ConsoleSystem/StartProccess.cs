@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {

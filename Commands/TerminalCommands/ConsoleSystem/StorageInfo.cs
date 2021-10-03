@@ -1,15 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Management;
-using System.Management.Automation;
-using System.Management.Instrumentation;
-using System.Text;
-using System.Threading.Tasks;
-using Wmi = Core.Hardware.WMIDetails;
 using ping = Core.NetWork;
-using System.IO;
+using Wmi = Core.Hardware.WMIDetails;
 namespace Commands.TerminalCommands.ConsoleSystem
 {
     public class StorageInfo : ITerminalCommand

@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Core;
 using System.IO;
-using Core;
 
 namespace Commands.TerminalCommands.DirFiles
 {

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Net;
-using Core;
 
 namespace Commands.TerminalCommands.Network
 {

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Text;
 
 namespace Core.Commands
 {
@@ -68,7 +66,7 @@ namespace Core.Commands
         public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile)
         {
             StringBuilder output = new StringBuilder();
-            
+
             foreach (var file in paths)
             {
                 var nFile = SanitizePath(file, currentDir);
@@ -81,22 +79,22 @@ namespace Core.Commands
                 output.AppendLine($"---------------- {nFile} ----------------");
                 output.AppendLine(FileOutput(nFile, currentDir, searchString));
             }
-            
+
             if (!string.IsNullOrEmpty(savedFile))
             {
                 return SaveFileOutput(savedFile, currentDir, output.ToString());
             }
-            
+
             return output.ToString();
         }
-        
+
         private static string SaveFileOutput(string path, string currentDir, string contents)
         {
             path = SanitizePath(path, currentDir);
             File.WriteAllText(path, contents);
             return $"Data saved in {path}";
         }
-        
+
         private static string SanitizePath(string path, string currentDir)
         {
             return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}\{path}";

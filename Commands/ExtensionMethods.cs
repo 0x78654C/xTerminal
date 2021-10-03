@@ -8,7 +8,7 @@ namespace Commands
     {
         internal static bool ContainsText(this string source, string searchText)
         {
-            return !string.IsNullOrWhiteSpace(source) && 
+            return !string.IsNullOrWhiteSpace(source) &&
                    source.ToLowerInvariant().ContainsText(searchText.ToLowerInvariant());
         }
 

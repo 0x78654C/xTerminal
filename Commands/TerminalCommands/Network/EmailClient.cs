@@ -1,5 +1,5 @@
-﻿using System;
-using Core;
+﻿using Core;
+using System;
 using System.Text;
 
 namespace Commands.TerminalCommands.Network

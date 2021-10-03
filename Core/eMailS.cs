@@ -26,12 +26,12 @@ namespace Core
                 {
                     int port = 587;
                     string _smtp = SmtpCheck(senderEmail);
-                    if(_smtp== "No valid SMTP Server")
+                    if (_smtp == "No valid SMTP Server")
                     {
                         Console.WriteLine($"[{_date}] No valid SMTP Server. Accepted email clients are: Microsoft(live, hotmail, outlook), Yahoo and Gmail!");
                         return;
                     }
-                 
+
                     MailMessage msg = new MailMessage(); //create the message
                     msg.To.Add(receiverEmail);
                     msg.From = new MailAddress(senderEmail, senderName, Encoding.UTF8);

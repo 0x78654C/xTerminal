@@ -59,7 +59,7 @@ namespace Core
             string gateway = string.Empty;
             string mask = string.Empty;
             string dnsAddr = string.Empty;
-            
+
             foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
@@ -85,11 +85,11 @@ namespace Core
 
                     var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
                     nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
-                    nicOuptut += $"Description:".PadRight(15, ' ') +$"{ networkInterface.Description}\n";
+                    nicOuptut += $"Description:".PadRight(15, ' ') + $"{ networkInterface.Description}\n";
                     nicOuptut += $"IP Address: \n{ ipAddress} \n";
                     nicOuptut += $"MASK: \n{ mask}\n";
                     nicOuptut += $"Gateway: \n{gateway}\n";
-                    nicOuptut += $"MAC Address: ".PadRight(15, ' ')+$"{mac}\n";
+                    nicOuptut += $"MAC Address: ".PadRight(15, ' ') + $"{mac}\n";
                     nicOuptut += $"DNS: \n{dnsAddr}\n";
                 }
             }

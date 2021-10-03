@@ -1,6 +1,5 @@
 ﻿using Core;
 using System;
-using System.IO;
 
 namespace Shell
 {

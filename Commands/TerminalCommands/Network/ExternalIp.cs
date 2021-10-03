@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Net;
 using System.Text.RegularExpressions;
-using Core;
 
 namespace Commands.TerminalCommands.Network
 {
@@ -9,7 +9,7 @@ namespace Commands.TerminalCommands.Network
     {
         public string Name => "extip";
 
-        public void Execute (string arg)
+        public void Execute(string arg)
         {
             try
             {

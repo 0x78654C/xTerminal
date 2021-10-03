@@ -9,7 +9,7 @@ using System.Threading;
 using CheckType = Core.FileSystem.CheckType;
 namespace Commands.TerminalCommands.Network
 {
-    public class WGet :ITerminalCommand
+    public class WGet : ITerminalCommand
     {
         public string Name => "wget";
 
@@ -47,7 +47,7 @@ namespace Commands.TerminalCommands.Network
 
                     if (s_urlFirst.Contains(@"\"))
                     {
-                        s_urlSecond = arg.Split(' ')[2] ;
+                        s_urlSecond = arg.Split(' ')[2];
                         s_workerDirectory.RunWorkerAsync();
                         s_resetEvent.WaitOne();
                     }

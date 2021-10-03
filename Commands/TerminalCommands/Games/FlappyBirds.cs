@@ -731,7 +731,7 @@ namespace Commands.TerminalCommands.Games
             Update();
         }
 
-        public void Execute(string arg) 
+        public void Execute(string arg)
         {
             FlappyBirds Fb = new FlappyBirds();
             Fb.ReadHighScoreFromFile();

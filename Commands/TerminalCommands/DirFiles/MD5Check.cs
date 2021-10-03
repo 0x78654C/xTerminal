@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.IO;
 using System.Security.Cryptography;
-using Core;
 
 namespace Commands.TerminalCommands.DirFiles
 {

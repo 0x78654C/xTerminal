@@ -44,7 +44,7 @@ namespace Commands
             s_terminalCommands.Add(new TerminalCommands.DirFiles.Delete());
             s_terminalCommands.Add(new TerminalCommands.DirFiles.StringView());
             s_terminalCommands.Add(new TerminalCommands.DirFiles.Editor());
-            
+
             // Games
             s_terminalCommands.Add(new TerminalCommands.Games.FlappyBirds());
         }

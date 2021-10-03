@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace Core.Commands
 {
-   public static class SystemCommands
+    public static class SystemCommands
     {
         /// <summary>
         /// Shutdown command using command promt.

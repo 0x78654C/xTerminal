@@ -15,7 +15,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             try
             {
                 string tabs = "\t";
-                input = arg.Split(' ')[1] ;
+                input = arg.Split(' ')[1];
                 if (input.Contains(@"\"))
                 {
                     if (Directory.Exists(input))
