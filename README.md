@@ -18,11 +18,11 @@ This is the full list of commands that can be used in xTerminal:
     chistory  -- Clears the current history of commands!
     start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe. Can use following parameter:
                  -u  : Start with different user.
-    clear     --  Cleares the console.
+    clear     -- Cleares the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory)
     odir      -- Open current directory with Windows Explorer
     ps        -- Opens Windows Powershell.
-    cmd       --  Opens Windows Command Prompt.
+    cmd       -- Opens Windows Command Prompt.
     reboot    -- It force reboots the Windows OS.
     shutdown  -- It force shutdown the Windows OS.
     logoff    -- It force logoff current user.
