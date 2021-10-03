@@ -34,8 +34,10 @@ This is the full list of commands that can be used in xTerminal:
                  -h   : Displays this message.
                  -s   : Output lines containing a provided text from a file.
                  -so  : Saves the lines containing a provided text from a file.
-                 -sm  : Output lines containing a provided text from multiple fies.
-                 -smo : Saves the lines containing a provided text from multiple files in current path location.
+                 -sa  : Output lines containing a provided text from all files in current directory.
+                 -sao : Saves the lines containing a provided text from all files in current directory.
+                 -sm  : Output lines containing a provided text from multiple fies in current directory.
+                 -smo : Saves the lines containing a provided text from multiple files in current directory.
     mkdir     -- It creates a directory in the current place.
     mkfile    -- It creates a file in the current place.
     fcopy     -- Copies a file with CRC checksum control.
