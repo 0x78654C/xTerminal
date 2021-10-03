@@ -13,8 +13,8 @@ namespace Commands.TerminalCommands.DirFiles
     -h   : Displays this message.
     -s   : Output lines containing a provided text from a file.
     -so  : Saves the lines containing a provided text from a file.
-    -sa  : Output lines containing a provided text from all files in current directory.
-    -sao : Saves the lines containing a provided text from all files in current directory.
+    -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
+    -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
     -sm  : Output lines containing a provided text from multiple fies in current directory.
     -smo : Saves the lines containing a provided text from multiple files in current directory.
 ";
@@ -58,7 +58,8 @@ namespace Commands.TerminalCommands.DirFiles
                         searchString = input[1];
                         fileName = "";
                         saveToFile = input[2];
-                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true)); ;
+                        string output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true);
+                        Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, output));
                         break;
                     case "-so":
                         {
@@ -73,7 +74,7 @@ namespace Commands.TerminalCommands.DirFiles
                         fileName = input[2];
                         fileName = fileName.Replace(";", " ");
                         searchString = input[1];
-                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "",false));
+                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", false));
                         break;
                     case "-smo":
                         {
@@ -81,14 +82,14 @@ namespace Commands.TerminalCommands.DirFiles
                             fileName = fileName.Replace(";", " ");
                             searchString = input[1];
                             saveToFile = input[3];
-                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile,false));
+                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, false));
                             break;
                         }
                 }
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.ToString());
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
     }

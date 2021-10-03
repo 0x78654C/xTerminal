@@ -19,7 +19,7 @@ namespace Core.Commands
         public static string FileOutput(string input, string currentDir, string searchString = null, string savedFile = null)
         {
             var output = new StringBuilder();
-            input = SanitizePath(input, currentDir);
+            input = FileSystem.SanitizePath(input, currentDir);
             int lineCount = 0;
 
             if (!File.Exists(input))
@@ -51,7 +51,7 @@ namespace Core.Commands
 
             if (!string.IsNullOrEmpty(savedFile))
             {
-                return SaveFileOutput(savedFile, currentDir, output.ToString());
+                return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
             }
          
             return output.ToString();
@@ -85,12 +85,18 @@ namespace Core.Commands
                     output.AppendLine($"---------------- {file} ----------------");
                     output.AppendLine(FileOutput(file, currentDir, searchString));
                 }
+               var directoryInfo = new DirectoryInfo(currentDir).GetDirectories();
+                foreach(var dir in directoryInfo)
+                {
+                    string p = "";
+                    output.AppendLine( MultiFileOutput(searchString, dir.FullName,p.Split(' '),savedFile,true));
+                }
             }
             else
             {
                 foreach (var file in paths)
                 {
-                    var nFile = SanitizePath(file, currentDir);
+                    var nFile = FileSystem.SanitizePath(file, currentDir);
                     if (!File.Exists(nFile))
                     {
                         FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
@@ -102,24 +108,14 @@ namespace Core.Commands
                 }
             }
 
-            if (!string.IsNullOrEmpty(savedFile))
+
+            if (!string.IsNullOrEmpty(savedFile) && searchAll == false)
             {
-                return SaveFileOutput(savedFile, currentDir, output.ToString());
+                return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
             }
 
             return output.ToString();
         }
 
-        private static string SaveFileOutput(string path, string currentDir, string contents)
-        {
-            path = SanitizePath(path, currentDir);
-            File.WriteAllText(path, contents);
-            return $"Data saved in {path}";
-        }
-
-        private static string SanitizePath(string path, string currentDir)
-        {
-            return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}\{path}";
-        }
     }
 }

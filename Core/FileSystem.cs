@@ -177,5 +177,17 @@ namespace Core
             }
             Console.WriteLine($"Directory '{dirPath}' does not exist!");
         }
+
+        public static string SaveFileOutput(string path, string currentDir, string contents)
+        {
+            path = SanitizePath(path, currentDir);
+            File.WriteAllText(path, contents);
+            return $"Data saved in {path}";
+        }
+
+        public static string SanitizePath(string path, string currentDir)
+        {
+            return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}\{path}";
+        }
     }
 }
