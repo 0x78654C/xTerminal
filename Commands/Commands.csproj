@@ -33,6 +33,10 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Windows\assembly\GAC_MSIL\System.Management.Automation\1.0.0.0__31bf3856ad364e35\System.Management.Automation.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -45,11 +49,31 @@
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="ITerminalCommand.cs" />
     <Compile Include="TerminalCommands\CommandHistory.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\BiosInfo.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\CheckPermission.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\CurrentDirectory.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
+    <Compile Include="TerminalCommands\DirFiles\Delete.cs" />
+    <Compile Include="TerminalCommands\DirFiles\Editor.cs" />
+    <Compile Include="TerminalCommands\DirFiles\FCopy.cs" />
+    <Compile Include="TerminalCommands\DirFiles\FMove.cs" />
+    <Compile Include="TerminalCommands\DirFiles\FRename.cs" />
+    <Compile Include="TerminalCommands\DirFiles\MakeDirectory.cs" />
+    <Compile Include="TerminalCommands\DirFiles\MakeFile.cs" />
+    <Compile Include="TerminalCommands\DirFiles\MD5Check.cs" />
+    <Compile Include="TerminalCommands\DirFiles\StringView.cs" />
+    <Compile Include="TerminalCommands\Games\FlappyBirds.cs" />
     <Compile Include="TerminalCommands\Help.cs" />
     <Compile Include="TerminalCommands\ListDirectories.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TerminalCommands\NetworkInterfaceCheck.cs" />
+    <Compile Include="TerminalCommands\Network\CheckDomain.cs" />
+    <Compile Include="TerminalCommands\Network\EmailClient.cs" />
+    <Compile Include="TerminalCommands\Network\ExternalIp.cs" />
+    <Compile Include="TerminalCommands\Network\InternetSpeed.cs" />
+    <Compile Include="TerminalCommands\Network\WGet.cs" />
     <Compile Include="TerminalCommands\StartProccess.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\Clear.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
@@ -57,8 +81,6 @@
       <Name>Core</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="TerminalCommands\System\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

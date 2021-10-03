@@ -36,29 +36,9 @@ namespace Shell
         //Define the shell commands 
         private Dictionary<string, string> Aliases = new Dictionary<string, string>
         {
-            { "clear", @".\Tools\Internal\Clear.exe" },
-            { "extip", @".\Tools\Network\Externalip.exe" },
-            { "ispeed", @".\Tools\Network\InternetSpeed.exe" },
-            { "icheck", @".\Tools\Network\CheckDomain.exe" },
-            { "md5", @".\Tools\FileSystem\CheckMD5.exe"  },
-            { "fcopy", @".\Tools\FileSystem\FCopy.exe"  },
-            { "fmove", @".\Tools\FileSystem\FMove.exe"  },
-            { "frename", @".\Tools\FileSystem\FRename.exe"  },
             { "cmd", "cmd"  },
             { "ps", "powershell"  },
-            { "cd", @".\Tools\FileSystem\CDirectory.exe"  },
-            { "cat", @".\Tools\FileSystem\StringView.exe"  },
-            { "del", @".\Tools\FileSystem\Delete.exe"  },
-            { "mkdir", @".\Tools\FileSystem\MakeDirectory.exe"  },
-            { "mkfile", @".\Tools\FileSystem\MKFile.exe"  },
-            { "speedtest", @".\Tools\netcoreapp3.1\TestNet.exe"  },
-            { "email", @".\Tools\Network\eMailS.exe"  },
-            { "wget", @".\Tools\Network\WGet.exe"  },
-            { "edit", @".\Tools\FileSystem\xEditor.exe"  },
-            { "cp", @".\Tools\FileSystem\CheckPermission.exe"  },
-            { "bios", @".\Tools\Hardware\BiosInfo.exe"  },
-            { "sinfo", @".\Tools\Hardware\sdc.exe"  },
-            { "flappy", @".\Tools\Game\FlappyBirds.exe"  }
+            { "speedtest", @".\Tools\netcoreapp3.1\TestNet.exe"  }
         };
         //-----------------------
 
@@ -81,51 +61,6 @@ namespace Shell
                 return false;
             }
         }
-
-        /// <summary>
-        /// Output the commands from history.
-        /// </summary>
-        /// <param name="historyFileName">Path to history command file.</param>
-        /// <param name="linesNumber">Number of commnands to be displayed.</param>
-        private static void OutputHistoryCommands(string historyFileName, int linesNumber)
-        {
-
-            if (CheckHistoryFileLength(historyFileName) == false)
-            {
-                return;
-            }
-
-            if (linesNumber > 100)
-            {
-                Console.WriteLine("Only 100 commands can be displayed!");
-                return;
-            }
-
-            int index = 1;
-            string line;
-            var lines = File.ReadLines(historyFileName);
-            int countLines = lines.Count();
-
-            do
-            {
-                line = lines.Skip(countLines - index).FirstOrDefault();
-                if (line == null)
-                {
-                    index++;
-                    continue;
-                }
-                line = line.Split('|').Skip(1).FirstOrDefault();
-                if (line != null)
-                {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
-                }
-                index++;
-
-            } while (index != linesNumber + 1);
-        }
-
-
 
 
         //Entry point of shell
@@ -185,15 +120,15 @@ namespace Shell
 
 
                 // New command implementation by Scott
-               
+
                 var c = Commands.CommandRepository.GetCommand(s_input);
                 if (c != null)
                 {
                     c.Execute(s_input);
-                }               
+                }
                 //----------------------------------------
 
-             
+
 
                 if (File.Exists(s_historyFile))
                 {
@@ -236,31 +171,22 @@ namespace Shell
                             Console.WriteLine("File '" + s_historyFile + "' dose not exist!");
                         }
                     }
-                    //editor set
-                    else if (s_input.Contains("edit set"))
+                    else if (s_input.Contains("speedtest"))
                     {
-                        SetTextEditor(s_input);
+                        Execute(s_input, "", true);
                     }
-                    else
+                    else if (s_input.Contains("cmd"))
                     {
-                        if (s_input.Contains(" "))
-                        {
-                            string[] dInput = s_input.Split(' ');
-                            string arg = s_input.Replace(dInput[0], "");
-                            Execute(dInput[0], arg, true); //run simple command                          
-                        }
-                        else
-                        {
-                            string[] dInput = s_input.Split(' ');
-                            string arg = s_input.Replace(dInput[0], "");
-                            Execute(dInput[0], arg, true); //run simple command
-                        }
+                        Execute(s_input, "", true);
+                    }
+                    else if (s_input.Contains("ps"))
+                    {
+                        Execute(s_input, "", true);
                     }
                 }
 
             } while (s_input != "exit");
         }
-
 
         //------------------
 
@@ -378,80 +304,6 @@ namespace Shell
                 //converting to int32 for future use
                 s_ioID = Convert.ToInt32(s_oID);
                 s_uPcount = s_ioID;
-            }
-
-        }
-
-
-        /// <summary>
-        /// Set specific text editor for 'edit' command.
-        /// </summary>
-        /// <param name="inputCommand"></param>
-        private void SetTextEditor(string inputCommand)
-        {
-            string[] dInput = inputCommand.Split(' ');
-            //counting the spaces in input command
-
-            try
-            {
-                if (inputCommand.Contains(@"\"))
-                {
-                    string arg = inputCommand.Replace(dInput[0], "");
-                    Execute(dInput[0], arg, true); //run simple command    
-                }
-                else
-                {
-                    string arg = inputCommand.Replace(dInput[0], "");
-                    Execute(dInput[0], arg, true); //run simple commandg
-                }
-            }
-            catch (Exception e)
-            {
-                FileSystem.ErrorWriteLine($"{e.Message} Check command. The path must be between double commas!");
-            }
-        }
-
-        private void StartApplication(string inputCommand, bool admin)
-        {
-
-            try
-            {
-                string[] dInput = inputCommand.Split(' ');
-                int _ch = Regex.Matches(inputCommand, " ").Count;
-
-                if (_ch == 1)
-                {
-                    if (!File.Exists(dInput[0]))
-                    {
-                        FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
-                        return;
-                    }
-                    if (admin)
-                    {
-                        Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1], true, true);
-                        return;
-                    }
-                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1], true, false); 
-                }
-                else
-                {
-                    if (!File.Exists(dInput[0]))
-                    {
-                        FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
-                        return;
-                    }
-                    if (admin)
-                    {
-                        Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], "", true, true);
-                        return;
-                    }
-                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], "", true, false);
-                }
-
-            }
-            catch (Exception e)
-            {
-                FileSystem.ErrorWriteLine(e.Message);
             }
         }
     }
