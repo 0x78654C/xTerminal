@@ -13,25 +13,14 @@ namespace Shell
     {
         //declaring variables
         public static string dlocation = null;
-        private static readonly string s_accountName = Environment.UserName;    //extract current loged username
-        private static readonly string s_computerName = Environment.MachineName; //extract machine name
+        private static readonly string s_accountName = GlobalVariables.accountName;    //extract current loged username
+        private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
-        private static string s_historyFilePath = $"C:\\Users\\{s_accountName}\\AppData\\Local\\xTerminal";
+        private static string s_historyFilePath = GlobalVariables.historyFilePath;
         private static List<string> s_listReg = new List<string>() { "CurrentDirectory" };
-        private static string s_historyFile = s_historyFilePath + "\\History.db";
-        private static string s_count = null;
-        private static string[] s_hLines = null;
-        private static string s_hContent = null;
-        private static string[] s_pLines = null;
-        private static string s_cID = null;
-        private static int s_iID = 0;
-        private static string[] s_cContent = null;
-        private static string[] s_clines = null;
-        private static string s_oID = null;
-        private static int s_ioID = 0;
-        private static int s_uPcount;
-
+        private static string s_historyFile =GlobalVariables.historyFile;
         //-------------------------------
+
         //Define the shell commands 
         private Dictionary<string, string> Aliases = new Dictionary<string, string>
         {
@@ -52,31 +41,16 @@ namespace Shell
 
 
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
-
-
             if (!Directory.Exists(s_historyFilePath))
             {
                 Directory.CreateDirectory(s_historyFilePath);
             }
 
             //creating history file if not exist
-            // Output NIC's configuration
             if (!File.Exists(s_historyFile))
             {
-                File.WriteAllText(s_historyFile, "0|0" + Environment.NewLine);
+                File.WriteAllText(s_historyFile, Environment.NewLine);
             }
-
-            //Reading lines and count
-            s_cContent = File.ReadAllLines(s_historyFile);
-
-            foreach (var line in s_cContent)
-            {
-                s_clines = line.Split('|');
-                s_oID = s_clines[0];
-                s_ioID = Convert.ToInt32(s_oID);
-                s_uPcount = s_ioID;
-            }
-
 
             // We loop unti exit commands is hit
             do
@@ -108,13 +82,11 @@ namespace Shell
                 //----------------------------------------
 
 
-
                 if (File.Exists(s_historyFile))
                 {
 
 
                     WriteHistoryCommandFile(s_historyFile, s_input);
-
 
                     //rebooting the machine command
                     if (s_input == "reboot")
@@ -210,62 +182,35 @@ namespace Shell
             }
         }
 
+
         /// <summary>
         /// Write terminal input commands to history file. 
         /// </summary>
         /// <param name="historyFile"></param>
-        /// <param name="commandInput"></param>
+        /// <param name="commandInput"></param
         private void WriteHistoryCommandFile(string historyFile, string commandInput)
         {
-            //reading file content
-            s_hContent = File.ReadAllText(historyFile);
+            int countLines = File.ReadAllLines(historyFile).Count();
+            var lines = File.ReadAllLines(historyFile).Skip(countLines - 99);
+            List<string> tempList = new List<string>();
 
-            //cheking if file is empy
-            if (s_hContent == string.Empty)
+            for (int i = 0; i < lines.Count(); i++)
             {
-                //writing dummy line if file is emtpy
-                File.WriteAllText(historyFile, "0|0" + Environment.NewLine);
-            }
-            s_hLines = File.ReadAllLines(historyFile); //reading lines from file
-            foreach (var line in s_hLines)
-            {
-                //parsing every line
-                s_pLines = line.Split('|');
-
-                //reading first string until space to determinate the last id
-                s_cID = s_pLines[0];
-
-                //convert first string to int                       
-                s_iID = Convert.ToInt32(s_cID);
-            }
-            // Checking if input is empty or starts with 'hcmd' for history display. If true do not write in.
-            if ((commandInput != string.Empty) && (!commandInput.StartsWith("hcmd")))
-            {
-                //increment value for new saved comnad
-                s_iID++;
-
-                //converting int back to string to be saved 
-                s_count = Convert.ToString(s_iID);
-
-                //writing command with id to file
-                File.AppendAllText(historyFile, s_count + "|" + commandInput + Environment.NewLine);
+                tempList.Add(lines.ElementAt(i));
             }
 
-            //reading all lines for count save
-            s_cContent = File.ReadAllLines(historyFile);
-
-            foreach (var line in s_cContent)
+            if (!commandInput.Contains("hcmd") && !commandInput.Contains("chistory"))
             {
-                //spliting the lines to get id's
-                s_clines = line.Split('|');
-
-                //reading first part with id's
-                s_oID = s_clines[0];
-
-                //converting to int32 for future use
-                s_ioID = Convert.ToInt32(s_oID);
-                s_uPcount = s_ioID;
+                tempList.Add(commandInput);
+                int countCommands = tempList.Count;
+                string outCommands = "";
+                for (int i = 0; i < countCommands; i++)
+                {
+                    outCommands += tempList.ElementAt(i) + Environment.NewLine;
+                }
+                File.WriteAllText(historyFile, outCommands);
             }
+            tempList.Clear();
         }
     }
 }
