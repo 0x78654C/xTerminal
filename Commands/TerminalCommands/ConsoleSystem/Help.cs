@@ -37,6 +37,8 @@ This is the full list of commands that can be used in xTerminal:
     cat       -- Displays the content of a file. Can use following parameters:
                  -h   : Displays this message.
                  -s   : Output lines containing a provided text from a file.
+                 -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
+                 -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
                  -so  : Saves the lines containing a provided text from a file.
                  -sm  : Output lines containing a provided text from multiple fies.
                  -smo : Saves the lines containing a provided text from multiple files in current path location.
