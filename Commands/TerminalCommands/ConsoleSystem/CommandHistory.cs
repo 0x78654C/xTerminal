@@ -1,5 +1,6 @@
 ﻿using Core;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -29,7 +30,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine($"Error: {e.Message}");
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
 
@@ -77,29 +78,22 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
 
-            int index = 1;
-            string line;
-            var lines = File.ReadLines(historyFileName);
-            int countLines = lines.Count();
+            int index = 0;
+            int linesCount = File.ReadAllLines(historyFileName).Count();
+            var lines = File.ReadLines(historyFileName).Skip(linesCount-linesNumber);
 
-            do
+            foreach (var line in lines)
             {
-                line = lines.Skip(countLines - index).FirstOrDefault();
-                if (line == null)
+                if (index <= linesNumber)
                 {
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
+                    }
                     index++;
-                    continue;
                 }
-                line = line.Split('|').Skip(1).FirstOrDefault();
-                if (line != null)
-                {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
-                }
-                index++;
-
-            } while (index != linesNumber + 1);
+            }
         }
-
     }
 }
