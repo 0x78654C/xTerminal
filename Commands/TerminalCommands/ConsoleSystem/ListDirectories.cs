@@ -56,8 +56,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         private static void DisplaySubDirectoryAndFileCounts()
         {
-            var files = Directory.GetFiles(s_currentDirectory, "*.*", SearchOption.AllDirectories);
-            var directories = Directory.GetDirectories(s_currentDirectory, "*", SearchOption.AllDirectories);
+            var files = Directory.GetFiles(s_currentDirectory, "*.*", SearchOption.AllDirectories).Count();
+            var directories = Directory.GetDirectories(s_currentDirectory, "*", SearchOption.AllDirectories).Count();
 
             Console.WriteLine($"Counting total directories/subdirectories and files on current location....\n");
             Console.WriteLine($"Total directories/subdirectories: {directories}");
