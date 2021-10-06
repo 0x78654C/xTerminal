@@ -37,11 +37,19 @@ This is the full list of commands that can be used in xTerminal:
     cat       -- Displays the content of a file. Can use following parameters:
                  -h   : Displays this message.
                  -s   : Output lines containing a provided text from a file.
-                 -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
-                 -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
+                      Example: cat -s <search_text> <file_search_in>
                  -so  : Saves the lines containing a provided text from a file.
-                 -sm  : Output lines containing a provided text from multiple fies.
-                 -smo : Saves the lines containing a provided text from multiple files in current path location.
+                      Example: cat -s <search_text> <file_search_in> <file_to_save>
+                 -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
+                      Example1: cat -sa <search_text>
+                      Example2: cat -sa <search_text> <part_of_file_name> 
+                 -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
+                      Example1: cat -sao <search_text> <file_to_save>
+                      Example2: cat -sao <search_text> <part_of_file_name> <file_to_save>
+                 -sm  : Output lines containing a provided text from multiple fies in current directory.
+                      Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
+                 -smo : Saves the lines containing a provided text from multiple files in current directory.
+                      Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> <file_to_save>
     mkdir     -- It creates a directory in the current place.
     mkfile    -- It creates a file in the current place.
     fcopy     -- Copies a file with CRC checksum control.
