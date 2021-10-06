@@ -48,7 +48,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         }
                         else
                         {
-                            File.WriteAllText(GlobalVariables.currentLocation, GlobalVariables.rootPath); //reset to current terminal locaton
                             RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
                         }
                     }
