@@ -8,6 +8,7 @@ namespace Core.Commands
     public static class CatCommand
     {
 
+
         /// <summary>
         /// Output to console specific lines from a file containing a specific string.
         /// </summary>
@@ -53,7 +54,7 @@ namespace Core.Commands
             {
                 return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
             }
-         
+
             return output.ToString();
         }
 
@@ -67,29 +68,51 @@ namespace Core.Commands
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <param name="searchAll"> Search in all files from current directory. </param>
         /// <returns>string</returns>
-        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile, bool searchAll)
+        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile, bool searchAll, string fileName = null)
         {
             StringBuilder output = new StringBuilder();
             if (searchAll)
             {
                 string[] files = Directory.GetFiles(currentDir);
-                foreach (var file in files)
-                {
-                   // var nFile = SanitizePath(file, currentDir);
-                    if (!File.Exists(file))
-                    {
-                        FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
-                        continue;
-                    }
 
-                    output.AppendLine($"---------------- {file} ----------------");
-                    output.AppendLine(FileOutput(file, currentDir, searchString));
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    foreach (var file in files)
+                    {
+                        var fileInfo = new FileInfo(file);
+
+                        if (!string.IsNullOrEmpty(fileName) && fileInfo.Name.Contains(fileName))
+                        {
+                            // var nFile = SanitizePath(file, currentDir);
+                            if (!File.Exists(file))
+                            {
+                                FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
+                                continue;
+                            }
+
+                            output.AppendLine($"---------------- {file} ----------------");
+                            output.AppendLine(FileOutput(file, currentDir, searchString));
+                        }
+                    }
                 }
-               var directoryInfo = new DirectoryInfo(currentDir).GetDirectories();
-                foreach(var dir in directoryInfo)
+                else
+                {
+                    foreach (var file in files)
+                    {
+                        if (!File.Exists(file))
+                        {
+                            FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
+                            continue;
+                        }
+                        output.AppendLine($"---------------- {file} ----------------");
+                        output.AppendLine(FileOutput(file, currentDir, searchString));
+                    }
+                }
+                var directoryInfo = new DirectoryInfo(currentDir).GetDirectories();
+                foreach (var dir in directoryInfo)
                 {
                     string p = "";
-                    output.AppendLine( MultiFileOutput(searchString, dir.FullName,p.Split(' '),savedFile,true));
+                    output.AppendLine(MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName));
                 }
             }
             else
