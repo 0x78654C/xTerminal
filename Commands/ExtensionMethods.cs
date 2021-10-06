@@ -9,7 +9,7 @@ namespace Commands
         internal static bool ContainsText(this string source, string searchText)
         {
             return !string.IsNullOrWhiteSpace(source) &&
-                   source.ToLowerInvariant().ContainsText(searchText.ToLowerInvariant());
+                   source.ToLowerInvariant().Contains(searchText.ToLowerInvariant());
         }
 
         internal static bool ContainsParameter(this IEnumerable<string> parameters, string parameter)
@@ -20,12 +20,12 @@ namespace Commands
         internal static string ParameterAfter(this IEnumerable<string> parameters, string parameter)
         {
             var parms = parameters.ToList();
-
+            string p = string.Join(" ", parms);
             int index = parms.FindIndex(s => s.Equals(parameter, StringComparison.InvariantCulture));
-
+            
             // Return an empty string if the parameter does not exist,
             // or if there is not another value after the searched parameter.
-            if (index == -1 || index + 1 <= parms.Count)
+            if (index == -1 || index + 1 == parms.Count)
             {
                 return "";
             }
