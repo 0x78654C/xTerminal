@@ -8,7 +8,7 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "cat";
 
         private static string s_currentDirectory;
-
+        private static string s_output = string.Empty;
         private static string s_helpMessage = @"
     -h   : Displays this message.
     -s   : Output lines containing a provided text from a file.
@@ -29,7 +29,15 @@ namespace Commands.TerminalCommands.DirFiles
                 string[] input = arg.Split(' ');
                 string searchString;
                 string fileName;
+                string fileSearchIn = string.Empty;
                 string saveToFile;
+
+                try
+                {
+                    fileSearchIn = input[2];
+                }
+                catch { }
+
                 if (input.Length == 1)
                 {
                     if (input[0].Contains("-h"))
@@ -52,14 +60,41 @@ namespace Commands.TerminalCommands.DirFiles
                     case "-sa":
                         searchString = input[1];
                         fileName = "";
-                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true)); ;
+                        if (!string.IsNullOrEmpty(fileSearchIn))
+                        {
+                            Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
+                            s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true, fileSearchIn);
+                        }
+                        else
+                        {
+                            s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true);
+                        }
+                        s_output = string.IsNullOrWhiteSpace(s_output) ? "No files with names that contains that text!" : s_output;
+                        Console.WriteLine(s_output);
                         break;
                     case "-sao":
                         searchString = input[1];
                         fileName = "";
-                        saveToFile = input[2];
-                        string output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true);
-                        Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, output));
+                        saveToFile = input[3];
+                        string startMessage="";
+                        if (!string.IsNullOrEmpty(fileSearchIn))
+                        {
+                            startMessage=$"---Searching in files containing '{fileSearchIn}' in name---\n\n";
+                            s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true, fileSearchIn);
+                        }
+                        else
+                        {
+                            s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true);
+                        }
+
+                        if (string.IsNullOrWhiteSpace(s_output))
+                        {
+                            Console.WriteLine("No files with names that contains that text!");
+                        }
+                        else
+                        {
+                            Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, startMessage+s_output));
+                        }
                         break;
                     case "-so":
                         {
