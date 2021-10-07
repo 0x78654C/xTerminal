@@ -1,3 +1,5 @@
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/ico.bmp?raw=true)
+
 # xTerminal
  A linux like terminal for windows in C#
  
