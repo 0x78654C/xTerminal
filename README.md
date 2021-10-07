@@ -1,12 +1,13 @@
 <p align="center">
 
   <img src="https://github.com/0x78654C/xTerminal/blob/main/media/ico.bmp">
-  ![Build status](https://ci.appveyor.com/api/projects/status/6as5ck98br6soxtk?svg=true)](https://ci.appveyor.com/project/0x78654C/xterminal)
 </p>
 
 # xTerminal
  A linux like terminal for windows in C#
- 
+
+ [![Build status](https://ci.appveyor.com/api/projects/status/6as5ck98br6soxtk?svg=true)](https://ci.appveyor.com/project/0x78654C/xterminal)
+
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 
 
