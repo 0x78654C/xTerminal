@@ -1,6 +1,6 @@
 <p align="center">
 
-  <img width="200" src="https://github.com/0x78654C/xTerminal/blob/main/media/ico.bmpg" alt="xTerminal">
+  <img width="200" src="https://github.com/0x78654C/xTerminal/blob/main/media/ico.bmp">
 
 </p>
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/ico.bmp?raw=true)
