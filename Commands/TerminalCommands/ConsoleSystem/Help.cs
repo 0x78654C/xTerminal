@@ -33,6 +33,8 @@ This is the full list of commands that can be used in xTerminal:
     logoff    -- It force logoff current user.
     bios      -- Displays BIOS information on local machine or remote.
     sinfo     -- Displays Storage devices information on local machine or remote.
+    hex       -- Display a hex dump of a file.
+                 -o  : Saves the output to a file. Ex.: hex <file_name> -o <file_to_be_saved>
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Can use following parameters:

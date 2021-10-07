@@ -37,6 +37,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Windows\assembly\GAC_MSIL\System.Management.Automation\1.0.0.0__31bf3856ad364e35\System.Management.Automation.dll</HintPath>
     </Reference>
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -53,6 +54,7 @@
     <Compile Include="TerminalCommands\ConsoleSystem\BiosInfo.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\CheckPermission.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\CurrentDirectory.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\HexViewer.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\OpenDirectory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
     <Compile Include="TerminalCommands\DirFiles\Delete.cs" />

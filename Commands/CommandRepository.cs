@@ -16,6 +16,7 @@ namespace Commands
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.ListDirectories());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.StartProccess());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.Help());
+            s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.HexViewer());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.CommandHistory());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.Clear());
             s_terminalCommands.Add(new TerminalCommands.ConsoleSystem.Clear());
