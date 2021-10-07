@@ -29,6 +29,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     FileSystem.ErrorWriteLine($"You need administrator rights to save file in: {arg.ParameterAfter("-o")} ");
                 }
+                catch (OutOfMemoryException)
+                {
+                    FileSystem.ErrorWriteLine($"Ran out of memmory!");
+                }
 
                 return;
             }
@@ -39,6 +43,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             if (File.Exists(file))
             {
+               
                 byte[] getBytes = File.ReadAllBytes(file);
                 if (saveToFile) {
                     Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16)));
