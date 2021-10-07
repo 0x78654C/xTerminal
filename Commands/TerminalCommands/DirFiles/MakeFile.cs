@@ -17,6 +17,7 @@ namespace Commands.TerminalCommands.DirFiles
                 if (Directory.Exists(CLocation))
                 {
                     File.Create(CLocation + @"\" + file);
+                    Console.WriteLine($"File {CLocation + @"\" + file} was created!");
                 }
                 else
                 {

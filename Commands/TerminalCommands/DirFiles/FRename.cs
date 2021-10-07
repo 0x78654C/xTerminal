@@ -1,4 +1,5 @@
 ﻿using Core;
+using System;
 using System.IO;
 
 namespace Commands.TerminalCommands.DirFiles
@@ -27,6 +28,7 @@ namespace Commands.TerminalCommands.DirFiles
                     if (File.Exists(FileName))
                     {
                         File.Move(FileName, NewName);
+                        Console.WriteLine($"File renamed from {FileName} to {NewName}");
                     }
                     else
                     {
@@ -39,6 +41,7 @@ namespace Commands.TerminalCommands.DirFiles
                     if (File.Exists(dlocation + @"\" + FileName))
                     {
                         File.Move(dlocation + @"\" + FileName, dlocation + @"\" + NewName);
+                        Console.WriteLine($"File renamed from {FileName} to {NewName}");
                     }
                     else
                     {
