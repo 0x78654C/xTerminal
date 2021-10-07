@@ -27,7 +27,7 @@ namespace Commands.TerminalCommands.DirFiles
             try
             {
                 file = arg.Split(' ')[1];
-                set = arg.Split(' ')[1];
+                
                 if (!file.Contains("set"))
                 {
 
@@ -61,8 +61,16 @@ namespace Commands.TerminalCommands.DirFiles
                 }
                 else
                 {
-                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, @set);
-                    Console.WriteLine("Your New editor is: " + @set);
+                    set = arg.Replace("edit set ","");
+                    if (File.Exists(set))
+                    {
+                        RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, set);
+                        Console.WriteLine("Your New editor is: " + set);
+                    }
+                    else
+                    {
+                        FileSystem.ErrorWriteLine($"File {set} dose not exist");
+                    }
                 }
 
             }
