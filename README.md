@@ -9,6 +9,7 @@
  [![Build status](https://ci.appveyor.com/api/projects/status/6as5ck98br6soxtk?svg=true)](https://ci.appveyor.com/project/0x78654C/xterminal)
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/2.bmp?raw=true)
 
 
 This is a simple terminal in C#  based on https://github.com/willharrison/ProgrammingWithWill
@@ -36,6 +37,8 @@ This is the full list of commands that can be used in xTerminal:
     logoff    -- It force logoff current user.
     bios      -- Displays BIOS information on local machine or remote.
     sinfo     -- Displays Storage devices information on local machine or remote.
+    hex       -- Display a hex dump of a file.
+                 -o  : Saves the output to a file. Ex.: hex <file_name> -o <file_to_be_saved>
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Can use following parameters:
