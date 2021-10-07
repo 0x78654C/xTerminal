@@ -10,6 +10,7 @@
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/2.bmp?raw=true)
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/3.bmp?raw=true)
 
 
 This is a simple terminal in C#  based on https://github.com/willharrison/ProgrammingWithWill
