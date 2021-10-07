@@ -4,7 +4,7 @@
 </p>
 
 # xTerminal
- A linux like terminal for windows in C#
+ A linux like terminal for windows in C# with some extras ;).
 
  [![Build status](https://ci.appveyor.com/api/projects/status/6as5ck98br6soxtk?svg=true)](https://ci.appveyor.com/project/0x78654C/xterminal)
 
