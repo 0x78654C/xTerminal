@@ -79,10 +79,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
-      <Project>{589BCB52-0184-4C70-BD85-095C0755F536}</Project>
+      <Project>{589bcb52-0184-4c70-bd85-095c0755f536}</Project>
       <Name>Core</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
