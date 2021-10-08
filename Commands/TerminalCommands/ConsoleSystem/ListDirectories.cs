@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    /* ls command class*/
     public class ListDirectories : ITerminalCommand
     {
         private static string s_currentDirectory = string.Empty;
@@ -14,7 +15,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countDirectories = 0;
         private static List<string> s_listFiles = new List<string>();
         private static List<string> s_listDirs = new List<string>();
-
+        private static string s_helpMessage = @"
+    -h  : Displays this message.
+    -s  : Displays size of files in current directory.
+    -c  : Counts files and directories (subdirs too) in current directory.
+    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl higlighted_text
+    -o  : Saves the output to a file. Ex.: ls -o file_to_save
+";
         public string Name => "ls";
 
         public void Execute(string args)
@@ -22,8 +29,17 @@ namespace Commands.TerminalCommands.ConsoleSystem
             try
             {
                 string[] arg = args.Split(' ');
+
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
+
+
+                // Display help message
+                if (arg.ContainsParameter("-h"))
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
 
                 // If the user passed "-hl" parameter without a search text parameter, report an error.
                 if (arg.ContainsParameter("-hl") &&
