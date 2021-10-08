@@ -15,6 +15,7 @@ This is the full list of commands that can be used in xTerminal:
 
     ------------------------ System -----------------------
     ls        -- List directories and files on a directory. Can use following parameters:
+                 -h  : Displays ls help message.
                  -s  : Displays size of files in current directory.
                  -c  : Counts files and directories (subdirs too) in current directory.
                  -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl higlighted_text
@@ -71,6 +72,7 @@ This is the full list of commands that can be used in xTerminal:
     wget      -- Download files from a specific website.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
+    ping      -- Pings a IP/Hostname. Ex.: ping google.com or ping google.com -r 10 (for 10 replays).
     
     ------------------------ Games -------------------------
     flappy    -- Play Flappy Birds in console!
