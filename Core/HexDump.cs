@@ -9,6 +9,12 @@ namespace Core
      */
     public class HexDump
     {
+        /// <summary>
+        /// Hex dump
+        /// </summary>
+        /// <param name="bytes">Bytes input from file</param>
+        /// <param name="bytesPerLine">Bytes per line. Default 16</param>
+        /// <returns>string </returns>
         public static string Hex(byte[] bytes, int bytesPerLine = 16)
         {
             if (bytes == null) return "<null>";
