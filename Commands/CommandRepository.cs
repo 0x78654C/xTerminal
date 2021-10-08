@@ -34,6 +34,7 @@ namespace Commands
             s_terminalCommands.Add(new TerminalCommands.Network.CheckDomain());
             s_terminalCommands.Add(new TerminalCommands.Network.EmailClient());
             s_terminalCommands.Add(new TerminalCommands.Network.WGet());
+            s_terminalCommands.Add(new TerminalCommands.Network.Ping());
 
             // File/Directory Commands
             s_terminalCommands.Add(new TerminalCommands.DirFiles.MD5Check());
