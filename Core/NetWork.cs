@@ -1,18 +1,22 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net.NetworkInformation;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Core
 {
     /*Network class for check Ping and Internet connection.*/
     public class NetWork
     {
+        private static Ping s_myPing;
+        private static PingReply s_pingReply;
 
         /// <summary>
         /// Verifies if IP is up or not
         /// </summary>
         /// <param name="ipAddress"></param>
         /// <returns>verifies if IP is up or not</returns>
-
         public static bool PingHost(string ipAddress)
         {
             bool pingable = false;
@@ -24,9 +28,9 @@ namespace Core
                 pingable = reply.Status == IPStatus.Success;
 
             }
-            catch (PingException p)
+            catch
             {
-                FileSystem.ErrorWriteLine(p.Message);
+                // We handle erros in other functions.
             }
             finally
             {
@@ -38,6 +42,46 @@ namespace Core
             }
             return pingable;
 
+        }
+
+        /// <summary>
+        /// Ping function for ping command line.
+        /// </summary>
+        /// <param name="address">IP/Hostanme for ping.</param>
+        public static void PingMain(string address, int pingReplys)
+        {
+            try
+            {
+                for (int i = 0; i < pingReplys; i++)
+                {
+                    if (PingHost(address))
+                    {
+                        Thread.Sleep(300);
+                        s_myPing = new Ping();
+                        s_pingReply = s_myPing.Send(address);
+                        Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {s_pingReply.Options.Ttl} |  Adress: {s_pingReply.Address}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{address} is down!");
+                    }
+                }
+            }
+            catch (TimeoutException)
+            {
+                FileSystem.ErrorWriteLine("Time out is to big");
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message);
+            }
+            finally
+            {
+                if (s_myPing != null)
+                {
+                    s_myPing.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Checking internet connection with Google DNS 8.8.8.8
