@@ -40,7 +40,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             string lastDirectory = s_currentLocation.Split('\\')[parseLocation];
                             if (parseLocation == 1)
                             {
-                                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
+                                string rootPartition = s_currentLocation.Split('\\')[parseLocation - 1]+"\\";
+                                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory,rootPartition);
                                 return;
                             }
                             s_currentLocation = s_currentLocation.Replace("\\" + lastDirectory, "");
