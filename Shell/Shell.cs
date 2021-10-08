@@ -72,19 +72,8 @@ namespace Shell
                 s_input = s_input.Trim();
 
 
-                // New command implementation by Scott
-
-                var c = Commands.CommandRepository.GetCommand(s_input);
-                if (c != null)
-                {
-                    c.Execute(s_input);
-                }
-                //----------------------------------------
-
-
                 if (File.Exists(s_historyFile))
                 {
-
 
                     WriteHistoryCommandFile(s_historyFile, s_input);
 
@@ -117,6 +106,15 @@ namespace Shell
                         Execute(s_input, "", true);
                     }
                 }
+
+                // New command implementation by Scott
+                var c = Commands.CommandRepository.GetCommand(s_input);
+                if (c != null)
+                {
+                    c.Execute(s_input);
+                }
+                //----------------------------------------
+
 
             } while (s_input != "exit");
         }
