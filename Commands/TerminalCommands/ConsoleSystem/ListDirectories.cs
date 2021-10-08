@@ -33,7 +33,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
 
-
+                
                 // Display help message
                 if (arg.ContainsParameter("-h"))
                 {
