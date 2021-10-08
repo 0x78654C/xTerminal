@@ -46,6 +46,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     Console.WriteLine(HexDump.Hex(getBytes, 16));
                 }
+                GC.Collect();
             }
             else
             {
