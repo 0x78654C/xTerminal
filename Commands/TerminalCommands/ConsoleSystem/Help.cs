@@ -72,7 +72,7 @@ This is the full list of commands that can be used in xTerminal:
     wget      -- Download files from a specific website.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
-    ping      -- Pings a IP/Hostname. Ex.: ping google.com or ping google.com -r 10 (for 10 replays).
+    ping      -- Pings a IP/Hostname. Ex.: ping google.com or ping google.com -r 10 (for 10 replies).
     
     ------------------------ Games -------------------------
     flappy    -- Play Flappy Birds in console!
