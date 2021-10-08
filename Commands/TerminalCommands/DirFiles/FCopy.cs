@@ -57,8 +57,6 @@ namespace Commands.TerminalCommands.DirFiles
  Ex 2: fcopy -ca <destination_directory> -- copy all files in a specific directory
  Ex 3: fcopy -ca  -- copy source files in same directory
 ");
-                    Environment.Exit(-1);
-
                 }
 
                 //copy all with and without args

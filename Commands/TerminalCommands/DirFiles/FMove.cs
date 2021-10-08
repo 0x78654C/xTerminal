@@ -57,8 +57,6 @@ namespace Commands.TerminalCommands.DirFiles
  Ex 1: fmove <source_file> <destination_file>
  Ex 2: fmove -ma <destination_directory> -- moves all files in a specific directory
 ");
-                    Environment.Exit(-1);
-
                 }
 
                 //copy all with and without args
