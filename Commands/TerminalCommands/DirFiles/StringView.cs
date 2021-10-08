@@ -10,13 +10,21 @@ namespace Commands.TerminalCommands.DirFiles
         private static string s_currentDirectory;
         private static string s_output = string.Empty;
         private static string s_helpMessage = @"
-    -h   : Displays this message.
-    -s   : Output lines containing a provided text from a file.
-    -so  : Saves the lines containing a provided text from a file.
-    -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
-    -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
-    -sm  : Output lines containing a provided text from multiple fies in current directory.
-    -smo : Saves the lines containing a provided text from multiple files in current directory.
+  -h   : Displays this message.
+  -s   : Output lines containing a provided text from a file.
+           Example: cat -s <search_text> <file_search_in>
+  -so  : Saves the lines containing a provided text from a file.
+           Example: cat -s <search_text> <file_search_in> <file_to_save>
+  -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
+           Example1: cat -sa <search_text>
+           Example2: cat -sa <search_text> <part_of_file_name> 
+  -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
+           Example1: cat -sao <search_text> <file_to_save>
+           Example2: cat -sao <search_text> <part_of_file_name> <file_to_save>
+  -sm  : Output lines containing a provided text from multiple fies in current directory.
+           Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
+  -smo : Saves the lines containing a provided text from multiple files in current directory.
+           Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> <file_to_save>
 ";
 
 
