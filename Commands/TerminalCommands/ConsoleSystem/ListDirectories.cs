@@ -98,6 +98,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
             fileList += string.Join("\n", s_listFiles);
             string finalList = dirList + fileList;
             Console.WriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
+            s_listDirs.Clear();
+            s_listFiles.Clear();
         }
 
         private static void DisplaySubDirectoryAndFileCounts(string currentDirectory)
