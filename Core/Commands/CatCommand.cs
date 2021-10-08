@@ -37,7 +37,7 @@ namespace Core.Commands
                     lineCount++;
                     if (string.IsNullOrWhiteSpace(searchString))
                     {
-                        output.AppendLine(line);
+                        //output.AppendLine(line);
                         continue;
                     }
 
@@ -91,7 +91,7 @@ namespace Core.Commands
                             }
 
                             output.AppendLine($"---------------- {file} ----------------");
-                            output.AppendLine(FileOutput(file, currentDir, searchString));
+                            LineOutput(output, file, currentDir, searchString);
                         }
                     }
                 }
@@ -105,14 +105,18 @@ namespace Core.Commands
                             continue;
                         }
                         output.AppendLine($"---------------- {file} ----------------");
-                        output.AppendLine(FileOutput(file, currentDir, searchString));
+                        LineOutput(output, file, currentDir, searchString);
                     }
                 }
                 var directoryInfo = new DirectoryInfo(currentDir).GetDirectories();
                 foreach (var dir in directoryInfo)
                 {
                     string p = "";
-                    output.AppendLine(MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName));
+                    string oD = MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName);
+                    if (!string.IsNullOrWhiteSpace(oD))
+                    {
+                        output.AppendLine(oD);
+                    }
                 }
             }
             else
@@ -127,7 +131,7 @@ namespace Core.Commands
                     }
 
                     output.AppendLine($"---------------- {nFile} ----------------");
-                    output.AppendLine(FileOutput(nFile, currentDir, searchString));
+                    LineOutput(output, nFile, currentDir, searchString);
                 }
             }
 
@@ -140,5 +144,13 @@ namespace Core.Commands
             return output.ToString();
         }
 
+        private static void LineOutput(StringBuilder stringBuilder,string file,string currentDir,string searchString)
+        {
+            string oFile = FileOutput(file, currentDir, searchString);
+            if (oFile.StartsWith("Line"))
+            {
+                stringBuilder.AppendLine(FileOutput(file, currentDir, searchString));
+            }
+        }
     }
 }
