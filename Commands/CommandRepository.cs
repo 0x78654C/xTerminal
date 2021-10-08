@@ -49,6 +49,7 @@ namespace Commands
 
             // Games
             s_terminalCommands.Add(new TerminalCommands.Games.FlappyBirds());
+            s_terminalCommands.Add(new TerminalCommands.Games.Snake());
         }
 
         public static ITerminalCommand GetCommand(string[] args)
