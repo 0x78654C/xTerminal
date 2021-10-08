@@ -18,7 +18,7 @@ namespace Shell
         private static string s_input = null;
         private static string s_historyFilePath = GlobalVariables.historyFilePath;
         private static List<string> s_listReg = new List<string>() { "CurrentDirectory" };
-        private static string s_historyFile =GlobalVariables.historyFile;
+        private static string s_historyFile = GlobalVariables.historyFile;
         //-------------------------------
 
         //Define the shell commands 
@@ -199,14 +199,17 @@ namespace Shell
 
             if (!commandInput.Contains("hcmd") && !commandInput.Contains("chistory"))
             {
-                tempList.Add(commandInput);
-                int countCommands = tempList.Count;
-                string outCommands = "";
-                for (int i = 0; i < countCommands; i++)
+                if (!string.IsNullOrWhiteSpace(commandInput) && !string.IsNullOrEmpty(commandInput))
                 {
-                    outCommands += tempList.ElementAt(i) + Environment.NewLine;
+                    tempList.Add(commandInput);
+                    int countCommands = tempList.Count;
+                    string outCommands = "";
+                    for (int i = 0; i < countCommands; i++)
+                    {
+                        outCommands += tempList.ElementAt(i) + Environment.NewLine;
+                    }
+                    File.WriteAllText(historyFile, outCommands);
                 }
-                File.WriteAllText(historyFile, outCommands);
             }
             tempList.Clear();
         }
