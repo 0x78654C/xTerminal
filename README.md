@@ -82,6 +82,7 @@ This is the full list of commands that can be used in xTerminal:
 
     ------------------------ Games -------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
+    snake     -- Play Snake game in console!(Ceated by https://github.com/mkbmain)
 
 
 Requirements:

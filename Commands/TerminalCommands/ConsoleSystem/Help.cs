@@ -76,6 +76,7 @@ This is the full list of commands that can be used in xTerminal:
     
     ------------------------ Games -------------------------
     flappy    -- Play Flappy Birds in console!
+    snake     -- Play Snake game in console!
  
 
                         ";
