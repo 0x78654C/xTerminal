@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Core
 {
@@ -178,13 +179,34 @@ namespace Core
             Console.WriteLine($"Directory '{dirPath}' does not exist!");
         }
 
-        public static string SaveFileOutput(string path, string currentDir, string contents)
+        /// <summary>
+        /// Save file to file with sanitize path.
+        /// </summary>
+        /// <param name="path"> Filename with path where to save.</param>
+        /// <param name="currentDir">Terminal current directory.</param>
+        /// <param name="contents">Data to be saved.</param>
+        /// <param name="unicode">Unicode format for hex dump file./param>
+        /// <returns>string</returns>
+        public static string SaveFileOutput(string path, string currentDir, string contents, bool unicode =false)
         {
             path = SanitizePath(path, currentDir);
-            File.WriteAllText(path, contents);
+            if (!unicode)
+            {
+                File.WriteAllText(path, contents);
+            }
+            else
+            {
+                File.WriteAllText(path, contents,Encoding.Unicode);
+            }
             return $"Data saved in {path}";
         }
 
+        /// <summary>
+        /// Sanitize path if includes current directory from terminal. 
+        /// </summary>
+        /// <param name="path">File path.</param>
+        /// <param name="currentDir">Terminal current direcotory.</param>
+        /// <returns>string</returns>
         public static string SanitizePath(string path, string currentDir)
         {
             return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}\{path}";

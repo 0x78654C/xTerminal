@@ -40,7 +40,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                
                 byte[] getBytes = File.ReadAllBytes(file);
                 if (saveToFile) {
-                    Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16)));
+                    Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16),true));
                 }
                 else
                 {
