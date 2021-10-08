@@ -75,6 +75,7 @@
     <Compile Include="TerminalCommands\Network\EmailClient.cs" />
     <Compile Include="TerminalCommands\Network\ExternalIp.cs" />
     <Compile Include="TerminalCommands\Network\InternetSpeed.cs" />
+    <Compile Include="TerminalCommands\Network\Ping.cs" />
     <Compile Include="TerminalCommands\Network\WGet.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StartProccess.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\Clear.cs" />
