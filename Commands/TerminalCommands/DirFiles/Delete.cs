@@ -34,9 +34,9 @@ namespace Commands.TerminalCommands.DirFiles
                             Console.WriteLine("File " + input + " deleted!");
                         }
                     }
-                    catch
+                    catch(Exception e)
                     {
-                        FileSystem.ErrorWriteLine("Directory/file " + input + " dose not exist!");
+                        FileSystem.ErrorWriteLine(e.Message);
                     }
                 }
                 else
@@ -57,9 +57,9 @@ namespace Commands.TerminalCommands.DirFiles
                             Console.WriteLine("File " + newlocation + @"\" + input + " deleted!");
                         }
                     }
-                    catch
+                    catch(Exception e)
                     {
-                        FileSystem.ErrorWriteLine("Directory/file " + newlocation + @"\" + input + " dose not exist!");
+                        FileSystem.ErrorWriteLine(e.Message);
                     }
                 }
             }
