@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Core
 {
@@ -16,5 +17,6 @@ namespace Core
         public static readonly string computerName = Environment.MachineName; //extract machine name
         public static string historyFilePath = $"C:\\Users\\{accountName}\\AppData\\Local\\xTerminal";
         public static string historyFile = historyFilePath + "\\History.db";
+        public static string addonDirectory=Directory.GetCurrentDirectory()+"\\Add-ons";
     }
 }
