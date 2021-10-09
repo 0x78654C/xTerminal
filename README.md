@@ -71,7 +71,7 @@ This is the full list of commands that can be used in xTerminal:
     snake     -- Play Snake game in console!(Ceated by https://github.com/mkbmain)
 
 
-Requirements:
+## Requirements:
 
 .NET Core 2.0
 
@@ -86,7 +86,7 @@ Requirements:
 
  For both css command and ! -add the code must be formatted and runned using the following example:
 
- ```
+ ```C#
  using System;
 // You can add more dependencies.
 
