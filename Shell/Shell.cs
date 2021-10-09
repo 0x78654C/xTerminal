@@ -42,16 +42,10 @@ namespace Shell
 
 
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
-            if (!Directory.Exists(s_historyFilePath))
-            {
-                Directory.CreateDirectory(s_historyFilePath);
-            }
+            Directory.CreateDirectory(s_historyFilePath);
 
             // Creating the addon directory for C# code script scomands if not exist.
-            if (!Directory.Exists(s_addonDir))
-            {
-                Directory.CreateDirectory(s_addonDir);
-            }
+            Directory.CreateDirectory(s_addonDir);
 
 
             //creating history file if not exist
