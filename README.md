@@ -55,7 +55,7 @@ This is the full list of commands that can be used in xTerminal:
     frename   -- Renames a file in a specific directory(s).
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
     edit      -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
-    del       -- Deletes a file or folder without recover.
+    del       -- Deletes a file or folder without recover. Use -h for additional parameters.
     cp        -- Check file/folder permissions.
     md5       -- Checks the md5 checksum of a file.
 
