@@ -12,6 +12,8 @@ This is a simple terminal in C#  based on https://github.com/willharrison/Progra
 
 For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
+
 ## Requirements:
 
 .NET Core 2.0
@@ -103,10 +105,8 @@ namespace Test_Code
   - public class : Takes the name of the class. In this case: Test 
   - Main : Is defined as entry point for the code to run.
 
-## Samples
+## More Samples
 
-
-![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/2.bmp?raw=true)
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/3.bmp?raw=true)
 
