@@ -68,7 +68,7 @@ This is the full list of commands that can be used in xTerminal:
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname. Ex.: ping google.com or ping google.com -r 10 (for 10 replies).
     
-    --------------------- C# Core Runner --------------------
+    -----------------C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
                  Example 2: ccs <file_name> -p <parameter> 
@@ -80,7 +80,7 @@ This is the full list of commands that can be used in xTerminal:
 
 
 
-## Usage of C# Core runner and add-ons:
+## Usage of C# Code runner and add-ons:
 
  For both css command and ! -add the code must be formatted and runned using the following example:
 
