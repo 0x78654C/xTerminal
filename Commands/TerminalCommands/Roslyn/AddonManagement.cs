@@ -31,6 +31,7 @@ namespace Commands.TerminalCommands.Roslyn
    -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
              current directory with a command name.
                 Ex.: ! -add <file_name_with_code> <command_name>|<command_description>
+   -del   : Deletes an Add-on.
    -list  :  Display the list of the saved add-ons with description.
 ";
 
@@ -59,6 +60,12 @@ namespace Commands.TerminalCommands.Roslyn
             else if (command.StartsWith("-list"))
             {
                 Console.WriteLine(ListAddons(_addonDir));
+                return;
+            }
+            else if (command.StartsWith("-del"))
+            {
+                string fileName = args.Split(' ').ParameterAfter("-del");
+                DeleteAddon(_addonDir, fileName);
                 return;
             }
             CompileAndRun(_addonDir, command, param);
@@ -90,6 +97,32 @@ namespace Commands.TerminalCommands.Roslyn
             }
             
             return outList;
+        }
+
+        private void DeleteAddon(string addonDir, string fileName)
+        {
+            try
+            {
+                if (!Directory.Exists(addonDir))
+                {
+                    FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
+                    return;
+                }
+                var files = Directory.GetFiles(addonDir);
+                foreach (var file in files)
+                {
+                    if (Path.GetFileName(file) == fileName+".x")
+                    {
+                        File.Delete(file);
+                        Console.WriteLine($"Deleted Add-on: {fileName}");
+                    }
+                }
+
+            }
+            catch(Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message + " Check Command!");
+            }
         }
         private void SaveAddon(string argument,string addonDir)
         {
