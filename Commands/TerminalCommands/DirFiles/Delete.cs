@@ -7,13 +7,68 @@ namespace Commands.TerminalCommands.DirFiles
     public class Delete : ITerminalCommand
     {
         public string Name => "del";
-        public void Execute(string arg)
-        {
+        private string _currentLocation;
+        private string _helpMessage = @"
 
+    -h  : Displayes this message. 
+    -a  : Deletes all files and directories in current directory. 
+    -af : Deletes all files in current directory. 
+    -ad : Deletes all directories in current directory. 
+";
+
+        public void Execute(string args)
+        {
+            _currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+            string param = args.Split(' ').ParameterAfter("del");
+            if (param == "-a")
+            {
+                DeleteAllFilesDris(_currentLocation, true, true);
+            }
+            else if (param == "-af")
+            {
+                DeleteAllFilesDris(_currentLocation, true, false);
+            }
+            else if (param == "-ad")
+            {
+                DeleteAllFilesDris(_currentLocation, false, true);
+            }
+            else if (param == "-h")
+            {
+                Console.WriteLine(_helpMessage);
+            }
+            else
+            {
+                DeleteFile(args, _currentLocation);
+            }
+        }
+
+        private void DeleteAllFilesDris(string currentLocation, bool fileDelete, bool dirDelete)
+        {
+            if (fileDelete)
+            {
+                var files = Directory.GetFiles(currentLocation);
+                foreach (var file in files)
+                {
+                    if (File.Exists(file))
+                        File.Delete(file);
+                }
+            }
+
+            if (dirDelete)
+            {
+                var dirs = Directory.GetDirectories(currentLocation);
+                foreach (var dir in dirs)
+                {
+                    if (Directory.Exists(dir))
+                        Directory.Delete(dir,true);
+                }
+            }
+        }
+        private void DeleteFile(string arg, string currentLocation)
+        {
             try
             {
                 string input = arg.Split(' ')[1];              // geting location input        
-                string newlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ; //get the new location
 
                 //checking the cureent locaiton in folder
                 if (input.Contains(":") && input.Contains(@"\"))
@@ -34,7 +89,7 @@ namespace Commands.TerminalCommands.DirFiles
                             Console.WriteLine("File " + input + " deleted!");
                         }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         FileSystem.ErrorWriteLine(e.Message);
                     }
@@ -44,20 +99,20 @@ namespace Commands.TerminalCommands.DirFiles
                     try
                     {
                         // get the file attributes for file or directory
-                        FileAttributes attr = File.GetAttributes(newlocation + @"\" + input);
+                        FileAttributes attr = File.GetAttributes(currentLocation + @"\" + input);
 
                         if (attr.HasFlag(FileAttributes.Directory))
                         {
-                            Directory.Delete(newlocation + @"\" + input);
-                            Console.WriteLine("Directory " + newlocation + @"\" + input + " deleted!");
+                            Directory.Delete(currentLocation + @"\" + input);
+                            Console.WriteLine("Directory " + currentLocation + @"\" + input + " deleted!");
                         }
                         else
                         {
-                            File.Delete(newlocation + @"\" + input);
-                            Console.WriteLine("File " + newlocation + @"\" + input + " deleted!");
+                            File.Delete(currentLocation + @"\" + input);
+                            Console.WriteLine("File " + currentLocation + @"\" + input + " deleted!");
                         }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         FileSystem.ErrorWriteLine(e.Message);
                     }
