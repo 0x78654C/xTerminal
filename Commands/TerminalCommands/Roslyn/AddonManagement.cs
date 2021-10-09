@@ -31,7 +31,7 @@ namespace Commands.TerminalCommands.Roslyn
    -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
              current directory with a command name.
                 Ex.: ! -add <file_name_with_code> <command_name>|<command_description>
-   -del   : Deletes an Add-on.
+   -del   :  Deletes an Add-on.
    -list  :  Display the list of the saved add-ons with description.
 ";
 
