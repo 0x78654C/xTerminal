@@ -22,7 +22,9 @@ namespace Commands.TerminalCommands.Roslyn
         private string _currentLocation = string.Empty;
         private string _addonDir = string.Empty;
         private string _helpMessage = @"
-    Usage: ! <command_name> .
+ Usage: ! <command_name>
+ Can be used with the follwing parameters:
+
    -h     :  Displays help message.
    -p     :  Uses command with parameters.
                 Ex.: ! <command_name> -p <parameters>
@@ -66,24 +68,27 @@ namespace Commands.TerminalCommands.Roslyn
         {
             string fileName;
             string description;
-            string outList="";
+            string outList="List of Add-ons commands:\n\n";
             if (!Directory.Exists(addonDir))
             {
                 FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
             }
             else
             {
-
                 var files = Directory.GetFiles(addonDir);
                 foreach (var file in files)
                 {
-                    var fileInfo = new FileInfo(file);
-                    fileName = fileInfo.Name.Replace(".x", "").PadRight(15,' ');
-                    string line = File.ReadAllLines(file).First();
-                    description = line.Replace("//D:", "") + "\n";
-                    outList += $"{fileName}  :  {description}";
+                    if (file.Contains(".x"))
+                    {
+                        var fileInfo = new FileInfo(file);
+                        fileName = fileInfo.Name.Replace(".x", "").PadRight(15, ' ');
+                        string line = File.ReadAllLines(file).First();
+                        description = line.Replace("//D:", "") + "\n";
+                        outList += $"{fileName}  :  {description}";
+                    }
                 }
             }
+            
             return outList;
         }
         private void SaveAddon(string argument,string addonDir)
