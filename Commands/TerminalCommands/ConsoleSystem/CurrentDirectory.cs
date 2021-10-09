@@ -40,11 +40,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             string lastDirectory = s_currentLocation.Split('\\')[parseLocation];
                             if (parseLocation == 1)
                             {
-                                string rootPartition = s_currentLocation.Split('\\')[parseLocation - 1]+"\\";
-                                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory,rootPartition);
+                                string rootPartition = s_currentLocation.Split('\\')[parseLocation - 1] + "\\";
+                                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, rootPartition);
                                 return;
                             }
-                            s_currentLocation = s_currentLocation.Replace("\\" + lastDirectory, "");
+                            s_currentLocation = GetParentDir(s_currentLocation);
                             RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, s_currentLocation);
                         }
                         else
@@ -57,7 +57,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         pathCombine = Path.Combine(s_currentLocation, s_newLocation); // combine locations
                         if (Directory.Exists(pathCombine))
                         {
-                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathCombine);
+                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathCombine+"\\");
                             return;
                         }
                         Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
@@ -71,6 +71,18 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
             }
+        }
+
+        private string GetParentDir(string dir)
+        {
+            string output;
+            int parseCount = Regex.Matches(dir, @"\\").Count;
+            string lastDir = dir.Split('\\')[parseCount-1];
+            int lastDirLength = lastDir.Length;
+            int dirLenght = dir.Length;
+            int parrentIndex = dirLenght - lastDirLength;
+            output = dir.Substring(0, parrentIndex-1);
+            return output;
         }
     }
 }
