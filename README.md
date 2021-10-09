@@ -64,6 +64,7 @@ This is the full list of commands that can be used in xTerminal:
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
                  Example 2: ccs <file_name> -p <parameter> 
+    !         -- Run or add custom C# code addons as a command. Use -h for additional help.
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
