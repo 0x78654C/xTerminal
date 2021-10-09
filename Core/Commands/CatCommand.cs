@@ -37,7 +37,7 @@ namespace Core.Commands
                     lineCount++;
                     if (string.IsNullOrWhiteSpace(searchString))
                     {
-                        //output.AppendLine(line);
+                        output.AppendLine(line);
                         continue;
                     }
 
