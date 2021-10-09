@@ -9,20 +9,13 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "mkfile";
         public void Execute(string arg)
         {
-            string CLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
+            string currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
             string file;
             try
             {
-                file = arg.Split(' ')[1];
-                if (Directory.Exists(CLocation))
-                {
-                    File.Create(CLocation + @"\" + file);
-                    Console.WriteLine($"File {CLocation + @"\" + file} was created!");
-                }
-                else
-                {
-                    FileSystem.ErrorWriteLine("Directory dose not exist!");
-                }
+                file = FileSystem.SanitizePath(arg.Split(' ')[1], currentDirectory);
+                File.Create(file);
+                Console.WriteLine($"File {file} was created!");
             }
             catch (Exception e)
             {
