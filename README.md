@@ -103,6 +103,6 @@ namespace Test_Code
 
  ```
  xTerminal splits the code in following parts:
-  - ````namespace``` : Takes the name of the namespace. In this case: Test_Code 
-  - ````public class``` : Takes the name of the class. In this case: Test 
-  - ```Main``` : Is defined as entry point for the code to run.
+  - ```` namespace ``` : Takes the name of the namespace. In this case: Test_Code 
+  - ```` public class ``` : Takes the name of the class. In this case: Test 
+  - ``` Main ``` : Is defined as entry point for the code to run.
