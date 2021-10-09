@@ -8,15 +8,21 @@
 
  [![Build status](https://ci.appveyor.com/api/projects/status/6as5ck98br6soxtk?svg=true)](https://ci.appveyor.com/project/0x78654C/xterminal)
 
-![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
-![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/2.bmp?raw=true)
-![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/3.bmp?raw=true)
-
-
 This is a simple terminal in C#  based on https://github.com/willharrison/ProgrammingWithWill
 
 For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
+## Requirements:
+
+.NET Core 2.0
+
+.NET Standard 2.0
+
+.NET Framework 4.7.2
+
+ For Roslyn C# code runner usce NuGet command in Commands project: Install-Package Microsoft.CodeAnalysis.CSharp -pre
+
+ ## Commands
 This is the full list of commands that can be used in xTerminal:
 
     ------------------------ System ------------------------
@@ -71,18 +77,8 @@ This is the full list of commands that can be used in xTerminal:
     snake     -- Play Snake game in console!(Ceated by https://github.com/mkbmain)
 
 
-## Requirements:
 
-.NET Core 2.0
-
-.NET Standard 2.0
-
-.NET Framework 4.7.2
-
- For Roslyn C# code runner usce NuGet command in Commands project: Install-Package Microsoft.CodeAnalysis.CSharp -pre
-
-
- ## Usage of C# Core runner and add-ons:
+## Usage of C# Core runner and add-ons:
 
  For both css command and ! -add the code must be formatted and runned using the following example:
 
@@ -103,6 +99,14 @@ namespace Test_Code
 
  ```
  xTerminal splits the code in following parts:
-  - ```` namespace ``` : Takes the name of the namespace. In this case: Test_Code 
-  - ```` public class ``` : Takes the name of the class. In this case: Test 
-  - ``` Main ``` : Is defined as entry point for the code to run.
+  - namespace : Takes the name of the namespace. In this case: Test_Code 
+  - public class : Takes the name of the class. In this case: Test 
+  - Main : Is defined as entry point for the code to run.
+
+## Samples
+
+
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/2.bmp?raw=true)
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/3.bmp?raw=true)
+
