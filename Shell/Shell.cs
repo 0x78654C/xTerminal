@@ -19,6 +19,7 @@ namespace Shell
         private static string s_historyFilePath = GlobalVariables.historyFilePath;
         private static List<string> s_listReg = new List<string>() { "CurrentDirectory" };
         private static string s_historyFile = GlobalVariables.historyFile;
+        private static string s_addonDir = GlobalVariables.addonDirectory;
         //-------------------------------
 
         //Define the shell commands 
@@ -45,6 +46,13 @@ namespace Shell
             {
                 Directory.CreateDirectory(s_historyFilePath);
             }
+
+            // Creating the addon directory for C# code script scomands if not exist.
+            if (!Directory.Exists(s_addonDir))
+            {
+                Directory.CreateDirectory(s_addonDir);
+            }
+
 
             //creating history file if not exist
             if (!File.Exists(s_historyFile))
@@ -114,7 +122,7 @@ namespace Shell
                     c.Execute(s_input);
                 }
                 //----------------------------------------
-
+                GC.Collect();
 
             } while (s_input != "exit");
         }
