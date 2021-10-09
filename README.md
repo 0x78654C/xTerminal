@@ -108,8 +108,10 @@ namespace Test_Code
 ## More Samples
 
 * Using hex command: 
+
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/2.bmp?raw=true)
 
 * Using NeoVim in xTerminal:
+
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/3.bmp?raw=true)
 
