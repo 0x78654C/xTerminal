@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Core;
-
+using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.Roslyn
 {
@@ -23,12 +23,13 @@ namespace Commands.TerminalCommands.Roslyn
         private string _addonDir = string.Empty;
         private string _helpMessage = @"
     Usage: ! <command_name> .
-   -h   :  Displays help message.
-   -p   :  Uses command with parameters.
-              Ex.: ! <command_name> -p <parameters>
-   -add :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
-           current directory with a command name.
-              Ex.: ! -add <file_name_with_code> <command_name> 
+   -h     :  Displays help message.
+   -p     :  Uses command with parameters.
+                Ex.: ! <command_name> -p <parameters>
+   -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
+             current directory with a command name.
+                Ex.: ! -add <file_name_with_code> <command_name>|<command_description>
+   -list  :  Display the list of the saved add-ons with description.
 ";
 
 
@@ -53,10 +54,38 @@ namespace Commands.TerminalCommands.Roslyn
                 Console.WriteLine(_helpMessage);
                 return;
             }
+            else if (command.StartsWith("-list"))
+            {
+                Console.WriteLine(ListAddons(_addonDir));
+                return;
+            }
             CompileAndRun(_addonDir, command, param);
         }
 
+        private string ListAddons(string addonDir)
+        {
+            string fileName;
+            string description;
+            string outList="";
+            if (!Directory.Exists(addonDir))
+            {
+                FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
+            }
+            else
+            {
 
+                var files = Directory.GetFiles(addonDir);
+                foreach (var file in files)
+                {
+                    var fileInfo = new FileInfo(file);
+                    fileName = fileInfo.Name.Replace(".x", "").PadRight(15,' ');
+                    string line = File.ReadAllLines(file).First();
+                    description = line.Replace("//D:", "") + "\n";
+                    outList += $"{fileName}  :  {description}";
+                }
+            }
+            return outList;
+        }
         private void SaveAddon(string argument,string addonDir)
         {
             try
@@ -66,6 +95,7 @@ namespace Commands.TerminalCommands.Roslyn
                     FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
                     return;
                 }
+
                 string file = FileSystem.SanitizePath(argument.Replace($"! -add ", "").Split(' ')[0], _currentLocation);
 
                 if (!File.Exists(file))
@@ -73,10 +103,16 @@ namespace Commands.TerminalCommands.Roslyn
                     FileSystem.ErrorWriteLine($"File {file} does not exist!");
                     return;
                 }
-                string command = argument.Replace($"! -add ", "").Split(' ')[1];
+
+                string argParse = argument.Replace($"! -add ", "").Split(' ')[1];
+                string command = argParse.Split('|')[0];
+                int countSpace = Regex.Matches(argument, " ").Count;
+                string description = argument.Split('|')[1];
+
                 using (StreamReader stringReader = new StreamReader(file))
                 {
-                    string fileContent = stringReader.ReadToEnd();
+                    string fileContent = $"//D:{description}"+Environment.NewLine;
+                    fileContent += stringReader.ReadToEnd();
                     File.WriteAllText(addonDir + $"\\{command}.x", fileContent);
                     Console.WriteLine($"Add '{command}' added!");
                 }
