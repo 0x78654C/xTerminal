@@ -20,7 +20,10 @@ For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
 .NET Framework 4.7.2
 
- For Roslyn C# code runner usce NuGet command in Commands project: Install-Package Microsoft.CodeAnalysis.CSharp -pre
+ For Roslyn C# code runner usce NuGet command in Commands project:
+ ```
+ Install-Package Microsoft.CodeAnalysis.CSharp -pre
+ ```
 
  ## Commands
 This is the full list of commands that can be used in xTerminal:
