@@ -83,7 +83,7 @@ This is the full list of commands that can be used in xTerminal:
 
 ## Usage of C# Code runner and add-ons:
 
- For both css command and ! -add the code must be formatted and runned using the following example:
+ For both ccs command and ! -add the code must be formatted and runned using the following example:
 
  ```C#
  using System;
