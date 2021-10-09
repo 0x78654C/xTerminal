@@ -78,3 +78,31 @@ Requirements:
 .NET Standard 2.0
 
 .NET Framework 4.7.2
+
+ For Roslyn C# code runner usce NuGet command in Commands project: Install-Package Microsoft.CodeAnalysis.CSharp -pre
+
+
+ ## Usage of C# Core runner and add-ons:
+
+ For both css command and ! -add the code must be formatted and runned using the following example:
+
+ ```
+ using System;
+// You can add more dependencies.
+
+namespace Test_Code
+{
+   public class Test
+   {	
+	  public void Main(string arg)
+	  {
+		// Do the stuff.
+	  }
+   }
+}
+
+ ```
+ xTerminal splits the code in following parts:
+  - ````namespace``` : Takes the name of the namespace. In this case: Test_Code 
+  - ````public class``` : Takes the name of the class. In this case: Test 
+  - ```Main``` : Is defined as entry point for the code to run.
