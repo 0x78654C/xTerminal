@@ -4,6 +4,9 @@ using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    /*
+     Clears the commands from history file. Stored in History.db under current user profile.
+     */
     public class ClearHistory : ITerminalCommand
     {
         private static string s_historyFile = GlobalVariables.historyFile;

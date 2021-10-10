@@ -4,6 +4,10 @@ using wmi = Core.Hardware.WMIDetails;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    /*
+     Bios information display for local or remote user using WMI.
+     */
+
     public class BiosInfo : ITerminalCommand
     {
         public string Name => "bios";

@@ -6,6 +6,10 @@ using System.Linq;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    /*
+     Outputs the stored commands in history.db file under the user profile.
+     Max numbers of output is 100. 
+     */
     public class CommandHistory : ITerminalCommand
     {
         public string Name => "hcmd";

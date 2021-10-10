@@ -13,6 +13,12 @@ namespace Commands.TerminalCommands.Roslyn
 {
     public class AddonManagement : ITerminalCommand
     {
+
+        /*
+        Add-on management class for running C# code with Roslyn 
+        Link: https://github.com/dotnet/roslyn
+         */
+
         public string Name => "!";
 
         private string _codeToRun;

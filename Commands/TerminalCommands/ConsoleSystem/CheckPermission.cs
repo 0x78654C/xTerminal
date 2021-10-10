@@ -5,13 +5,16 @@ using System.Security.AccessControl;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    /*
+     Checks the permission attributes for a file or directory. 
+     */
     class CheckPermission : ITerminalCommand
     {
         public string Name => "cp";
         public void Execute(string arg)
         {
             string currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
-            string input = "";
+            string input;
             try
             {
                 string tabs = "\t";
@@ -26,7 +29,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         Console.WriteLine("Permissions of directory: " + input);
                         foreach (FileSystemAccessRule ace in acl)
                         {
-
                             Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
                             Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
                             Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
@@ -60,7 +62,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         Console.WriteLine("Permissions of directory: " + currentLocation + @"\" + input);
                         foreach (FileSystemAccessRule ace in acl)
                         {
-
                             Console.WriteLine("{0}Account: {1}", tabs, ace.IdentityReference.Value);
                             Console.WriteLine("{0}Type: {1}", tabs, ace.AccessControlType);
                             Console.WriteLine("{0}Rights: {1}", tabs, ace.FileSystemRights);
