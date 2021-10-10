@@ -8,7 +8,8 @@ namespace Core.Commands
     public static class CatCommand
     {
 
-
+        private static int s_linesCount = 0;
+        private static int s_linesCountName = 0;
         /// <summary>
         /// Output to console specific lines from a file containing a specific string.
         /// </summary>
@@ -151,6 +152,78 @@ namespace Core.Commands
             {
                 stringBuilder.AppendLine(FileOutput(file, currentDir, searchString));
             }
+        }
+
+        private static void TotalLinesCounter(string currentDir, string fileName, bool fileCount)
+        {
+            var files =  Directory.GetFiles(currentDir);
+       
+            foreach(var file in files)
+            {
+                if (fileCount)
+                {
+                    if (file.Contains(fileName))
+                    {
+                        var lines = File.ReadLines(file);
+                        foreach (var line in lines)
+                        {
+                            if (!string.IsNullOrEmpty(line))
+                            {
+                                s_linesCountName++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    var lines = File.ReadLines(file);
+                    foreach (var line in lines)
+                    {
+                        if (!string.IsNullOrEmpty(line))
+                        {
+                            s_linesCount++;
+                        }
+                    }
+                }
+            }
+
+            var directories = new DirectoryInfo(currentDir).GetDirectories();
+            foreach(var dir in directories)
+            {
+                TotalLinesCounter(dir.FullName,fileName,fileCount);
+            }
+        }
+
+        /// <summary>
+        /// Outputs the lines count from all files in a directory and subdirectories.
+        /// </summary>
+        /// <param name="currentDir">Directory localtion.</param>
+        /// <returns></returns>
+        public static int LineCounts(string currentDir)
+        {
+            TotalLinesCounter(currentDir,"",false);
+            return s_linesCount;
+        }
+
+        /// <summary>
+        /// Ouputs the lines count all files that contains a specific text, in a directory and subdirectories.
+        /// </summary>
+        /// <param name="currentDir">Directory location.</param>
+        /// <param name="fileName">Custom text included in filename.</param>
+        /// <returns></returns>
+        public static int LineCountsName(string currentDir, string fileName = null)
+        {
+            TotalLinesCounter(currentDir,fileName,true);
+            return s_linesCountName;
+        }
+
+        /// <summary>
+        /// Clears all the lines count.
+        /// </summary>
+        public static void ClearCounter()
+        {
+            s_linesCount = 0;
+            s_linesCountName = 0;
         }
     }
 }

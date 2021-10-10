@@ -25,6 +25,9 @@ namespace Commands.TerminalCommands.DirFiles
            Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
   -smo : Saves the lines containing a provided text from multiple files in current directory.
            Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> <file_to_save>
+  -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
+  -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
+           Example: cat -lfc <file_name_text>
 ";
 
 
@@ -51,6 +54,13 @@ namespace Commands.TerminalCommands.DirFiles
                     if (input[0].Contains("-h"))
                     {
                         Console.WriteLine(s_helpMessage);
+                        return;
+                    }
+                    if(input[0].Contains("-lc"))
+                    {
+                        int totalLinesCount = Core.Commands.CatCommand.LineCounts(s_currentDirectory);
+                        Core.Commands.CatCommand.ClearCounter();
+                        Console.WriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
                         return;
                     }
                     Console.WriteLine(Core.Commands.CatCommand.FileOutput(input[0], s_currentDirectory));
@@ -84,10 +94,10 @@ namespace Commands.TerminalCommands.DirFiles
                         searchString = input[1];
                         fileName = "";
                         saveToFile = input[3];
-                        string startMessage="";
+                        string startMessage = "";
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
-                            startMessage=$"---Searching in files containing '{fileSearchIn}' in name---\n\n";
+                            startMessage = $"---Searching in files containing '{fileSearchIn}' in name---\n\n";
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true, fileSearchIn);
                         }
                         else
@@ -101,7 +111,7 @@ namespace Commands.TerminalCommands.DirFiles
                         }
                         else
                         {
-                            Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, startMessage+s_output));
+                            Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, startMessage + s_output));
                         }
                         break;
                     case "-so":
@@ -128,11 +138,25 @@ namespace Commands.TerminalCommands.DirFiles
                             Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, false));
                             break;
                         }
+                    case "-lfc":
+                        {
+                            try
+                            {
+                                fileName = input[1];
+                                int totalLinesCount = Core.Commands.CatCommand.LineCountsName(s_currentDirectory,fileName);
+                                Core.Commands.CatCommand.ClearCounter();
+                                Console.WriteLine($"Total lines in files that name contains '{fileName}' (without empty lines): {totalLinesCount}");
+                            }catch(Exception e)
+                            {
+                                FileSystem.ErrorWriteLine(e.Message);
+                            }
+                        }
+                        break;
                 }
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine(e.ToString());
             }
         }
     }
