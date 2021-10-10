@@ -17,11 +17,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 File.WriteAllText(s_historyFile, Environment.NewLine);
                 Console.WriteLine("Command history log cleared!");
+                return;
             }
-            else
-            {
-                Console.WriteLine("File '" + s_historyFile + "' dose not exist!");
-            }
+            Console.WriteLine("File '" + s_historyFile + "' dose not exist!");
         }
     }
 }
