@@ -26,11 +26,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (Int32.TryParse(cmd, out var position))
                 {
                     OutputHistoryCommands(s_historyFile, position);
+                    return;
                 }
-                else
-                {
-                    OutputHistoryCommands(s_historyFile, 1);
-                }
+                OutputHistoryCommands(s_historyFile, 1);
             }
             catch (Exception e)
             {
@@ -84,7 +82,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             int index = 0;
             int linesCount = File.ReadAllLines(historyFileName).Count();
-            var lines = File.ReadLines(historyFileName).Skip(linesCount-linesNumber);
+            var lines = File.ReadLines(historyFileName).Skip(linesCount - linesNumber);
 
             foreach (var line in lines)
             {
