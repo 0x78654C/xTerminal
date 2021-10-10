@@ -21,13 +21,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 s_newLocation = arg.Split(' ')[1];              // geting location input             
                 s_currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); // read location from ini
                 string pathCombine = null;
+                string pathSeparator;
                 if (s_newLocation != "")
                 {
                     if (s_newLocation.Length >= 2 && s_newLocation.EndsWith(":")) //check root path
                     {
                         if (Directory.Exists(s_newLocation))
                         {
-                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, s_newLocation + "\\");
+                            pathSeparator = s_newLocation + "\\";
+                            pathSeparator = pathSeparator.Replace("\\\\", "\\");
+                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathSeparator);
                             return;
                         }
                         Console.WriteLine($"Directory '{s_newLocation}'\\ dose not exist!");
@@ -57,7 +60,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         pathCombine = Path.Combine(s_currentLocation, s_newLocation); // combine locations
                         if (Directory.Exists(pathCombine))
                         {
-                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathCombine+"\\");
+                            pathSeparator = pathCombine + "\\";
+                            pathSeparator = pathSeparator.Replace("\\\\", "\\");
+                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathSeparator);
                             return;
                         }
                         Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
