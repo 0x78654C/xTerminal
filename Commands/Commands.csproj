@@ -117,6 +117,7 @@
     <Compile Include="TerminalCommands\ConsoleSystem\Clear.cs" />
     <Compile Include="TerminalCommands\Roslyn\Compiler.cs" />
     <Compile Include="TerminalCommands\Roslyn\AddonManagement.cs" />
+    <Compile Include="TerminalCommands\UI\UIManagement.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">

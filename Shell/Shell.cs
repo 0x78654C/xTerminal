@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SystemCmd = Core.Commands.SystemCommands;
+using SetConsoleColor = Core.SystemTools.UI;
+using System.Threading.Tasks;
 
 namespace Shell
 {
@@ -17,9 +19,16 @@ namespace Shell
         private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
         private static string s_historyFilePath = GlobalVariables.historyFilePath;
-        private static List<string> s_listReg = new List<string>() { "CurrentDirectory" };
+        private static List<string> s_listReg = new List<string>() { "CurrentDirectory","UI" };
         private static string s_historyFile = GlobalVariables.historyFile;
         private static string s_addonDir = GlobalVariables.addonDirectory;
+        private static string s_regUI="";
+        private static string s_indicator="$";
+        private static string s_indicatorColor="white";
+        private static string s_userColor="green";
+        private static int s_userEnabled=1;
+        private static string s_cdColor="cyan";
+
         //-------------------------------
 
         //Define the shell commands 
@@ -59,13 +68,22 @@ namespace Shell
             {
                 //reading current location
                 dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                
                 if (dlocation == "")
                 {
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, @"C:\");
                 }
 
+                // Reading UI settings.
+                s_regUI = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUI);
+                if (s_regUI == "")
+                {
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
+                }
+
+
                 // We se the color and user loged in on console.
-                SetConsoleUserConnected(dlocation, s_accountName, s_computerName);
+                SetConsoleUserConnected(dlocation, s_accountName, s_computerName,s_regUI);
 
                 //reading user imput
                 s_input = Console.ReadLine();
@@ -157,31 +175,121 @@ namespace Shell
                     FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
                 return;
             }
-
-            // return 1;
         }
         //------------------------
 
         // We set the name of the current user logged in and machine on console.
-        private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName)
+        private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName,string uiSettings)
         {
+            if (uiSettings != "")
+            {
+                UISettingsParse(uiSettings);
+            }
+
             if (currentLocation.Contains(GlobalVariables.rootPath) && currentLocation.Length == 3)
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}");
-                FileSystem.ColorConsoleText(ConsoleColor.White, ":");
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
-                FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+                SetUser(accountName, computerName,currentLocation,false);
             }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}");
-                FileSystem.ColorConsoleText(ConsoleColor.White, ":");
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{currentLocation}~");
-                FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
-                Console.Title = $"{GlobalVariables.terminalTitle} | {currentLocation}";//setting up the new title
+                SetUser(accountName, computerName, currentLocation, true);
             }
         }
 
+        private static void SetUser(string accountName, string computerName,string currentLocation, bool currentDir)
+        {
+            if (currentDir==false)
+            {
+                if (s_userEnabled == 1)
+                {
+                    if (s_userColor != "green")
+                    {
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName }@{computerName}:");
+                    }
+                    else
+                    {
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}:");
+                    }
+                }
+              
+                if (s_cdColor != "cyan")
+                {
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"~");
+                }
+                else
+                {
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
+                }
+                if (!string.IsNullOrEmpty(s_indicator))
+                {
+                    if (s_indicatorColor != "white")
+                    {
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $"{s_indicator} ");
+                    }
+                    else{
+                        FileSystem.ColorConsoleText(ConsoleColor.White, $"{s_indicator} ");
+                    }
+                }
+                else
+                {
+                    FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+                }
+                return;
+            }
+            if (s_userEnabled == 1)
+            {
+                if (s_userColor != "green")
+                {
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName }@{computerName}:");
+                }
+                else
+                {
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}:");
+                }
+            }
+            if (s_cdColor != "cyan")
+            {
+                FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"{currentLocation}~");
+            }
+            else
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{currentLocation}~");
+            }
+            if (!string.IsNullOrEmpty(s_indicator))
+            {
+                if (s_indicatorColor != "white")
+                {
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $"{s_indicator} ");
+                }
+                else
+                {
+                    FileSystem.ColorConsoleText(ConsoleColor.White, $"{s_indicator} ");
+                }
+            }
+            else
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+            }
+            Console.Title = $"{GlobalVariables.terminalTitle} | {currentLocation}";//setting up the new title
+        }
+        private static void UISettingsParse(string settings)
+        {
+            var parseSettings = settings.Split('|');
+            string userSetting = parseSettings[0];
+            string indicatorSetting = parseSettings[1];
+
+            // Setting the current directorycolor.
+            s_cdColor = parseSettings[2];
+
+            // Setting the user settings.
+            s_userEnabled = Int32.Parse(userSetting.Split(';')[1]);
+            s_userColor = userSetting.Split(';')[0];
+
+            // Setting the indicator settings.
+            s_indicator = indicatorSetting.Split(';')[1];
+            s_indicatorColor = indicatorSetting.Split(';')[0];
+
+        }
 
         /// <summary>
         /// Write terminal input commands to history file. 
