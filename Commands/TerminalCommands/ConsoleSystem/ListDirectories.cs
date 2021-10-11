@@ -143,7 +143,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             foreach (var file in files)
             {
-                if (fileName != string.Empty && file.Contains(fileName))
+                if (fileName != string.Empty && file.ToLower().Contains(fileName.ToLower()))
                 {
                     s_countFilesText++;
                 }
@@ -155,7 +155,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             foreach (var dir in directories)
             {
-                if (dirName != string.Empty && dir.Contains(dirName))
+                if (dirName != string.Empty && dir.ToLower().Contains(dirName.ToLower()))
                 {
                     s_countDirectoriesText++;
                 }
@@ -196,7 +196,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
             }
 
-            Console.WriteLine("---------------------------------------------\n");
+            Console.WriteLine("-----------Current Direcotry Count------------\n");
             Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
             Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
         }
