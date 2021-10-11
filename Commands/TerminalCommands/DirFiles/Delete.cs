@@ -99,17 +99,17 @@ namespace Commands.TerminalCommands.DirFiles
                     try
                     {
                         // get the file attributes for file or directory
-                        FileAttributes attr = File.GetAttributes(currentLocation + @"\" + input);
+                        FileAttributes attr = File.GetAttributes(currentLocation + input);
 
                         if (attr.HasFlag(FileAttributes.Directory))
                         {
-                            Directory.Delete(currentLocation + @"\" + input);
-                            Console.WriteLine("Directory " + currentLocation + @"\" + input + " deleted!");
+                            Directory.Delete(currentLocation + input);
+                            Console.WriteLine("Directory " + currentLocation + input + " deleted!");
                         }
                         else
                         {
-                            File.Delete(currentLocation + @"\" + input);
-                            Console.WriteLine("File " + currentLocation + @"\" + input + " deleted!");
+                            File.Delete(currentLocation + input);
+                            Console.WriteLine("File " + currentLocation + input + " deleted!");
                         }
                     }
                     catch (Exception e)

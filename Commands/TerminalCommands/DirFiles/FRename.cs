@@ -40,12 +40,12 @@ namespace Commands.TerminalCommands.DirFiles
                     //we check if file exists
                     if (File.Exists(dlocation + @"\" + FileName))
                     {
-                        File.Move(dlocation + @"\" + FileName, dlocation + @"\" + NewName);
+                        File.Move(dlocation + @"\" + FileName, dlocation  + NewName);
                         Console.WriteLine($"File renamed from {FileName} to {NewName}");
                     }
                     else
                     {
-                        FileSystem.ErrorWriteLine("File " + dlocation + @"\" + FileName + " dose not exist!");
+                        FileSystem.ErrorWriteLine("File " + dlocation  + FileName + " dose not exist!");
                     }
                 }
             }

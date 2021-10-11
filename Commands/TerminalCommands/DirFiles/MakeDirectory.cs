@@ -9,13 +9,11 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "mkdir";
         public void Execute(string arg)
         {
-
             try
             {
-
                 string input = arg.Split(' ')[1];              // geting  input        
                 string newlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ; //get the new location
-                string locinput = newlocation + @"\" + input; //new location+input
+                string locinput = newlocation + input; //new location+input
                 if (input.Contains(":") && input.Contains(@"\"))
                 {
                     try
@@ -30,7 +28,6 @@ namespace Commands.TerminalCommands.DirFiles
                 }
                 else
                 {
-
                     try
                     {
                         Directory.CreateDirectory(locinput);
