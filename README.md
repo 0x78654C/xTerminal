@@ -119,8 +119,8 @@ This is the full list of commands that can be used in xTerminal:
                     -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
                               current directory with a command name.
                               Example: ! -add <file_name_with_code> <command_name>|<command_description>
-   -del   :  Deletes an Add-on.
-   -list  :  Display the list of the saved add-ons with description.
+                    -del   :  Deletes an Add-on.
+                    -list  :  Display the list of the saved add-ons with description.
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
