@@ -61,6 +61,9 @@ This is the full list of commands that can be used in xTerminal:
                  Example 2: ccs <file_name> -p <parameter> 
     !         -- Run or add custom C# code addons as a command. Use -h for additional help.
 
+    -------------------- UI Customization -------------------
+    ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
+
     ------------------------ Games -------------------------
     flappy    -- Play Flappy Birds in console!
     snake     -- Play Snake game in console!

@@ -12,7 +12,22 @@ namespace Commands.TerminalCommands.UI
 
         private string _regUI;
         List<string> _colors = new List<string>() { "darkred", "darkgreen", "darkyellow", "darkmagenta", "darkcyan", "darkgray", "darkblue", "red", "green", "yellow", "white", "magenta", "cyan", "black", "gray", "blue" };
-        List<string> _indicators = new List<string>() { ":", ">", "->", "=>", "$", ">>" };
+        List<string> _indicators = new List<string>() {">", "->", "=>", "$", ">>" };
+        private string _helpMessage = @"Usage of  UI PS1(Prompt string 1) command:
+ ::Predifined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
+                      red, green, yellow, white, magenta, cyan, black, gray, blue 
+ ::Predifined indicators: > , ->, =>, $, >>
+
+ -h : Displys this help message.
+ -u : Enables or disables current user@machine information with a predifined color from list:
+       Example1: ui -u -c <color> :e  -- enables information with a predifined color from list.
+       Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
+ -i : Changes command indicator and sets a predifined color from list:
+       Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predifined list with a predifined color from list. 
+       Example1: ui -i -c <color> -s  -- sets default indicator($) with a predifined color from list. 
+ -cd : Changes current directory with a predifined color from list:
+       Example1: ui -cd <color> -- sets a predifined color from list to current directory path.
+";
         public string Name => "ui";
         public void Execute(string arg)
         {
@@ -27,8 +42,11 @@ namespace Commands.TerminalCommands.UI
                     SetUserColor(args.ParameterAfter("-c"), _regUI, "", true, Core.SystemTools.UI.Setting.UserInfo);
                     return;
                 }
-                SetUserColor(args.ParameterAfter("-c"), _regUI, "", false, Core.SystemTools.UI.Setting.UserInfo);
-                return;
+                else if(arg.ContainsText(":d"))
+                {
+                    SetUserColor(args.ParameterAfter("-c"), _regUI, "", false, Core.SystemTools.UI.Setting.UserInfo);
+                    return;
+                }
             }
 
             // Store indicator setting.
@@ -43,11 +61,17 @@ namespace Commands.TerminalCommands.UI
                 return;
             }
 
-            //Store current directory setting.
-            if (arg.ContainsText("-p"))
+            // Store current directory setting.
+            if (arg.ContainsText("-cd"))
             {
-                SetUserColor(args.ParameterAfter("-p"), _regUI, "$", true, Core.SystemTools.UI.Setting.CurrentDirectoy);
+                SetUserColor(args.ParameterAfter("-cd"), _regUI, "$", true, Core.SystemTools.UI.Setting.CurrentDirectoy);
                 return;
+            }
+
+            // Display help message
+            if (arg.ContainsText("-h"))
+            {
+                Console.WriteLine(_helpMessage);
             }
         }
 

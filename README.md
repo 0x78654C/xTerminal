@@ -69,11 +69,14 @@ This is the full list of commands that can be used in xTerminal:
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname. Ex.: ping google.com or ping google.com -r 10 (for 10 replies).
     
-    -----------------C# Core Runner and Add-ons -------------
+    ---------------- C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
                  Example 2: ccs <file_name> -p <parameter> 
     !         -- Run or add custom C# code addons as a command. Use -h for additional help.
+
+    -------------------- UI Customization -------------------
+    ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
