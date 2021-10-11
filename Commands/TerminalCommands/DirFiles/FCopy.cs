@@ -52,10 +52,10 @@ namespace Commands.TerminalCommands.DirFiles
 
                 if (Source.StartsWith("-h"))
                 {
-                    Console.WriteLine(@"Usage:
- Ex 1: fcopy <source_file> <destination_file>
- Ex 2: fcopy -ca <destination_directory> -- copy all files in a specific directory
- Ex 3: fcopy -ca  -- copy source files in same directory
+                    Console.WriteLine(@"Usage: fcopy <source_file> <destination_file>. Can bee used with following parameters:
+ -h : displays this message
+ -ca <destination_directory> : copy all files from current directory in a specific directory
+ -ca : copy source files in same directory
 ");
                     return;
                 }

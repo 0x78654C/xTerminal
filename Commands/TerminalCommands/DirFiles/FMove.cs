@@ -53,9 +53,8 @@ namespace Commands.TerminalCommands.DirFiles
 
                 if (Source.StartsWith("-h"))
                 {
-                    Console.WriteLine(@"Usage:
- Ex 1: fmove <source_file> <destination_file>
- Ex 2: fmove -ma <destination_directory> -- moves all files in a specific directory
+                    Console.WriteLine(@"Usage: fmove <source_file> <destination_file>. Can bee used with following parameters:
+ -ma <destination_directory> : moves all files from current directory in a specific directory
 ");
                     return;
                 }

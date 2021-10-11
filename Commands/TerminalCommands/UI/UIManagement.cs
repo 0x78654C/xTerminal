@@ -24,7 +24,7 @@ namespace Commands.TerminalCommands.UI
        Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
  -i : Changes command indicator and sets a predifined color from list:
        Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predifined list with a predifined color from list. 
-       Example1: ui -i -c <color> -s  -- sets default indicator($) with a predifined color from list. 
+       Example2: ui -i -c <color> -s  -- sets default indicator($) with a predifined color from list. 
  -cd : Changes current directory with a predifined color from list:
        Example1: ui -cd <color> -- sets a predifined color from list to current directory path.
 ";

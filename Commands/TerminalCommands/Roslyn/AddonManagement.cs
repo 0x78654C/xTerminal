@@ -33,10 +33,10 @@ namespace Commands.TerminalCommands.Roslyn
 
    -h     :  Displays help message.
    -p     :  Uses command with parameters.
-                Ex.: ! <command_name> -p <parameters>
+                Example: ! <command_name> -p <parameters>
    -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
              current directory with a command name.
-                Ex.: ! -add <file_name_with_code> <command_name>|<command_description>
+                Example: ! -add <file_name_with_code> <command_name>|<command_description>
    -del   :  Deletes an Add-on.
    -list  :  Display the list of the saved add-ons with description.
 ";
