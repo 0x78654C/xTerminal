@@ -12,15 +12,21 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_currentDirectory = string.Empty;
 
         private static int s_countFiles = 0;
+        private static int s_countFilesText = 0;
         private static int s_countDirectories = 0;
+        private static int s_countDirectoriesText = 0;
         private static List<string> s_listFiles = new List<string>();
         private static List<string> s_listDirs = new List<string>();
         private static string s_helpMessage = @"
     -h  : Displays this message.
-    -s  : Displays size of files in current directory.
-    -c  : Counts files and directories (subdirs too) in current directory.
-    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl higlighted_text
-    -o  : Saves the output to a file. Ex.: ls -o file_to_save
+    -s  : Displays size of files in current directory and subdirectories.
+    -c  : Counts files and directories and subdirectories from current directory.
+    -cf : Counts files from current directory and subdirectories with name containing a specific text.
+          Example: ls -cf <search_text>
+    -cd : Counts directories from current directory and subdirectories with name containing a specific text.
+          Example: ls -cd <search_text>
+    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
+    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
 ";
         public string Name => "ls";
 
@@ -33,7 +39,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
 
-                
+
                 // Display help message
                 if (arg.ContainsParameter("-h"))
                 {
@@ -67,11 +73,32 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (arg.ContainsParameter("-c"))
                 {
                     Console.WriteLine($"\nCounting total directories/subdirectories and files on current location....\n");
-                    DisplaySubDirectoryAndFileCounts(s_currentDirectory);
+                    DisplaySubDirectoryAndFileCounts(s_currentDirectory, string.Empty, string.Empty);
                     Console.WriteLine($"Total directories/subdirectories: {s_countDirectories}");
                     Console.WriteLine($"Total files (include subdirectories): {s_countFiles}");
-                    s_countDirectories = 0;
-                    s_countFiles = 0;
+                    ClearCounters();
+                }
+
+                if (arg.ContainsParameter("-cf"))
+                {
+                    if (!string.IsNullOrEmpty(arg.ParameterAfter("-cf")))
+                    {
+                        Console.WriteLine("---------------------------------------------\n");
+                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, arg.ParameterAfter("-cf"), "");
+                        Console.WriteLine($"Total files that contains '{arg.ParameterAfter("-cf")}' (included subdirectories): {s_countFilesText}\n");
+                        ClearCounters();
+                    }
+                }
+
+                if (arg.ContainsParameter("-cd"))
+                {
+                    if (!string.IsNullOrEmpty(arg.ParameterAfter("-cd")))
+                    {
+                        Console.WriteLine("---------------------------------------------\n");
+                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd"));
+                        Console.WriteLine($"Total directories/subdirectories that name contains '{arg.ParameterAfter("-cd")}': {s_countDirectoriesText}\n");
+                        ClearCounters();
+                    }
                 }
             }
             catch (IndexOutOfRangeException)
@@ -89,6 +116,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
+        private void ClearCounters()
+        {
+            s_countDirectories = 0;
+            s_countFiles = 0;
+            s_countDirectoriesText = 0;
+            s_countFilesText = 0;
+        }
         private static void SaveLSOutput(string path)
         {
             DisplayCurrentDirectoryFiles(false, "", true);
@@ -102,22 +136,37 @@ namespace Commands.TerminalCommands.ConsoleSystem
             s_listFiles.Clear();
         }
 
-        private static void DisplaySubDirectoryAndFileCounts(string currentDirectory)
+        private static void DisplaySubDirectoryAndFileCounts(string currentDirectory, string fileName, string dirName)
         {
             var files = Directory.GetFiles(currentDirectory);
             var directories = Directory.GetDirectories(currentDirectory);
 
             foreach (var file in files)
             {
-                s_countFiles++;
+                if (fileName != string.Empty && file.Contains(fileName))
+                {
+                    s_countFilesText++;
+                }
+                else
+                {
+                    s_countFiles++;
+                }
             }
 
             foreach (var dir in directories)
             {
-                DisplaySubDirectoryAndFileCounts(dir);
-                s_countDirectories++;
+                if (dirName != string.Empty && dir.Contains(dirName))
+                {
+                    s_countDirectoriesText++;
+                }
+                else
+                {
+                    s_countDirectories++;
+                }
+                DisplaySubDirectoryAndFileCounts(dir, fileName, dirName);
             }
         }
+
 
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile)
         {
