@@ -15,10 +15,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         public void Execute(string arg)
         {
-
             try
             {
-                s_newLocation = arg.Split(' ')[1];              // geting location input             
+                s_newLocation = arg.Split(' ')[1];             
                 s_currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); // read location from ini
                 string pathCombine = null;
                 string pathSeparator;
@@ -78,6 +77,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
+        // Getting parrent directory name from child one.
         private string GetParentDir(string dir)
         {
             string output;
