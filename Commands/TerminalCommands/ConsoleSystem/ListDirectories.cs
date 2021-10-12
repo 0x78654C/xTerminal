@@ -17,6 +17,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countDirectoriesText = 0;
         private static List<string> s_listFiles = new List<string>();
         private static List<string> s_listDirs = new List<string>();
+        private static List<string> s_listParams = new List<string>() { "-h","-s","-c","-cf","-cd","-hl","-o"};
         private static string s_helpMessage = @"
     -h  : Displays this message.
     -s  : Displays size of files in current directory and subdirectories.
@@ -34,12 +35,26 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                // Set directory, to be used in other functions
+                s_currentDirectory =
+                    RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+
                 string[] arg = args.Split(' ');
 
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
-
-
+                bool found = true;
+                foreach(var param in s_listParams)
+                {
+                    if(arg.ParameterAfter("ls")!=param && arg.ParameterAfter("ls").Contains(":\\"))
+                    {
+                        if (found)
+                        {
+                            s_currentDirectory = arg.ParameterAfter("ls");
+                            found = false;
+                        }
+                    }
+                }
                 // Display help message
                 if (arg.ContainsParameter("-h"))
                 {
@@ -54,10 +69,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.ErrorWriteLine("Check command. You must provide a text to highlight!");
                     return;
                 }
-
-                // Set directory, to be used in other functions
-                s_currentDirectory =
-                    RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
 
                 // Save ls output to a file
                 if (arg.ContainsParameter("-o"))
