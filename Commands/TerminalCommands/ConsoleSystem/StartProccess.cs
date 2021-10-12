@@ -37,11 +37,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    StartApplication(s_currentDirectory + @"\\" + args, true);
+                    StartApplication(s_currentDirectory + args, true);
                 }
                 else
                 {
-                    StartApplication(s_currentDirectory + @"\\" + args, false);
+                    StartApplication(s_currentDirectory + args, false);
                 }
             }
         }
