@@ -12,7 +12,7 @@ namespace Commands
                     Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(ITerminalCommand).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract)
                         .Select(t => Activator.CreateInstance(t))
                         .Cast<ITerminalCommand>().ToList();
-
+        private static List<string> s_shellCommands = new List<string>() { "cmd", "ps", "reboot", "logoff", "shutdown" , "speedtest" };
         public static ITerminalCommand GetCommand(string[] args)
         {
             if (args == null || args.Length == 0)
@@ -33,6 +33,9 @@ namespace Commands
             // Get the first word from the parameters. This should be a command
             string commandName = commandLine.Split().First();
 
+            var t = s_terminalCommands.FirstOrDefault(c => c.Name.Equals(commandName, StringComparison.InvariantCulture));
+            if (t == null && !s_shellCommands.Contains(commandLine))
+                Console.WriteLine("Unknown command!");
             return s_terminalCommands.FirstOrDefault(c => c.Name.Equals(commandName, StringComparison.InvariantCulture));
         }
     }
