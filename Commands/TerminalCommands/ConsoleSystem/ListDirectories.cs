@@ -207,7 +207,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
             }
 
-            Console.WriteLine("-----------Current Direcotry Count------------\n");
+            Console.WriteLine("-----------Current Directory Count------------\n");
             Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
             Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
         }
