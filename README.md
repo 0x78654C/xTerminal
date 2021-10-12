@@ -120,6 +120,7 @@ This is the full list of commands that can be used in xTerminal:
                               current directory with a command name.
                               Example: ! -add <file_name_with_code> <command_name>|<command_description>
                     -del   :  Deletes an Add-on.
+                              Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
 
     -------------------- UI Customization -------------------
