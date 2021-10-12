@@ -117,13 +117,13 @@ namespace Shell
                     {
                         Execute(s_input, "", true);
                     }
-                    else if (s_input.Contains("cmd"))
+                    else if (s_input.StartsWith("cmd"))
                     {
-                        Execute(s_input, "", true);
+                        Execute(s_input, s_input, true);
                     }
-                    else if (s_input.Contains("ps"))
+                    else if (s_input.StartsWith("ps"))
                     {
-                        Execute(s_input, "", true);
+                        Execute(s_input, s_input, true);
                     }
                 }
 
@@ -144,16 +144,20 @@ namespace Shell
         //process execute 
         public void Execute(string input, string args, bool waitForExit)
         {
+            input = input.Split(' ')[0];
             if (Aliases.Keys.Contains(input))
             {
                 var process = new Process();
 
                 if (input == "cmd" || input == "ps")
                 {
+                    args = args.Replace("cmd ", "");
+                    args = args.Replace("ps ", "");
                     process.StartInfo = new ProcessStartInfo(Aliases[input])
                     {
                         UseShellExecute = false,
-                        WorkingDirectory = dlocation
+                        WorkingDirectory = dlocation,
+                        Arguments = "/c " + args
                     };
                     process.Start();
                     if (waitForExit)

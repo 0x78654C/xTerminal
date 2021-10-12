@@ -46,8 +46,10 @@ This is the full list of commands that can be used in xTerminal:
     clear     -- Cleares the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory)
     odir      -- Open current directory with Windows Explorer
-    ps        -- Opens Windows Powershell.
-    cmd       -- Opens Windows Command Prompt.
+    ps        -- Opens Windows Powershell. It can use PowerShell comands:
+                 Example: ps <ps_command_>
+    cmd       -- Opens Windows Command Prompt. It can use Command Prompt comands:
+                 Example: ps <cmd_commmand>
     reboot    -- It force reboots the Windows OS.
     shutdown  -- It force shutdown the Windows OS.
     logoff    -- It force logoff current user.
