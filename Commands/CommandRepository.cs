@@ -35,7 +35,7 @@ namespace Commands
 
             var t = s_terminalCommands.FirstOrDefault(c => c.Name.Equals(commandName, StringComparison.InvariantCulture));
             if (t == null && !s_shellCommands.Contains(commandLine))
-                Console.WriteLine("Unknown command!");
+                Console.WriteLine($"Unknown command: {commandLine}");
             return s_terminalCommands.FirstOrDefault(c => c.Name.Equals(commandName, StringComparison.InvariantCulture));
         }
     }
