@@ -13,7 +13,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
             if (dlocation == "")
             {
-                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, @"C:\");
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
             }
             FileSystem.OpenCurrentDiretory(dlocation);
         }

@@ -13,9 +13,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class CommandHistory : ITerminalCommand
     {
         public string Name => "hcmd";
-        private static readonly string s_accountName = Environment.UserName;
-        private static string s_historyFilePath = $"C:\\Users\\{s_accountName}\\AppData\\Local\\xTerminal";
-        private static string s_historyFile = s_historyFilePath + "\\History.db";
+        private static string s_historyFile =GlobalVariables.historyFile;
 
         public void Execute(string args)
         {

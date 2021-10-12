@@ -19,15 +19,15 @@ namespace Shell
         private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
         private static string s_historyFilePath = GlobalVariables.historyFilePath;
-        private static List<string> s_listReg = new List<string>() { "CurrentDirectory","UI" };
+        private static List<string> s_listReg = new List<string>() { "CurrentDirectory", "UI" };
         private static string s_historyFile = GlobalVariables.historyFile;
         private static string s_addonDir = GlobalVariables.addonDirectory;
-        private static string s_regUI="";
-        private static string s_indicator="$";
-        private static string s_indicatorColor="white";
-        private static string s_userColor="green";
-        private static int s_userEnabled=1;
-        private static string s_cdColor="cyan";
+        private static string s_regUI = "";
+        private static string s_indicator = "$";
+        private static string s_indicatorColor = "white";
+        private static string s_userColor = "green";
+        private static int s_userEnabled = 1;
+        private static string s_cdColor = "cyan";
 
         //-------------------------------
 
@@ -47,7 +47,7 @@ namespace Shell
         {
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
-            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, @"C:\"); // write root path of c
+            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath); // write root path of c
 
 
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
@@ -68,10 +68,10 @@ namespace Shell
             {
                 //reading current location
                 dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
-                
+
                 if (dlocation == "")
                 {
-                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, @"C:\");
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
                 }
 
                 // Reading UI settings.
@@ -83,7 +83,7 @@ namespace Shell
 
 
                 // We se the color and user loged in on console.
-                SetConsoleUserConnected(dlocation, s_accountName, s_computerName,s_regUI);
+                SetConsoleUserConnected(dlocation, s_accountName, s_computerName, s_regUI);
 
                 //reading user imput
                 s_input = Console.ReadLine();
@@ -179,7 +179,7 @@ namespace Shell
         //------------------------
 
         // We set the name of the current user logged in and machine on console.
-        private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName,string uiSettings)
+        private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName, string uiSettings)
         {
             if (uiSettings != "")
             {
@@ -188,7 +188,7 @@ namespace Shell
 
             if (currentLocation.Contains(GlobalVariables.rootPath) && currentLocation.Length == 3)
             {
-                SetUser(accountName, computerName,currentLocation,false);
+                SetUser(accountName, computerName, currentLocation, false);
             }
             else
             {
@@ -196,9 +196,9 @@ namespace Shell
             }
         }
 
-        private static void SetUser(string accountName, string computerName,string currentLocation, bool currentDir)
+        private static void SetUser(string accountName, string computerName, string currentLocation, bool currentDir)
         {
-            if (currentDir==false)
+            if (currentDir == false)
             {
                 if (s_userEnabled == 1)
                 {
@@ -211,7 +211,7 @@ namespace Shell
                         FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}:");
                     }
                 }
-              
+
                 if (s_cdColor != "cyan")
                 {
                     FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"~");
@@ -226,7 +226,8 @@ namespace Shell
                     {
                         FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $"{s_indicator} ");
                     }
-                    else{
+                    else
+                    {
                         FileSystem.ColorConsoleText(ConsoleColor.White, $"{s_indicator} ");
                     }
                 }
