@@ -52,7 +52,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
-        //Display help command
+        // Display help command.
         private static string HelpCommand()
         {
             string help = @"Bios info grabber commands list:

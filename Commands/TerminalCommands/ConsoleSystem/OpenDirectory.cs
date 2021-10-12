@@ -6,7 +6,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "odir";
 
-
         public void Execute(string arg)
         {
             //reading current location
