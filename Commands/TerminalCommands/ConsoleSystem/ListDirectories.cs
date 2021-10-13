@@ -50,7 +50,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     {
                         if (found)
                         {
-                            s_currentDirectory = arg.ParameterAfter("ls");
+                            int arglength = args.Length - 3;
+                            s_currentDirectory = args.Substring(3,arglength);
                             found = false;
                         }
                     }
@@ -73,7 +74,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // Save ls output to a file
                 if (arg.ContainsParameter("-o"))
                 {
-                    SaveLSOutput(arg.ParameterAfter("-o"));
+                    SaveLSOutput(args.SplitByText(" -o ",1));
                 }
                 else
                 {

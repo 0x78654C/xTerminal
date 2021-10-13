@@ -16,12 +16,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
             var arg = args.Split(' ');
-            string file = FileSystem.SanitizePath(arg.ParameterAfter("hex"), s_currentDirectory);
+            string file;
             if (arg.ContainsParameter("-o"))
             {
+                file = FileSystem.SanitizePath(arg.ParameterAfter("hex"), s_currentDirectory);
                 try
                 {
-                    HexDumpFile(file, true, arg.ParameterAfter("-o"));
+                    HexDumpFile(file, true, args.SplitByText(" -o ",1));
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -34,6 +35,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 return;
             }
+            int argLength = args.Length - 4;
+            file = args.Substring(3, argLength);
             HexDumpFile(file, false, "");
         }
 

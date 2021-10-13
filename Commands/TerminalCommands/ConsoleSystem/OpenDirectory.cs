@@ -12,7 +12,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public void Execute(string arg)
         {
             string currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
-            string args = arg.Split(' ').ParameterAfter("odir");
+            int argLenght = arg.Length - 4;
+            string args = arg.Substring(4,argLenght);
 
             if (!string.IsNullOrEmpty(args))
             {

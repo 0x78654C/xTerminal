@@ -7,6 +7,10 @@ namespace Commands.TerminalCommands.DirFiles
 {
     public class MD5Check : ITerminalCommand
     {
+
+        /*
+         * Checks MD5 hash of a file.
+         */
         public string Name => "md5";
 
         public void Execute(string arg)
@@ -14,8 +18,9 @@ namespace Commands.TerminalCommands.DirFiles
 
             try
             {
-                string cDir = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
-                string input = arg.Split(' ')[1];
+                string cDir = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                int argLenght = arg.Length - 4;
+                string input = arg.Substring(4,argLenght);
 
                 if (input.Contains(":") && input.Contains(@"\"))
                 {

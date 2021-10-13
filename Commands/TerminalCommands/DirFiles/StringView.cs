@@ -5,6 +5,10 @@ namespace Commands.TerminalCommands.DirFiles
 {
     public class StringView : ITerminalCommand
     {
+        /*
+         Read data from files with certain paramters.
+         */
+        
         public string Name => "cat";
 
         private static string s_currentDirectory;
@@ -14,17 +18,17 @@ namespace Commands.TerminalCommands.DirFiles
   -s   : Output lines containing a provided text from a file.
            Example: cat -s <search_text> <file_search_in>
   -so  : Saves the lines containing a provided text from a file.
-           Example: cat -s <search_text> <file_search_in> <file_to_save>
+           Example: cat -so <search_text> <file_search_in> -o <file_to_save>
   -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
            Example1: cat -sa <search_text>
            Example2: cat -sa <search_text> <part_of_file_name> 
   -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
-           Example1: cat -sao <search_text> <file_to_save>
-           Example2: cat -sao <search_text> <part_of_file_name> <file_to_save>
+           Example1: cat -sao <search_text> -o <file_to_save>
+           Example2: cat -sao <search_text> <part_of_file_name> -o <file_to_save>
   -sm  : Output lines containing a provided text from multiple fies in current directory.
            Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
   -smo : Saves the lines containing a provided text from multiple files in current directory.
-           Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> <file_to_save>
+           Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
   -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
   -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
            Example: cat -lfc <file_name_text>
@@ -63,7 +67,7 @@ namespace Commands.TerminalCommands.DirFiles
                         Console.WriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
                         return;
                     }
-                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(input[0], s_currentDirectory));
+                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg, s_currentDirectory));
                     return;
                 }
 ;
@@ -93,7 +97,7 @@ namespace Commands.TerminalCommands.DirFiles
                     case "-sao":
                         searchString = input[1];
                         fileName = "";
-                        saveToFile = input[3];
+                        saveToFile = arg.SplitByText(" -o ",1);
                         string startMessage = "";
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
@@ -119,7 +123,7 @@ namespace Commands.TerminalCommands.DirFiles
                             fileName = input[2];
                             fileName = fileName.Replace(";", " ");
                             searchString = input[1];
-                            saveToFile = input[3];
+                            saveToFile = arg.SplitByText(" -o ", 1);
                             Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
                             break;
                         }
@@ -134,7 +138,7 @@ namespace Commands.TerminalCommands.DirFiles
                             fileName = input[2];
                             fileName = fileName.Replace(";", " ");
                             searchString = input[1];
-                            saveToFile = input[3];
+                            saveToFile = arg.SplitByText(" -o ", 1);
                             Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, false));
                             break;
                         }
@@ -151,6 +155,9 @@ namespace Commands.TerminalCommands.DirFiles
                                 FileSystem.ErrorWriteLine(e.Message);
                             }
                         }
+                        break;
+                    default:
+                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg, s_currentDirectory));
                         break;
                 }
             }

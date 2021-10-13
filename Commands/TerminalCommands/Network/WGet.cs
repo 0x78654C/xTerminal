@@ -26,6 +26,13 @@ namespace Commands.TerminalCommands.Network
         private static BackgroundWorker s_worker;
         private static BackgroundWorker s_workerDirectory;
         private static AutoResetEvent s_resetEvent = new AutoResetEvent(false);
+        private static string s_helpMessage = @"   
+  Usage: wget <url> . Or with paramters:
+
+   -h : Display this message.
+   -o : Save to a specific directory.
+        Example2: wget <url> -o <directory_path>
+";
         public void Execute(string arg)
         {
             s_worker = new BackgroundWorker();
@@ -43,11 +50,13 @@ namespace Commands.TerminalCommands.Network
             {
                 if (NetWork.IntertCheck())
                 {
-                    s_urlFirst = arg.Split(' ')[1];  //url input
-
-                    if (s_urlFirst.Contains(@"\"))
+                    int argLenght = arg.Length - 5;
+                    string input = arg.Substring(5,argLenght);  //url input
+                    Console.WriteLine(s_urlFirst);
+                    if (input.Contains("-o"))
                     {
-                        s_urlSecond = arg.Split(' ')[2];
+                        s_urlFirst = input.SplitByText("-o",1);
+                        s_urlSecond = input.SplitByText("-o",0);
                         s_workerDirectory.RunWorkerAsync();
                         s_resetEvent.WaitOne();
                     }
@@ -64,7 +73,7 @@ namespace Commands.TerminalCommands.Network
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine(e.ToString());
             }
         }
         //Download file directly in root path
@@ -98,12 +107,13 @@ namespace Commands.TerminalCommands.Network
         {
             if (!Directory.Exists(s_urlFirst))
             {
-                Console.WriteLine($"Directory: {s_urlFirst} does not exist!");
+               FileSystem.ErrorWriteLine($"Directory: {s_urlFirst} does not exist!");
                 return;
             }
 
             if (!FileSystem.CheckPermission(s_urlFirst, CheckType.Directory))
             {
+                FileSystem.ErrorWriteLine($"Access denied to direcotry: {s_urlFirst}");
                 return;
             }
 

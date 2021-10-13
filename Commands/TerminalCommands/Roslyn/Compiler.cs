@@ -12,6 +12,9 @@ namespace Commands.TerminalCommands.Roslyn
 {
     public class Compiler : ITerminalCommand
     {
+        /*
+         Compiles C# in memory usint Roslyn 
+         */
         public string Name => "ccs";
         private string _codeToRun;
         private string _namesapce;
@@ -21,16 +24,17 @@ namespace Commands.TerminalCommands.Roslyn
         {
             _currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
             string fileName;
-            string param=string.Empty;
+            string param = string.Empty;
+            args = args.Replace("ccs ", "");
             if (args.ContainsText("-p"))
             {
-                fileName = args.Split(' ').ParameterAfter("ccs");
-                param =args.Replace($"ccs {fileName} -p ","");
-               CompileAndRun(fileName, param);
+                fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0),_currentLocation);
+                param = args.SplitByText(" -p ", 1);
+                CompileAndRun(fileName, param);
                 return;
             }
-            fileName = args.Split(' ').ParameterAfter("ccs");
-            CompileAndRun(fileName, param);
+            args = FileSystem.SanitizePath(args, _currentLocation);
+            CompileAndRun(args, param);
         }
 
         private void CompileAndRun(string fileName, string param)

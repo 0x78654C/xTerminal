@@ -13,7 +13,8 @@ namespace Commands.TerminalCommands.DirFiles
             string file;
             try
             {
-                file = FileSystem.SanitizePath(arg.Split(' ')[1], currentDirectory);
+                int argLenght = arg.Length - 7;
+                file = FileSystem.SanitizePath(arg.Substring(7,argLenght), currentDirectory);
                 File.Create(file);
                 Console.WriteLine($"File {file} was created!");
             }

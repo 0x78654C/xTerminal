@@ -36,7 +36,7 @@ namespace Commands.TerminalCommands.Roslyn
                 Example: ! <command_name> -p <parameters>
    -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
              current directory with a command name.
-                Example: ! -add <file_name_with_code> <command_name>|<command_description>
+                Example: ! -add <file_name_with_code> -d <command_name>|<command_description>
    -del   :  Deletes an Add-on.
                 Example: ! -del <command_name>
    -list  :  Display the list of the saved add-ons with description.
@@ -140,8 +140,10 @@ namespace Commands.TerminalCommands.Roslyn
                     FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
                     return;
                 }
-
-                string file = FileSystem.SanitizePath(argument.Replace($"! -add ", "").Split(' ')[0], _currentLocation);
+                string dirFirst = argument.SplitByText("-add ", 1);
+                string dir = dirFirst.SplitByText(" -c ", 0);
+                Console.WriteLine(dir);
+                string file = FileSystem.SanitizePath(dir, _currentLocation);
 
                 if (!File.Exists(file))
                 {
@@ -149,7 +151,7 @@ namespace Commands.TerminalCommands.Roslyn
                     return;
                 }
 
-                string argParse = argument.Replace($"! -add ", "").Split(' ')[1];
+                string argParse = dirFirst.SplitByText(" -c ", 1);
                 string command = argParse.Split('|')[0];
                 int countSpace = Regex.Matches(argument, " ").Count;
                 string description = argument.Split('|')[1];

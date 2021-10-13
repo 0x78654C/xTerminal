@@ -11,14 +11,11 @@ namespace Commands.TerminalCommands.DirFiles
 
         public void Execute(string arg)
         {
-
             string file = string.Empty;
             string set;
-
             string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
-
-
             string cEditor = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor);
+
             if (cEditor == "")
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, "notepad");
@@ -26,10 +23,10 @@ namespace Commands.TerminalCommands.DirFiles
 
             try
             {
-                file = arg.Split(' ')[1];
-
                 if (!file.Contains("set"))
                 {
+                    int argLenght = arg.Length - 5;
+                    file = arg.Substring(5, argLenght);
                     file = FileSystem.SanitizePath(file, dlocation);
                     ProcessCall(file, File.Exists(cEditor) ? cEditor : "notepad");
                     return;

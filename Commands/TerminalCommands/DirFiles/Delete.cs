@@ -20,6 +20,8 @@ namespace Commands.TerminalCommands.DirFiles
         {
             _currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
             string param = args.Split(' ').ParameterAfter("del");
+            int argsLenght = args.Length - 3;
+            args = args.Substring(3, argsLenght);
             if (param == "-a")
             {
                 DeleteAllFilesDris(_currentLocation, true, true);
@@ -68,7 +70,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             try
             {
-                string input = arg.Split(' ')[1];              // geting location input        
+                string input = arg;              // geting location input        
 
                 //checking the cureent locaiton in folder
                 if (input.Contains(":") && input.Contains(@"\"))
