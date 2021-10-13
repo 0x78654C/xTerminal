@@ -17,72 +17,57 @@ namespace Commands.TerminalCommands.ConsoleSystem
             // Set directory, to be used in other functions
             s_currentDirectory =
                 RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
-
-            args = args.Replace("start ", "");
+            int argsLength = args.Length - 6;
+            args = args.Substring(6,argsLength);
             string param = args.Split(' ').First();
             if (args.Contains(@"\"))
             {
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    StartApplication(args, true);
+                    args = FileSystem.SanitizePath(args, s_currentDirectory);
+                    StartApplication(args,"", true);
+                    return;
                 }
-                else
-                {
-                    StartApplication(args, false);
-                }
+                StartApplication(args,"", false);
+                return;
             }
-            else
+            args = FileSystem.SanitizePath(args, s_currentDirectory);
+
+            if (param == "-u")
             {
-                if (param == "-u")
-                {
-                    args = args.Replace("-u ", "");
-                    StartApplication(s_currentDirectory + args, true);
-                }
-                else
-                {
-                    StartApplication(s_currentDirectory + args, false);
-                }
+                args = args.Replace("-u ", "");
+                StartApplication(args,"", true);
+                return;
             }
+            StartApplication(args,"", false);
         }
 
-        private void StartApplication(string inputCommand, bool admin)
+        /// <summary>
+        /// Start process using args and other user options.
+        /// </summary>
+        /// <param name="inputCommand">Path to procces required to be started.</param>
+        /// <param name="arg">Arguments</param>
+        /// <param name="admin">Use other user for run procces.</param>
+        private void StartApplication(string inputCommand,string arg, bool admin)
         {
-
             try
             {
                 string[] dInput = inputCommand.Split(' ');
                 int _ch = Regex.Matches(inputCommand, " ").Count;
 
-                if (_ch == 1)
-                {
-                    if (!File.Exists(dInput[0]))
+                    if (!File.Exists(inputCommand))
                     {
-                        FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
+                        FileSystem.ErrorWriteLine($"File {inputCommand} does not exist!");
                         return;
                     }
                     if (admin)
                     {
-                        Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1], true, true);
+                        Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true);
                         return;
                     }
-                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], dInput[1], true, false);
-                }
-                else
-                {
-                    if (!File.Exists(dInput[0]))
-                    {
-                        FileSystem.ErrorWriteLine($"File {dInput[0]} does not exist!");
-                        return;
-                    }
-                    if (admin)
-                    {
-                        Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], "", true, true);
-                        return;
-                    }
-                    Core.SystemTools.ProcessStart.ProcessExecute(dInput[0], "", true, false);
-                }
-
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false);
+                    return;
             }
             catch (Exception e)
             {
