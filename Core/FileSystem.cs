@@ -169,8 +169,9 @@ namespace Core
         /// Opens a directory in Windows Explorer.
         /// </summary>
         /// <param name="dirPath"></param>
-        public static void OpenCurrentDiretory(string dirPath)
+        public static void OpenCurrentDiretory(string dirPath, string currentDirectory)
         {
+            dirPath = SanitizePath(dirPath, currentDirectory);
             if (Directory.Exists(dirPath))
             {
                 SystemTools.ProcessStart.ProcessExecute("explorer", dirPath, false, false);
