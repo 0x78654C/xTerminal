@@ -17,7 +17,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
-                s_newLocation = arg.Split(' ')[1];             
+                int newPathLength = arg.Length - 3;
+                s_newLocation = arg.Substring(3,newPathLength);             
                 s_currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); // read location from ini
                 string pathCombine = null;
                 string pathSeparator;
