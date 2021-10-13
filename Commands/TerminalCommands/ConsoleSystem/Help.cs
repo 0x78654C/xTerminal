@@ -20,8 +20,8 @@ This is the full list of commands that can be used in xTerminal:
     start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe. Can use following parameter:
                  -u  : Start with different user.
     clear     -- Cleares the console.
-    cd        -- Sets the currnet directory. (cd .. for parent directory)
-    odir      -- Open current directory with Windows Explorer
+    cd        -- Sets the currnet directory. (cd .. for parent directory).
+    odir      -- Open current directory or other directory path provided with Windows Explorer.
     ps        -- Opens Windows Powershell.
     cmd       -- Opens Windows Command Prompt.
     reboot    -- It force reboots the Windows OS.

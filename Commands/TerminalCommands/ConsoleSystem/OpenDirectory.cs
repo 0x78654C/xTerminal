@@ -4,17 +4,24 @@ namespace Commands.TerminalCommands.ConsoleSystem
 {
     public class OpenDirectory : ITerminalCommand
     {
+        /*
+         * Opens current directory or other directory path provided.
+         */
         public string Name => "odir";
 
         public void Execute(string arg)
         {
-            //reading current location
-            string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
-            if (dlocation == "")
+            string currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+            string args = arg.Split(' ').ParameterAfter("odir");
+
+            if (!string.IsNullOrEmpty(args))
             {
-                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
+                int lengthPath = arg.Length-5;
+                string dirlocation = arg.Substring(5, lengthPath);
+                FileSystem.OpenCurrentDiretory(dirlocation,currentDirectory);
+                return;
             }
-            FileSystem.OpenCurrentDiretory(dlocation);
+            FileSystem.OpenCurrentDiretory(currentDirectory,currentDirectory);
         }
     }
 }
