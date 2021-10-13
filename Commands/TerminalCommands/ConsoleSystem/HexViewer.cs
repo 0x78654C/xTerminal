@@ -6,6 +6,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
 {
     public class HexViewer : ITerminalCommand
     {
+        /*
+         * Simple hex viewer.
+         */
+
         public string Name => "hex";
         private static string s_currentDirectory;
         public void Execute(string args)
@@ -30,28 +34,30 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 return;
             }
-            HexDumpFile(file,false,"");
+            HexDumpFile(file, false, "");
         }
 
-        private static void HexDumpFile(string file, bool saveToFile,string savePath)
+        /// <summary>
+        /// Outputs or saves the hex dump to a file.
+        /// </summary>
+        /// <param name="file">Path of file for hexdump.</param>
+        /// <param name="saveToFile">True for save output to a file.</param>
+        /// <param name="savePath">File path and name where to store the dump.</param>
+        private static void HexDumpFile(string file, bool saveToFile, string savePath)
         {
             if (File.Exists(file))
             {
-               
                 byte[] getBytes = File.ReadAllBytes(file);
-                if (saveToFile) {
-                    Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16),true));
-                }
-                else
+                if (saveToFile)
                 {
-                    Console.WriteLine(HexDump.Hex(getBytes, 16));
+                    Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
+                    return;
                 }
-                GC.Collect();
+                Console.WriteLine(HexDump.Hex(getBytes, 16));
+                return;
             }
-            else
-            {
-                FileSystem.ErrorWriteLine($"File {file} does not exist");
-            }
+
+            FileSystem.ErrorWriteLine($"File {file} does not exist");
         }
     }
 }
