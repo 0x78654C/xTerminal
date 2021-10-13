@@ -27,90 +27,51 @@ namespace Commands.TerminalCommands.DirFiles
             try
             {
                 file = arg.Split(' ')[1];
-                
+
                 if (!file.Contains("set"))
                 {
-
-                    if (File.Exists(cEditor))
-                    {
-                        var process = new Process();
-                        process.StartInfo = new ProcessStartInfo(cEditor)
-                        {
-                            UseShellExecute = false,
-                            Arguments = dlocation + @"\" + file
-
-                        };
-
-                        process.Start();
-                        process.WaitForExit();
-                    }
-                    else
-                    {
-
-                        var process = new Process();
-                        process.StartInfo = new ProcessStartInfo("notepad")
-                        {
-                            UseShellExecute = false,
-                            Arguments = dlocation + @"\" + file
-
-                        };
-
-                        process.Start();
-                        process.WaitForExit();
-                    }
+                    file = FileSystem.SanitizePath(file, dlocation);
+                    ProcessCall(file, File.Exists(cEditor) ? cEditor : "notepad");
+                    return;
                 }
-                else
+                set = arg.Replace("edit set ", "");
+                if (File.Exists(set))
                 {
-                    set = arg.Replace("edit set ","");
-                    if (File.Exists(set))
-                    {
-                        RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, set);
-                        Console.WriteLine("Your New editor is: " + set);
-                    }
-                    else
-                    {
-                        FileSystem.ErrorWriteLine($"File {set} dose not exist");
-                    }
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, set);
+                    Console.WriteLine("Your New editor is: " + set);
+                    return;
                 }
-
+                FileSystem.ErrorWriteLine($"File {set} dose not exist");
+                return;
             }
             catch
             {
-
-                if (File.Exists(cEditor))
+                file = FileSystem.SanitizePath(file, dlocation);
+                if (string.IsNullOrEmpty(file))
                 {
-                    if (string.IsNullOrEmpty(file))
-                    {
-                        Console.WriteLine("You must type the file name for edit!");
-                    }
-                    else
-                    {
-                        var process = new Process();
-                        process.StartInfo = new ProcessStartInfo(cEditor)
-                        {
-                            UseShellExecute = false,
-                            Arguments = dlocation + @"\" + file
-
-                        };
-
-                        process.Start();
-                        process.WaitForExit();
-                    }
+                    Console.WriteLine("You must type the file name for edit!");
+                    return;
                 }
-                else
-                {
-                    var process = new Process();
-                    process.StartInfo = new ProcessStartInfo("notepad")
-                    {
-                        UseShellExecute = false,
-                        Arguments = dlocation + @"\" + file
-
-                    };
-
-                    process.Start();
-                    process.WaitForExit();
-                }
+                ProcessCall(file, File.Exists(cEditor) ? cEditor : "notepad");
+                return;
             }
+        }
+
+        /// <summary>
+        /// Edit file with predifined editor(notepad) or custom one.
+        /// </summary>
+        /// <param name="file">File to be edited.</param>
+        /// <param name="currentEditor">Editor path.</param>
+        private void ProcessCall(string file, string currentEditor)
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo(currentEditor)
+            {
+                UseShellExecute = false,
+                Arguments = file
+            };
+            process.Start();
+            process.WaitForExit();
         }
     }
 }
