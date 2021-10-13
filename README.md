@@ -68,17 +68,17 @@ This is the full list of commands that can be used in xTerminal:
                    -s   : Output lines containing a provided text from a file.
                           Example: cat -s <search_text> <file_search_in>
                    -so  : Saves the lines containing a provided text from a file.
-                          Example: cat -s <search_text> <file_search_in> <file_to_save>
+                          Example: cat -so <search_text> <file_search_in> -o <file_to_save>
                    -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
                           Example1: cat -sa <search_text>
                           Example2: cat -sa <search_text> <part_of_file_name> 
                    -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
-                          Example1: cat -sao <search_text> <file_to_save>
-                          Example2: cat -sao <search_text> <part_of_file_name> <file_to_save>
+                          Example1: cat -sao <search_text> -o <file_to_save>
+                          Example2: cat -sao <search_text> <part_of_file_name> -o <file_to_save>
                    -sm  : Output lines containing a provided text from multiple fies in current directory.
                           Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
                    -smo : Saves the lines containing a provided text from multiple files in current directory.
-                          Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> <file_to_save>
+                          Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
                    -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
                    -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
                           Example: cat -lfc <file_name_text>
@@ -89,6 +89,7 @@ This is the full list of commands that can be used in xTerminal:
                    -ca <destination_directory> : copy all files from current directory in a specific directory
                    -ca : copy source files in same directory
     frename   -- Renames a file in a specific directory(s).
+                 Example: frename <old_file_name> -o <new_file_name>
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
                    -ma <destination_directory> : moves all files from current directory in a specific directory
     edit      -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
@@ -106,6 +107,9 @@ This is the full list of commands that can be used in xTerminal:
     icheck    -- Checks if a Domain or IP address is online.
     extip     -- Displays the current external IP address.
     wget      -- Download files from a specific website.
+                    -h : Display this message.
+                    -o : Save to a specific directory.
+                         Example2: wget <url> -o <directory_path>
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname. Ex.: ping google.com or ping google.com -r 10 (for 10 replies).
@@ -120,7 +124,7 @@ This is the full list of commands that can be used in xTerminal:
                               Example: ! <command_name> -p <parameters>
                     -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
                               current directory with a command name.
-                              Example: ! -add <file_name_with_code> <command_name>|<command_description>
+                              Example: ! -add <file_name_with_code> -c <command_name>|<command_description>
                     -del   :  Deletes an Add-on.
                               Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
