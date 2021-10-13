@@ -23,7 +23,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             try
             {
-                if (!file.Contains("set"))
+                if (!arg.Contains("set"))
                 {
                     int argLenght = arg.Length - 5;
                     file = arg.Substring(5, argLenght);
