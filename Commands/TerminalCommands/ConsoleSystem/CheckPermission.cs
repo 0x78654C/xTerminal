@@ -18,7 +18,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
             try
             {
                 string tabs = "\t";
-                input = arg.Split(' ')[1];
+                int argLenght = arg.Length - 3;
+                input = arg.Substring(3, argLenght);
                 ListPermissions(input, currentLocation, tabs);
             }
             catch (Exception e)
