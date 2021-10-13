@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Commands
 {
@@ -31,6 +32,13 @@ namespace Commands
             }
 
             return parms[index + 1];
+        }
+
+        internal static string SplitByText( this string input,string parameter,int index)
+        {
+            // return Regex.Split(input, parameter)[index];
+            string[] output = input.Split(new string[] { parameter }, StringSplitOptions.None);
+            return output[index];
         }
 
         internal static bool IsNotNullEmptyOrWhitespace(this string text)
