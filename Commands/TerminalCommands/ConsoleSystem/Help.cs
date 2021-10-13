@@ -17,8 +17,7 @@ This is the full list of commands that can be used in xTerminal:
     ls        -- List directories and files on a directory. Use -h for additional parameters.
     hcmd      -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe. Can use following parameter:
-                 -u  : Start with different user.
+    start     -- Starts an application. Use -h for additional help.
     clear     -- Cleares the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory).
     odir      -- Open current directory or other directory path provided with Windows Explorer.

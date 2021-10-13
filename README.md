@@ -41,8 +41,12 @@ This is the full list of commands that can be used in xTerminal:
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
     hcmd      -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    start     -- Starts an application. Ex.: start C:\Windows\System32\notepad.exe. Can use following parameter:
-                   -u : Start with different user.
+    start     -- Starts an application. Ex.: start start <file_name> OR start <file_name> -p <file_paramters>.
+                 Can use following parameter:
+                   -h : Display this message.
+                   -u : Can run process with different user.
+                        Example1: start -u <file_name>
+                        Example2: start -u <file_name> -p <file_paramters>
     clear     -- Cleares the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory).
     odir      -- Open current directory or other directory path provided with Windows Explorer.
