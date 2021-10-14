@@ -31,6 +31,9 @@ This is the full list of commands that can be used in xTerminal:
     ------------------------ System ------------------------
     ls        -- List directories and files on a directory. Use -h for additional parameters.
                    -h  : Displays this message.
+                   -d  : Display duplicate files in a directory and subdirectories.
+                         Example1: ls -d <directory_path>
+                         Example2: ls -d <directory_path> -o <file_to_save>
                    -s  : Displays size of files in current directory and subdirectories.
                    -c  : Counts files and directories and subdirectories from current directory.
                    -cf : Counts files from current directory and subdirectories with name containing a specific text.
