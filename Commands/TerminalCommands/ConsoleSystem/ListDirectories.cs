@@ -1,10 +1,10 @@
 ﻿using Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -17,9 +17,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countFilesText = 0;
         private static int s_countDirectories = 0;
         private static int s_countDirectoriesText = 0;
+        private Stopwatch s_stopWatch;
+        private TimeSpan s_timeSpan;
         private static List<string> s_listFiles = new List<string>();
         private static List<string> s_listDirs = new List<string>();
         private static List<string> s_listDuplicateFiles = new List<string>();
+        private static string s_virus;
         private static List<string> s_listParams = new List<string>() { "-h","-s","-c","-cf","-cd","-hl","-o"};
         private static string s_helpMessage = @"
     -h  : Displays this message.
@@ -74,7 +77,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         OutputDuplicates(dirSearchIn,fileToSave);
                         return;
                     }
-                    OutputDuplicates(args.SplitByText("-d ", 1));
+                    string nullDir = args.Replace("ls -d", "");
+                    if (!string.IsNullOrEmpty(nullDir))
+                    {
+                        OutputDuplicates(args.SplitByText("-d ", 1));
+                        return;
+                    }
+                    OutputDuplicates(s_currentDirectory);
                     return;
                 }
 
@@ -144,35 +153,52 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 FileSystem.ErrorWriteLine(
                     "You need administrator rights to run full command in this place! Some directories/files cannot be accessed!");
             }
-            catch
+            catch(Exception e)
             {
-                FileSystem.ErrorWriteLine("Unable to perform the 'ls' command");
+                if (e.Message.Contains("virus"))
+                {
+                    FileSystem.ErrorWriteLine(e.ToString());
+                    FileSystem.ErrorWriteLine($"Potential virused fle or unwanted file: {s_virus}");
+                }
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
 
+
+
         private void OutputDuplicates(string dir,string savetoFile = null)
         {
+            s_timeSpan = new TimeSpan();
+            s_stopWatch = new Stopwatch();
+            s_stopWatch.Start();
             GetDuplicateFiles(dir);
             string output="";
             var lisDups = s_listDuplicateFiles.GroupBy(a => a.SplitByText("CheckSUM: ", 1)).Where(a => a.Count() > 1).SelectMany(o => o).ToList();
             if (!string.IsNullOrEmpty(savetoFile))
             {
-                output = "List of duplicated files in {dir} :\n";
+                output =$"List of duplicated files in {dir} :\n";
                 output += string.Join("\n", lisDups);
                 Console.WriteLine(FileSystem.SaveFileOutput(savetoFile, s_currentDirectory, string.Join("\n", output)));
+                s_stopWatch.Stop();
+                s_timeSpan = s_stopWatch.Elapsed;
+                Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
                 s_listDuplicateFiles.Clear();
                 return;
             }
             Console.WriteLine($"List of duplicated files in {dir} :\n");
             Console.WriteLine(string.Join("\n", lisDups));
             s_listDuplicateFiles.Clear();
+            s_stopWatch.Stop();
+            s_timeSpan = s_stopWatch.Elapsed;
+            Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
         }
         private string GetMD5CheckSum(string file)
         {
             using (var md5 = MD5.Create())
             {
-                using (var stream = new BufferedStream(File.OpenRead(file),1200000))
+                using (var stream = File.OpenRead(file))
                 {
+                    s_virus = file;
                     var hash = md5.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                 }
