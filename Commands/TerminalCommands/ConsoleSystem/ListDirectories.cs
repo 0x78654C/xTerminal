@@ -157,7 +157,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 if (e.Message.Contains("virus"))
                 {
-                    FileSystem.ErrorWriteLine(e.ToString());
+                    FileSystem.ErrorWriteLine(e.Message);
                     FileSystem.ErrorWriteLine($"Potential virused fle or unwanted file: {s_virus}");
                 }
                 FileSystem.ErrorWriteLine(e.Message);
