@@ -40,6 +40,7 @@
     <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.4.0.0-4.final\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
@@ -91,6 +92,7 @@
     <Compile Include="TerminalCommands\ConsoleSystem\CurrentDirectory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\HexViewer.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\OpenDirectory.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\PCInfo.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
     <Compile Include="TerminalCommands\DirFiles\Delete.cs" />
     <Compile Include="TerminalCommands\DirFiles\Editor.cs" />

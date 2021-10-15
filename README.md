@@ -68,6 +68,7 @@ This is the full list of commands that can be used in xTerminal:
                    -r : Displays Storage devices information on a remote pc.
     hex       -- Display a hex dump of a file.
                    -o : Saves the output to a file. Ex.: hex <file_name> -o <file_to_be_saved>
+    pcinfo    -- Display System Information.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
