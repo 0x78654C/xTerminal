@@ -8,7 +8,7 @@ namespace Commands.TerminalCommands.DirFiles
         /*
          Read data from files with certain paramters.
          */
-        
+
         public string Name => "cat";
 
         private static string s_currentDirectory;
@@ -60,7 +60,7 @@ namespace Commands.TerminalCommands.DirFiles
                         Console.WriteLine(s_helpMessage);
                         return;
                     }
-                    if(input[0].Contains("-lc"))
+                    if (input[0].Contains("-lc"))
                     {
                         int totalLinesCount = Core.Commands.CatCommand.LineCounts(s_currentDirectory);
                         Core.Commands.CatCommand.ClearCounter();
@@ -97,7 +97,7 @@ namespace Commands.TerminalCommands.DirFiles
                     case "-sao":
                         searchString = input[1];
                         fileName = "";
-                        saveToFile = arg.SplitByText(" -o ",1);
+                        saveToFile = arg.SplitByText(" -o ", 1);
                         string startMessage = "";
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
@@ -147,10 +147,11 @@ namespace Commands.TerminalCommands.DirFiles
                             try
                             {
                                 fileName = input[1];
-                                int totalLinesCount = Core.Commands.CatCommand.LineCountsName(s_currentDirectory,fileName);
+                                int totalLinesCount = Core.Commands.CatCommand.LineCountsName(s_currentDirectory, fileName);
                                 Core.Commands.CatCommand.ClearCounter();
                                 Console.WriteLine($"Total lines in files that name contains '{fileName}' (without empty lines): {totalLinesCount}");
-                            }catch(Exception e)
+                            }
+                            catch (Exception e)
                             {
                                 FileSystem.ErrorWriteLine(e.Message);
                             }

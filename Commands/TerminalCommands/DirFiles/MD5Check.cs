@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.DirFiles
             {
                 string cDir = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
                 int argLenght = arg.Length - 4;
-                string input = arg.Substring(4,argLenght);
+                string input = arg.Substring(4, argLenght);
 
                 if (input.Contains(":") && input.Contains(@"\"))
                 {

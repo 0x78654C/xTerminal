@@ -14,7 +14,7 @@ namespace Commands.TerminalCommands.DirFiles
             try
             {
                 int argLenght = arg.Length - 7;
-                file = FileSystem.SanitizePath(arg.Substring(7,argLenght), currentDirectory);
+                file = FileSystem.SanitizePath(arg.Substring(7, argLenght), currentDirectory);
                 File.Create(file);
                 Console.WriteLine($"File {file} was created!");
             }

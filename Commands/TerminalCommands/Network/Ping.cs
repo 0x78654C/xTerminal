@@ -1,5 +1,5 @@
-﻿using System;
-using Core;
+﻿using Core;
+using System;
 
 namespace Commands.TerminalCommands.Network
 {
@@ -14,8 +14,8 @@ namespace Commands.TerminalCommands.Network
                 string[] arg = args.Split(' ');
                 if (args.ContainsText("-r"))
                 {
-                    int pingReplays= Int32.Parse(arg.ParameterAfter("-r"));
-                    NetWork.PingMain(arg.ParameterAfter("ping"),pingReplays);
+                    int pingReplays = Int32.Parse(arg.ParameterAfter("-r"));
+                    NetWork.PingMain(arg.ParameterAfter("ping"), pingReplays);
                     return;
                 }
                 NetWork.PingMain(arg.ParameterAfter("ping"), 4);

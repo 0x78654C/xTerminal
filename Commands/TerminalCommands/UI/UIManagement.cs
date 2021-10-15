@@ -1,9 +1,6 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace Commands.TerminalCommands.UI
 {
@@ -12,7 +9,7 @@ namespace Commands.TerminalCommands.UI
 
         private string _regUI;
         List<string> _colors = new List<string>() { "darkred", "darkgreen", "darkyellow", "darkmagenta", "darkcyan", "darkgray", "darkblue", "red", "green", "yellow", "white", "magenta", "cyan", "black", "gray", "blue" };
-        List<string> _indicators = new List<string>() {">", "->", "=>", "$", ">>" };
+        List<string> _indicators = new List<string>() { ">", "->", "=>", "$", ">>" };
         private string _helpMessage = @"Usage of  UI PS1(Prompt string 1) command:
  ::Predifined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
                       red, green, yellow, white, magenta, cyan, black, gray, blue 
@@ -42,7 +39,7 @@ namespace Commands.TerminalCommands.UI
                     SetUserColor(args.ParameterAfter("-c"), _regUI, "", true, Core.SystemTools.UI.Setting.UserInfo);
                     return;
                 }
-                else if(arg.ContainsText(":d"))
+                else if (arg.ContainsText(":d"))
                 {
                     SetUserColor(args.ParameterAfter("-c"), _regUI, "", false, Core.SystemTools.UI.Setting.UserInfo);
                     return;
@@ -89,7 +86,7 @@ namespace Commands.TerminalCommands.UI
                     colorSetting = $"{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.UserInfo)}|{outColor};{indiOut}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.CurrentDirectoy)}";
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, colorSetting);
                 }
-                else if(setting.ToString() == "UserInfo")
+                else if (setting.ToString() == "UserInfo")
                 {
                     if (enable)
                     {
@@ -99,7 +96,8 @@ namespace Commands.TerminalCommands.UI
                     }
                     colorSetting = $"{outColor};0|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.Indicator)}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.CurrentDirectoy)}";
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, colorSetting);
-                }else if(setting.ToString() == "CurrentDirectoy")
+                }
+                else if (setting.ToString() == "CurrentDirectoy")
                 {
                     colorSetting = $"{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.UserInfo)}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.Indicator)}|{outColor}";
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, colorSetting);

@@ -13,16 +13,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             string currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
             int argLenght = arg.Length - 4;
-            string args = arg.Substring(4,argLenght);
+            string args = arg.Substring(4, argLenght);
 
             if (!string.IsNullOrEmpty(args))
             {
-                int lengthPath = arg.Length-5;
+                int lengthPath = arg.Length - 5;
                 string dirlocation = arg.Substring(5, lengthPath);
-                FileSystem.OpenCurrentDiretory(dirlocation,currentDirectory);
+                FileSystem.OpenCurrentDiretory(dirlocation, currentDirectory);
                 return;
             }
-            FileSystem.OpenCurrentDiretory(currentDirectory,currentDirectory);
+            FileSystem.OpenCurrentDiretory(currentDirectory, currentDirectory);
         }
     }
 }

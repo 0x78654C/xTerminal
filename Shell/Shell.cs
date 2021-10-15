@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using SystemCmd = Core.Commands.SystemCommands;
 using SetConsoleColor = Core.SystemTools.UI;
-using System.Threading.Tasks;
+using SystemCmd = Core.Commands.SystemCommands;
 
 namespace Shell
 {

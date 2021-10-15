@@ -10,7 +10,7 @@ namespace Commands.TerminalCommands.Games
      * Autor: mkbmain
      * Link: https://github.com/mkbmain/ConsoleSnake/
      */
-    public class Snake: ITerminalCommand
+    public class Snake : ITerminalCommand
     {
         private static readonly Random Random = new Random(Guid.NewGuid().GetHashCode());
         private const char Food = ' ';
@@ -26,7 +26,7 @@ namespace Commands.TerminalCommands.Games
         public string Name => "snake";
         public void Execute(string args)
         {
-            Main();            
+            Main();
         }
         private static void Main()
         {

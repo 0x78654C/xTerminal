@@ -18,7 +18,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             try
             {
                 int newPathLength = arg.Length - 3;
-                s_newLocation = arg.Substring(3,newPathLength);             
+                s_newLocation = arg.Substring(3, newPathLength);
                 s_currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); // read location from ini
                 string pathCombine = null;
                 string pathSeparator;
@@ -83,11 +83,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             string output;
             int parseCount = Regex.Matches(dir, @"\\").Count;
-            string lastDir = dir.Split('\\')[parseCount-1];
+            string lastDir = dir.Split('\\')[parseCount - 1];
             int lastDirLength = lastDir.Length;
             int dirLenght = dir.Length;
             int parrentIndex = dirLenght - lastDirLength;
-            output = dir.Substring(0, parrentIndex-1);
+            output = dir.Substring(0, parrentIndex - 1);
             return output;
         }
     }

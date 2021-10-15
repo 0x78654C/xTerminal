@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Commands
 {
@@ -23,7 +22,7 @@ namespace Commands
             var parms = parameters.ToList();
             string p = string.Join(" ", parms);
             int index = parms.FindIndex(s => s.Equals(parameter, StringComparison.InvariantCulture));
-            
+
             // Return an empty string if the parameter does not exist,
             // or if there is not another value after the searched parameter.
             if (index == -1 || index + 1 == parms.Count)
@@ -34,7 +33,7 @@ namespace Commands
             return parms[index + 1];
         }
 
-        internal static string SplitByText( this string input,string parameter,int index)
+        internal static string SplitByText(this string input, string parameter, int index)
         {
             // return Regex.Split(input, parameter)[index];
             string[] output = input.Split(new string[] { parameter }, StringSplitOptions.None);

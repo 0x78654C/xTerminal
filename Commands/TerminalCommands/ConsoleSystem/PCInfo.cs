@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using Core;
 using wmi = Core.Hardware.WMIDetails;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -92,7 +92,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 int countGPU = 0;
                 while ((lineGPU = sRead.ReadLine()) != null)
                 {
-
                     if (lineGPU.StartsWith("Description"))
                     {
                         countGPU++;

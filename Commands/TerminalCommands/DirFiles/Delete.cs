@@ -146,12 +146,12 @@ namespace Commands.TerminalCommands.DirFiles
                 return;
             }
 
-            foreach(var dir in directory.EnumerateDirectories())
+            foreach (var dir in directory.EnumerateDirectories())
             {
                 RecursiveDeleteDir(dir);
             }
             var files = directory.GetFiles();
-            foreach(var file in files)
+            foreach (var file in files)
             {
                 file.IsReadOnly = false;
                 file.Delete();

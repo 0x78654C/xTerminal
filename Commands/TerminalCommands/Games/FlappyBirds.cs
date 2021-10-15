@@ -339,9 +339,9 @@ namespace Commands.TerminalCommands.Games
                     break;
             }
             ShowMainMenu();
-        through1:;
+            through1:;
             CountDown();
-        through2:;
+            through2:;
         }
 
         void Lose()
@@ -368,9 +368,9 @@ namespace Commands.TerminalCommands.Games
                     goto through2;
                 }
             }
-        through1:;
+            through1:;
             ShowMainMenu();
-        through2:;
+            through2:;
             restart = true;
         }
 

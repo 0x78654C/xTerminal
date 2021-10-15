@@ -29,7 +29,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         }
 
         // List permissions of a file or directory.
-        private void ListPermissions(string input,string currentDirectory,string tabs)
+        private void ListPermissions(string input, string currentDirectory, string tabs)
         {
             input = FileSystem.SanitizePath(input, currentDirectory);
             if (Directory.Exists(input))

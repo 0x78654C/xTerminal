@@ -1,6 +1,5 @@
 ﻿using Core;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -13,7 +12,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class CommandHistory : ITerminalCommand
     {
         public string Name => "hcmd";
-        private static string s_historyFile =GlobalVariables.historyFile;
+        private static string s_historyFile = GlobalVariables.historyFile;
 
         public void Execute(string args)
         {

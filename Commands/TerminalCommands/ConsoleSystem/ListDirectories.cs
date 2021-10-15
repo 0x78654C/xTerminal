@@ -23,7 +23,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDirs = new List<string>();
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static string s_virus;
-        private static List<string> s_listParams = new List<string>() { "-h","-s","-c","-cf","-cd","-hl","-o"};
+        private static List<string> s_listParams = new List<string>() { "-h", "-s", "-c", "-cf", "-cd", "-hl", "-o" };
         private static string s_helpMessage = @"
     -h  : Displays this message.
     -d  : Display duplicate files in a directory and subdirectories.
@@ -53,14 +53,14 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
                 bool found = true;
-                foreach(var param in s_listParams)
+                foreach (var param in s_listParams)
                 {
-                    if(arg.ParameterAfter("ls")!=param && arg.ParameterAfter("ls").Contains(":\\"))
+                    if (arg.ParameterAfter("ls") != param && arg.ParameterAfter("ls").Contains(":\\"))
                     {
                         if (found)
                         {
                             int arglength = args.Length - 3;
-                            s_currentDirectory = args.Substring(3,arglength);
+                            s_currentDirectory = args.Substring(3, arglength);
                             found = false;
                         }
                     }
@@ -74,7 +74,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         string dirSearchIn = args.SplitByText(" -o", 0);
                         dirSearchIn = dirSearchIn.Replace("ls -d ", "");
                         string fileToSave = args.SplitByText("-o ", 1);
-                        OutputDuplicates(dirSearchIn,fileToSave);
+                        OutputDuplicates(dirSearchIn, fileToSave);
                         return;
                     }
                     string nullDir = args.Replace("ls -d", "");
@@ -105,7 +105,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // Save ls output to a file
                 if (arg.ContainsParameter("-o"))
                 {
-                    SaveLSOutput(args.SplitByText(" -o ",1));
+                    SaveLSOutput(args.SplitByText(" -o ", 1));
                 }
                 else
                 {
@@ -153,7 +153,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 FileSystem.ErrorWriteLine(
                     "You need administrator rights to run full command in this place! Some directories/files cannot be accessed!");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (e.Message.Contains("virus"))
                 {
@@ -166,17 +166,17 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
 
 
-        private void OutputDuplicates(string dir,string savetoFile = null)
+        private void OutputDuplicates(string dir, string savetoFile = null)
         {
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
             GetDuplicateFiles(dir);
-            string output="";
+            string output = "";
             var lisDups = s_listDuplicateFiles.GroupBy(a => a.SplitByText("CheckSUM: ", 1)).Where(a => a.Count() > 1).SelectMany(o => o).ToList();
             if (!string.IsNullOrEmpty(savetoFile))
             {
-                output =$"List of duplicated files in {dir} :\n";
+                output = $"List of duplicated files in {dir} :\n";
                 output += string.Join("\n", lisDups);
                 Console.WriteLine(FileSystem.SaveFileOutput(savetoFile, s_currentDirectory, string.Join("\n", output)));
                 s_stopWatch.Stop();
@@ -213,14 +213,14 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
             var files = Directory.GetFiles(directory);
-            foreach(var file in files)
+            foreach (var file in files)
             {
                 string md5Get = GetMD5CheckSum(file);
                 s_listDuplicateFiles.Add($"{file} | MD5 CheckSUM: {md5Get}");
             }
 
             var dirs = new DirectoryInfo(directory).GetDirectories();
-            foreach(var dir in dirs)
+            foreach (var dir in dirs)
             {
                 GetDuplicateFiles(dir.FullName);
             }

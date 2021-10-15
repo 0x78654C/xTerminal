@@ -22,7 +22,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 file = FileSystem.SanitizePath(arg.ParameterAfter("hex"), s_currentDirectory);
                 try
                 {
-                    HexDumpFile(file, true, args.SplitByText(" -o ",1));
+                    HexDumpFile(file, true, args.SplitByText(" -o ", 1));
                 }
                 catch (UnauthorizedAccessException)
                 {

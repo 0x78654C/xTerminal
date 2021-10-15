@@ -145,7 +145,7 @@ namespace Core.Commands
             return output.ToString();
         }
 
-        private static void LineOutput(StringBuilder stringBuilder,string file,string currentDir,string searchString)
+        private static void LineOutput(StringBuilder stringBuilder, string file, string currentDir, string searchString)
         {
             string oFile = FileOutput(file, currentDir, searchString);
             if (oFile.StartsWith("Line"))
@@ -156,9 +156,9 @@ namespace Core.Commands
 
         private static void TotalLinesCounter(string currentDir, string fileName, bool fileCount)
         {
-            var files =  Directory.GetFiles(currentDir);
-       
-            foreach(var file in files)
+            var files = Directory.GetFiles(currentDir);
+
+            foreach (var file in files)
             {
                 if (fileCount)
                 {
@@ -188,9 +188,9 @@ namespace Core.Commands
             }
 
             var directories = new DirectoryInfo(currentDir).GetDirectories();
-            foreach(var dir in directories)
+            foreach (var dir in directories)
             {
-                TotalLinesCounter(dir.FullName,fileName,fileCount);
+                TotalLinesCounter(dir.FullName, fileName, fileCount);
             }
         }
 
@@ -201,7 +201,7 @@ namespace Core.Commands
         /// <returns></returns>
         public static int LineCounts(string currentDir)
         {
-            TotalLinesCounter(currentDir,"",false);
+            TotalLinesCounter(currentDir, "", false);
             return s_linesCount;
         }
 
@@ -213,7 +213,7 @@ namespace Core.Commands
         /// <returns></returns>
         public static int LineCountsName(string currentDir, string fileName = null)
         {
-            TotalLinesCounter(currentDir,fileName,true);
+            TotalLinesCounter(currentDir, fileName, true);
             return s_linesCountName;
         }
 

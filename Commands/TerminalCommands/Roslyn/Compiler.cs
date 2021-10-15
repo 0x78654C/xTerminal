@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Core;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Emit;
-using Core;
 
 namespace Commands.TerminalCommands.Roslyn
 {
@@ -28,7 +28,7 @@ namespace Commands.TerminalCommands.Roslyn
             args = args.Replace("ccs ", "");
             if (args.ContainsText("-p"))
             {
-                fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0),_currentLocation);
+                fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
                 param = args.SplitByText(" -p ", 1);
                 CompileAndRun(fileName, param);
                 return;

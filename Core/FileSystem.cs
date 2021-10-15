@@ -219,7 +219,7 @@ namespace Core
         /// <param name="contents">Data to be saved.</param>
         /// <param name="unicode">Unicode format for hex dump file./param>
         /// <returns>string</returns>
-        public static string SaveFileOutput(string path, string currentDir, string contents, bool unicode =false)
+        public static string SaveFileOutput(string path, string currentDir, string contents, bool unicode = false)
         {
             path = SanitizePath(path, currentDir);
             if (!unicode)
@@ -228,7 +228,7 @@ namespace Core
             }
             else
             {
-                File.WriteAllText(path, contents,Encoding.Unicode);
+                File.WriteAllText(path, contents, Encoding.Unicode);
             }
             return $"Data saved in {path}";
         }

@@ -25,7 +25,7 @@ Can use with following parameter:
             s_currentDirectory =
                 RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
             int argsLength = args.Length - 6;
-            args = args.Substring(6,argsLength);
+            args = args.Substring(6, argsLength);
             string param = args.Split(' ').First();
             string paramApp = string.Empty;
             if (args.Contains("-p"))
@@ -45,10 +45,10 @@ Can use with following parameter:
                     args = args.Replace("-u ", "");
                     args = FileSystem.SanitizePath(args, s_currentDirectory);
 
-                    StartApplication(args,paramApp, true);
+                    StartApplication(args, paramApp, true);
                     return;
                 }
-                StartApplication(args,paramApp, false);
+                StartApplication(args, paramApp, false);
                 return;
             }
             args = FileSystem.SanitizePath(args, s_currentDirectory);
@@ -56,10 +56,10 @@ Can use with following parameter:
             if (param == "-u")
             {
                 args = args.Replace("-u ", "");
-                StartApplication(args,paramApp, true);
+                StartApplication(args, paramApp, true);
                 return;
             }
-            StartApplication(args,paramApp, false);
+            StartApplication(args, paramApp, false);
         }
 
         /// <summary>
@@ -68,25 +68,25 @@ Can use with following parameter:
         /// <param name="inputCommand">Path to procces required to be started.</param>
         /// <param name="arg">Arguments</param>
         /// <param name="admin">Use other user for run procces.</param>
-        private void StartApplication(string inputCommand,string arg, bool admin)
+        private void StartApplication(string inputCommand, string arg, bool admin)
         {
             try
             {
                 string[] dInput = inputCommand.Split(' ');
                 int _ch = Regex.Matches(inputCommand, " ").Count;
 
-                    if (!File.Exists(inputCommand))
-                    {
-                        FileSystem.ErrorWriteLine($"File {inputCommand} does not exist!");
-                        return;
-                    }
-                    if (admin)
-                    {
-                        Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true);
-                        return;
-                    }
-                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false);
+                if (!File.Exists(inputCommand))
+                {
+                    FileSystem.ErrorWriteLine($"File {inputCommand} does not exist!");
                     return;
+                }
+                if (admin)
+                {
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true);
+                    return;
+                }
+                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false);
+                return;
             }
             catch (Exception e)
             {
