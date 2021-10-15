@@ -41,6 +41,37 @@ namespace Core
         }
 
         /// <summary>
+        /// Convert bytes as string to size information,
+        /// </summary>
+        /// <param name="fileSize">Bytes in string format</param>
+        /// <param name="fixedSize">Type of check.</param>
+        /// <returns></returns>
+        public static string GetSize(string fileSize, bool fixedSize)
+        {
+            double len = Convert.ToDouble(fileSize);
+            if (fixedSize)
+            {
+                string sLen = String.Format("{0:0.##}", len);
+                double fLen = Convert.ToDouble(sLen);
+                for (int i = 0; i < 2; i++)
+                {
+                    fLen /= 1024;
+                }
+                return fLen.ToString();
+            }
+            else
+            {
+                int order = 0;
+                while (len >= 1024 && order < s_sizes.Length - 1)
+                {
+                    order++;
+                    len /= 1024;
+                }
+                return String.Format("{0:0.##} {1}", len, s_sizes[order]);
+            }
+        }
+
+        /// <summary>
         /// Return size of a directory.
         /// </summary>
         /// <param name="info">Directory info of a specificic path directory.</param>
