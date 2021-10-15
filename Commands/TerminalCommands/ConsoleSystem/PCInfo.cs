@@ -24,9 +24,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string pcInfo = wmi.GetWMIDetails("SELECT * FROM Win32_OperatingSystem");
             string gpuInfo = wmi.GetWMIDetails("SELECT * FROM Win32_VideoController");
             Console.WriteLine("\n----------------------System Info---------------------\n");
-            FileSystem.ColorConsoleText(ConsoleColor.Green, "User logged: ");
+            FileSystem.ColorConsoleText(ConsoleColor.Green, "User logged");
             Console.WriteLine($": {GlobalVariables.accountName }");
-            FileSystem.ColorConsoleText(ConsoleColor.Green, "Machine Name: ");
+            FileSystem.ColorConsoleText(ConsoleColor.Green, "Machine Name");
             Console.WriteLine($": {GlobalVariables.computerName }");
             Console.WriteLine("\n--------------------------OS--------------------------\n");
             GetOSInfo(pcInfo);
