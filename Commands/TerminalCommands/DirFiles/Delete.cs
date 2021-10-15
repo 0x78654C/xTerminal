@@ -20,8 +20,8 @@ namespace Commands.TerminalCommands.DirFiles
         {
             _currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
             string param = args.Split(' ').ParameterAfter("del");
-            int argsLenght = args.Length - 3;
-            args = args.Substring(3, argsLenght);
+            int argsLenght = args.Length - 4;
+            args = args.Substring(4, argsLenght);
             if (param == "-a")
             {
                 DeleteAllFilesDris(_currentLocation, true, true);
@@ -40,6 +40,7 @@ namespace Commands.TerminalCommands.DirFiles
             }
             else
             {
+                args = args.Replace("del ", "");
                 DeleteFile(args, _currentLocation);
             }
         }
@@ -62,7 +63,10 @@ namespace Commands.TerminalCommands.DirFiles
                 foreach (var dir in dirs)
                 {
                     if (Directory.Exists(dir))
-                        Directory.Delete(dir,true);
+                    {
+                        var dirInfo = new DirectoryInfo(dir);
+                        RecursiveDeleteDir(dirInfo);
+                    }
                 }
             }
         }
@@ -82,11 +86,13 @@ namespace Commands.TerminalCommands.DirFiles
 
                         if (attr.HasFlag(FileAttributes.Directory))
                         {
-                            Directory.Delete(input);
+                            var dir = new DirectoryInfo(input);
+                            RecursiveDeleteDir(dir);
                             Console.WriteLine("Directory " + input + " deleted!");
                         }
                         else
                         {
+                            File.SetAttributes(input, FileAttributes.Normal);
                             File.Delete(input);
                             Console.WriteLine("File " + input + " deleted!");
                         }
@@ -105,11 +111,13 @@ namespace Commands.TerminalCommands.DirFiles
 
                         if (attr.HasFlag(FileAttributes.Directory))
                         {
-                            Directory.Delete(currentLocation + input);
+                            var dir = new DirectoryInfo(currentLocation + input);
+                            RecursiveDeleteDir(dir);
                             Console.WriteLine("Directory " + currentLocation + input + " deleted!");
                         }
                         else
                         {
+                            File.SetAttributes(currentLocation + input, FileAttributes.Normal);
                             File.Delete(currentLocation + input);
                             Console.WriteLine("File " + currentLocation + input + " deleted!");
                         }
@@ -124,6 +132,31 @@ namespace Commands.TerminalCommands.DirFiles
             {
                 FileSystem.ErrorWriteLine("You must type the file/directory name!");
             }
+        }
+
+        /// <summary>
+        /// Recursive directory delete with file atribute set.
+        /// </summary>
+        /// <param name="directory"></param>
+        private void RecursiveDeleteDir(DirectoryInfo directory)
+        {
+            if (!directory.Exists)
+            {
+                FileSystem.ErrorWriteLine("Directory '{directory}' does not exist!");
+                return;
+            }
+
+            foreach(var dir in directory.EnumerateDirectories())
+            {
+                RecursiveDeleteDir(dir);
+            }
+            var files = directory.GetFiles();
+            foreach(var file in files)
+            {
+                file.IsReadOnly = false;
+                file.Delete();
+            }
+            directory.Delete();
         }
     }
 }
