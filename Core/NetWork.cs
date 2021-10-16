@@ -10,6 +10,8 @@ namespace Core
     {
         private static Ping s_myPing;
         private static PingReply s_pingReply;
+        private static int s_success = 0;
+        private static int s_failure = 0;
 
         /// <summary>
         /// Verifies if IP is up or not
@@ -59,26 +61,39 @@ namespace Core
                         s_myPing = new Ping();
                         s_pingReply = s_myPing.Send(address);
                         Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {s_pingReply.Options.Ttl} |  Adress: {s_pingReply.Address}");
+                        s_success++;
                     }
                     else
                     {
+                        s_failure++;
                         Console.WriteLine($"{address} is down!");
                     }
                 }
+                Console.WriteLine("\n---------------------------------------------------\n");
+                Console.Write($" Total status count: Success ");
+                FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
+                Console.Write(" Failure ");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString()+"\n");
             }
             catch (TimeoutException)
             {
                 FileSystem.ErrorWriteLine("Time out is to big");
+                s_failure = 0;
+                s_success = 0;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                s_failure = 0;
+                s_success = 0;
             }
             finally
             {
                 if (s_myPing != null)
                 {
                     s_myPing.Dispose();
+                    s_failure = 0;
+                    s_success = 0;
                 }
             }
         }
