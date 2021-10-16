@@ -5,6 +5,10 @@ namespace Commands.TerminalCommands.Network
 {
     public class Ping : ITerminalCommand
     {
+        /*
+         Display the echo newtork respons from other machine.
+         */
+
         public string Name => "ping";
 
         public void Execute(string args)
