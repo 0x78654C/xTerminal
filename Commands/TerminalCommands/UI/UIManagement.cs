@@ -8,11 +8,11 @@ namespace Commands.TerminalCommands.UI
     {
 
         private string _regUI;
-        List<string> _colors = new List<string>() { "darkred", "darkgreen", "darkyellow", "darkmagenta", "darkcyan", "darkgray", "darkblue", "red", "green", "yellow", "white", "magenta", "cyan", "black", "gray", "blue" };
+        List<string> _colors = new List<string>() { "darkred", "darkgreen", "darkyellow", "darkmagenta", "darkcyan", "darkgray", "darkblue", "red", "green", "yellow", "white", "magenta", "cyan", "gray", "blue" };
         List<string> _indicators = new List<string>() { ">", "->", "=>", "$", ">>" };
         private string _helpMessage = @"Usage of  UI PS1(Prompt string 1) command:
  ::Predifined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
-                      red, green, yellow, white, magenta, cyan, black, gray, blue 
+                      red, green, yellow, white, magenta, cyan, gray, blue 
  ::Predifined indicators: > , ->, =>, $, >>
 
  -h : Displys this help message.
