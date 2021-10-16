@@ -12,7 +12,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class ListDirectories : ITerminalCommand
     {
         private static string s_currentDirectory = string.Empty;
-
         private static int s_countFiles = 0;
         private static int s_countFilesText = 0;
         private static int s_countDirectories = 0;
@@ -304,7 +303,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
-
+        /// <summary>
+        /// Display files and directory list in the current directory
+        /// </summary>
+        /// <param name="displaySizes">Display size of files.</param>
+        /// <param name="highlightSearchText">Thext to be highlighted in files or directories names.</param>
+        /// <param name="saveToFile">Save output to a file.</param>
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile)
         {
             if (!Directory.Exists(s_currentDirectory))
@@ -338,6 +342,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
             Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
         }
 
+
+        /// <summary>
+        /// Display directories.
+        /// </summary>
+        /// <param name="highlightSearchText">Thext to be highlighted in files or directories names.</param>
+        /// <param name="saveToFile">Save output to a file.</param>
         private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile)
         {
             foreach (var dir in Directory.GetDirectories(s_currentDirectory))
@@ -382,6 +392,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
+        /// <summary>
+        /// Format the the space limit for files sizes.
+        /// </summary>
+        /// <param name="fileInfo">File info.</param>
+        /// <param name="displaySizes">Display size</param>
+        /// <returns></returns>
         private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
         {
             return displaySizes
@@ -389,6 +405,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 : fileInfo.Name;
         }
 
+
+        /// <summary>
+        /// Highlight the speficied text in files names.
+        /// </summary>
+        /// <param name="text">Text to be higlighted.</param>
+        /// <param name="highlightSearchText">Highlight</param>
         private static void DisplayFileInfoText(string text, string highlightSearchText)
         {
             if (highlightSearchText.IsNotNullEmptyOrWhitespace() &&
