@@ -6,6 +6,9 @@ namespace Commands.TerminalCommands.Network
 {
     public class CheckDomain : ITerminalCommand
     {
+        /*
+         Check  if an IP dor domain is down.
+         */
         public string Name => "icheck";
 
         public void Execute(string arg)
