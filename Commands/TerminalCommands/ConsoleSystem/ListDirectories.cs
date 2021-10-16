@@ -66,7 +66,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     }
                 }
 
-                // Grab the dublicate files.
+                // Grab the duplicate files.
                 if (arg.ContainsParameter("-d"))
                 {
                     if (arg.ContainsParameter("-o"))
@@ -165,7 +165,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
         }
 
 
-
+        /// <summary>
+        /// Outputs or saves the dublicate files.
+        /// </summary>
+        /// <param name="dir">Directory to search in.</param>
+        /// <param name="savetoFile">Path of file where to save.</param>
         private void OutputDuplicates(string dir, string savetoFile = null)
         {
             s_timeSpan = new TimeSpan();
@@ -192,19 +196,30 @@ namespace Commands.TerminalCommands.ConsoleSystem
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
         }
+
+
+        /// <summary>
+        /// Get the MD5 checksum of a file.
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
         private string GetMD5CheckSum(string file)
         {
             using (var md5 = MD5.Create())
             {
                 using (var stream = File.OpenRead(file))
                 {
-                    s_virus = file;
+                    s_virus = file; // The file where Windows Defender detects a potential malware.
                     var hash = md5.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                 }
             }
         }
 
+        /// <summary>
+        /// Outputs reursevly to a list the duplicated files containnig save MD5 checksum.
+        /// </summary>
+        /// <param name="directory"></param>
         private void GetDuplicateFiles(string directory)
         {
             if (!Directory.Exists(directory))
@@ -226,6 +241,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
+        // Clear the counters.
         private void ClearCounters()
         {
             s_countDirectories = 0;
@@ -233,6 +249,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
             s_countDirectoriesText = 0;
             s_countFilesText = 0;
         }
+
+        /// <summary>
+        /// Save to file the ls ouput.
+        /// </summary>
+        /// <param name="path">Path to file</param>
         private static void SaveLSOutput(string path)
         {
             DisplayCurrentDirectoryFiles(false, "", true);
@@ -246,6 +267,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
             s_listFiles.Clear();
         }
 
+        /// <summary>
+        /// Display recursively the files or part of files/directory name and directories count.
+        /// </summary>
+        /// <param name="currentDirectory">Current directory location.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="dirName">Directory name.</param>
         private static void DisplaySubDirectoryAndFileCounts(string currentDirectory, string fileName, string dirName)
         {
             var files = Directory.GetFiles(currentDirectory);
