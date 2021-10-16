@@ -14,30 +14,36 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_currentDirectory;
         public void Execute(string args)
         {
-            s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
-            var arg = args.Split(' ');
-            string file;
-            if (arg.ContainsParameter("-o"))
+            string file="";
+            try
             {
-                file = FileSystem.SanitizePath(arg.ParameterAfter("hex"), s_currentDirectory);
-                try
+                s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                var arg = args.Split(' ');
+                if (arg.ContainsParameter("-o"))
                 {
-                    HexDumpFile(file, true, args.SplitByText(" -o ", 1));
+                    string dumpFile1 = args.SplitByText("hex ", 1);
+                    string dumpFile = dumpFile1.SplitByText(" -o", 0);
+                    file = FileSystem.SanitizePath(dumpFile, s_currentDirectory);
+                    string fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
+                    HexDumpFile(file, true, fileToSave);
+                    return;
                 }
-                catch (UnauthorizedAccessException)
-                {
-                    FileSystem.ErrorWriteLine($"You need administrator rights to save file in: {arg.ParameterAfter("-o")} ");
-                }
-                catch (OutOfMemoryException)
-                {
-                    FileSystem.ErrorWriteLine($"Ran out of memmory!");
-                }
-
-                return;
+                int argLength = args.Length - 4;
+                file = FileSystem.SanitizePath(args.Substring(4, argLength), s_currentDirectory);
+                HexDumpFile(file, false, "");
             }
-            int argLength = args.Length - 4;
-            file = args.Substring(3, argLength);
-            HexDumpFile(file, false, "");
+            catch (UnauthorizedAccessException)
+            {
+                FileSystem.ErrorWriteLine($"You need administrator rights to save file in: {file} ");
+            }
+            catch (OutOfMemoryException)
+            {
+                FileSystem.ErrorWriteLine($"Ran out of memmory!");
+            }
+            catch(Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message);
+            }
         }
 
         /// <summary>
