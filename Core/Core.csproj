@@ -55,7 +55,6 @@
     <Compile Include="eMailS.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="GlobalVariables.cs" />
-    <Compile Include="Hardware\PowerShell.cs" />
     <Compile Include="Hardware\WMIDetails.cs" />
     <Compile Include="HexDump.cs" />
     <Compile Include="InterceptKeys.cs" />
