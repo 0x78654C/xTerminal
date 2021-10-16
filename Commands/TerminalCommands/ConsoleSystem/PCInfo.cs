@@ -23,11 +23,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             string pcInfo = wmi.GetWMIDetails("SELECT * FROM Win32_OperatingSystem");
             string gpuInfo = wmi.GetWMIDetails("SELECT * FROM Win32_VideoController");
+            string modelInfo = wmi.GetWMIDetails("SELECT * FROM Win32_ComputerSystem");
             Console.WriteLine("\n----------------------System Info---------------------\n");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "User logged");
             Console.WriteLine($": {GlobalVariables.accountName }");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "Machine Name");
             Console.WriteLine($": {GlobalVariables.computerName }");
+            GetMachineModel(modelInfo);
             Console.WriteLine("\n--------------------------OS--------------------------\n");
             GetOSInfo(pcInfo);
             Console.WriteLine("\n---------------------- Hardware-----------------------\n");
@@ -35,6 +37,31 @@ namespace Commands.TerminalCommands.ConsoleSystem
             GetRAMInfo();
             GetGPUInfo(gpuInfo);
             Console.WriteLine("");
+        }
+
+        /// <summary>
+        /// Grab machine manufacturer and model info from WMI.
+        /// </summary>
+        /// <param name="pcInfo">WMI data.</param>
+        private void GetMachineModel(string pcInfo)
+        {
+            List<string> machineParams = new List<string>() { "Manufacturer", "Model" };
+            using (var sRead = new StringReader(pcInfo))
+            {
+                string lineOS;
+                while ((lineOS = sRead.ReadLine()) != null)
+                {
+                    foreach (var param in machineParams)
+                    {
+                        if (lineOS.StartsWith(param))
+                        {
+                            string outParam = lineOS.Split(':')[1];
+                            FileSystem.ColorConsoleText(ConsoleColor.Green, $"{param}");
+                            Console.WriteLine($": {outParam }");
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
