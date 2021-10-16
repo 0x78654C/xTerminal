@@ -33,7 +33,9 @@ This is the full list of commands that can be used in xTerminal:
                    -h  : Displays this message.
                    -d  : Display duplicate files in a directory and subdirectories.
                          Example1: ls -d <directory_path>
-                         Example2: ls -d <directory_path> -o <file_to_save>
+                         Example2: ls -d -e <directory_path> (scanns for dulpicate files with same extension)
+                         Example3: ls -d <directory_path> -o <file_to_save>
+                         Example4: ls -d -e <directory_path> -o <file_to_save>  (scanns for dulpicate files with same extension)
                    -s  : Displays size of files in current directory and subdirectories.
                    -c  : Counts files and directories and subdirectories from current directory.
                    -cf : Counts files from current directory and subdirectories with name containing a specific text.
@@ -140,7 +142,7 @@ This is the full list of commands that can be used in xTerminal:
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
                     ::Predifined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
-                                         red, green, yellow, white, magenta, cyan, black, gray, blue 
+                                         red, green, yellow, white, magenta, cyan, gray, blue 
                     ::Predifined indicators: > , ->, =>, $, >>
 
                     -h : Displys this help message.

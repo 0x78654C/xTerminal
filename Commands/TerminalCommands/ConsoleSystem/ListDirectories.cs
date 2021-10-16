@@ -8,6 +8,13 @@ using System.Security.Cryptography;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+
+    public class Dupe
+    {
+        public string FileName { get; set; }
+        public string Md5 { get; set; }
+    }
+
     /* ls command class*/
     public class ListDirectories : ITerminalCommand
     {
@@ -23,11 +30,20 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static string s_virus;
         private static List<string> s_listParams = new List<string>() { "-h", "-s", "-c", "-cf", "-cd", "-hl", "-o" };
+        private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
+   .GroupBy(t => t.Md5)
+   .Where(t => t.Count() > 1)
+   .Select(t => t.Select(r => r))
+   .Select(t => t)
+   .ToArray();
+
         private static string s_helpMessage = @"
     -h  : Displays this message.
     -d  : Display duplicate files in a directory and subdirectories.
           Example1: ls -d <directory_path>
-          Example2: ls -d <directory_path> -o <file_to_save>
+          Example2: ls -d -e <directory_path> (scanns for dulpicate files with same extension)
+          Example3: ls -d <directory_path> -o <file_to_save>
+          Example4: ls -d -e <directory_path> -o <file_to_save>  (scanns for dulpicate files with same extension)
     -s  : Displays size of files in current directory and subdirectories.
     -c  : Counts files and directories and subdirectories from current directory.
     -cf : Counts files from current directory and subdirectories with name containing a specific text.
@@ -68,21 +84,32 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // Grab the duplicate files.
                 if (arg.ContainsParameter("-d"))
                 {
+                    string dirSearchIn = args.SplitByText(" -o", 0);
+                    bool extensions = false;
+
                     if (arg.ContainsParameter("-o"))
                     {
-                        string dirSearchIn = args.SplitByText(" -o", 0);
-                        dirSearchIn = dirSearchIn.Replace("ls -d ", "");
+                        if (arg.ContainsParameter("-e"))
+                            extensions = true;
+
+                        dirSearchIn = arg.ContainsParameter("-e")? dirSearchIn.Replace("ls -d -e ", ""): dirSearchIn.Replace("ls -d ", "");
                         string fileToSave = args.SplitByText("-o ", 1);
-                        OutputDuplicates(dirSearchIn, fileToSave);
+                        GetDuplicateFiles(dirSearchIn,extensions, fileToSave);
                         return;
                     }
-                    string nullDir = args.Replace("ls -d", "");
+
+                    if (arg.ContainsParameter("-e"))
+                        extensions = true;
+                    string nullDir = arg.ContainsParameter("-e") ? args.Replace("ls -d -e", "") : args.Replace("ls -d", "");
                     if (!string.IsNullOrEmpty(nullDir))
                     {
-                        OutputDuplicates(args.SplitByText("-d ", 1));
+                        if (arg.ContainsParameter("-e"))
+                            extensions = true;
+                        string searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1): args.SplitByText("-d ", 1);
+                        GetDuplicateFiles(FileSystem.SanitizePath(searchDir,s_currentDirectory), extensions);
                         return;
                     }
-                    OutputDuplicates(s_currentDirectory);
+                    GetDuplicateFiles(s_currentDirectory,extensions);
                     return;
                 }
 
@@ -162,47 +189,64 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 FileSystem.ErrorWriteLine(e.Message);
             }
         }
-
-
+        
+        
         /// <summary>
-        /// Outputs or saves the dublicate files.
+        /// Get duplicates files based on MD5 checksuma and file size.
         /// </summary>
-        /// <param name="dir">Directory to search in.</param>
-        /// <param name="savetoFile">Path of file where to save.</param>
-        private void OutputDuplicates(string dir, string savetoFile = null)
+        /// <param name="dirToScan">Directory path where to scan for duplicates.</param>
+        /// <param name="checkExtension">Check duplicates by files extesnsion.</param>
+        /// <param name="saveToFile">File where to save the output.</param>
+        private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile=null)
         {
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
-            GetDuplicateFiles(dir);
-            string output = "";
-            var lisDups = s_listDuplicateFiles.GroupBy(a => a.SplitByText("CheckSUM: ", 1)).Where(a => a.Count() > 1).SelectMany(o => o).ToList();
-            if (!string.IsNullOrEmpty(savetoFile))
+            string results = checkExtension? $"List of duplicated files(extension check) in {dirToScan} \n": $"List of duplicated files in {dirToScan} :\n";
+
+                var allDupesBySize = Directory.GetFiles(dirToScan, "*", SearchOption.AllDirectories)
+                  .Select(f => new FileInfo(f))
+                  .GroupBy(t => t.Length.ToString())
+                  .Where(t => t.Count() > 1)
+                  .ToArray();
+
+            var dupesList = new List<Dupe[]>();
+            foreach (var item in allDupesBySize)
             {
-                output = $"List of duplicated files in {dir} :\n";
-                output += string.Join("\n", lisDups);
-                Console.WriteLine(FileSystem.SaveFileOutput(savetoFile, s_currentDirectory, string.Join("\n", output)));
+                if (!checkExtension)
+                {
+                    dupesList.AddRange(DupesEnumerable(item).Select(t => t.ToArray()));
+                    continue;
+                }
+
+                foreach (var group in item.GroupBy(t => t.Extension).Where(t => t.Count() > 1).Select(t => t))
+                {
+                    dupesList.AddRange(DupesEnumerable(group).Select(t => t.ToArray()));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(saveToFile))
+            {
                 s_stopWatch.Stop();
                 s_timeSpan = s_stopWatch.Elapsed;
+                results += string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))));
+                Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory,results));
                 Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
-                s_listDuplicateFiles.Clear();
                 return;
             }
-            Console.WriteLine($"List of duplicated files in {dir} :\n");
-            Console.WriteLine(string.Join("\n", lisDups));
-            s_listDuplicateFiles.Clear();
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
-            Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
+            Console.WriteLine(results);
+            Console.WriteLine(string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName)))));
+            Console.WriteLine($"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
         }
-
 
         /// <summary>
         /// Get the MD5 checksum of a file.
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        private string GetMD5CheckSum(string file)
+        private static string GetMD5CheckSum(string file)
         {
             using (var md5 = MD5.Create())
             {
@@ -215,31 +259,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
-        /// <summary>
-        /// Outputs reursevly to a list the duplicated files containnig save MD5 checksum.
-        /// </summary>
-        /// <param name="directory"></param>
-        private void GetDuplicateFiles(string directory)
-        {
-            if (!Directory.Exists(directory))
-            {
-                FileSystem.ErrorWriteLine($"Directory '{directory}' does not exist!");
-                return;
-            }
-            var files = Directory.GetFiles(directory);
-            foreach (var file in files)
-            {
-                string md5Get = GetMD5CheckSum(file);
-                s_listDuplicateFiles.Add($"{file} | MD5 CheckSUM: {md5Get}");
-            }
-
-            var dirs = new DirectoryInfo(directory).GetDirectories();
-            foreach (var dir in dirs)
-            {
-                GetDuplicateFiles(dir.FullName);
-            }
-        }
-
+       
         // Clear the counters.
         private void ClearCounters()
         {
