@@ -97,7 +97,7 @@ namespace Commands.TerminalCommands.DirFiles
                     case "-sao":
                         searchString = input[1];
                         fileName = "";
-                        saveToFile = arg.SplitByText(" -o ", 1);
+                        saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                         string startMessage = "";
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
@@ -123,7 +123,7 @@ namespace Commands.TerminalCommands.DirFiles
                             fileName = input[2];
                             fileName = fileName.Replace(";", " ");
                             searchString = input[1];
-                            saveToFile = arg.SplitByText(" -o ", 1);
+                            saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                             Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
                             break;
                         }
@@ -138,7 +138,7 @@ namespace Commands.TerminalCommands.DirFiles
                             fileName = input[2];
                             fileName = fileName.Replace(";", " ");
                             searchString = input[1];
-                            saveToFile = arg.SplitByText(" -o ", 1);
+                            saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                             Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, false));
                             break;
                         }
