@@ -104,7 +104,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // Save ls output to a file
                 if (arg.ContainsParameter("-o"))
                 {
-                    SaveLSOutput(args.SplitByText(" -o ", 1));
+                    SaveLSOutput(FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory));
                 }
                 else
                 {
