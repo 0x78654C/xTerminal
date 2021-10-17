@@ -23,6 +23,12 @@ namespace Shell
             CTRL_SHUTDOWN_EVENT = 6
         }
 
+        // Deletes current directory file.
+        private static void DeleteCDFIle()
+        {
+            if (File.Exists(GlobalVariables.currentDirectory))
+                File.Delete(GlobalVariables.currentDirectory);
+        }
 
         // Delete the current directory file on any of the events are triggered
         private static bool Handler(CtrlType signal)
@@ -31,23 +37,19 @@ namespace Shell
             switch (signal)
             {
                 case CtrlType.CTRL_LOGOFF_EVENT:
-                    if (File.Exists(GlobalVariables.currentDirectory))
-                        File.Delete(GlobalVariables.currentDirectory);
+                    DeleteCDFIle();
                     Environment.Exit(0);
                     return false;
                 case CtrlType.CTRL_SHUTDOWN_EVENT:
-                    if (File.Exists(GlobalVariables.currentDirectory))
-                        File.Delete(GlobalVariables.currentDirectory);
+                    DeleteCDFIle();
                     Environment.Exit(0);
                     return false;
                 case CtrlType.CTRL_BREAK_EVENT:
-                    if (File.Exists(GlobalVariables.currentDirectory))
-                        File.Delete(GlobalVariables.currentDirectory);
+                    DeleteCDFIle();
                     Environment.Exit(0);
                     return false;
                 case CtrlType.CTRL_CLOSE_EVENT:
-                    if (File.Exists(GlobalVariables.currentDirectory))
-                        File.Delete(GlobalVariables.currentDirectory);
+                    DeleteCDFIle();
                     Environment.Exit(0);
                     return false;
                 default:
