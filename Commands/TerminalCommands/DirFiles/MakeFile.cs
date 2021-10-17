@@ -9,7 +9,7 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "mkfile";
         public void Execute(string arg)
         {
-            string currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
+            string currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory); ;
             string file;
             try
             {

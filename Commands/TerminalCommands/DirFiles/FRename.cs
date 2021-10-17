@@ -18,7 +18,7 @@ namespace Commands.TerminalCommands.DirFiles
                 arg = arg.Replace("frename ", "");
 
                 //reading current location(for test no, after i make dynamic)
-                string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
+                string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
                 string cLocation = Directory.GetCurrentDirectory();
 
                 //we grab the file names for source and destination

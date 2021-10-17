@@ -14,10 +14,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_currentDirectory;
         public void Execute(string args)
         {
-            string file="";
+            string file = "";
             try
             {
-                s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
                 if (arg.ContainsParameter("-o"))
                 {
@@ -40,7 +40,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 FileSystem.ErrorWriteLine($"Ran out of memmory!");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }

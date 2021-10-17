@@ -18,7 +18,7 @@ namespace Commands.TerminalCommands.DirFiles
 
         public void Execute(string args)
         {
-            _currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+            _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string param = args.Split(' ').ParameterAfter("del");
             int argsLenght = args.Length - 4;
             args = args.Substring(4, argsLenght);

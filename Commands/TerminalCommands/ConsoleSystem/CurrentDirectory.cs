@@ -6,6 +6,9 @@ using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    /*
+     Setting te currnet directory
+     */
     public class CurrentDirectory : ITerminalCommand
     {
         private static string s_newLocation = string.Empty;
@@ -19,7 +22,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 int newPathLength = arg.Length - 3;
                 s_newLocation = arg.Substring(3, newPathLength);
-                s_currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); // read location from ini
+                s_currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
                 string pathCombine = null;
                 string pathSeparator;
                 if (s_newLocation != "")
@@ -30,7 +33,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         {
                             pathSeparator = s_newLocation + "\\";
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
-                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathSeparator);
+                            File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
                         Console.WriteLine($"Directory '{s_newLocation}'\\ dose not exist!");
@@ -44,15 +47,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             if (parseLocation == 1)
                             {
                                 string rootPartition = s_currentLocation.Split('\\')[parseLocation - 1] + "\\";
-                                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, rootPartition);
+                                File.WriteAllText(GlobalVariables.currentDirectory, rootPartition);
                                 return;
                             }
                             s_currentLocation = GetParentDir(s_currentLocation);
-                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, s_currentLocation);
+                            File.WriteAllText(GlobalVariables.currentDirectory, s_currentLocation);
                         }
                         else
                         {
-                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
+                            File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
                         }
                     }
                     else
@@ -62,19 +65,18 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         {
                             pathSeparator = pathCombine + "\\";
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
-                            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, pathSeparator);
+                            File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
                         Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
                     }
                     return;
                 }
-
-                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
+                File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
             }
             catch
             {
-                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
+                File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
             }
         }
 

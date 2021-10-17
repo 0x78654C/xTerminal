@@ -1,5 +1,6 @@
 ﻿using Core;
 using System;
+using System.IO;
 
 namespace Commands.TerminalCommands.DirFiles
 {
@@ -39,7 +40,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             try
             {
-                s_currentDirectory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 arg = arg.Replace("cat ", "");
                 string[] input = arg.Split(' ');
                 string searchString;

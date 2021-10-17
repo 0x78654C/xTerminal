@@ -45,7 +45,7 @@ namespace Commands.TerminalCommands.Roslyn
 
         public void Execute(string args)
         {
-            _currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+            _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             _addonDir = GlobalVariables.addonDirectory;
             string param = string.Empty;
             string command = args.Split(' ').ParameterAfter("!");

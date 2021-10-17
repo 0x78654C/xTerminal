@@ -13,7 +13,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             string file = string.Empty;
             string set;
-            string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+            string dlocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string cEditor = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor);
 
             if (cEditor == "")

@@ -18,7 +18,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             try
             {
-                string cDir = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                string cDir = File.ReadAllText(GlobalVariables.currentDirectory);
                 int argLenght = arg.Length - 4;
                 string input = arg.Substring(4, argLenght);
 

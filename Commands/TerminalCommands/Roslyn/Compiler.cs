@@ -22,7 +22,7 @@ namespace Commands.TerminalCommands.Roslyn
         private string _currentLocation = string.Empty;
         public void Execute(string args)
         {
-            _currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+            _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
             string param = string.Empty;
             args = args.Replace("ccs ", "");

@@ -17,7 +17,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             Console.WriteLine(" ");
 
-            string dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
+            string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
             string crcSource = null;
             string crcDestination = null;
             string Source = null;

@@ -18,7 +18,7 @@ namespace Shell
         private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
         private static string s_historyFilePath = GlobalVariables.historyFilePath;
-        private static List<string> s_listReg = new List<string>() { "CurrentDirectory", "UI" };
+        private static List<string> s_listReg = new List<string>() { "UI" };
         private static string s_historyFile = GlobalVariables.historyFile;
         private static string s_addonDir = GlobalVariables.addonDirectory;
         private static string s_regUI = "";
@@ -39,18 +39,27 @@ namespace Shell
         };
         //-----------------------
 
+        // Function for store current path in directory by current process id.
+        private void StoreCurrentDirectory()
+        {
+
+            if (!File.Exists(GlobalVariables.currentDirectory))
+            {
+                File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
+            }
+        }
 
         //Entry point of shell
-
         public void Run()
         {
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
-            RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath); // write root path of c
-
 
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
             Directory.CreateDirectory(s_historyFilePath);
+
+            //Store current directory with current process id.
+            StoreCurrentDirectory();
 
             // Creating the addon directory for C# code script scomands if not exist.
             Directory.CreateDirectory(s_addonDir);
@@ -66,11 +75,11 @@ namespace Shell
             do
             {
                 //reading current location
-                dlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                dlocation = File.ReadAllText(GlobalVariables.currentDirectory);
 
                 if (dlocation == "")
                 {
-                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory, GlobalVariables.rootPath);
+                    File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
                 }
 
                 // Reading UI settings.

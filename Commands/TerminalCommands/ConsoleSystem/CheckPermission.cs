@@ -13,7 +13,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public string Name => "cp";
         public void Execute(string arg)
         {
-            string currentLocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ;
+            string currentLocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
             string input;
             try
             {

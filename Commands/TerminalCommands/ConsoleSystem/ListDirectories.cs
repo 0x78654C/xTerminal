@@ -61,7 +61,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 // Set directory, to be used in other functions
                 s_currentDirectory =
-                    RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                                File.ReadAllText(GlobalVariables.currentDirectory);
 
                 string[] arg = args.Split(' ');
 
@@ -92,9 +92,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         if (arg.ContainsParameter("-e"))
                             extensions = true;
 
-                        dirSearchIn = arg.ContainsParameter("-e")? dirSearchIn.Replace("ls -d -e ", ""): dirSearchIn.Replace("ls -d ", "");
+                        dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -d -e ", "") : dirSearchIn.Replace("ls -d ", "");
                         string fileToSave = args.SplitByText("-o ", 1);
-                        GetDuplicateFiles(dirSearchIn,extensions, fileToSave);
+                        GetDuplicateFiles(dirSearchIn, extensions, fileToSave);
                         return;
                     }
 
@@ -105,11 +105,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     {
                         if (arg.ContainsParameter("-e"))
                             extensions = true;
-                        string searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1): args.SplitByText("-d ", 1);
-                        GetDuplicateFiles(FileSystem.SanitizePath(searchDir,s_currentDirectory), extensions);
+                        string searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-d ", 1);
+                        GetDuplicateFiles(FileSystem.SanitizePath(searchDir, s_currentDirectory), extensions);
                         return;
                     }
-                    GetDuplicateFiles(s_currentDirectory,extensions);
+                    GetDuplicateFiles(s_currentDirectory, extensions);
                     return;
                 }
 
@@ -189,26 +189,27 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 FileSystem.ErrorWriteLine(e.Message);
             }
         }
-        
-        
+
+
         /// <summary>
         /// Get duplicates files based on MD5 checksuma and file size.
+        /// A big thanks for @mkbmain for help
         /// </summary>
         /// <param name="dirToScan">Directory path where to scan for duplicates.</param>
         /// <param name="checkExtension">Check duplicates by files extesnsion.</param>
         /// <param name="saveToFile">File where to save the output.</param>
-        private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile=null)
+        private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile = null)
         {
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
-            string results = checkExtension? $"List of duplicated files(extension check) in {dirToScan} \n": $"List of duplicated files in {dirToScan} :\n";
+            string results = checkExtension ? $"List of duplicated files(extension check) in {dirToScan} \n" : $"List of duplicated files in {dirToScan} :\n";
 
-                var allDupesBySize = Directory.GetFiles(dirToScan, "*", SearchOption.AllDirectories)
-                  .Select(f => new FileInfo(f))
-                  .GroupBy(t => t.Length.ToString())
-                  .Where(t => t.Count() > 1)
-                  .ToArray();
+            var allDupesBySize = Directory.GetFiles(dirToScan, "*", SearchOption.AllDirectories)
+              .Select(f => new FileInfo(f))
+              .GroupBy(t => t.Length.ToString())
+              .Where(t => t.Count() > 1)
+              .ToArray();
 
             var dupesList = new List<Dupe[]>();
             foreach (var item in allDupesBySize)
@@ -230,7 +231,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 s_stopWatch.Stop();
                 s_timeSpan = s_stopWatch.Elapsed;
                 results += string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))));
-                Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory,results));
+                Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
                 Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
                 return;
             }
@@ -259,7 +260,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
-       
+
         // Clear the counters.
         private void ClearCounters()
         {

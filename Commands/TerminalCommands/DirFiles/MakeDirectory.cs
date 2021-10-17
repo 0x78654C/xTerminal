@@ -14,7 +14,7 @@ namespace Commands.TerminalCommands.DirFiles
                 int argLength = arg.Length - 6;
 
                 string input = arg.Substring(6, argLength);
-                string newlocation = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory); ; //get the new location
+                string newlocation = File.ReadAllText(GlobalVariables.currentDirectory); ; //get the new location
                 string locinput = newlocation + input; //new location+input
                 if (input.Contains(":") && input.Contains(@"\"))
                 {

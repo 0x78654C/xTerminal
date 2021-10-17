@@ -23,7 +23,7 @@ Can use with following parameter:
 
             // Set directory, to be used in other functions
             s_currentDirectory =
-                RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentDirectory);
+                            File.ReadAllText(GlobalVariables.currentDirectory);
             int argsLength = args.Length - 6;
             args = args.Substring(6, argsLength);
             string param = args.Split(' ').First();
@@ -72,7 +72,6 @@ Can use with following parameter:
         {
             try
             {
-                string[] dInput = inputCommand.Split(' ');
                 int _ch = Regex.Matches(inputCommand, " ").Count;
 
                 if (!File.Exists(inputCommand))

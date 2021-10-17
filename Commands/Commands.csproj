@@ -91,6 +91,7 @@
     <Compile Include="TerminalCommands\ConsoleSystem\CheckPermission.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\CurrentDirectory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\HexViewer.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\NewTWindow.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\OpenDirectory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\PCInfo.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
