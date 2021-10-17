@@ -71,6 +71,8 @@ This is the full list of commands that can be used in xTerminal:
     hex       -- Display a hex dump of a file.
                    -o : Saves the output to a file. Ex.: hex <file_name> -o <file_to_be_saved>
     pcinfo    -- Display System Information.
+    nt        -- Starts new xTerminal console.
+                   -u : Starts new xTerminal console with other user option.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
