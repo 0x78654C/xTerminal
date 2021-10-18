@@ -33,7 +33,6 @@ namespace Shell
         // Delete the current directory file on any of the events are triggered
         private static bool Handler(CtrlType signal)
         {
-
             switch (signal)
             {
                 case CtrlType.CTRL_LOGOFF_EVENT:
@@ -68,5 +67,4 @@ namespace Shell
             shell.Run();//Running the shell
         }
     }
-
 }

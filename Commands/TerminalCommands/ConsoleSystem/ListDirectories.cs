@@ -193,7 +193,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         /// <summary>
         /// Get duplicates files based on MD5 checksuma and file size.
-        /// A big thanks for @mkbmain for help
+        /// A big thanks for @mkbmain for help.
         /// </summary>
         /// <param name="dirToScan">Directory path where to scan for duplicates.</param>
         /// <param name="checkExtension">Check duplicates by files extesnsion.</param>
