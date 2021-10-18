@@ -33,8 +33,6 @@ namespace Shell
         //Define the shell commands 
         private Dictionary<string, string> Aliases = new Dictionary<string, string>
         {
-            { "cmd", "cmd"  },
-            { "ps", "powershell"  },
             { "speedtest", @".\Tools\netcoreapp3.1\TestNet.exe"  }
         };
         //-----------------------
@@ -152,35 +150,33 @@ namespace Shell
         //process execute 
         public void Execute(string input, string args, bool waitForExit)
         {
-
-            var process = new Process();
-
             if (input.StartsWith("cmd"))
             {
                 args = args.Split(' ').Count() >= 1 ? args.Replace("cmd ", "/c ") : args = args.Replace("cmd", "");
-                process.StartInfo = new ProcessStartInfo("cmd")
-                {
-                    UseShellExecute = false,
-                    WorkingDirectory = dlocation,
-                    Arguments = args
-                };
-                process.Start();
-                if (waitForExit)
-                    process.WaitForExit();
+                ExecutApp("cmd", args, true);
                 return;
             }
+            if(input.StartsWith("ps"))
+            {
+                args = args.Split(' ').Count() >= 1 ? args.Replace("ps", "") : args.Replace("ps ", "");
+                ExecutApp("powershell", args, true);
+                return;
+            }
+            ExecutApp(Aliases[input], args, true);
+        }
 
-            args = args.Split(' ').Count() >= 1 ? args.Replace("ps", "") : args.Replace("ps ", "");
-            process.StartInfo = new ProcessStartInfo("powershell")
+        private void ExecutApp(string processName,string arg, bool waitForExit)
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo(processName)
             {
                 UseShellExecute = false,
                 WorkingDirectory = dlocation,
-                Arguments = args
+                Arguments = arg
             };
             process.Start();
             if (waitForExit)
                 process.WaitForExit();
-            return;
         }
         //------------------------
 
