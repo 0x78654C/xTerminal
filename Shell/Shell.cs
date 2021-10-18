@@ -170,7 +170,7 @@ namespace Shell
                 return;
             }
 
-            args = args.Split(' ').Count() >= 1 ? args = args.Replace("ps", "") : args = args.Replace("ps ", "");
+            args = args.Split(' ').Count() >= 1 ? args.Replace("ps", "") : args.Replace("ps ", "");
             process.StartInfo = new ProcessStartInfo("powershell")
             {
                 UseShellExecute = false,
