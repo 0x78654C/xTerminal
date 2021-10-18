@@ -162,6 +162,9 @@ namespace Shell
                 ExecutApp("powershell", args, true);
                 return;
             }
+            if (!File.Exists(Aliases[input]))
+                FileSystem.ErrorWriteLine($"File {Aliases[input]} does not exist!");
+
             ExecutApp(Aliases[input], args, true);
         }
 
