@@ -152,41 +152,35 @@ namespace Shell
         //process execute 
         public void Execute(string input, string args, bool waitForExit)
         {
-            input = input.Split(' ')[0];
-            if (Aliases.Keys.Contains(input))
-            {
-                var process = new Process();
 
-                if (input == "cmd" || input == "ps")
-                {
-                    args = args.Replace("cmd ", "");
-                    args = args.Replace("ps ", "");
-                    process.StartInfo = new ProcessStartInfo(Aliases[input])
-                    {
-                        UseShellExecute = false,
-                        WorkingDirectory = dlocation,
-                        Arguments = "/c " + args
-                    };
-                    process.Start();
-                    if (waitForExit)
-                        process.WaitForExit();
-                    return;
-                }
-                process.StartInfo = new ProcessStartInfo(Aliases[input])
+            var process = new Process();
+
+            if (input.StartsWith("cmd"))
+            {
+                args = args.Split(' ').Count() >= 1 ? args.Replace("cmd ", "/c ") : args = args.Replace("cmd", "");
+                process.StartInfo = new ProcessStartInfo("cmd")
                 {
                     UseShellExecute = false,
+                    WorkingDirectory = dlocation,
                     Arguments = args
                 };
-                if (File.Exists(Aliases[input]))
-                {
-                    process.Start();
-                    if (waitForExit)
-                        process.WaitForExit();
-                }
-                else
-                    FileSystem.ErrorWriteLine($"Couldn't find file \"{Aliases[input]}\" to execute. Reinstalling should fix the issue ");
+                process.Start();
+                if (waitForExit)
+                    process.WaitForExit();
                 return;
             }
+
+            args = args.Split(' ').Count() >= 1 ? args = args.Replace("ps", "") : args = args.Replace("ps ", "");
+            process.StartInfo = new ProcessStartInfo("powershell")
+            {
+                UseShellExecute = false,
+                WorkingDirectory = dlocation,
+                Arguments = args
+            };
+            process.Start();
+            if (waitForExit)
+                process.WaitForExit();
+            return;
         }
         //------------------------
 
