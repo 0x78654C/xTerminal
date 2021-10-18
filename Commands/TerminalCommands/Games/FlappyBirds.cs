@@ -32,8 +32,8 @@ namespace Commands.TerminalCommands.Games
         public int splitStart2, splitLength2, pipePivotX2;
 
         private bool gameOver, restart, isfly, isPrinted;
-        private string dirFile = "D:\\FlappyBird";
-        private string highscoreFile = "D:\\FlappyBird\\saved_game.txt";
+        private string dirFile = Directory.GetCurrentDirectory();
+        private string highscoreFile = Directory.GetCurrentDirectory()+"\\saved_game.txt";
 
         void ShowMainMenu()
         {
