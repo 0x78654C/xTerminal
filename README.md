@@ -37,6 +37,9 @@ This is the full list of commands that can be used in xTerminal:
                          Example3: ls -d <directory_path> -o <file_to_save>
                          Example4: ls -d -e <directory_path> -o <file_to_save>  (scanns for dulpicate files with same extension)
                    -s  : Displays size of files in current directory and subdirectories.
+                   -se : List recursively files and directories containing a specific text.
+                         Example1: ls -se <search_text>
+                         Example2: ls -se <search_text> -o <file_to_save>
                    -c  : Counts files and directories and subdirectories from current directory.
                    -cf : Counts files from current directory and subdirectories with name containing a specific text.
                          Example: ls -cf <search_text>
