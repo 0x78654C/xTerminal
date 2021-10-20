@@ -47,7 +47,7 @@ This is the full list of commands that can be used in xTerminal:
                          Example: ls -cd <search_text>
                    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-    hcmd      -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
+    ch        -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
     start     -- Starts an application. Ex.: start start <file_name> OR start <file_name> -p <file_paramters>.
                  Can use following parameter:
