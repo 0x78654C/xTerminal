@@ -11,7 +11,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
      */
     public class CommandHistory : ITerminalCommand
     {
-        public string Name => "hcmd";
+        public string Name => "ch";
         private static string s_historyFile = GlobalVariables.historyFile;
 
         public void Execute(string args)
@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     OutputHistoryCommands(s_historyFile, position);
                     return;
                 }
-                OutputHistoryCommands(s_historyFile, 1);
+                OutputHistoryCommands(s_historyFile, 10);
             }
             catch (Exception e)
             {
