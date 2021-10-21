@@ -16,7 +16,7 @@ namespace Core
         public static string regCurrentEitor = "CurrentEditor";
         public static string regUI = "UI";
         public static string rootPath = Path.GetPathRoot(Environment.SystemDirectory);
-        public static string terminalTitle = "xTerminal v1.0"; 
+        public static string terminalTitle = "xTerminal v1.0.1"; 
         public static readonly string accountName = Environment.UserName;
         public static readonly string computerName = Environment.MachineName; 
         public static string historyFilePath = $"{rootPath}Users\\{accountName}\\AppData\\Local\\xTerminal";
