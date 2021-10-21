@@ -114,7 +114,7 @@ namespace Commands.TerminalCommands.Network
                 return;
             }
 
-            if (!FileSystem.CheckPermission(s_urlFirst, CheckType.Directory))
+            if (!FileSystem.CheckPermission(s_urlFirst,true, CheckType.Directory))
             {
                 FileSystem.ErrorWriteLine($"Access denied to direcotry: {s_urlFirst}");
                 return;
