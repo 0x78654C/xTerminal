@@ -165,7 +165,7 @@ namespace Commands.TerminalCommands.DirFiles
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.ToString());
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
     }
