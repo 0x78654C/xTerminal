@@ -415,21 +415,23 @@ namespace Commands.TerminalCommands.ConsoleSystem
             foreach (var dir in Directory.GetDirectories(s_currentDirectory))
             {
                 var directoryInfo = new DirectoryInfo(dir);
-
-                if (highlightSearchText.IsNotNullEmptyOrWhitespace() &&
+                if (!GlobalVariables.excludeDirectories.Contains(directoryInfo.Name))
+                {
+                    if (highlightSearchText.IsNotNullEmptyOrWhitespace() &&
                     directoryInfo.Name.ContainsText(highlightSearchText))
-                {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
-                }
-                else
-                {
-                    if (saveToFile)
                     {
-                        s_listDirs.Add(directoryInfo.Name);
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
                     }
                     else
                     {
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                        if (saveToFile)
+                        {
+                            s_listDirs.Add(directoryInfo.Name);
+                        }
+                        else
+                        {
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                        }
                     }
                 }
             }
@@ -442,14 +444,17 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             foreach (var file in files)
             {
-                string formattedText = GetFormattedFileInfoText(file, displaySizes);
-                if (saveToFile)
+                if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName,false,FileSystem.CheckType.File))
                 {
-                    s_listFiles.Add(file.Name);
-                }
-                else
-                {
-                    DisplayFileInfoText(formattedText, highlightSearchText);
+                    string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                    if (saveToFile)
+                    {
+                        s_listFiles.Add(file.Name);
+                    }
+                    else
+                    {
+                        DisplayFileInfoText(formattedText, highlightSearchText);
+                    }
                 }
             }
         }
