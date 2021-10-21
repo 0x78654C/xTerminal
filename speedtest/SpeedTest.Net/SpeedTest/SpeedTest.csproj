@@ -21,6 +21,10 @@
     <OutputPath>F:\MegaSync\Projects\Shell\Release\Tools\</OutputPath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>F:\twitch\Projects\Release\xTerminal\Tools</OutputPath>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Web" />
   </ItemGroup>

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("xTerminal")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Linux like terminal")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("xTerminal")]
-[assembly: AssemblyCopyright("Copyright ©  2020 0x078654c")]
+[assembly: AssemblyCopyright("Copyright ©  2020-2021 0x078654c")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
