@@ -32,7 +32,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             GetMachineModel(modelInfo);
             Console.WriteLine("\n--------------------------OS--------------------------\n");
             GetOSInfo(pcInfo);
-            Console.WriteLine("\n---------------------- Hardware-----------------------\n");
+            Console.WriteLine("\n-----------------------Hardware-----------------------\n");
             GetProcesorInfo();
             GetRAMInfo();
             GetGPUInfo(gpuInfo);
