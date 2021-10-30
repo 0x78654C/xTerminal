@@ -17,7 +17,8 @@ namespace Shell
         private static readonly string s_accountName = GlobalVariables.accountName;    //extract current loged username
         private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
-        private static string s_historyFilePath = GlobalVariables.historyFilePath;
+        private static string s_historyFilePath = GlobalVariables.terminalWorkDirectory;
+        private static string s_passwordManagerDirectory = GlobalVariables.passwordManagerDirectory;
         private static List<string> s_listReg = new List<string>() { "UI" };
         private static string s_historyFile = GlobalVariables.historyFile;
         private static string s_addonDir = GlobalVariables.addonDirectory;
@@ -56,6 +57,9 @@ namespace Shell
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
             Directory.CreateDirectory(s_historyFilePath);
 
+            // Creating the Password Manager directory for storing the encrypted files.
+            Directory.CreateDirectory(s_passwordManagerDirectory);
+            
             //Store current directory with current process id.
             StoreCurrentDirectory();
 
@@ -118,6 +122,10 @@ namespace Shell
                     else if (s_input == "logoff")
                     {
                         SystemCmd.LogoffCmd();
+                    }
+                    else if (s_input == "lock")
+                    {
+                        SystemCmd.LockCmd();
                     }
                     else if (s_input.Contains("speedtest"))
                     {
@@ -313,7 +321,7 @@ namespace Shell
                 tempList.Add(lines.ElementAt(i));
             }
 
-            if (!commandInput.Contains("hcmd") && !commandInput.Contains("chistory"))
+            if (!commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory"))
             {
                 if (!string.IsNullOrWhiteSpace(commandInput) && !string.IsNullOrEmpty(commandInput))
                 {
