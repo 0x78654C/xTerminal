@@ -12,10 +12,10 @@ namespace Core
         /// <param name="keyPath"></param>
         /// <param name="keyName"></param>
         /// <returns></returns>
-        public static bool regKey_Check(string keyPath, string keyName, string subKeyName)
+        public static bool regKey_Check(string keyName, string subKeyName)
         {
-            RegistryKey rkApp = Registry.CurrentUser.OpenSubKey(keyName, true);
-            if ((Registry.GetValue(keyPath, keyName, null) == null) && (!string.IsNullOrEmpty(rkApp.GetValue(subKeyName).ToString())))
+            RegistryKey rkApp = Registry.CurrentUser.OpenSubKey(@"HKEY_CURRENT_USER\"+keyName, false);
+            if ((Registry.GetValue(@"HKEY_CURRENT_USER\"+keyName, subKeyName, null) == null) && (!string.IsNullOrEmpty(rkApp.GetValue(subKeyName).ToString())))
             {
                 return false;
             }
@@ -88,6 +88,19 @@ namespace Core
 
             key.SetValue(subKeyName, subKeyValue);
             key.Close();
+        }
+
+        /// <summary>
+        /// Delete a subkey by name.
+        /// </summary>
+        /// <param name="keyName">Main key name.</param>
+        /// <param name="subKeyName">Sub key name.</param>
+        public static void regKey_Delete(string keyName, string subKeyName)
+        {
+            using (var key = Registry.CurrentUser.OpenSubKey(keyName, true))
+            {
+                key.DeleteValue(subKeyName);
+            }
         }
 
         /// <summary>
