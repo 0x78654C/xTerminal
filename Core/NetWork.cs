@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Text;
 using System.Threading;
 
 namespace Core
@@ -53,14 +54,17 @@ namespace Core
         {
             try
             {
-                for (int i = 0; i < pingReplys; i++)
+                for (int i = 0; i <pingReplys; i++)
                 {
                     if (PingHost(address))
                     {
                         Thread.Sleep(300);
                         s_myPing = new Ping();
-                        s_pingReply = s_myPing.Send(address);
-                        Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {s_pingReply.Options.Ttl} |  Adress: {s_pingReply.Address}");
+                        string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+                        byte[] buffer = Encoding.ASCII.GetBytes(data);
+                        PingOptions options = new PingOptions(64,true);
+                        s_pingReply = s_myPing.Send(address, 12000,buffer,options);
+                        Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} |  Adress: {s_pingReply.Address}");
                         s_success++;
                     }
                     else
@@ -85,7 +89,7 @@ namespace Core
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine(e.ToString());
                 s_failure = 0;
                 s_success = 0;
             }
