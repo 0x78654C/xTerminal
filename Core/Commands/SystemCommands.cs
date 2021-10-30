@@ -51,5 +51,21 @@ namespace Core.Commands
             process.Start();
             process.WaitForExit();
         }
+
+        /// <summary>
+        /// Screen Lock using command promt.
+        /// </summary>
+        public static void LockCmd()
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            {
+                UseShellExecute = false,
+                Arguments = "/c Rundll32.exe user32.dll,LockWorkStation"
+
+            };
+            process.Start();
+            process.WaitForExit();
+        }
     }
 }
