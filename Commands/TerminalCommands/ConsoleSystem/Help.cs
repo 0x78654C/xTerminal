@@ -27,6 +27,7 @@ This is the full list of commands that can be used in xTerminal:
     reboot    -- It force reboots the Windows OS.
     shutdown  -- It force shutdown the Windows OS.
     logoff    -- It force logoff current user.
+    lock      -- Locks the screen(similar to Win+L key combination).
     bios      -- Displays BIOS information on local machine or remote. Use -h for additional parameters.
     sinfo     -- Displays Storage devices information on local machine or remote. Use -h for additional parameters.
     hex       -- Display a hex dump of a file.
