@@ -30,7 +30,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
-        private static List<string> s_listParams = new List<string>() { "-h", "-s", "-c", "-cf", "-cd", "-hl", "-o","-se" };
+        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o","-se" };
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
    .GroupBy(t => t.Md5)
    .Where(t => t.Count() > 1)
