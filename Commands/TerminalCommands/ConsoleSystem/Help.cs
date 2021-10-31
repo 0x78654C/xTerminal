@@ -72,6 +72,7 @@ This is the full list of commands that can be used in xTerminal:
     -------------------- Password Manager -------------------
     pwm       -- Useage of built in password manager to store local the application sensitive information encrypted
                  using Rijndael AES 256 and Argon2 for password hash.
+                 Disclaimer: Use it at your OWN risk.
                  Use -h for additional help.
 
     ------------------------ Games -------------------------
