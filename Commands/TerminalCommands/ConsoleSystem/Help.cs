@@ -69,6 +69,11 @@ This is the full list of commands that can be used in xTerminal:
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
 
+    -------------------- Password Manager -------------------
+    pwm       -- Useage of built in password manager to store application sensitive information encrypted
+                 using Rijndael AES 256 and Argon2 for password hash.
+                 Use -h for additional help.
+
     ------------------------ Games -------------------------
     flappy    -- Play Flappy Birds in console!
     snake     -- Play Snake game in console!
