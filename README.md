@@ -163,6 +163,18 @@ This is the full list of commands that can be used in xTerminal:
                          Example2: ui -i -c <color> -s  -- sets default indicator($) with a predifined color from list. 
                     -cd : Changes current directory with a predifined color from list:
                          Example1: ui -cd <color> -- sets a predifined color from list to current directory path.
+ 
+    -------------------- Password Manager -------------------
+    pwm       -- Useage of built in password manager to store local the application sensitive information encrypted
+                 using Rijndael AES 256 and Argon2 for password hash.
+                     -h       : Display this message.
+                     -createv : Create a new vault.
+                     -delv    : Deletes an existing vault.
+                     -listv   : Displays the current vaults.
+                     -addapp  : Adds a new application to vault.
+                     -dela    : Deletes an existing application in a vault.
+                     -update  : Updates account's password for an application in a vault.
+                     -lista   : Displays the existing applicaitons in a vault.
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
