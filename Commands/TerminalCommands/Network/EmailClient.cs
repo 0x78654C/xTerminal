@@ -28,7 +28,8 @@ namespace Commands.TerminalCommands.Network
                 s_mailName = "";
             }
             Console.WriteLine("** Enter your eMail password **");
-            s_mailPass = GetHiddenConsoleInput();
+            s_mailPass = eMailS.GetHiddenConsoleInput();
+            Console.WriteLine();
             Console.WriteLine("** Enter destination eMail address **");
             s_mailTo = Console.ReadLine();
             Console.WriteLine("** Enter eMail title **");
@@ -48,23 +49,6 @@ namespace Commands.TerminalCommands.Network
                 FileSystem.ErrorWriteLine(e.ToString());
             }
             //----------------------
-        }
-
-        /// <summary>
-        /// Hidding password imput for strings
-        /// </summary>
-        /// <returns></returns>
-        private static string GetHiddenConsoleInput()
-        {
-            StringBuilder input = new StringBuilder();
-            while (true)
-            {
-                var key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Enter) break;
-                if (key.Key == ConsoleKey.Backspace && input.Length > 0) input.Remove(input.Length - 1, 1);
-                else if (key.Key != ConsoleKey.Backspace) input.Append(key.KeyChar);
-            }
-            return input.ToString();
         }
     }
 }
