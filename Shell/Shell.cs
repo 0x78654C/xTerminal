@@ -91,7 +91,6 @@ namespace Shell
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
                 }
 
-
                 // We se the color and user loged in on console.
                 SetConsoleUserConnected(dlocation, s_accountName, s_computerName, s_regUI);
 
@@ -104,7 +103,6 @@ namespace Shell
 
                 if (File.Exists(s_historyFile))
                 {
-
                     WriteHistoryCommandFile(s_historyFile, s_input);
 
                     //rebooting the machine command
