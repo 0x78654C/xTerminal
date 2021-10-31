@@ -20,9 +20,14 @@ For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
 .NET Framework 4.7.2
 
- For Roslyn C# code runner usce NuGet command in Commands project:
+ For Roslyn C# code runner use NuGet command in Commands project:
  ```
  Install-Package Microsoft.CodeAnalysis.CSharp -pre
+ ```
+
+ For Password Manager use NuGet command in Commands project:
+ ```
+ Install-Package Konscious.Security.Cryptography.Argon2
  ```
 
  ## Commands
