@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>F:\MegaSync\Projects\Shell\Release\Tools\</OutputPath>
+    <OutputPath>F:\twitch\Projects\xTerminal\Release\Tools\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>F:\twitch\Projects\Release\xTerminal\Tools</OutputPath>
+    <WarningLevel>5</WarningLevel>
   </PropertyGroup>
 
   <ItemGroup>
