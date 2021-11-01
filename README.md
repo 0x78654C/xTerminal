@@ -13,9 +13,9 @@ For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
 ## Requirements:
 
-.NET Core 2.0
+.NET Core 3.1
 
-.NET Standard 2.0
+.NET Standard 2.1
 
 .NET Framework 4.7.2
 
