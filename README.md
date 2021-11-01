@@ -1,6 +1,5 @@
 <p align="center">
-
-  <img src="https://github.com/0x78654C/xTerminal/blob/main/media/ico.bmp">
+  <img src="https://github.com/0x78654C/xTerminal/blob/main/media/ico.bmp?raw=true">
 </p>
 
 # xTerminal
