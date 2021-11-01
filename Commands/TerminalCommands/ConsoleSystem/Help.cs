@@ -70,8 +70,8 @@ This is the full list of commands that can be used in xTerminal:
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
 
     -------------------- Password Manager -------------------
-    pwm       -- Useage of built in password manager to store local the application sensitive information encrypted
-                 using Rijndael AES 256 and Argon2 for password hash.
+    pwm       -- A simple password manager to store localy the authentification data encrypted for 
+                 a application using Rijndael AES-256 and Argon2 for password hash.
                  Disclaimer: Use it at your OWN risk.
                  Use -h for additional help.
 
