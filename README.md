@@ -169,17 +169,18 @@ This is the full list of commands that can be used in xTerminal:
                          Example1: ui -cd <color> -- sets a predifined color from list to current directory path.
  
     -------------------- Password Manager -------------------
-    pwm       -- Useage of built in password manager to store local the application sensitive information encrypted
-                 using Rijndael AES 256 and Argon2 for password hash.
+    pwm       -- A simple password manager to store localy the authentification data encrypted for 
+                 a application using Rijndael AES-256 and Argon2 for password hash.
                  Disclaimer: Use it at your OWN risk.
+                 Useage of password manager commands:
                      -h       : Display this message.
                      -createv : Create a new vault.
                      -delv    : Deletes an existing vault.
                      -listv   : Displays the current vaults.
                      -addapp  : Adds a new application to vault.
                      -dela    : Deletes an existing application in a vault.
-                     -update  : Updates account's password for an application in a vault.
-                     -lista   : Displays the existing applicaitons in a vault.
+                     -updatea  : Updates account's password for an application in a vault.
+                     -lista   : Displays the existing applications in a vault.
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
@@ -211,6 +212,47 @@ namespace Test_Code
   - namespace : Takes the name of the namespace. In this case: Test_Code 
   - public class : Takes the name of the class. In this case: Test 
   - Main : Is defined as entry point for the code to run.
+
+
+
+## Usage of the Password Manager:
+
+As most of the password managers we start by creating a vault where we store the applications data.
+For that we use following command:
+ ```
+ pwm -createv
+ ```
+ You will be asked for the vault name and master password. Master password must meet the following complexity:
+ ```
+ Password must be at least 10 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!
+ ````
+
+ To see if the vault is created we list the current existing vaults by typing in console the following command:
+ ```
+ pwm -listv
+ ```
+
+ Adding the application information just type:
+ ```
+ pwm -addapp
+ ```
+ You will be prompted for vault name, master password to login in it, application name to be added, account name and password to be stored.
+
+ To delete a specific account from an application just use:
+ ```
+ pwm -dela
+ ```
+
+ To update password for a specific account in a application type:
+ ```
+ pwm -updatea
+ ```
+
+ To delete a vault type:
+ ```
+ pwm -delv
+ ```
+
 
 ## More Samples
 
