@@ -24,6 +24,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string pcInfo = wmi.GetWMIDetails("SELECT * FROM Win32_OperatingSystem");
             string gpuInfo = wmi.GetWMIDetails("SELECT * FROM Win32_VideoController");
             string modelInfo = wmi.GetWMIDetails("SELECT * FROM Win32_ComputerSystem");
+            string coresInfo = wmi.GetWMIDetails("SELECT * FROM Win32_Processor");
             Console.WriteLine("\n----------------------System Info---------------------\n");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "User logged");
             Console.WriteLine($": {GlobalVariables.accountName }");
@@ -33,7 +34,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             Console.WriteLine("\n--------------------------OS--------------------------\n");
             GetOSInfo(pcInfo);
             Console.WriteLine("\n-----------------------Hardware-----------------------\n");
-            GetProcesorInfo();
+            GetProcesorInfo(modelInfo,coresInfo);
             GetRAMInfo();
             GetGPUInfo(gpuInfo);
             Console.WriteLine("");
@@ -90,11 +91,41 @@ namespace Commands.TerminalCommands.ConsoleSystem
         }
 
         // Grap processor information from registry.
-        private void GetProcesorInfo()
+        private void GetProcesorInfo(string cpuInfoWMI, string coresInfo)
         {
             string procInfo = RegistryManagement.regKey_ReadMachine(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "CPU");
             Console.WriteLine($": {procInfo}");
+            using (var sRead = new StringReader(cpuInfoWMI))
+            {
+                string lineCPUCount;
+                while ((lineCPUCount = sRead.ReadLine()) != null)
+                {
+                    if (lineCPUCount.StartsWith("NumberOfProcessors"))
+                    {
+                        string outParam = "";
+                        outParam += lineCPUCount.Split(':')[1];
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"Physical CPU's");
+                        Console.WriteLine($": {outParam}");
+                    }
+                }
+            }
+            using (var sRead = new StringReader(coresInfo))
+            {
+                string lineCoresCount;
+                while ((lineCoresCount = sRead.ReadLine()) != null)
+                {
+                    if (lineCoresCount.StartsWith("NumberOfCores"))
+                    {
+                        string outParam = "";
+                        outParam += lineCoresCount.Split(':')[1];
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"CPU(s) Cores");
+                        Console.WriteLine($": {outParam}");
+                    }
+                }
+            }
+            FileSystem.ColorConsoleText(ConsoleColor.Green, $"Logical CPU's");
+            Console.WriteLine($": {Environment.ProcessorCount}");
         }
 
         // Grab RAM information.
