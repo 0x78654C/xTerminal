@@ -13,6 +13,7 @@ namespace Commands.TerminalCommands.PasswordManager
     public class PManager : ITerminalCommand
     {
         public string Name => "pwm";
+        private static int s_tries = 0;
         private static JavaScriptSerializer s_serializer;
         private static string s_helpMessage = @"A simple password manager to store localy the authentification data encrypted for a application using Rijndael AES-256 and Argon2 for password hash.
 Usage of Password Manager commands:
@@ -47,17 +48,36 @@ Usage of Password Manager commands:
                 if (arg.ContainsText("-updatea"))
                     UpdateAppUserData();
             }
+            catch (FileNotFoundException)
+            {
+                FileSystem.ErrorWriteLine("Vault was not found. Check command!");
+            }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message + ". Check command!");
             }
         }
 
+        /// <summary>
+        /// Check maximum of tries. Used in while loops for exit them at a certain count.
+        /// </summary>
+        /// <returns></returns>
+        private static bool CheckMaxTries()
+        {
+            s_tries++;
+            if (s_tries >= 3)
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "You have exceeded the number of tries!");
+                s_tries = 0;
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Creates a new vault.
         /// </summary>
-        private void CreateVault()
+        private static void CreateVault()
         {
             string vaultName;
             string masterPassword1;
@@ -66,6 +86,8 @@ Usage of Password Manager commands:
             bool passValidation = false;
             do
             {
+                if (CheckMaxTries())
+                    return;
                 Console.WriteLine("Vault Name: ");
                 vaultName = Console.ReadLine();
                 vaultName = vaultName.ToLower();
@@ -82,9 +104,8 @@ Usage of Password Manager commands:
                 {
                     userNameIsValid = true;
                 }
-
             } while (userNameIsValid == false);
-
+            s_tries = 0;
             do
             {
                 Console.WriteLine("Master Password: ");
@@ -103,13 +124,14 @@ Usage of Password Manager commands:
                 }
                 if (!eMailS.ValidatePassword(masterPassword2))
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Password must be at least 10 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!");
-
+                if (CheckMaxTries())
+                    return;
             } while ((masterPassword1 != masterPassword2) || !eMailS.ValidatePassword(masterPassword2));
-
+            s_tries = 0;
             if (passValidation)
             {
                 File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x", Core.Encryption.AES.Encrypt(string.Empty, masterPassword1));
-                WordColorInLine("[+] Vault ", vaultName, " was created!", ConsoleColor.Cyan);
+                WordColorInLine("\n[+] Vault ", vaultName, " was created!\n", ConsoleColor.Cyan);
             }
         }
 
@@ -124,10 +146,13 @@ Usage of Password Manager commands:
             var vaultFiles = Directory.GetFiles(GlobalVariables.passwordManagerDirectory);
             while (!string.Join("\n", vaultFiles).Contains($"{vaultName}.x"))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} does not exist!");
                 Console.WriteLine("Enter vault name: ");
                 vaultName = Console.ReadLine();
             }
+            s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x");
             WordColorInLine("Enter master password for ", vaultName, " vault:", ConsoleColor.Cyan);
             string masterPassword = eMailS.GetHiddenConsoleInput();
@@ -143,7 +168,7 @@ Usage of Password Manager commands:
             if (string.Join("\n", vaultFiles).Contains(vaultName))
             {
                 File.Delete(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x");
-                WordColorInLine("[-] Vault ", vaultName, " was deleted!", ConsoleColor.Cyan);
+                WordColorInLine("\n[-] Vault ", vaultName, " was deleted!\n", ConsoleColor.Cyan);
             }
             else
             {
@@ -163,7 +188,7 @@ Usage of Password Manager commands:
             foreach (var file in getFiles)
             {
                 FileInfo fileInfo = new FileInfo(file);
-                string vaultName = fileInfo.Name.Substring(0,fileInfo.Name.Length - 2);
+                string vaultName = fileInfo.Name.Substring(0, fileInfo.Name.Length - 2);
                 outFiles += "----------------\n";
                 outFiles += vaultName + Environment.NewLine;
             }
@@ -173,7 +198,7 @@ Usage of Password Manager commands:
                 return;
             }
             Console.WriteLine("List of current vaults:");
-            Console.WriteLine(outFiles+ "----------------");
+            Console.WriteLine(outFiles + "----------------");
         }
 
 
@@ -204,10 +229,13 @@ Usage of Password Manager commands:
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
                 Console.WriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
+            s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
             string masterPassword = eMailS.GetHiddenConsoleInput();
@@ -222,18 +250,24 @@ Usage of Password Manager commands:
             string application = Console.ReadLine();
             while (application.Length < 3)
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "The length of application name should be at least 3 characters!");
                 Console.WriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
+            s_tries = 0;
             WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
             string account = Console.ReadLine();
             while (account.Length < 3)
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "The length of account name should be at least 3 characters!");
                 WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
                 account = Console.ReadLine();
             }
+            s_tries = 0;
             WordColorInLine("Enter password for ", account, ":", ConsoleColor.Green);
             string password = eMailS.GetHiddenConsoleInput();
             Console.WriteLine();
@@ -243,13 +277,12 @@ Usage of Password Manager commands:
                     { "account", account },
                     { "password", password },
                 };
-
             s_serializer = new JavaScriptSerializer();
             string encryptdata = Core.Encryption.AES.Encrypt(decryptVault + "\n" + s_serializer.Serialize(keyValues), masterPassword);
             if (File.Exists(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x"))
             {
                 File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x", encryptdata);
-                WordColorInLine("Data for ", application, " is encrypted and added to vault!", ConsoleColor.Magenta);
+                WordColorInLine("\n[+] Data for ", application, " is encrypted and added to vault!\n", ConsoleColor.Magenta);
                 return;
             }
             else
@@ -267,6 +300,10 @@ Usage of Password Manager commands:
             if (decryptVault.Contains("Error decrypting"))
             {
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
+                return;
+            }
+            if (string.IsNullOrEmpty(decryptVault))
+            {
                 return;
             }
             Console.WriteLine("Enter application name (leave blank for all applications):");
@@ -312,10 +349,13 @@ Usage of Password Manager commands:
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
             {
-                Console.WriteLine("Vault does not exist!");
+                if (CheckMaxTries())
+                    return string.Empty;
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
                 Console.WriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
+            s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
             string masterPassword = eMailS.GetHiddenConsoleInput();
@@ -336,10 +376,13 @@ Usage of Password Manager commands:
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
                 Console.WriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
+            s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
             string masterPassword = eMailS.GetHiddenConsoleInput();
@@ -354,24 +397,33 @@ Usage of Password Manager commands:
             string application = Console.ReadLine();
             while (string.IsNullOrEmpty(application))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Application name should not be empty!");
                 Console.WriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
+            s_tries = 0;
             while (!decryptVault.Contains(application))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Application {application} does not exist!");
                 Console.WriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
+            s_tries = 0;
             WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
             string accountName = Console.ReadLine();
             while (string.IsNullOrEmpty(accountName))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Account name should not be empty!");
                 WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
                 accountName = Console.ReadLine();
             }
+            s_tries = 0;
             using (var reader = new StringReader(decryptVault))
             {
                 string line;
@@ -396,11 +448,11 @@ Usage of Password Manager commands:
                     if (accountCheck)
                     {
                         File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x", encryptdata);
-                        Console.Write("Account ");
-                        FileSystem.ColorConsoleText(ConsoleColor.Green,accountName);
+                        Console.Write("\n[-]Account ");
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, accountName);
                         Console.Write(" for ");
                         FileSystem.ColorConsoleText(ConsoleColor.Magenta, application);
-                        Console.Write(" was deleted!\n");
+                        Console.Write(" was deleted!" + Environment.NewLine);
                         return;
                     }
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Account {accountName} does not exist!");
@@ -423,10 +475,13 @@ Usage of Password Manager commands:
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
                 Console.WriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
+            s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
             string masterPassword = eMailS.GetHiddenConsoleInput();
@@ -441,25 +496,33 @@ Usage of Password Manager commands:
             string application = Console.ReadLine();
             while (string.IsNullOrEmpty(application))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Application name should not be empty!");
                 Console.WriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
+            s_tries = 0;
             while (!decryptVault.Contains(application))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Application {application} does not exist!");
                 Console.WriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
+            s_tries = 0;
             WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
             string accountName = Console.ReadLine();
             while (string.IsNullOrEmpty(accountName))
             {
+                if (CheckMaxTries())
+                    return;
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Account name should not be empty!");
                 WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
                 accountName = Console.ReadLine();
             }
-
+            s_tries = 0;
             WordColorInLine("Enter new password for ", accountName, ":", ConsoleColor.Green);
             string password = eMailS.GetHiddenConsoleInput();
             Console.WriteLine();
@@ -496,7 +559,7 @@ Usage of Password Manager commands:
                     if (accountCheck)
                     {
                         File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x", encryptdata);
-                        WordColorInLine("Password for ", accountName, " was updated!", ConsoleColor.Green);
+                        WordColorInLine("\n[*]Password for ", accountName, " was updated!\n", ConsoleColor.Green);
                         return;
                     }
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Account {accountName} does not exist!");
@@ -513,11 +576,11 @@ Usage of Password Manager commands:
         /// <param name="word">Word to be colored.</param>
         /// <param name="afterText">Text after the colored word.</param>
         /// <param name="color">Console color for the metioned word.</param>
-        private static void WordColorInLine(string beforeText, string word,string afterText, ConsoleColor color)
+        private static void WordColorInLine(string beforeText, string word, string afterText, ConsoleColor color)
         {
             Console.Write(beforeText);
             FileSystem.ColorConsoleText(color, word);
-            Console.Write(afterText+Environment.NewLine);
+            Console.Write(afterText + Environment.NewLine);
         }
     }
 }
