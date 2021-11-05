@@ -10,7 +10,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
 
             string helpMGS = @"
-xTerminal v1.2 Copyright @ 2020-2021 0x078654c
+xTerminal Copyright @ 2020-2021 0x078654c
 This is the full list of commands that can be used in xTerminal:
 
     ------------------------ System -----------------------
