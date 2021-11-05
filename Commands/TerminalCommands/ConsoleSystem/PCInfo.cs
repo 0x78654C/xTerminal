@@ -37,7 +37,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             GetProcesorInfo(modelInfo,coresInfo);
             GetRAMInfo();
             GetGPUInfo(gpuInfo);
-            Console.WriteLine("");
+            Console.WriteLine("\n------------------------------------------------------\n");
         }
 
         /// <summary>
