@@ -1,6 +1,6 @@
 ﻿using Core;
 using System;
-using System.Text;
+using PasswordValidator = Core.Encryption.PasswordValidator;
 
 namespace Commands.TerminalCommands.Network
 {
@@ -28,7 +28,7 @@ namespace Commands.TerminalCommands.Network
                 s_mailName = "";
             }
             Console.WriteLine("** Enter your eMail password **");
-            s_mailPass = eMailS.GetHiddenConsoleInput();
+            s_mailPass = PasswordValidator.GetHiddenConsoleInput().ToString();
             Console.WriteLine();
             Console.WriteLine("** Enter destination eMail address **");
             s_mailTo = Console.ReadLine();
