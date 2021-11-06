@@ -224,7 +224,7 @@ For that we use following command:
  ```
  You will be asked for the vault name and master password. Master password must meet the following complexity:
  ```
- Password must be at least 10 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!
+ Password must be at least 12 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!
  ````
 
  To see if the vault is created we list the current existing vaults by typing in console the following command:
