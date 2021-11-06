@@ -15,9 +15,9 @@ namespace Core
         public static string regCurrentEitor = "CurrentEditor";
         public static string regUI = "UI";
         public static string rootPath = Path.GetPathRoot(Environment.SystemDirectory);
-        public static string terminalTitle = "xTerminal v1.2.1"; 
+        public static string terminalTitle = "xTerminal v1.2.1";
         public static readonly string accountName = Environment.UserName;
-        public static readonly string computerName = Environment.MachineName; 
+        public static readonly string computerName = Environment.MachineName;
         public static string terminalWorkDirectory = $"{rootPath}Users\\{accountName}\\AppData\\Local\\xTerminal";
         public static string passwordManagerDirectory = $"{terminalWorkDirectory}\\Pwm\\";
         public static string currentDirectory = terminalWorkDirectory + $"\\{process}cDir.t";
@@ -25,6 +25,6 @@ namespace Core
         public static string historyFile = terminalWorkDirectory + "\\History.db";
         public static string addonDirectory = Directory.GetCurrentDirectory() + "\\Add-ons";
         public static List<string> excludeDirectories = new List<string>() { "System Volume Information", "$Recycle.Bin" };
-        public static List<string> excludeFiles = new List<string>() { "pagefile.sys"};
+        public static List<string> excludeFiles = new List<string>() { "pagefile.sys" };
     }
 }

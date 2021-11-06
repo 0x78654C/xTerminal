@@ -54,7 +54,7 @@ namespace Core
         {
             try
             {
-                for (int i = 0; i <pingReplys; i++)
+                for (int i = 0; i < pingReplys; i++)
                 {
                     if (PingHost(address))
                     {
@@ -62,8 +62,8 @@ namespace Core
                         s_myPing = new Ping();
                         string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
                         byte[] buffer = Encoding.ASCII.GetBytes(data);
-                        PingOptions options = new PingOptions(64,true);
-                        s_pingReply = s_myPing.Send(address, 12000,buffer,options);
+                        PingOptions options = new PingOptions(64, true);
+                        s_pingReply = s_myPing.Send(address, 12000, buffer, options);
                         Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} |  Adress: {s_pingReply.Address}");
                         s_success++;
                     }

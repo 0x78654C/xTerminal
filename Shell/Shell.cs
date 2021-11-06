@@ -59,7 +59,7 @@ namespace Shell
 
             // Creating the Password Manager directory for storing the encrypted files.
             Directory.CreateDirectory(s_passwordManagerDirectory);
-            
+
             //Store current directory with current process id.
             StoreCurrentDirectory();
 
@@ -162,7 +162,7 @@ namespace Shell
                 ExecutApp("cmd", args, true);
                 return;
             }
-            if(input.StartsWith("ps"))
+            if (input.StartsWith("ps"))
             {
                 args = args.Split(' ').Count() >= 1 ? args.Replace("ps", "") : args.Replace("ps ", "");
                 ExecutApp("powershell", args, true);
@@ -174,7 +174,7 @@ namespace Shell
             ExecutApp(Aliases[input], args, true);
         }
 
-        private void ExecutApp(string processName,string arg, bool waitForExit)
+        private void ExecutApp(string processName, string arg, bool waitForExit)
         {
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(processName)

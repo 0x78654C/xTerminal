@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Diagnostics;
-using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -19,7 +19,7 @@ Kills a running process by name or id. Usage:
         {
             try
             {
-                if(arg.ContainsText(" -h"))
+                if (arg.ContainsText(" -h"))
                 {
                     Console.WriteLine(_helpMessage);
                     return;

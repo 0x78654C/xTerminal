@@ -1,6 +1,5 @@
-﻿using System.Linq;
+﻿using Konscious.Security.Cryptography;
 using System.Text;
-using Konscious.Security.Cryptography;
 
 
 namespace Core.Encryption
@@ -9,13 +8,13 @@ namespace Core.Encryption
     {
         public static Argon2id s_argon2;
 
-		/// <summary>
-		/// Argon2 Password Hash
-		/// </summary>
-		/// <param name="password"></param>
-		/// <returns></returns>
-		public static byte[] Argon2HashPassword(string password)
-		{
+        /// <summary>
+        /// Argon2 Password Hash
+        /// </summary>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public static byte[] Argon2HashPassword(string password)
+        {
             s_argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
             {
                 Salt = Encoding.UTF8.GetBytes(password.Substring(2, 10)),
@@ -24,6 +23,6 @@ namespace Core.Encryption
                 MemorySize = 4096
             };
             return s_argon2.GetBytes(32);
-		}
-	}
+        }
+    }
 }

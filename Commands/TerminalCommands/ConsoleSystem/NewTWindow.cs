@@ -1,7 +1,4 @@
-﻿using System.Diagnostics;
-using System.Threading;
-
-namespace Commands.TerminalCommands.ConsoleSystem
+﻿namespace Commands.TerminalCommands.ConsoleSystem
 {
     /*
      * Start new terminal window.
@@ -14,7 +11,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             if (arg.ContainsText("-u"))
             {
-                Core.SystemTools.ProcessStart.ProcessExecute("xTerminal.exe","", true, true);
+                Core.SystemTools.ProcessStart.ProcessExecute("xTerminal.exe", "", true, true);
                 return;
             }
             Core.SystemTools.ProcessStart.ProcessExecute("xTerminal.exe", "", true, false);

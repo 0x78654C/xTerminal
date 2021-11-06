@@ -33,7 +33,7 @@ namespace Commands.TerminalCommands.Games
 
         private bool gameOver, restart, isfly, isPrinted;
         private string dirFile = Directory.GetCurrentDirectory();
-        private string highscoreFile = Directory.GetCurrentDirectory()+"\\saved_game.txt";
+        private string highscoreFile = Directory.GetCurrentDirectory() + "\\saved_game.txt";
 
         void ShowMainMenu()
         {

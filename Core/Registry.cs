@@ -14,8 +14,8 @@ namespace Core
         /// <returns></returns>
         public static bool regKey_Check(string keyName, string subKeyName)
         {
-            RegistryKey rkApp = Registry.CurrentUser.OpenSubKey(@"HKEY_CURRENT_USER\"+keyName, false);
-            if ((Registry.GetValue(@"HKEY_CURRENT_USER\"+keyName, subKeyName, null) == null) && (!string.IsNullOrEmpty(rkApp.GetValue(subKeyName).ToString())))
+            RegistryKey rkApp = Registry.CurrentUser.OpenSubKey(@"HKEY_CURRENT_USER\" + keyName, false);
+            if ((Registry.GetValue(@"HKEY_CURRENT_USER\" + keyName, subKeyName, null) == null) && (!string.IsNullOrEmpty(rkApp.GetValue(subKeyName).ToString())))
             {
                 return false;
             }

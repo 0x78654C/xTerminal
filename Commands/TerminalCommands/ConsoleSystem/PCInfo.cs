@@ -34,7 +34,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             Console.WriteLine("\n--------------------------OS--------------------------\n");
             GetOSInfo(pcInfo);
             Console.WriteLine("\n-----------------------Hardware-----------------------\n");
-            GetProcesorInfo(modelInfo,coresInfo);
+            GetProcesorInfo(modelInfo, coresInfo);
             GetRAMInfo();
             GetGPUInfo(gpuInfo);
             Console.WriteLine("\n------------------------------------------------------\n");

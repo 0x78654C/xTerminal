@@ -106,7 +106,7 @@ namespace Core
             DirectoryInfo[] directoryInfos = directoryInfo.GetDirectories();
             foreach (var dirInfo in directoryInfos)
             {
-                if (CheckPermission(dirInfo.FullName,true,CheckType.Directory) == true)
+                if (CheckPermission(dirInfo.FullName, true, CheckType.Directory) == true)
                 {
                     size += DirectorySize(dirInfo);
                 }

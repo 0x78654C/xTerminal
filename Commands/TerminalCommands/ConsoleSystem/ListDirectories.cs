@@ -30,7 +30,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
-        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o","-se" };
+        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-se" };
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
    .GroupBy(t => t.Md5)
    .Where(t => t.Count() > 1)
@@ -93,15 +93,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         searchedText = args.SplitByText("-se ", 1);
                         searchedText = searchedText.SplitByText(" -o", 0);
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
-                        string saveData= args.SplitByText("-o ", 1);
+                        string saveData = args.SplitByText("-o ", 1);
                         string content = $"Searching for: {searchedText}\n";
                         content += string.Join("\n", s_listSearched);
                         content += $"\n\n    Search results: {s_listSearched.Count()} matches\n";
-                        Console.WriteLine( FileSystem.SaveFileOutput(FileSystem.SanitizePath(saveData, s_currentDirectory),s_currentDirectory,content));
+                        Console.WriteLine(FileSystem.SaveFileOutput(FileSystem.SanitizePath(saveData, s_currentDirectory), s_currentDirectory, content));
                         s_listSearched.Clear();
                         return;
                     }
-                    searchedText = args.SplitByText("-se ",1);
+                    searchedText = args.SplitByText("-se ", 1);
                     DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
                     Console.WriteLine($"Searching for: {searchedText}\n");
                     Console.WriteLine(string.Join("\n", s_listSearched));
@@ -160,7 +160,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (arg.ContainsParameter("-c"))
                 {
                     Console.WriteLine($"\nCounting total directories/subdirectories and files on current location....\n");
-                    DisplaySubDirectoryAndFileCounts(s_currentDirectory, string.Empty, string.Empty,false);
+                    DisplaySubDirectoryAndFileCounts(s_currentDirectory, string.Empty, string.Empty, false);
                     Console.WriteLine($"Total directories/subdirectories: {s_countDirectories}");
                     Console.WriteLine($"Total files (include subdirectories): {s_countFiles}");
                     ClearCounters();
@@ -171,7 +171,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     if (!string.IsNullOrEmpty(arg.ParameterAfter("-cf")))
                     {
-                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, arg.ParameterAfter("-cf"), "",false);
+                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, arg.ParameterAfter("-cf"), "", false);
                         Console.WriteLine($"Total files that contains '{arg.ParameterAfter("-cf")}' (from subdirectories too): {s_countFilesText}\n");
                         ClearCounters();
                         return;
@@ -182,7 +182,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     if (!string.IsNullOrEmpty(arg.ParameterAfter("-cd")))
                     {
-                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd"),false);
+                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd"), false);
                         Console.WriteLine($"Total directories/subdirectories that name contains '{arg.ParameterAfter("-cd")}': {s_countDirectoriesText}\n");
                         ClearCounters();
                     }
@@ -336,8 +336,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (fileName != string.Empty && fileInfo.Name.ToLower().Contains(fileName.ToLower()))
                 {
                     s_countFilesText++;
-                    if(search)
-                    s_listSearched.Add($"File: {file}");
+                    if (search)
+                        s_listSearched.Add($"File: {file}");
                 }
                 else
                 {
@@ -361,7 +361,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     s_countDirectories++;
                 }
-                DisplaySubDirectoryAndFileCounts(dir, fileName, dirName,search);
+                DisplaySubDirectoryAndFileCounts(dir, fileName, dirName, search);
             }
         }
 
@@ -444,7 +444,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             foreach (var file in files)
             {
-                if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName,false,FileSystem.CheckType.File))
+                if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
                 {
                     string formattedText = GetFormattedFileInfoText(file, displaySizes);
                     if (saveToFile)
