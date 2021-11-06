@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using Core;
+using System.Linq;
 using System.Web.Script.Serialization;
+using PasswordValidator = Core.Encryption.PasswordValidator;
 
 namespace Commands.TerminalCommands.PasswordManager
 {
@@ -29,6 +30,7 @@ Usage of Password Manager commands:
 
         public void Execute(string arg)
         {
+        
             try
             {
                 if (arg.ContainsText("-h"))
@@ -86,8 +88,6 @@ Usage of Password Manager commands:
             bool passValidation = false;
             do
             {
-                if (CheckMaxTries())
-                    return;
                 Console.WriteLine("Vault Name: ");
                 vaultName = Console.ReadLine();
                 vaultName = vaultName.ToLower();
@@ -104,15 +104,17 @@ Usage of Password Manager commands:
                 {
                     userNameIsValid = true;
                 }
+                if (CheckMaxTries())
+                    return;
             } while (userNameIsValid == false);
             s_tries = 0;
             do
             {
                 Console.WriteLine("Master Password: ");
-                masterPassword1 = eMailS.GetHiddenConsoleInput();
+                masterPassword1 = PasswordValidator.GetHiddenConsoleInput();
                 Console.WriteLine();
                 Console.WriteLine("Confirm Master Password: ");
-                masterPassword2 = eMailS.GetHiddenConsoleInput();
+                masterPassword2 = PasswordValidator.GetHiddenConsoleInput();
                 Console.WriteLine();
                 if (masterPassword1 != masterPassword2)
                 {
@@ -122,16 +124,22 @@ Usage of Password Manager commands:
                 {
                     passValidation = true;
                 }
-                if (!eMailS.ValidatePassword(masterPassword2))
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Password must be at least 10 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!");
+                if (!PasswordValidator.ValidatePassword(masterPassword2))
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Password must be at least 12 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!");
                 if (CheckMaxTries())
                     return;
-            } while ((masterPassword1 != masterPassword2) || !eMailS.ValidatePassword(masterPassword2));
+            } while ((masterPassword1 != masterPassword2) || !PasswordValidator.ValidatePassword(masterPassword2));
             s_tries = 0;
             if (passValidation)
             {
-                File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x", Core.Encryption.AES.Encrypt(string.Empty, masterPassword1));
-                WordColorInLine("\n[+] Vault ", vaultName, " was created!\n", ConsoleColor.Cyan);
+                string sealVault = Core.Encryption.AES.Encrypt(string.Empty, masterPassword1);
+                if (!sealVault.Contains("Error encrypting"))
+                {
+                    File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x", sealVault);
+                    WordColorInLine("\n[+] Vault ", vaultName, " was created!\n", ConsoleColor.Cyan);
+                    return;
+                }
+                FileSystem.ErrorWriteLine(sealVault + ". Check command!");
             }
         }
 
@@ -155,7 +163,7 @@ Usage of Password Manager commands:
             s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x");
             WordColorInLine("Enter master password for ", vaultName, " vault:", ConsoleColor.Cyan);
-            string masterPassword = eMailS.GetHiddenConsoleInput();
+            string masterPassword = PasswordValidator.GetHiddenConsoleInput();
             Console.WriteLine();
             string decryptVault = Core.Encryption.AES.Decrypt(encryptedData, masterPassword);
 
@@ -238,7 +246,7 @@ Usage of Password Manager commands:
             s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
-            string masterPassword = eMailS.GetHiddenConsoleInput();
+            string masterPassword = PasswordValidator.GetHiddenConsoleInput();
             Console.WriteLine();
             string decryptVault = Core.Encryption.AES.Decrypt(encryptedData, masterPassword);
             if (decryptVault.Contains("Error decrypting"))
@@ -269,7 +277,7 @@ Usage of Password Manager commands:
             }
             s_tries = 0;
             WordColorInLine("Enter password for ", account, ":", ConsoleColor.Green);
-            string password = eMailS.GetHiddenConsoleInput();
+            string password = PasswordValidator.GetHiddenConsoleInput();
             Console.WriteLine();
             var keyValues = new Dictionary<string, object>
                 {
@@ -358,7 +366,7 @@ Usage of Password Manager commands:
             s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
-            string masterPassword = eMailS.GetHiddenConsoleInput();
+            string masterPassword = PasswordValidator.GetHiddenConsoleInput();
             Console.WriteLine();
             string decryptVault = Core.Encryption.AES.Decrypt(encryptedData, masterPassword);
             return decryptVault;
@@ -385,7 +393,7 @@ Usage of Password Manager commands:
             s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
-            string masterPassword = eMailS.GetHiddenConsoleInput();
+            string masterPassword = PasswordValidator.GetHiddenConsoleInput();
             Console.WriteLine();
             string decryptVault = Core.Encryption.AES.Decrypt(encryptedData, masterPassword);
             if (decryptVault.Contains("Error decrypting"))
@@ -484,7 +492,7 @@ Usage of Password Manager commands:
             s_tries = 0;
             string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x");
             WordColorInLine("Enter master password for ", vault, " vault:", ConsoleColor.Cyan);
-            string masterPassword = eMailS.GetHiddenConsoleInput();
+            string masterPassword = PasswordValidator.GetHiddenConsoleInput();
             Console.WriteLine();
             string decryptVault = Core.Encryption.AES.Decrypt(encryptedData, masterPassword);
             if (decryptVault.Contains("Error decrypting"))
@@ -524,7 +532,7 @@ Usage of Password Manager commands:
             }
             s_tries = 0;
             WordColorInLine("Enter new password for ", accountName, ":", ConsoleColor.Green);
-            string password = eMailS.GetHiddenConsoleInput();
+            string password = PasswordValidator.GetHiddenConsoleInput();
             Console.WriteLine();
             using (var reader = new StringReader(decryptVault))
             {
