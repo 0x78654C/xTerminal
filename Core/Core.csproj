@@ -10,7 +10,7 @@
     <RootNamespace>Core</RootNamespace>
     <AssemblyName>Core</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-	 <LangVersion>8.0</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -67,6 +67,7 @@
     <Compile Include="eMailS.cs" />
     <Compile Include="Encryption\AES.cs" />
     <Compile Include="Encryption\Argon2.cs" />
+    <Compile Include="Encryption\PasswordValidator.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="GlobalVariables.cs" />
     <Compile Include="Hardware\WMIDetails.cs" />
