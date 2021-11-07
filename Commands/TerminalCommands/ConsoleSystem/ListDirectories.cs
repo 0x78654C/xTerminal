@@ -172,7 +172,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (!string.IsNullOrEmpty(arg.ParameterAfter("-cf")))
                     {
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, arg.ParameterAfter("-cf"), "", false);
-                        Console.WriteLine($"Total files that contains '{arg.ParameterAfter("-cf")}' (from subdirectories too): {s_countFilesText}\n");
+                        Console.WriteLine($"Total files count that contains '{arg.ParameterAfter("-cf")}' (from subdirectories too): {s_countFilesText}\n");
                         ClearCounters();
                         return;
                     }
@@ -183,7 +183,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (!string.IsNullOrEmpty(arg.ParameterAfter("-cd")))
                     {
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd"), false);
-                        Console.WriteLine($"Total directories/subdirectories that name contains '{arg.ParameterAfter("-cd")}': {s_countDirectoriesText}\n");
+                        Console.WriteLine($"Total directories/subdirectories count that name contains '{arg.ParameterAfter("-cd")}': {s_countDirectoriesText}\n");
                         ClearCounters();
                     }
                     return;
