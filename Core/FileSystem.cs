@@ -121,9 +121,10 @@ namespace Core
         /// <param name="text"></param>
         public static void ColorConsoleTextLine(ConsoleColor color, string text)
         {
+            ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = color;
             Console.WriteLine(text);
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = currentForeground;
         }
 
         /// <summary>
@@ -133,9 +134,10 @@ namespace Core
         /// <param name="text"></param>
         public static void ColorConsoleText(ConsoleColor color, string text)
         {
+            ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = color;
             Console.Write(text);
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = currentForeground;
         }
 
         /// <summary>
@@ -193,9 +195,10 @@ namespace Core
         /// <param name="text"></param>
         public static void ErrorWriteLine(string text)
         {
+            ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Error: {text}");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = currentForeground;
         }
 
         /// <summary>
