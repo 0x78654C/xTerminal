@@ -87,7 +87,6 @@ namespace Core.Encryption
                 {
                     pwd += (i.KeyChar);
                     Console.Write("*");
-
                 }
             }
             return pwd;
