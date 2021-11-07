@@ -256,6 +256,10 @@ For that we use following command:
 
 ## More Samples
 
+* Using the Password Manager: 
+
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/4.png?raw=true)
+
 * Using hex command: 
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/2.bmp?raw=true)
