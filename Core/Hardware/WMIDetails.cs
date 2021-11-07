@@ -47,6 +47,7 @@ namespace Core.Hardware
         {
             ManagementObjectSearcher moSearcher = scope == null ? new ManagementObjectSearcher(query) : new ManagementObjectSearcher(scope, query);
             StringBuilder sb = new StringBuilder();
+            sb.AppendLine(string.Join("", Enumerable.Range(1, 30).Select(t => '-')) + Environment.NewLine);
             foreach (ManagementObject wmi_HD in moSearcher.Get())
             {
                 foreach (var item in itemName)
