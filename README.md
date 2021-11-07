@@ -3,9 +3,7 @@
 </p>
 
 # xTerminal
- A linux like terminal for windows in C# with some extras ;).
-
-This is a simple terminal in C#  based on https://github.com/willharrison/ProgrammingWithWill
+A linux like terminal for windows in C# with some extras ;).
 
 For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
