@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text.RegularExpressions;
 
@@ -65,9 +66,9 @@ namespace Core.Encryption
         /// Hidding password imput for strings
         /// </summary>
         /// <returns></returns>
-        public static string GetHiddenConsoleInput()
+        public static SecureString GetHiddenConsoleInput()
         {
-            string pwd = string.Empty;
+            SecureString pwd = new SecureString();
             while (true)
             {
                 ConsoleKeyInfo i = Console.ReadKey(true);
@@ -79,17 +80,37 @@ namespace Core.Encryption
                 {
                     if (pwd.Length > 0)
                     {
-                        pwd = pwd.Remove(pwd.Length - 1);
+                        pwd.RemoveAt(pwd.Length - 1);
                         Console.Write("\b \b");
                     }
                 }
                 else if (i.KeyChar != '\u0000')
                 {
-                    pwd += (i.KeyChar);
+                    pwd.AppendChar(i.KeyChar);
                     Console.Write("*");
                 }
             }
             return pwd;
+        }
+
+
+        /// <summary>
+        /// Converts the secure string to string.
+        /// </summary>
+        /// <returns>The secure string to string.</returns>
+        /// <param name="data">Data.</param>
+        public static string ConvertSecureStringToString(this SecureString data)
+        {
+            var pointer = IntPtr.Zero;
+            try
+            {
+                pointer = Marshal.SecureStringToGlobalAllocUnicode(data);
+                return Marshal.PtrToStringUni(pointer);
+            }
+            finally
+            {
+                Marshal.ZeroFreeGlobalAllocUnicode(pointer);
+            }
         }
     }
 }
