@@ -487,7 +487,14 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             else
             {
-                Console.WriteLine(text);
+                if (text.EndsWith(".exe") || text.EndsWith(".msi"))
+                {
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, text);
+                }
+                else
+                {
+                    Console.WriteLine(text);
+                }
             }
         }
     }
