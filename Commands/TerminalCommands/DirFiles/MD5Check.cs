@@ -1,5 +1,6 @@
 ﻿using Core;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -7,62 +8,154 @@ namespace Commands.TerminalCommands.DirFiles
 {
     public class MD5Check : ITerminalCommand
     {
-
         /*
          * Checks MD5 hash of a file.
          */
-        public string Name => "md5";
 
+        public string Name => "md5";
+        private static string s_currentDirectory;
+        private static string s_helpMessage = @"Usage of MD5 command:
+ md5 <file_name> : Display the MD5 CheckSUM of a file.
+ md5 -d <dire_name> : Display the MD5 CheckSUM list of all the files in a directory and subdirectories.
+ md5 -d <dire_name> -o <save_to_file> : Saves the MD5 CheckSUM list of all the files in a directory and subdirectories.
+";
         public void Execute(string arg)
         {
-
             try
             {
-                string cDir = File.ReadAllText(GlobalVariables.currentDirectory);
+                s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
+
+                // Display help message.
+                if(arg.ContainsText(" -h"))
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
+
+                // Empty command info display.
+                if (arg.Length == 3)
+                {
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
+
+                // Display files md5 from a specific directory and subdirectories and output to a file if necesary.
+                if (arg.ContainsText(" -d "))
+                {
+                    if (arg.ContainsText(" -o "))
+                    {
+                        string dParam = arg.SplitByText(" -d ", 1);
+                        string dirPath = dParam.SplitByText(" -o", 0);
+                        dirPath = FileSystem.SanitizePath(dirPath, s_currentDirectory);
+                        if (!Directory.Exists(dirPath))
+                        {
+                            FileSystem.ErrorWriteLine($"Directory {dirPath} does not exist!");
+                            return;
+                        }
+                        string fileSaved = FileSystem.SanitizePath(dParam.SplitByText(" -o ", 1), s_currentDirectory);
+                        Console.WriteLine(FileSystem.SaveFileOutput(fileSaved, s_currentDirectory, MD5DirCheckFiles(dirPath)));
+                        return;
+                    }
+                    string dirName = FileSystem.SanitizePath(arg.SplitByText(" -d ", 1), s_currentDirectory);
+                    if (!Directory.Exists(dirName))
+                    {
+                        FileSystem.ErrorWriteLine($"Directory {dirName} does not exist!");
+                        return;
+                    }
+                    Console.WriteLine($"MD5 CheckSUM list for files located in {dirName}:\n");
+                    Console.WriteLine(MD5DirCheckFiles(dirName));
+                    return;
+                }
                 int argLenght = arg.Length - 4;
                 string input = arg.Substring(4, argLenght);
 
-                if (input.Contains(":") && input.Contains(@"\"))
+                // Display md5 CheckSUM of a single file.
+                Console.WriteLine(MD5CheckSum(input, true));
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Check MD5 of all files in a directory and subdirectories.
+        /// </summary>
+        /// <param name="dirName">Path to directory.</param>
+        /// <returns>string</returns>
+        private string MD5DirCheckFiles(string dirName)
+        {
+            var dirs = Directory.GetDirectories(dirName);
+            var files = Directory.GetFiles(dirName);
+            List<string> md5List = new List<string>();
+            string retValue;
+            foreach (var file in files)
+            {
+                md5List.Add(MD5CheckSum(file,false));
+            }
+            foreach (var dir in dirs)
+            {
+                md5List.Add(MD5DirCheckFiles(dir));
+            }
+            retValue = string.Join("\n", md5List);
+            return retValue;
+        }
+
+        /// <summary>
+        /// Check MD5 of a file.
+        /// </summary>
+        /// <param name="arg">Path of file to be checked</param>
+        /// <param name="fileCheck">Display if file not exist.</param>
+        /// <returns>string</returns>
+        private string MD5CheckSum(string arg, bool fileCheck)
+        {
+            string retValue = string.Empty;
+            try
+            {
+                string cDir = File.ReadAllText(GlobalVariables.currentDirectory);
+                if (arg.Contains(":") && arg.Contains(@"\"))
                 {
-                    if (File.Exists(input))
+                    if (File.Exists(arg))
                     {
                         using (var md5 = MD5.Create())
                         {
-                            using (var stream = File.OpenRead(input))
+                            using (var stream = File.OpenRead(arg))
                             {
                                 var hash = md5.ComputeHash(stream);
-                                Console.WriteLine("MD5 of " + input + ": " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
+                                retValue = arg + "   MD5: " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                             }
                         }
                     }
                     else
                     {
-                        Console.WriteLine("File " + input + " dose not exist!");
+                        if (fileCheck)
+                            retValue = "File " + arg + " dose not exist!";
                     }
                 }
                 else
                 {
-                    if (File.Exists(cDir + @"\" + input))
+                    if (File.Exists(cDir + @"\" + arg))
                     {
                         using (var md5 = MD5.Create())
                         {
-                            using (var stream = File.OpenRead(cDir + @"\" + input))
+                            using (var stream = File.OpenRead(cDir + @"\" + arg))
                             {
                                 var hash = md5.ComputeHash(stream);
-                                Console.WriteLine("MD5 of " + input + ": " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant());
-
+                                retValue =  arg + "   MD5: " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                             }
                         }
                     }
                     else
                     {
-                        Console.WriteLine("File " + cDir + @"\" + input + " dose not exist!");
+                        if (fileCheck)
+                            retValue += "File " + cDir + @"\" + arg + " dose not exist!";
                     }
                 }
+                return retValue;
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine($"{e.Message} Have you typed the file name?");
+                return $"{e.Message}. Have you typed the file name?";
             }
         }
     }
