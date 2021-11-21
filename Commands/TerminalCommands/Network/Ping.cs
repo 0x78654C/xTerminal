@@ -15,6 +15,11 @@ namespace Commands.TerminalCommands.Network
         {
             try
             {
+                if (args.Length == 4)
+                {
+                    FileSystem.ErrorWriteLine($"You must provide an IP/Hostname.");
+                    return;
+                }
                 string[] arg = args.Split(' ');
                 if (args.ContainsText("-r"))
                 {

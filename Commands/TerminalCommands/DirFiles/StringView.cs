@@ -48,6 +48,12 @@ namespace Commands.TerminalCommands.DirFiles
                 string fileSearchIn = string.Empty;
                 string saveToFile;
 
+                if (arg.Length == 3)
+                {
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
+
                 try
                 {
                     fileSearchIn = input[2];

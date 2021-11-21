@@ -33,6 +33,11 @@ Usage of Password Manager commands:
         
             try
             {
+                if (arg.Length == 3)
+                {
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
                 if (arg.ContainsText("-h"))
                     Console.WriteLine(s_helpMessage);
                 if (arg.ContainsText("-createv"))

@@ -47,6 +47,11 @@ namespace Commands.TerminalCommands.Roslyn
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             _addonDir = GlobalVariables.addonDirectory;
+            if (args.Length == 1)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
             string param = string.Empty;
             string command = args.Split(' ').ParameterAfter("!");
             if (args.ContainsText("-p"))

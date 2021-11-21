@@ -25,6 +25,12 @@ namespace Commands.TerminalCommands.Roslyn
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
             string param = string.Empty;
+            if (args.Length == 3)
+            {
+                FileSystem.ErrorWriteLine($"You must provide an C# file for complile.");
+                return;
+            }
+
             args = args.Replace("ccs ", "");
             if (args.ContainsText("-p"))
             {

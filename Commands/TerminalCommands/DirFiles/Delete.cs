@@ -19,6 +19,11 @@ namespace Commands.TerminalCommands.DirFiles
         public void Execute(string args)
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
+            if (args.Length == 3)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
             string param = args.Split(' ').ParameterAfter("del");
             int argsLenght = args.Length - 4;
             args = args.Substring(4, argsLenght);

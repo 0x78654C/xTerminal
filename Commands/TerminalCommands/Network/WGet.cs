@@ -44,7 +44,11 @@ namespace Commands.TerminalCommands.Network
 
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
-
+            if (arg.Length == 4)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
             try
             {
                 if (NetWork.IntertCheck())
@@ -76,7 +80,7 @@ namespace Commands.TerminalCommands.Network
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.ToString());
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
         //Download file directly in root path

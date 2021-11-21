@@ -19,6 +19,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
+                if (arg.Length == 3)
+                {
+                    FileSystem.ErrorWriteLine($"You must provide a file for check!");
+                    return;
+                }
                 if (arg.ContainsParameter("-o"))
                 {
                     string dumpFile1 = args.SplitByText("hex ", 1);

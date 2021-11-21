@@ -19,6 +19,12 @@ Kills a running process by name or id. Usage:
         {
             try
             {
+                if (arg.Length == 3)
+                {
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
+
                 if (arg.ContainsText(" -h"))
                 {
                     Console.WriteLine(_helpMessage);

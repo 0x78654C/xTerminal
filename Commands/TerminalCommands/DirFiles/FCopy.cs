@@ -17,7 +17,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             Console.WriteLine(" ");
 
-            string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
+            string dlocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string crcSource = null;
             string crcDestination = null;
             string Source = null;
@@ -32,7 +32,11 @@ namespace Commands.TerminalCommands.DirFiles
             string codeBase = Assembly.GetExecutingAssembly().GetName().Name;
             double sizeSourceFiles = 0;
             double sizeDestinationFiles = 0;
-
+            if (arg.Length == 5)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
             Console.WriteLine("\n\r");
             try
             {

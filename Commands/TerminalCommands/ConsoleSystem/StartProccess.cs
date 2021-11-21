@@ -24,10 +24,16 @@ Can use with following parameter:
             // Set directory, to be used in other functions
             s_currentDirectory =
                             File.ReadAllText(GlobalVariables.currentDirectory);
+            if (args.Length == 5)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
             int argsLength = args.Length - 6;
             args = args.Substring(6, argsLength);
             string param = args.Split(' ').First();
             string paramApp = string.Empty;
+
             if (args.Contains("-p"))
             {
                 paramApp = args.SplitByText(" -p ", 1);

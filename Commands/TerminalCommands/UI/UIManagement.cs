@@ -28,6 +28,12 @@ namespace Commands.TerminalCommands.UI
         public string Name => "ui";
         public void Execute(string arg)
         {
+            if (arg.Length == 2)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
+            
             _regUI = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUI);
             var args = arg.Split(' ');
 
