@@ -120,7 +120,10 @@ This is the full list of commands that can be used in xTerminal:
                    -af : Deletes all files in current directory. 
                    -ad : Deletes all directories in current directory. 
     cp        -- Check file/folder permissions.
-    md5       -- Checks the md5 checksum of a file.
+    md5       -- Checks the md5 checksum of a file. Use -h for additional parameters.
+                     md5 <file_name> : Display the MD5 CheckSUM of a file.
+                     md5 -d <dire_name> : Display the MD5 CheckSUM list of all the files in a directory and subdirectories.
+                     md5 -d <dire_name> -o <save_to_file> : Saves the MD5 CheckSUM list of all the files in a directory and subdirectories.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)

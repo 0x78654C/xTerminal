@@ -48,7 +48,7 @@ This is the full list of commands that can be used in xTerminal:
                  To set a new text editor you must use following command: edit set ""Path to editor""
     del       -- Deletes a file or folder without recover.  Use -h for additional parameters.
     cp        -- Check file/folder permissions.
-    md5       -- Checks the md5 checksum of a file.
+    md5       -- Checks the md5 checksum of a file. Use -h for additional help.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
