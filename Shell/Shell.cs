@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows.Forms;
 using SetConsoleColor = Core.SystemTools.UI;
 using SystemCmd = Core.Commands.SystemCommands;
 
@@ -28,7 +29,7 @@ namespace Shell
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
-        private static string s_terminalTitle = "xTerminal v1.2.4";
+        private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
 
         //-------------------------------
 
@@ -66,7 +67,9 @@ namespace Shell
 
             // Creating the addon directory for C# code script scomands if not exist.
             Directory.CreateDirectory(s_addonDir);
+
             // Setting up the title.
+            s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2);
             Console.Title = s_terminalTitle;
             //creating history file if not exist
             if (!File.Exists(s_historyFile))
