@@ -28,7 +28,7 @@ namespace Commands.TerminalCommands.Network
                 s_mailName = "";
             }
             Console.WriteLine("** Enter your eMail password **");
-            s_mailPass = PasswordValidator.GetHiddenConsoleInput().ToString();
+            s_mailPass = PasswordValidator.ConvertSecureStringToString(PasswordValidator.GetHiddenConsoleInput());
             Console.WriteLine();
             Console.WriteLine("** Enter destination eMail address **");
             s_mailTo = Console.ReadLine();
