@@ -13,7 +13,7 @@ namespace Shell
     public class Shell
     {
         //declaring variables
-        public static string dlocation = null;
+        public static string s_currentDirectory = null;
         private static readonly string s_accountName = GlobalVariables.accountName;    //extract current loged username
         private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
@@ -28,6 +28,7 @@ namespace Shell
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
+        private static string s_terminalTitle = "xTerminal v1.2.4";
 
         //-------------------------------
 
@@ -65,8 +66,8 @@ namespace Shell
 
             // Creating the addon directory for C# code script scomands if not exist.
             Directory.CreateDirectory(s_addonDir);
-
-
+            // Setting up the title.
+            Console.Title = s_terminalTitle;
             //creating history file if not exist
             if (!File.Exists(s_historyFile))
             {
@@ -77,9 +78,9 @@ namespace Shell
             do
             {
                 //reading current location
-                dlocation = File.ReadAllText(GlobalVariables.currentDirectory);
+                s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
-                if (dlocation == "")
+                if (s_currentDirectory == "")
                 {
                     File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
                 }
@@ -91,8 +92,18 @@ namespace Shell
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
                 }
 
+                // Title display applicaiton name and version + current directory.
+                if (s_currentDirectory == GlobalVariables.rootPath)
+                {
+                    Console.Title = $"{s_terminalTitle}";
+                }
+                else
+                {
+                    Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
+                }
+
                 // We se the color and user loged in on console.
-                SetConsoleUserConnected(dlocation, s_accountName, s_computerName, s_regUI);
+                SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI);
 
                 //reading user imput
                 s_input = Console.ReadLine();
@@ -180,7 +191,7 @@ namespace Shell
             process.StartInfo = new ProcessStartInfo(processName)
             {
                 UseShellExecute = false,
-                WorkingDirectory = dlocation,
+                WorkingDirectory = s_currentDirectory,
                 Arguments = arg
             };
             process.Start();
@@ -282,7 +293,6 @@ namespace Shell
             {
                 FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
             }
-            Console.Title = $"{GlobalVariables.terminalTitle} | {currentLocation}";//setting up the new title
         }
         private static void UISettingsParse(string settings)
         {
