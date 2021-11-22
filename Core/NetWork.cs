@@ -58,7 +58,7 @@ namespace Core
                 {
                     if (PingHost(address))
                     {
-                        Thread.Sleep(300);
+                        Thread.Sleep(500);
                         s_myPing = new Ping();
                         string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
                         byte[] buffer = Encoding.ASCII.GetBytes(data);
