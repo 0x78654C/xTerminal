@@ -60,7 +60,6 @@ namespace Shell
         {
             // confgure console
             Console.OutputEncoding = System.Text.Encoding.UTF8;//set utf8 encoding (for support Russian letters)
-            Console.Title = GlobalVariables.terminalTitle;//setting up the new title
             _handler += new EventHandler(Handler);
             SetConsoleCtrlHandler(_handler, true); // New event for listening on close console event.
             var shell = new Shell();
