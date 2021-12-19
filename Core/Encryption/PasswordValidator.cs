@@ -15,25 +15,8 @@ namespace Core.Encryption
         /// <returns>bool</returns>
         public static bool ValidatePassword(string password)
         {
-            string patternPassword = @"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{12,500}$";
-            if (!string.IsNullOrEmpty(password))
-            {
-                if (CheckSpaceChar(password))
-                {
-                    return false;
-                }
-
-                if (!Regex.IsMatch(password, patternPassword))
-                {
-                    return false;
-                }
-
-                if (!SpecialCharCheck(password))
-                {
-                    return false;
-                }
-            }
-            return true;
+            const string patternPassword = @"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{12,500}$";
+            return !(string.IsNullOrEmpty(password) || CheckSpaceChar(password) || !Regex.IsMatch(password, patternPassword) || !SpecialCharCheck(password));
         }
 
         /// <summary>
@@ -43,12 +26,7 @@ namespace Core.Encryption
         /// <returns></returns>
         private static bool SpecialCharCheck(string input)
         {
-            string specialChar = @"\|!#$%&/()=?»«@£§€{}.-;'<>_,";
-            if (input.IndexOfAny(specialChar.ToCharArray()) > -1)
-            {
-                return true;
-            }
-            return false;
+            return input.IndexOfAny(@"\|!#$%&/()=?»«@£§€{}.-;'<>_,".ToCharArray()) > -1;
         }
 
         /// <summary>
