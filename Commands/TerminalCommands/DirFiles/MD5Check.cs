@@ -141,7 +141,7 @@ namespace Commands.TerminalCommands.DirFiles
                             using (var stream = File.OpenRead(cDir + @"\" + arg))
                             {
                                 var hash = md5.ComputeHash(stream);
-                                retValue =  arg + "   MD5: " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                                retValue = cDir + @"\" + arg + "   MD5: " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                             }
                         }
                     }
