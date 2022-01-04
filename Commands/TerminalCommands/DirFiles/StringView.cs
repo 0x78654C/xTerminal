@@ -48,7 +48,7 @@ namespace Commands.TerminalCommands.DirFiles
                 string fileSearchIn = string.Empty;
                 string saveToFile;
 
-                if (arg.Length == 3)
+                if (arg.Length == 3 && !arg.Contains("-lc"))
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
