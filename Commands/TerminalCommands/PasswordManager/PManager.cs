@@ -155,6 +155,11 @@ Usage of Password Manager commands:
         {
             Console.WriteLine("Enter vault name: ");
             string vaultName = Console.ReadLine();
+            if (string.IsNullOrEmpty(vaultName))
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"You must type the vault name!");
+                return;
+            }
             vaultName = vaultName.ToLower();
             var vaultFiles = Directory.GetFiles(GlobalVariables.passwordManagerDirectory);
             while (!string.Join("\n", vaultFiles).Contains($"{vaultName}.x"))
@@ -166,29 +171,34 @@ Usage of Password Manager commands:
                 vaultName = Console.ReadLine();
             }
             s_tries = 0;
-            string encryptedData = File.ReadAllText(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x");
-            WordColorInLine("Enter master password for ", vaultName, " vault:", ConsoleColor.Cyan);
-            string masterPassword = PasswordValidator.ConvertSecureStringToString(PasswordValidator.GetHiddenConsoleInput());
-            Console.WriteLine();
-            string decryptVault = Core.Encryption.AES.Decrypt(encryptedData, masterPassword);
-
-            if (decryptVault.Contains("Error decrypting"))
-            {
-                FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
-                return;
-            }
-
             if (string.Join("\n", vaultFiles).Contains(vaultName))
             {
-                File.Delete(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x");
-                WordColorInLine("\n[-] Vault ", vaultName, " was deleted!\n", ConsoleColor.Cyan);
+                if (DeleteConfirmationCheck(vaultName))
+                {
+                    File.Delete(GlobalVariables.passwordManagerDirectory + $"\\{vaultName}.x");
+                    WordColorInLine("\n[-] Vault ", vaultName, " was deleted!\n", ConsoleColor.Cyan);
+                    return;
+                }
+                return;
             }
-            else
-            {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} does not exist anymore!");
-            }
+            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} does not exist anymore!");
         }
 
+        /// <summary>
+        /// Confirmation message for vault delete.
+        /// </summary>
+        /// <param name="vaultName"></param>
+        /// <returns></returns>
+        private static bool DeleteConfirmationCheck(string vaultName)
+        {
+            WordColorInLine("\n Do you want to delete ", vaultName, " vault? Press Y [yes] / N [no]:\n", ConsoleColor.Cyan);
+            string response = Console.ReadLine().ToLower();
+            if (response == "y")
+            {
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// List current vaults.
