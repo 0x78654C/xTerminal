@@ -56,30 +56,32 @@ namespace Shell
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
-            // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
-            Directory.CreateDirectory(s_historyFilePath);
-
-            // Creating the Password Manager directory for storing the encrypted files.
-            Directory.CreateDirectory(s_passwordManagerDirectory);
-
-            //Store current directory with current process id.
-            StoreCurrentDirectory();
-
-            // Creating the addon directory for C# code script scomands if not exist.
-            Directory.CreateDirectory(s_addonDir);
-
             // Setting up the title.
             s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2);
             Console.Title = s_terminalTitle;
-            //creating history file if not exist
-            if (!File.Exists(s_historyFile))
-            {
-                File.WriteAllText(s_historyFile, Environment.NewLine);
-            }
-
-            // We loop unti exit commands is hit
+     
+            // We loop until exit commands is hit
             do
             {
+                // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
+                if (!Directory.Exists(s_historyFilePath))
+                    Directory.CreateDirectory(s_historyFilePath);
+                
+                //creating history file if not exist
+                if (!File.Exists(s_historyFile))
+                    File.WriteAllText(s_historyFile, Environment.NewLine);
+
+                // Creating the Password Manager directory for storing the encrypted files.
+                if (!Directory.Exists(s_passwordManagerDirectory))
+                    Directory.CreateDirectory(s_passwordManagerDirectory);
+
+                //Store current directory with current process id.
+                StoreCurrentDirectory();
+
+                // Creating the addon directory for C# code script scomands if not exist.
+                if (!Directory.Exists(s_addonDir))
+                    Directory.CreateDirectory(s_addonDir);
+
                 //reading current location
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
