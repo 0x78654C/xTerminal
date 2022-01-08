@@ -11,6 +11,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             string helpMGS = @"
 xTerminal Copyright @ 2020-2022 0x078654c
+Contact: xcoding.dev@gmail.com
+
 This is the full list of commands that can be used in xTerminal:
 
     ------------------------ System -----------------------
@@ -78,7 +80,12 @@ This is the full list of commands that can be used in xTerminal:
     ------------------------ Games -------------------------
     flappy    -- Play Flappy Birds in console!
     snake     -- Play Snake game in console!
- 
+
+    ------------------------Support -------------------------
+    If you like this application and want to support the project you can always buy me a crypto coffee :D. Thank you very much for your support, I appreciate it!
+    
+    Bitcoin:   bc1qe6z79u5f62c3v5lh6nt3hfcj683etyx65s5nch
+    Ethereum:  0x7Aedd83d94b350624f4FDb4dF7eC3a2A7caA9952
 
                         ";
 
