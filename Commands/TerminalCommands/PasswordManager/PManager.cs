@@ -345,7 +345,7 @@ Usage of Password Manager commands:
             }
             if (string.IsNullOrEmpty(decryptVault))
             {
-                ColorConsoleTextLine(ConsoleColor.Yellow, "There is no data saved in this vault!");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "There is no data saved in this vault!");
                 return;
             }
             Console.WriteLine("Enter application name (leave blank for all applications):");
