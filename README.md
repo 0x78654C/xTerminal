@@ -239,6 +239,11 @@ For that we use following command:
  ```
  You will be prompted for vault name, master password to login in it, application name to be added, account name and password to be stored.
 
+ To list the accounts from a specific application or entire vault lists type: 
+ ```
+ pwm -lista
+ ```
+ 
  To delete a specific account from an application just use:
  ```
  pwm -dela
