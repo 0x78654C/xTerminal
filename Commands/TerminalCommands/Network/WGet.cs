@@ -49,6 +49,11 @@ namespace Commands.TerminalCommands.Network
                 Console.WriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
+            if (arg ==$"{Name} -h")
+            {
+                Console.WriteLine(s_helpMessage);
+                return;
+            }
             try
             {
                 if (NetWork.IntertCheck())
@@ -64,14 +69,9 @@ namespace Commands.TerminalCommands.Network
                         s_resetEvent.WaitOne();
                         return;
                     }
-                    if (input.StartsWith("-h"))
-                    {
-                        Console.WriteLine(s_helpMessage);
-                        return;
-                    }
+                    
                     s_worker.RunWorkerAsync();
                     s_resetEvent.WaitOne();
-
                 }
                 else
                 {
