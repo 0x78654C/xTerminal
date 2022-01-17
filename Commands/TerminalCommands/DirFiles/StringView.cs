@@ -106,6 +106,8 @@ namespace Commands.TerminalCommands.DirFiles
                         fileName = "";
                         saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                         string startMessage = "";
+                        fileSearchIn = arg.SplitByText(searchString, 1);
+                        fileSearchIn = fileSearchIn.SplitByText(" -o", 0);
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
                             startMessage = $"---Searching in files containing '{fileSearchIn}' in name---\n\n";
