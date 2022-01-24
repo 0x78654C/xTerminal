@@ -119,7 +119,6 @@ namespace Commands.TerminalCommands.DirFiles
                                     else
                                     {
                                         Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
-                                        Environment.Exit(-1);
                                     }
                                 }
 
@@ -198,7 +197,6 @@ namespace Commands.TerminalCommands.DirFiles
                                 else
                                 {
                                     Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
-                                    Environment.Exit(-1);
                                 }
                                 //-------------------------
 
@@ -261,7 +259,7 @@ namespace Commands.TerminalCommands.DirFiles
                                 //check if source is current path
                                 if (!Source.Contains(":") || !Source.Contains(@"\"))
                                 {
-                                    Source = dlocation + "\\" + Source;
+                                    Source = dlocation + Source;
                                 }
 
                                 using (var crc32 = Crc32.Create())
@@ -279,7 +277,6 @@ namespace Commands.TerminalCommands.DirFiles
                                     else
                                     {
                                         Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
-                                        Environment.Exit(-1);
                                     }
                                 }
 
@@ -361,7 +358,6 @@ namespace Commands.TerminalCommands.DirFiles
                                 else
                                 {
                                     Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
-                                    Environment.Exit(-1);
                                 }
                                 //-------------------------
 
@@ -395,10 +391,9 @@ namespace Commands.TerminalCommands.DirFiles
                 }
                 else
                 {
-
                     if (!Source.Contains(":") || !Source.Contains(@"\"))
                     {
-                        Source = dlocation + "\\" + Source;
+                        Source = dlocation + Source;
                     }
                     using (var crc32 = Crc32.Create())
                     {
@@ -415,7 +410,6 @@ namespace Commands.TerminalCommands.DirFiles
                         else
                         {
                             Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
-                            Environment.Exit(-1);
                         }
                     }
 
@@ -423,7 +417,7 @@ namespace Commands.TerminalCommands.DirFiles
 
                     if (!Destination.Contains(":") || !Destination.Contains(@"\"))
                     {
-                        Destination = dlocation + "\\" + Destination;
+                        Destination = dlocation + Destination;
                     }
 
                     //copy module
@@ -431,19 +425,16 @@ namespace Commands.TerminalCommands.DirFiles
                     {
                         if (!File.Exists(Destination))
                         {
-
                             File.Copy(Source, Destination);
                         }
                         else
                         {
                             Console.WriteLine($"Destination file '{Destination}' already exist!" + Environment.NewLine);
-                            Environment.Exit(-1);
                         }
                     }
                     else
                     {
                         Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
-                        Environment.Exit(-1);
                     }
                     //-------------------------
                     //Grabing destination file crc
