@@ -1,6 +1,9 @@
 ﻿using Core;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Shell
@@ -23,9 +26,40 @@ namespace Shell
             CTRL_SHUTDOWN_EVENT = 6
         }
 
-        // Deletes current directory file.
+        // Deletes current directory temp file.
         private static void DeleteCDFIle()
         {
+            var getFiles = Directory.GetFiles(GlobalVariables.terminalWorkDirectory);
+            var listFilesID = new List<string>();
+            var listProcessID = new List<string>();
+            foreach (var file in getFiles)
+            {
+                if (file.EndsWith("cDir.t"))
+                {
+                    FileInfo fileInfo = new FileInfo(file);
+                    var fileCDir = fileInfo.Name.Replace("cDir.t", "");
+                    listFilesID.Add(fileCDir);
+                }
+            }
+            foreach (var process in Process.GetProcessesByName("xTerminal"))
+            {
+                listProcessID.Add(process.Id.ToString());
+            }
+
+            var finalListID = listFilesID.Except(listProcessID).ToList();
+
+            foreach (var file in getFiles)
+            {
+                foreach (var item in finalListID)
+                {
+                    if (file.EndsWith("cDir.t") && file.Contains(item))
+                    {
+                        FileInfo fileInfo = new FileInfo(file);
+                        File.Delete(fileInfo.FullName); 
+                    }
+                }
+            }
+
             if (File.Exists(GlobalVariables.currentDirectory))
                 File.Delete(GlobalVariables.currentDirectory);
         }
