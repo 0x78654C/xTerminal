@@ -246,7 +246,7 @@ namespace Core
         /// <returns>string</returns>
         public static string SanitizePath(string path, string currentDir)
         {
-            return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}\{path}";
+            return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}{path}";
         }
     }
 }
