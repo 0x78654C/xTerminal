@@ -97,7 +97,7 @@ namespace Shell
             _handler += new EventHandler(Handler);
             SetConsoleCtrlHandler(_handler, true); // New event for listening on close console event.
             var shell = new Shell();
-            shell.Run();//Running the shell
+            shell.Run(args);//Running the shell
         }
     }
 }
