@@ -50,8 +50,108 @@ namespace Shell
             }
         }
 
+        /// <summary>
+        /// Load predefined settings.
+        /// </summary>
+        private void SettingsLoad()
+        {
+            // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
+            if (!Directory.Exists(s_historyFilePath))
+                Directory.CreateDirectory(s_historyFilePath);
+
+            //creating history file if not exist
+            if (!File.Exists(s_historyFile))
+                File.WriteAllText(s_historyFile, Environment.NewLine);
+
+            // Creating the Password Manager directory for storing the encrypted files.
+            if (!Directory.Exists(s_passwordManagerDirectory))
+                Directory.CreateDirectory(s_passwordManagerDirectory);
+
+            //Store current directory with current process id.
+            StoreCurrentDirectory();
+
+            // Creating the addon directory for C# code script scomands if not exist.
+            if (!Directory.Exists(s_addonDir))
+                Directory.CreateDirectory(s_addonDir);
+
+            //reading current location
+            s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
+
+            if (s_currentDirectory == "")
+            {
+                File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
+            }
+
+            // Reading UI settings.
+            s_regUI = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUI);
+            if (s_regUI == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
+            }
+
+            // Title display applicaiton name and version + current directory.
+            if (s_currentDirectory == GlobalVariables.rootPath)
+            {
+                Console.Title = $"{s_terminalTitle}";
+            }
+            else
+            {
+                Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
+            }
+        }
+
+        /// <summary>
+        /// Execute predifined xTerminal commands.
+        /// </summary>
+        /// <param name="command"></param>
+        private void ExecuteCommands(string command)
+        {
+            var c = Commands.CommandRepository.GetCommand(command);
+            if (c != null)
+            {
+                c.Execute(command);
+            }
+        }
+
+        /// <summary>
+        /// Arguments handler for parameter usage.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private List<string> ParamHandler(string[] args)
+        {
+            List<string> argList = new List<string>();
+            foreach(var arg in args)
+            {
+                argList.Add(arg);
+            }
+            return argList;
+        }
+
+        /// <summary>
+        /// Execute xTerminal commands via parameters.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        private bool ExecuteParamCommands(string[] args)
+        {
+            try
+            {
+                string param =string.Join(" ",ParamHandler(args));
+                if (!string.IsNullOrEmpty(param))
+                {
+                    SettingsLoad();
+                    ExecuteCommands(param);
+                    return true;
+                }
+                return false;
+            }
+            catch { return false; }
+        }
+
+
         //Entry point of shell
-        public void Run()
+        public void Run(string[] args)
         {
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
@@ -59,53 +159,14 @@ namespace Shell
             // Setting up the title.
             s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2);
             Console.Title = s_terminalTitle;
-     
+
+            if (ExecuteParamCommands(args)) { return; };
+
             // We loop until exit commands is hit
             do
             {
-                // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
-                if (!Directory.Exists(s_historyFilePath))
-                    Directory.CreateDirectory(s_historyFilePath);
-                
-                //creating history file if not exist
-                if (!File.Exists(s_historyFile))
-                    File.WriteAllText(s_historyFile, Environment.NewLine);
-
-                // Creating the Password Manager directory for storing the encrypted files.
-                if (!Directory.Exists(s_passwordManagerDirectory))
-                    Directory.CreateDirectory(s_passwordManagerDirectory);
-
-                //Store current directory with current process id.
-                StoreCurrentDirectory();
-
-                // Creating the addon directory for C# code script scomands if not exist.
-                if (!Directory.Exists(s_addonDir))
-                    Directory.CreateDirectory(s_addonDir);
-
-                //reading current location
-                s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-
-                if (s_currentDirectory == "")
-                {
-                    File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
-                }
-
-                // Reading UI settings.
-                s_regUI = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUI);
-                if (s_regUI == "")
-                {
-                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
-                }
-
-                // Title display applicaiton name and version + current directory.
-                if (s_currentDirectory == GlobalVariables.rootPath)
-                {
-                    Console.Title = $"{s_terminalTitle}";
-                }
-                else
-                {
-                    Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
-                }
+                //Load predifined settings.
+                SettingsLoad();
 
                 // We se the color and user loged in on console.
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI);
@@ -155,13 +216,9 @@ namespace Shell
                     }
                 }
 
-                // New command implementation by Scott
-                var c = Commands.CommandRepository.GetCommand(s_input);
-                if (c != null)
-                {
-                    c.Execute(s_input);
-                }
-                //----------------------------------------
+                // New command implementation by Scott.
+                ExecuteCommands(s_input);
+
                 GC.Collect();
 
             } while (s_input != "exit");
