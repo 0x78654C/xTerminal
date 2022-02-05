@@ -14,6 +14,7 @@ namespace Core
         public static string regKeyName = "xTerminal";
         public static string regCurrentEitor = "CurrentEditor";
         public static string regUI = "UI";
+        public static string version { get; set; }
         public static string rootPath = Path.GetPathRoot(Environment.SystemDirectory);
         public static readonly string accountName = Environment.UserName;
         public static readonly string computerName = Environment.MachineName;
