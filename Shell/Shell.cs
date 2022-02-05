@@ -30,7 +30,7 @@ namespace Shell
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
-
+        
         //-------------------------------
 
         //Define the shell commands 
@@ -98,6 +98,9 @@ namespace Shell
             {
                 Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
             }
+
+            // Store xTerminal version.
+            GlobalVariables.version = Application.ProductVersion;
         }
 
         /// <summary>
