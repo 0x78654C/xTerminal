@@ -1,4 +1,5 @@
 ﻿using System;
+using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -9,9 +10,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public void Execute(string arg)
         {
 
-            string helpMGS = @"
+            string helpMGS = $@"
+----------------------------------------------------------------
 xTerminal Copyright @ 2020-2022 0x078654c
+Version: {GlobalVariables.version.Substring(0, GlobalVariables.version.Length - 2)}
 Contact: xcoding.dev@gmail.com
+----------------------------------------------------------------
 
 This is the full list of commands that can be used in xTerminal:
 
