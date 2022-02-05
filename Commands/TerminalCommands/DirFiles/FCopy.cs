@@ -12,6 +12,19 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "fcopy";
 
+
+        private string GetParam(string arg)
+        {
+            if (arg.Contains("-ca"))
+            {
+                arg = arg.Replace("fcopy -ca ", string.Empty);
+            }
+            else
+            {
+                arg = arg.Replace("fcopy ", string.Empty);
+            }
+            return arg;
+        }
         public void Execute(string arg)
         {
 
@@ -32,6 +45,7 @@ namespace Commands.TerminalCommands.DirFiles
             string codeBase = Assembly.GetExecutingAssembly().GetName().Name;
             double sizeSourceFiles = 0;
             double sizeDestinationFiles = 0;
+            string param = GetParam(arg);
             if (arg.Length == 5)
             {
                 Console.WriteLine($"Use -h param for {Name} command usage!");
@@ -42,21 +56,17 @@ namespace Commands.TerminalCommands.DirFiles
             {
                 files = Directory.GetFiles(dlocation);
 
-                Source = arg.Split(' ')[1];
+                Source = param.SplitByText(" -o ", 0);
                 cmdType = Source;
-                try
+                if (Source.Contains(@":\"))
                 {
-                    NewPath = arg.Split(' ')[2];
+                    NewPath = param;
                 }
-                catch
-                {
-                    NewPath = dlocation;
-                }
-
+                else { NewPath = dlocation; }
 
                 if (Source.StartsWith("-h"))
                 {
-                    Console.WriteLine(@"Usage: fcopy <source_file> <destination_file>. Can bee used with following parameters:
+                    Console.WriteLine(@"Usage: fcopy <source_file> -o <destination_file>. Can bee used with following parameters:
  -h : displays this message
  -ca <destination_directory> : copy all files from current directory in a specific directory
  -ca : copy source files in same directory
@@ -65,9 +75,8 @@ namespace Commands.TerminalCommands.DirFiles
                 }
 
                 //copy all with and without args
-                if (Source.StartsWith("-ca"))
+                if (arg.Contains(" -ca "))
                 {
-
                     dfiles = Directory.GetFiles(NewPath);
                     string dFilesList = string.Join("", dfiles);
 
@@ -75,7 +84,6 @@ namespace Commands.TerminalCommands.DirFiles
                     {
                         foreach (var file in dfiles)
                         {
-
                             if (!file.Contains(") - ") && !file.Contains(codeBase))
                             {
 
@@ -100,10 +108,7 @@ namespace Commands.TerminalCommands.DirFiles
                                 FileCount = woIndex + wIndex;
                                 FileCount--;
 
-
                                 Source = dlocation + "\\" + delilmiterSplitF;
-
-
                                 using (var crc32 = Crc32.Create())
                                 {
                                     if (File.Exists(Source))
@@ -126,11 +131,11 @@ namespace Commands.TerminalCommands.DirFiles
 
                                 if (!Destination.Contains(":") || !Destination.Contains(@"\"))
                                 {
-                                    Destination = NewPath + "\\" + Destination;
+                                    Destination = NewPath + Destination;
                                 }
                                 else
                                 {
-                                    Destination = NewPath + "\\" + delilmiterSplitF;
+                                    Destination = NewPath + delilmiterSplitF;
                                 }
 
 
@@ -413,7 +418,7 @@ namespace Commands.TerminalCommands.DirFiles
                         }
                     }
 
-                    Destination = arg.Split(' ')[2];
+                    Destination = param.SplitByText(" -o ", 1);
 
                     if (!Destination.Contains(":") || !Destination.Contains(@"\"))
                     {
@@ -460,6 +465,10 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                 }
             }
+            catch (UnauthorizedAccessException u)
+            {
+                FileSystem.ErrorWriteLine(u.Message);
+            }
             catch (Exception x)
             {
                 if (x.Message.Contains("is being used by another process"))
@@ -468,8 +477,8 @@ namespace Commands.TerminalCommands.DirFiles
                 }
                 else
                 {
-
-                    FileSystem.ErrorWriteLine("Command should look like this: fcopy source_file target_file");
+                    FileSystem.ErrorWriteLine(x.Message);
+                    FileSystem.ErrorWriteLine("\nCommand should look like this: fcopy source_file target_file");
                 }
 
             }
@@ -497,7 +506,6 @@ namespace Commands.TerminalCommands.DirFiles
                     Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
                 }
             }
-
         }
     }
 }

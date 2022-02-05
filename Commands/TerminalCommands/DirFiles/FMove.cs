@@ -13,6 +13,19 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "fmove";
 
+        private string GetParam(string arg)
+        {
+            if (arg.Contains("-ma"))
+            {
+                arg = arg.Replace("fmove -ma ", string.Empty);
+            }
+            else
+            {
+                arg = arg.Replace("fmove ", string.Empty);
+            }
+            return arg;
+        }
+
         public void Execute(string arg)
         {
 
@@ -33,6 +46,7 @@ namespace Commands.TerminalCommands.DirFiles
             string codeBase = Assembly.GetExecutingAssembly().GetName().Name;
             double sizeSourceFiles = 0;
             double sizeDestinationFiles = 0;
+            string param = GetParam(arg);
             if (arg.Length == 5)
             {
                 Console.WriteLine($"Use -h param for {Name} command usage!");
@@ -42,32 +56,26 @@ namespace Commands.TerminalCommands.DirFiles
             try
             {
                 files = Directory.GetFiles(dlocation); ;
-                Source = arg.Split(' ')[1];
+                Source = param.SplitByText(" -o ", 0);
                 cmdType = Source;
-                try
+                if (Source.Contains(@":\"))
                 {
-                    NewPath = arg.Split(' ')[2];
+                    NewPath = param;
                 }
-                catch
-                {
-                    NewPath = dlocation;
-                }
+                else { NewPath = dlocation; }
 
 
                 if (Source.StartsWith("-h"))
                 {
-                    Console.WriteLine(@"Usage: fmove <source_file> <destination_file>. Can bee used with following parameters:
+                    Console.WriteLine(@"Usage: fmove <source_file> -o <destination_file>. Can bee used with following parameters:
  -ma <destination_directory> : moves all files from current directory in a specific directory
 ");
                     return;
                 }
 
-                //copy all with and without args
-                if (Source.StartsWith("-ma"))
+                //Move all with and without args
+                if (arg.Contains(" -ma "))
                 {
-
-
-
                     dfiles = Directory.GetFiles(NewPath);
                     string dFilesList = string.Join("", dfiles);
 
@@ -126,11 +134,11 @@ namespace Commands.TerminalCommands.DirFiles
 
                                 if (!Destination.Contains(":") || !Destination.Contains(@"\"))
                                 {
-                                    Destination = NewPath + "\\" + Destination;
+                                    Destination = NewPath + Destination;
                                 }
                                 else
                                 {
-                                    Destination = NewPath + "\\" + delilmiterSplitF;
+                                    Destination = NewPath + delilmiterSplitF;
                                 }
 
 
@@ -415,7 +423,7 @@ namespace Commands.TerminalCommands.DirFiles
                         }
                     }
 
-                    Destination = arg.Split(' ')[2];
+                    Destination = param.SplitByText(" -o ", 1);
 
                     if (!Destination.Contains(":") || !Destination.Contains(@"\"))
                     {
@@ -464,6 +472,10 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                 }
             }
+            catch(UnauthorizedAccessException u)
+            {
+                FileSystem.ErrorWriteLine(u.Message);
+            }
             catch (Exception x)
             {
                 if (x.ToString().Contains("is being used by another process"))
@@ -472,7 +484,8 @@ namespace Commands.TerminalCommands.DirFiles
                 }
                 else
                 {
-                    FileSystem.ErrorWriteLine("Command should look like this: fcopy source_file target_file");
+                    FileSystem.ErrorWriteLine(x.Message);
+                    FileSystem.ErrorWriteLine("\nCommand should look like this: fcopy source_file target_file");
                 }
 
             }
