@@ -187,7 +187,10 @@ This is the full list of commands that can be used in xTerminal:
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
     snake     -- Play Snake game in console!(Ceated by https://github.com/mkbmain)
 
-
+All xTerminal commands can be used from other terminals as Command Line Arguments. Example: 
+ ```
+ C:\work\xTerminal\xTerminal.exe extip
+ ```
 
 ## Usage of C# Code runner and add-ons:
 
