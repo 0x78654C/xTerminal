@@ -84,15 +84,12 @@ namespace Core.Commands
 
                         if (!string.IsNullOrEmpty(fileName) && fileInfo.Name.Contains(fileName))
                         {
-                            // var nFile = SanitizePath(file, currentDir);
                             if (!File.Exists(file))
                             {
                                 FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
                                 continue;
                             }
-
-                            output.AppendLine($"---------------- {file} ----------------");
-                            LineOutput(output, file, currentDir, searchString);
+                            output.AppendLine(LineOutput(file, currentDir, searchString));
                         }
                     }
                 }
@@ -105,8 +102,8 @@ namespace Core.Commands
                             FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
                             continue;
                         }
-                        output.AppendLine($"---------------- {file} ----------------");
-                        LineOutput(output, file, currentDir, searchString);
+                        string o = LineOutput(file, currentDir, searchString);
+                        output.AppendLine(o);
                     }
                 }
                 var directoryInfo = new DirectoryInfo(currentDir).GetDirectories();
@@ -130,9 +127,7 @@ namespace Core.Commands
                         FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
                         continue;
                     }
-
-                    output.AppendLine($"---------------- {nFile} ----------------");
-                    LineOutput(output, nFile, currentDir, searchString);
+                    output.AppendLine(LineOutput(nFile, currentDir, searchString));
                 }
             }
 
@@ -145,13 +140,16 @@ namespace Core.Commands
             return output.ToString();
         }
 
-        private static void LineOutput(StringBuilder stringBuilder, string file, string currentDir, string searchString)
+        private static string LineOutput(string file, string currentDir, string searchString)
         {
             string oFile = FileOutput(file, currentDir, searchString);
             if (oFile.StartsWith("Line"))
             {
-                stringBuilder.AppendLine(FileOutput(file, currentDir, searchString));
+               return $"---------------- {file} ----------------"
+                    +Environment.NewLine
+                    +FileOutput(file, currentDir, searchString);
             }
+            return null;
         }
 
         private static void TotalLinesCounter(string currentDir, string fileName, bool fileCount)
