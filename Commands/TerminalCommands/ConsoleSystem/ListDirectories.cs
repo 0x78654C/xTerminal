@@ -73,14 +73,32 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 bool found = true;
                 foreach (var param in s_listParams)
                 {
-                    if (arg.ParameterAfter("ls") != param && arg.ParameterAfter("ls").Contains(":\\"))
+                    bool paramt = arg.ContainsParameter(param);
+                    if (!paramt)
                     {
-                        if (found)
+                        if (!string.IsNullOrEmpty(arg.ParameterAfter("ls")))
                         {
-                            int arglength = args.Length - 3;
-                            s_currentDirectory = args.Substring(3, arglength);
-                            found = false;
+                            if (found)
+                            {
+                                int arglength = args.Length - 3;
+                                string path = args.Substring(3, arglength);
+                                if (path.Length == 2 && path.EndsWith(":"))
+                                {
+                                    string pathDir = FileSystem.SanitizePath(args.Substring(3, arglength) + "\\", s_currentDirectory);
+                                    s_currentDirectory = pathDir;
+                                }
+                                else
+                                {
+                                    string pathDir = FileSystem.SanitizePath(args.Substring(3, arglength), s_currentDirectory);
+                                    s_currentDirectory = pathDir;
+                                }
+                                found = false;
+                            }
                         }
+                    }
+                    else
+                    {
+                        s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                     }
                 }
 
@@ -235,7 +253,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
-            string results = checkExtension ? $"List of duplicated files(extension check) in {dirToScan} \n" : $"List of duplicated files in {dirToScan} :\n";
+            string results = checkExtension ? $"List of duplicated files(extension check) in {dirToScan}: " + Environment.NewLine + Environment.NewLine : $"List of duplicated files in {dirToScan}:"+Environment.NewLine + Environment.NewLine;
 
             var allDupesBySize = Directory.GetFiles(dirToScan, "*", SearchOption.AllDirectories)
               .Select(f => new FileInfo(f))
@@ -309,10 +327,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static void SaveLSOutput(string path)
         {
             DisplayCurrentDirectoryFiles(false, "", true);
-            string dirList = "Directories:\n";
-            dirList += string.Join("\n", s_listDirs);
-            string fileList = "\n\nFiles:\n";
-            fileList += string.Join("\n", s_listFiles);
+            string dirList = "-----Directories-----"+Environment.NewLine;
+            dirList += string.Join(Environment.NewLine, s_listDirs);
+            string fileList = Environment.NewLine+"-------Files-------" +Environment.NewLine;
+            fileList += string.Join(Environment.NewLine, s_listFiles);
             string finalList = dirList + fileList;
             Console.WriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
             s_listDirs.Clear();
