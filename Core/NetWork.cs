@@ -64,7 +64,7 @@ namespace Core
                         byte[] buffer = Encoding.ASCII.GetBytes(data);
                         PingOptions options = new PingOptions(64, true);
                         s_pingReply = s_myPing.Send(address, 12000, buffer, options);
-                        if (s_pingReply.Status.ToString().Contains("Time"))
+                        if (!s_pingReply.Status.ToString().Contains("Success"))
                             s_failure++;
                         Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} |  Adress: {s_pingReply.Address}");
                         s_success++;
