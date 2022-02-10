@@ -1,10 +1,12 @@
 ﻿using Core;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using System.Windows.Input;
 using SetConsoleColor = Core.SystemTools.UI;
 using SystemCmd = Core.Commands.SystemCommands;
 
@@ -29,8 +31,11 @@ namespace Shell
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
+        private static bool s_ctrlKey = false;
+        private static bool s_xKey = false;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
-        
+        private static BackgroundWorker s_backgroundWorker;
+
         //-------------------------------
 
         //Define the shell commands 
@@ -124,7 +129,7 @@ namespace Shell
         private List<string> ParamHandler(string[] args)
         {
             List<string> argList = new List<string>();
-            foreach(var arg in args)
+            foreach (var arg in args)
             {
                 argList.Add(arg);
             }
@@ -140,7 +145,7 @@ namespace Shell
         {
             try
             {
-                string param =string.Join(" ",ParamHandler(args));
+                string param = string.Join(" ", ParamHandler(args));
                 if (!string.IsNullOrEmpty(param))
                 {
                     SettingsLoad();
@@ -152,10 +157,50 @@ namespace Shell
             catch { return false; }
         }
 
+        /// <summary>
+        /// CTRL+X key event.
+        /// </summary>
+        /// <param name="e"></param>
+        static void KeyDown(KeyEventArgs e)
+        {
+            if (e.KeyData.ToString() == "RControlKey" || e.KeyData.ToString() == "LControlKey")
+                s_ctrlKey = true;
+
+            if (e.KeyData == Keys.X)
+                s_xKey = true;
+
+            if (s_xKey && s_ctrlKey && GlobalVariables.eventKeyFlagX)
+            {
+                GlobalVariables.eventKeyFlagX = false;
+                GlobalVariables.eventCancelKey = true;
+
+                //Close flags for reuse.
+                s_xKey = false;
+                s_ctrlKey = false;
+            }
+        }
+
+        /// <summary>
+        /// Hook key event on KeyDown press.
+        /// </summary>
+        /// <param name="o"></param>
+        /// <param name="e"></param>
+        private void KeyHook(object o, DoWorkEventArgs e)
+        {
+            InterceptKeys.SetupHook(KeyDown);
+            InterceptKeys.ReleaseHook();
+        }
+
 
         //Entry point of shell
         public void Run(string[] args)
         {
+            // Start keyhook event on background for CTRL+X .
+            s_backgroundWorker = new BackgroundWorker();
+            s_backgroundWorker.DoWork += KeyHook;
+            s_backgroundWorker.RunWorkerAsync();
+
+
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
