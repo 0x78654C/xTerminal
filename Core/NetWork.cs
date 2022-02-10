@@ -66,8 +66,9 @@ namespace Core
                         s_pingReply = s_myPing.Send(address, 12000, buffer, options);
                         if (!s_pingReply.Status.ToString().Contains("Success"))
                             s_failure++;
+                        else
+                            s_success++;
                         Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} |  Adress: {s_pingReply.Address}");
-                        s_success++;
                     }
                     else
                     {
