@@ -21,14 +21,27 @@ namespace Commands.TerminalCommands.Network
                     return;
                 }
                 string[] arg = args.Split(' ');
-                if (args.ContainsText("-r"))
+                if (args.ContainsText("-t"))
                 {
-                    int pingReplays = Int32.Parse(arg.ParameterAfter("-r"));
-                    NetWork.PingMain(arg.ParameterAfter("ping"), pingReplays);
-                    return;
+                    string pingRetry = args.SplitByText("-t", 1);
+                    int pingReplays = 0;
+                    if (!string.IsNullOrEmpty(pingRetry))
+                        pingReplays = Int32.Parse(pingRetry);
+
+                    if (pingReplays > 0) {
+                        GlobalVariables.eventKeyFlagX = true;
+                        NetWork.PingMain(arg.ParameterAfter("ping"), pingReplays);
+                        return;
+                    }
+
+                    if (string.IsNullOrEmpty(pingRetry))
+                    {
+                        GlobalVariables.eventKeyFlagX = true;
+                        NetWork.PingMain(arg.ParameterAfter("ping"), 0);
+                        return;
+                    }
                 }
                 NetWork.PingMain(arg.ParameterAfter("ping"), 4);
-
             }
             catch (Exception e)
             {
