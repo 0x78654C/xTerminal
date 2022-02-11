@@ -74,6 +74,7 @@
     <Compile Include="HexDump.cs" />
     <Compile Include="InterceptKeys.cs" />
     <Compile Include="NetWork.cs" />
+    <Compile Include="PortScan.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Registry.cs" />
     <Compile Include="SystemTools\ProcessStart.cs" />
