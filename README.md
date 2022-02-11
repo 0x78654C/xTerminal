@@ -141,7 +141,10 @@ This is the full list of commands that can be used in xTerminal:
                  Example 2: ping google.com -t 10  (for 10 replies)
                  Example 3: ping google.com -t  (infinite replies)
                  Ping with -t can be canceled with CTRL+X key combination.
-    
+    cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
+                 Example 1: cport IPAddress/HostName -p 80   (checks if port 80 is open)
+                 Example 2: cport IPAddress/HostName -p 1-200   (checks if any port is open from 1 to 200)    
+
     ---------------- C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
