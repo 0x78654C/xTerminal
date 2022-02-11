@@ -61,9 +61,10 @@ namespace Core
                         if (GlobalVariables.eventCancelKey)
                         {
                             GlobalVariables.eventCancelKey = false;
+                            FinalReplayOutput();
                             return;
                         }
-                        PingOutput(address);
+                        GetReply(address);
                     }
                 }
                 else
@@ -73,18 +74,13 @@ namespace Core
                         if (GlobalVariables.eventCancelKey)
                         {
                             GlobalVariables.eventCancelKey = false;
+                            FinalReplayOutput();
                             return;
                         }
-                        PingOutput(address);
+                        GetReply(address);
                     }
                 }
-                Console.WriteLine("\n---------------------------------------------------\n");
-                Console.Write($" Total status count: Success ");
-                FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
-                Console.Write(" Failure ");
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString() + "\n");
-                s_failure = 0;
-                s_success = 0;
+                FinalReplayOutput();
             }
             catch (TimeoutException)
             {
@@ -108,6 +104,21 @@ namespace Core
                 }
             }
         }
+
+        /// <summary>
+        /// Ouptus the final count and reset counters.
+        /// </summary>
+        private static void FinalReplayOutput()
+        {
+            Console.WriteLine("\n---------------------------------------------------\n");
+            Console.Write($" Total status count: Success ");
+            FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
+            Console.Write(" Failure ");
+            FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString() + "\n");
+            s_failure = 0;
+            s_success = 0;
+        }
+
         /// <summary>
         /// Checking internet connection with Google DNS 8.8.8.8
         /// </summary>
@@ -122,7 +133,7 @@ namespace Core
         /// </summary>
         /// <param name="address"></param>
         /// <param name="pingReplys"></param>
-        private static void PingOutput(string address)
+        private static void GetReply(string address)
         {
             if (PingHost(address))
             {
