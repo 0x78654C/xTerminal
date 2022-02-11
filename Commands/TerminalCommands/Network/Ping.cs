@@ -10,6 +10,14 @@ namespace Commands.TerminalCommands.Network
          */
 
         public string Name => "ping";
+        private static string s_helpMessage = @"Usage of ping command:
+
+Example 1: ping google.com  (for normal ping with 4 replies)
+Example 2: ping google.com -t 10  (for 10 replies)
+Example 3: ping google.com -t  (infinite replies)
+
+Ping with -t can be canceled with CTRL+X key combination.    
+";
 
         public void Execute(string args)
         {
@@ -17,7 +25,12 @@ namespace Commands.TerminalCommands.Network
             {
                 if (args.Length == 4)
                 {
-                    FileSystem.ErrorWriteLine($"You must provide an IP/Hostname.");
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
+                if (args == $"{Name} -h")
+                {
+                    Console.WriteLine(s_helpMessage);
                     return;
                 }
                 string[] arg = args.Split(' ');
