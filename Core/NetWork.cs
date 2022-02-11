@@ -115,6 +115,7 @@ namespace Core
             FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
             Console.Write(" Failure ");
             FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString() + "\n");
+            GlobalVariables.eventKeyFlagX = false;
             s_failure = 0;
             s_success = 0;
         }
