@@ -64,11 +64,8 @@ This is the full list of commands that can be used in xTerminal:
     wget      -- Download files from a specific website. Use -h for additional help.
     speedtest -- Makes an internet speed test based on speedtest.net API.
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
-    ping      -- Pings a IP/Hostname. 
-                 Example 1: ping google.com  (for normal ping with 4 replies)
-                 Example 2: ping google.com -t 10  (for 10 replies)
-                 Example 3: ping google.com -t  (infinite replies)
-                 Ping with -t can be canceled with CTRL+X key combination.
+    ping      -- Pings a IP/Hostname.  Use -h for additional parameters.
+    cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
 
     -----------------C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
