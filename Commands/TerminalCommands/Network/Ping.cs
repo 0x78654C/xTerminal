@@ -54,6 +54,7 @@ Ping with -t can be canceled with CTRL+X key combination.
                         return;
                     }
                 }
+                GlobalVariables.eventKeyFlagX = true;
                 NetWork.PingMain(arg.ParameterAfter("ping"), 4);
             }
             catch (Exception e)
