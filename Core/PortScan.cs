@@ -13,6 +13,7 @@ namespace Core
     /// From the Oreilly C# 6.0 Cookbook
     /// https://github.com/oreillymedia/c_sharp_6_cookbook
     /// http://shop.oreilly.com/product/0636920037347.do
+    /// edited by x_coding
     /// </remarks>
 
     public class PortScan
@@ -71,10 +72,8 @@ namespace Core
             private const int PORT_MAX_VALUE = 65535;
 
             private List<int> _openPorts;
-            private List<int> _closedPorts;
 
             public ReadOnlyCollection<int> OpenPorts => new ReadOnlyCollection<int>(_openPorts);
-            public ReadOnlyCollection<int> ClosedPorts => new ReadOnlyCollection<int>(_closedPorts);
 
             public int MinPort { get; } = PORT_MIN_VALUE;
             public int MaxPort { get; } = PORT_MAX_VALUE;
@@ -126,7 +125,6 @@ namespace Core
 
                 // reserve half the ports in the range for each
                 _openPorts = new List<int>(rangeCount / 2);
-                _closedPorts = new List<int>(rangeCount / 2);
             }
 
             internal class PortScanResult
@@ -148,7 +146,6 @@ namespace Core
                 else
                 {
                     // server doesn't have that port open
-                    _closedPorts.Add(port);
                     progress?.Report(new PortScanResult() { PortNum = port, IsPortOpen = false });
                 }
             }
@@ -202,18 +199,12 @@ namespace Core
                     ? "0"
                     : string.Join(",", _openPorts);
 
-                // display "0" or comma delimited list of closed ports
-                string closedPorts = (_closedPorts.Count == 0)
-                    ? "0"
-                    : string.Join(",", _closedPorts);
-
                 Console.WriteLine();
                 Console.WriteLine("-----------------");
                 Console.WriteLine("Port Scan Results");
                 Console.WriteLine("-----------------");
                 Console.WriteLine();
                 Console.WriteLine($"Open Ports......: {openPorts}");
-                Console.WriteLine($"Closed Ports....: {closedPorts}");
                 Console.WriteLine();
                 GlobalVariables.eventKeyFlagX = false;
             }
