@@ -84,7 +84,7 @@ namespace Core
             }
             else if (senderEmail.Contains("@live.") || senderEmail.Contains("@hotmail.") || senderEmail.Contains("@outlook."))
             {
-                smtpServer = "smtp.live.com";
+                smtpServer = "smtp.office365.com";
             }
             else
             {
