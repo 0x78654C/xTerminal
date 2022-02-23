@@ -15,14 +15,29 @@
     <PackageLicense>LICENSE</PackageLicense>
     <Title>SpeedTest.Net</Title>
     <LangVersion>8</LangVersion>
+    <Configurations>Debug;Release;x64;Release x64</Configurations>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>F:\twitch\Projects\xTerminal\Release\Tools\</OutputPath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64|AnyCPU'">
+    <OutputPath>F:\twitch\Projects\xTerminal\Release\Tools\</OutputPath>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>F:\twitch\Projects\Release\xTerminal\Tools</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release x64|AnyCPU'">
+    <OutputPath>F:\twitch\Projects\Release\xTerminal\Tools</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release x64|x64'">
+    <Optimize>true</Optimize>
+    <OutputPath>F:\twitch\Projects\Release\xTerminal64\Tools\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">

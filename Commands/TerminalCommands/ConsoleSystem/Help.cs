@@ -62,7 +62,6 @@ This is the full list of commands that can be used in xTerminal:
     icheck    -- Checks if a Domain or IP address is online.
     extip     -- Displays the current external IP address.
     wget      -- Download files from a specific website. Use -h for additional help.
-    speedtest -- Makes an internet speed test based on speedtest.net API.
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname.  Use -h for additional parameters.
     cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.

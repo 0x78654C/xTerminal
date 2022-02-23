@@ -12,7 +12,7 @@ namespace Commands
                     Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(ITerminalCommand).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract)
                         .Select(t => Activator.CreateInstance(t))
                         .Cast<ITerminalCommand>().ToList();
-        private static List<string> s_shellCommands = new List<string>() { "reboot", "logoff", "lock", "shutdown", "speedtest" };
+        private static List<string> s_shellCommands = new List<string>() { "reboot", "logoff", "lock", "shutdown"};
         public static ITerminalCommand GetCommand(string[] args)
         {
             if (args == null || args.Length == 0)

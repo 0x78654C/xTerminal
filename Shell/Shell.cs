@@ -38,12 +38,6 @@ namespace Shell
 
         //-------------------------------
 
-        //Define the shell commands 
-        private Dictionary<string, string> Aliases = new Dictionary<string, string>
-        {
-            { "speedtest", @".\Tools\netcoreapp3.1\TestNet.exe"  }
-        };
-        //-----------------------
 
         // Function for store current path in directory by current process id.
         private void StoreCurrentDirectory()
@@ -289,10 +283,6 @@ namespace Shell
                 ExecutApp("powershell", args, true);
                 return;
             }
-            if (!File.Exists(Aliases[input]))
-                FileSystem.ErrorWriteLine($"File {Aliases[input]} does not exist!");
-
-            ExecutApp(Aliases[input], args, true);
         }
 
         private void ExecutApp(string processName, string arg, bool waitForExit)

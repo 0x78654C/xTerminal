@@ -134,7 +134,6 @@ This is the full list of commands that can be used in xTerminal:
                     -h : Display this message.
                     -o : Save to a specific directory.
                          Example2: wget <url> -o <directory_path>
-    speedtest -- Makes an internet speed test based on speedtest.net API.
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname.
                  Example 1: ping google.com  (for normal ping with 4 replies)
