@@ -89,14 +89,7 @@ namespace Shell
             }
 
             // Title display applicaiton name and version + current directory.
-            if (s_currentDirectory == GlobalVariables.rootPath)
-            {
-                Console.Title = $"{s_terminalTitle}";
-            }
-            else
-            {
-                Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
-            }
+            Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
 
             // Store xTerminal version.
             GlobalVariables.version = Application.ProductVersion;
@@ -308,7 +301,7 @@ namespace Shell
                 UISettingsParse(uiSettings);
             }
 
-            if (currentLocation.Contains(GlobalVariables.rootPath) && currentLocation.Length == 3)
+            if (currentLocation == GlobalVariables.rootPath)
             {
                 SetUser(accountName, computerName, currentLocation, false);
             }
