@@ -5,8 +5,6 @@
 # xTerminal
 A Linux like terminal for windows in C# with some extras ;).
 
-For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
-
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 
 ## Requirements:
