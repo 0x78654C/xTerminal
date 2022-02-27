@@ -15,10 +15,10 @@ namespace Core
         public static string regCurrentEitor = "CurrentEditor";
         public static string regUI = "UI";
         public static string version { get; set; }
-        public static string rootPath = Path.GetPathRoot(Environment.SystemDirectory);
         public static readonly string accountName = Environment.UserName;
+        public static string rootPath = $"{Path.GetPathRoot(Environment.SystemDirectory)}Users\\{accountName}\\";
         public static readonly string computerName = Environment.MachineName;
-        public static string terminalWorkDirectory = $"{rootPath}Users\\{accountName}\\AppData\\Local\\xTerminal";
+        public static string terminalWorkDirectory = $"{Path.GetPathRoot(Environment.SystemDirectory)}Users\\{accountName}\\AppData\\Local\\xTerminal";
         public static string passwordManagerDirectory = $"{terminalWorkDirectory}\\Pwm\\";
         public static string currentDirectory = terminalWorkDirectory + $"\\{process}cDir.t";
         public static string uiSettings = terminalWorkDirectory + $"\\{process}ui.t";
