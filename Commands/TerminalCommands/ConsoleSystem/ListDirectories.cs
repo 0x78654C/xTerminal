@@ -38,13 +38,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
    .Select(t => t)
    .ToArray();
 
-        private static string s_helpMessage = @"
+        private static string s_helpMessage = @"Usage of ls command:
     -h  : Displays this message.
     -d  : Display duplicate files in a directory and subdirectories.
           Example1: ls -d <directory_path>
-          Example2: ls -d -e <directory_path> (scanns for dulpicate files with same extension)
+          Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
           Example3: ls -d <directory_path> -o <file_to_save>
-          Example4: ls -d -e <directory_path> -o <file_to_save>  (scanns for dulpicate files with same extension)
+          Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
     -s  : Displays size of files in current directory and subdirectories.
     -se : List recursively files and directories containing a specific text.
           Example1: ls -se <search_text>
@@ -161,7 +161,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
 
                 // Display help message.
-                if (arg.ContainsParameter("-h"))
+                if (args == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
                     return;

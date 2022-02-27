@@ -21,12 +21,12 @@ This is the full list of commands that can be used in xTerminal:
 
     ------------------------ System -----------------------
     ls        -- List directories and files on a directory. Use -h for additional parameters.
-    ch        -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
+    ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
     start     -- Starts an application. Use -h for additional help.
     pkill     -- Kills a running process by name or id. Use -h for additional help.
-    clear     -- Cleares the console.
-    cd        -- Sets the currnet directory. (cd .. for parent directory).
+    clear     -- Clears the console.
+    cd        -- Sets the current directory. (cd .. for parent directory).
     odir      -- Open current directory or other directory path provided with Windows Explorer.
     ps        -- Opens Windows Powershell.
     cmd       -- Opens Windows Command Prompt.
@@ -36,8 +36,7 @@ This is the full list of commands that can be used in xTerminal:
     lock      -- Locks the screen(similar to Win+L key combination).
     bios      -- Displays BIOS information on local machine or remote. Use -h for additional parameters.
     sinfo     -- Displays Storage devices information on local machine or remote. Use -h for additional parameters.
-    hex       -- Display a hex dump of a file.
-                 -o  : Saves the output to a file. Ex.: hex <file_name> -o <file_to_be_saved>
+    hex       -- Display a hex dump of a file. Use -h for additional parameters.
     pcinfo    -- Display System Information.
     nt        -- Starts new xTerminal console.
                  -u : Starts new xTerminal console with other user option.
@@ -70,13 +69,13 @@ This is the full list of commands that can be used in xTerminal:
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
                  Example 2: ccs <file_name> -p <parameter> 
-    !         -- Run or add custom C# code addons as a command. Use -h for additional help.
+    !         -- Run or add custom C# code add-ons as a command. Use -h for additional help.
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
 
     -------------------- Password Manager -------------------
-    pwm       -- A simple password manager to store localy the authentification data encrypted for 
+    pwm       -- A simple password manager to store locally the authentication data encrypted for 
                  a application using Rijndael AES-256 and Argon2 for password hash.
                  Disclaimer: Use it at your OWN risk.
                  Use -h for additional help.

@@ -28,7 +28,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\" + pc + @"\root\cimv2");
                     Console.WriteLine(SizeConvert(wmiDetails));
                 }
-                else if (arg.Split(' ')[1] == "-h")
+                else if (arg == $"{Name} -h")
                 {
                     Console.WriteLine(HelpCommand());
                 }

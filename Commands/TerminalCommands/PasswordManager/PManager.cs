@@ -16,7 +16,7 @@ namespace Commands.TerminalCommands.PasswordManager
         public string Name => "pwm";
         private static int s_tries = 0;
         private static JavaScriptSerializer s_serializer;
-        private static string s_helpMessage = @"A simple password manager to store localy the authentification data encrypted for a application using Rijndael AES-256 and Argon2 for password hash.
+        private static string s_helpMessage = @"A simple password manager to store locally the authentication data encrypted for a application using Rijndael AES-256 and Argon2 for password hash.
 Usage of Password Manager commands:
   -h       : Display this message.
   -createv : Create a new vault.
@@ -38,7 +38,7 @@ Usage of Password Manager commands:
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
-                if (arg.ContainsText("-h"))
+                if (arg == $"{Name} -h")
                     Console.WriteLine(s_helpMessage);
                 if (arg.ContainsText("-createv"))
                     CreateVault();

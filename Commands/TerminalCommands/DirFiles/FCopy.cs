@@ -64,12 +64,13 @@ namespace Commands.TerminalCommands.DirFiles
                 }
                 else { NewPath = dlocation; }
 
-                if (Source.StartsWith("-h"))
+                if (arg == $"{Name} -h")
                 {
-                    Console.WriteLine(@"Usage: fcopy <source_file> -o <destination_file>. Can bee used with following parameters:
- -h : displays this message
- -ca <destination_directory> : copy all files from current directory in a specific directory
- -ca : copy source files in same directory
+                    Console.WriteLine(@"Usage of fcopy command:
+    fcopy <source_file> -o <destination_file>. Can bee used with following parameters:
+    fcopy -h : displays this message    
+    fcopy -ca <destination_directory> : copy all files from current directory in a specific directory
+    fcopy -ca : copy source files in same directory
 ");
                     return;
                 }

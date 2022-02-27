@@ -26,7 +26,7 @@ namespace Commands.TerminalCommands.DirFiles
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
                 // Display help message.
-                if(arg.ContainsText(" -h"))
+                if(arg == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
                     return;

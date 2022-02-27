@@ -3,7 +3,7 @@
 </p>
 
 # xTerminal
-A linux like terminal for windows in C# with some extras ;).
+A Linux like terminal for windows in C# with some extras ;).
 
 For SpeedTest I use this library https://github.com/JoyMoe/SpeedTest.Net
 
@@ -35,9 +35,9 @@ This is the full list of commands that can be used in xTerminal:
                    -h  : Displays this message.
                    -d  : Display duplicate files in a directory and subdirectories.
                          Example1: ls -d <directory_path>
-                         Example2: ls -d -e <directory_path> (scanns for dulpicate files with same extension)
+                         Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
                          Example3: ls -d <directory_path> -o <file_to_save>
-                         Example4: ls -d -e <directory_path> -o <file_to_save>  (scanns for dulpicate files with same extension)
+                         Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
                    -s  : Displays size of files in current directory and subdirectories.
                    -se : List recursively files and directories containing a specific text.
                          Example1: ls -se <search_text>
@@ -49,9 +49,9 @@ This is the full list of commands that can be used in xTerminal:
                          Example: ls -cd <search_text>
                    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-    ch        -- Displays a list of previous commands typed in terminal. Ex.: hcmd 10 -> displays last 10 commands used. 
+    ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    start     -- Starts an application. Ex.: start start <file_name> OR start <file_name> -p <file_paramters>.
+    start     -- Starts an application. Ex.: start <file_name> OR start <file_name> -p <file_paramters>.
                  Can use following parameter:
                    -h : Display this message.
                    -u : Can run process with different user.
@@ -60,12 +60,12 @@ This is the full list of commands that can be used in xTerminal:
     pkill     -- Kills a running process by name or id.
                  Example1: pkill <process_name>
                  Example2: pkill -i <process_id>
-    clear     -- Cleares the console.
+    clear     -- Clears the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory).
     odir      -- Open current directory or other directory path provided with Windows Explorer.
-    ps        -- Opens Windows Powershell. It can use PowerShell comands:
+    ps        -- Opens Windows Powershell. It can use PowerShell commands:
                  Example: ps <ps_command_>
-    cmd       -- Opens Windows Command Prompt. It can use Command Prompt comands:
+    cmd       -- Opens Windows Command Prompt. It can use Command Prompt commands:
                  Example: ps <cmd_commmand>
     reboot    -- It force reboots the Windows OS.
     shutdown  -- It force shutdown the Windows OS.
@@ -96,7 +96,7 @@ This is the full list of commands that can be used in xTerminal:
                    -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
                           Example1: cat -sao <search_text> -o <file_to_save>
                           Example2: cat -sao <search_text> <part_of_file_name> -o <file_to_save>
-                   -sm  : Output lines containing a provided text from multiple fies in current directory.
+                   -sm  : Output lines containing a provided text from multiple files in current directory.
                           Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
                    -smo : Saves the lines containing a provided text from multiple files in current directory.
                           Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
@@ -161,22 +161,22 @@ This is the full list of commands that can be used in xTerminal:
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
-                    ::Predifined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
+                    ::Predefined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
                                          red, green, yellow, white, magenta, cyan, gray, blue 
-                    ::Predifined indicators: > , ->, =>, $, >>
+                    ::Predefined indicators: > , ->, =>, $, >>
 
-                    -h : Displys this help message.
-                    -u : Enables or disables current user@machine information with a predifined color from list:
-                         Example1: ui -u -c <color> :e  -- enables information with a predifined color from list.
+                    -h : Displays this help message.
+                    -u : Enables or disables current user@machine information with a predefined color from list:
+                         Example1: ui -u -c <color> :e  -- enables information with a predefined color from list.
                          Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
-                    -i : Changes command indicator and sets a predifined color from list:
-                         Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predifined list with a predifined color from list. 
-                         Example2: ui -i -c <color> -s  -- sets default indicator($) with a predifined color from list. 
-                    -cd : Changes current directory with a predifined color from list:
-                         Example1: ui -cd <color> -- sets a predifined color from list to current directory path.
+                    -i : Changes command indicator and sets a predefined color from list:
+                         Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
+                         Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
+                    -cd : Changes current directory with a predefined color from list:
+                         Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
  
     -------------------- Password Manager -------------------
-    pwm       -- A simple password manager to store localy the authentification data encrypted for 
+    pwm       -- A simple password manager to store locally the authentication data encrypted for 
                  a application using Rijndael AES-256 and Argon2 for password hash.
                  Disclaimer: Use it at your OWN risk.
                  Useage of password manager commands:
@@ -191,7 +191,7 @@ This is the full list of commands that can be used in xTerminal:
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
-    snake     -- Play Snake game in console!(Ceated by https://github.com/mkbmain)
+    snake     -- Play Snake game in console!(Created by https://github.com/mkbmain)
 
 All xTerminal commands can be used from other terminals as <b>Command Line Arguments</b>. Example: 
  ```

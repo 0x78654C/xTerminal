@@ -65,7 +65,7 @@ namespace Commands.TerminalCommands.Roslyn
                 SaveAddon(args, _addonDir);
                 return;
             }
-            else if (command.StartsWith("-h"))
+            else if (args == $"{Name} -h")
             {
                 Console.WriteLine(_helpMessage);
                 return;

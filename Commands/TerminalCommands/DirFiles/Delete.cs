@@ -8,9 +8,8 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "del";
         private string _currentLocation;
-        private string _helpMessage = @"
-
-    -h  : Displayes this message. 
+        private string _helpMessage = @"Usage of del command:
+    -h  : Displays this message. 
     -a  : Deletes all files and directories in current directory. 
     -af : Deletes all files in current directory. 
     -ad : Deletes all directories in current directory. 
@@ -39,7 +38,7 @@ namespace Commands.TerminalCommands.DirFiles
             {
                 DeleteAllFilesDris(_currentLocation, false, true);
             }
-            else if (param == "-h")
+            else if (args == "-h")
             {
                 Console.WriteLine(_helpMessage);
             }

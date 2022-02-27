@@ -12,6 +12,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         public string Name => "hex";
         private static string s_currentDirectory;
+        private static string s_helpMessage = @"Usage of hex command:
+ hex <file_name> : Display the memory hex view of the provided file.
+ hex <file_name> -o <output_file_name>: Saves the memory hex view of the provided file.
+";
         public void Execute(string args)
         {
             string file = "";
@@ -19,9 +23,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
-                if (arg.Length == 3)
+
+                if (args.Length == 3)
                 {
-                    FileSystem.ErrorWriteLine($"You must provide a file for check!");
+                    Console.WriteLine($"Use -h param for {Name} command usage!"); 
+                    return;
+                }
+                if (args == $"{Name} -h")
+                {
+                    Console.WriteLine(s_helpMessage);
                     return;
                 }
                 if (arg.ContainsParameter("-o"))

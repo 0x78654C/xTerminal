@@ -25,7 +25,7 @@ Kills a running process by name or id. Usage:
                     return;
                 }
 
-                if (arg.ContainsText(" -h"))
+                if (arg == $"{Name} -h")
                 {
                     Console.WriteLine(_helpMessage);
                     return;

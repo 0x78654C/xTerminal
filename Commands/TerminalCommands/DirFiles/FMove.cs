@@ -65,10 +65,11 @@ namespace Commands.TerminalCommands.DirFiles
                 else { NewPath = dlocation; }
 
 
-                if (Source.StartsWith("-h"))
+                if (arg == $"{Name} -h")
                 {
-                    Console.WriteLine(@"Usage: fmove <source_file> -o <destination_file>. Can bee used with following parameters:
- -ma <destination_directory> : moves all files from current directory in a specific directory
+                    Console.WriteLine(@"Usage of fmove command:
+    fmove <source_file> -o <destination_file>. Can bee used with following parameters:
+    fmove -ma <destination_directory> : moves all files from current directory in a specific directory
 ");
                     return;
                 }

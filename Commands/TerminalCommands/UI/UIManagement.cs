@@ -16,14 +16,14 @@ namespace Commands.TerminalCommands.UI
  ::Predifined indicators: > , ->, =>, $, >>
 
  -h : Displys this help message.
- -u : Enables or disables current user@machine information with a predifined color from list:
-       Example1: ui -u -c <color> :e  -- enables information with a predifined color from list.
+ -u : Enables or disables current user@machine information with a predefined color from list:
+       Example1: ui -u -c <color> :e  -- enables information with a predefined color from list.
        Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
- -i : Changes command indicator and sets a predifined color from list:
-       Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predifined list with a predifined color from list. 
-       Example2: ui -i -c <color> -s  -- sets default indicator($) with a predifined color from list. 
- -cd : Changes current directory with a predifined color from list:
-       Example1: ui -cd <color> -- sets a predifined color from list to current directory path.
+ -i : Changes command indicator and sets a predefined color from list:
+       Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
+       Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
+ -cd : Changes current directory with a predefined color from list:
+       Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
 ";
         public string Name => "ui";
         public void Execute(string arg)
@@ -72,7 +72,7 @@ namespace Commands.TerminalCommands.UI
             }
 
             // Display help message
-            if (arg.ContainsText("-h"))
+            if (arg == $"{Name} -h")
             {
                 Console.WriteLine(_helpMessage);
             }

@@ -39,7 +39,7 @@ Can use with following parameter:
                 paramApp = args.SplitByText(" -p ", 1);
                 args = args.SplitByText(" -p ", 0);
             }
-            if (args.StartsWith("-h"))
+            if (args == "-h")
             {
                 Console.WriteLine(_helpMessage);
                 return;

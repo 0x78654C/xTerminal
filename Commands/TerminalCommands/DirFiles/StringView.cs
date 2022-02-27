@@ -14,7 +14,7 @@ namespace Commands.TerminalCommands.DirFiles
 
         private static string s_currentDirectory;
         private static string s_output = string.Empty;
-        private static string s_helpMessage = @"
+        private static string s_helpMessage = @"Usage of cat command:
   -h   : Displays this message.
   -s   : Output lines containing a provided text from a file.
            Example: cat -s <search_text> <file_search_in>
@@ -62,7 +62,7 @@ namespace Commands.TerminalCommands.DirFiles
 
                 if (input.Length == 1)
                 {
-                    if (input[0].Contains("-h"))
+                    if (arg == "-h")
                     {
                         Console.WriteLine(s_helpMessage);
                         return;
