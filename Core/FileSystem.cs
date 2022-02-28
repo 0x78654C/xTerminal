@@ -1,13 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Core
 {
     public class FileSystem
     {
         private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };  // Array with types of store data
-
+        private static readonly Regex s_regexNumber = new Regex("[^0-9.-]+"); //regex that matches disallowed text
 
         /// <summary>
         /// Get the size of a file.
@@ -247,6 +248,16 @@ namespace Core
         public static string SanitizePath(string path, string currentDir)
         {
             return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}{path}";
+        }
+
+        /// <summary>
+        /// Check text if contains numbers only.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static bool IsNumberAllowed(string text)
+        {
+            return !s_regexNumber.IsMatch(text);
         }
     }
 }
