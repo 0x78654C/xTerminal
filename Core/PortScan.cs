@@ -24,9 +24,9 @@ namespace Core
         /// <param name="ipAddress">IP Address/Hostname</param>
         /// <param name="minPort">min port</param>
         /// <param name="maxPort">Max port (max 65535)</param>
-        public static void RunPortScan(string ipAddress, int minPort, int maxPort)
+        /// <param name="timeOut">check port time out (default 500 ms)</param>
+        public static void RunPortScan(string ipAddress, int minPort, int maxPort, int timeOut)
         {
-            
             if (minPort == maxPort)
             {
                 Console.Write($"> Checking port {minPort} on ");
@@ -59,8 +59,8 @@ namespace Core
                     }
                 }
             };
-            
-            cps.Scan(progress);
+
+            cps.Scan(progress, timeOut);
             Thread.Sleep(5);
             cps.LastPortScanSummary();
         }
@@ -133,9 +133,9 @@ namespace Core
                 public bool IsPortOpen { get; set; }
             }
 
-            private void CheckPort(int port, IProgress<PortScanResult> progress)
+            private void CheckPort(int port, int timeOut, IProgress<PortScanResult> progress)
             {
-                if (IsPortOpen(port))
+                if (IsPortOpen(port, timeOut))
                 {
                     // if we got here it is open
                     _openPorts.Add(port);
@@ -150,7 +150,7 @@ namespace Core
                 }
             }
 
-            private bool IsPortOpen(int port)
+            private bool IsPortOpen(int port, int timeOut)
             {
                 Socket socket = null;
                 try
@@ -158,7 +158,7 @@ namespace Core
 
                     TcpClient tcpClient = new TcpClient();
                     IAsyncResult ar = tcpClient.BeginConnect(Host, port, null, true);
-                    return ar.AsyncWaitHandle.WaitOne(500, false);
+                    return ar.AsyncWaitHandle.WaitOne(timeOut, false);
                 }
                 catch (SocketException ex)
                 {
@@ -179,7 +179,7 @@ namespace Core
                 return false;
             }
 
-            public void Scan(IProgress<PortScanResult> progress)
+            public void Scan(IProgress<PortScanResult> progress, int timeOut)
             {
                 for (int port = MinPort; port <= MaxPort; port++)
                 {
@@ -188,7 +188,7 @@ namespace Core
                         GlobalVariables.eventCancelKey = false;
                         return;
                     }
-                    CheckPort(port, progress);
+                    CheckPort(port,timeOut, progress);
                 }
             }
 
