@@ -140,7 +140,9 @@ This is the full list of commands that can be used in xTerminal:
                  Ping with -t can be canceled with CTRL+X key combination.
     cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
                  Example 1: cport IPAddress/HostName -p 80   (checks if port 80 is open)
-                 Example 2: cport IPAddress/HostName -p 1-200   (checks if any port is open from 1 to 200)    
+                 Example 2: cport IPAddress/HostName -p 1-200   (checks if any port is open from 1 to 200)
+                 Example 3: cport stimeout 100   (Set check port time out in milliseconds. Default value is 500.)
+                 Example 4: cport rtimeout   (Reads the current time out value)
 
     ---------------- C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
