@@ -81,6 +81,13 @@ namespace Shell
                 File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
             }
 
+            // Reading cport time out setting and set default vaule if is emtpy.
+            string timeOut= RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut);
+            if (timeOut == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut, "500");
+            }
+
             // Reading UI settings.
             s_regUI = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUI);
             if (s_regUI == "")
