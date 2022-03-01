@@ -1,4 +1,6 @@
-﻿namespace Commands.TerminalCommands.ConsoleSystem
+﻿using System.Windows.Forms;
+
+namespace Commands.TerminalCommands.ConsoleSystem
 {
     /*
      * Start new terminal window.
@@ -11,10 +13,10 @@
         {
             if (arg.ContainsText("-u"))
             {
-                Core.SystemTools.ProcessStart.ProcessExecute("xTerminal.exe", "", true, true);
+                Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "\\xTerminal.exe", "", true, true);
                 return;
             }
-            Core.SystemTools.ProcessStart.ProcessExecute("xTerminal.exe", "", true, false);
+            Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "\\xTerminal.exe", "", true, false);
         }
     }
 }

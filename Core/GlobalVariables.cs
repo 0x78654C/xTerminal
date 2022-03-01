@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Forms;
 
 namespace Core
 {
@@ -24,7 +25,7 @@ namespace Core
         public static string currentDirectory = terminalWorkDirectory + $"\\{process}cDir.t";
         public static string uiSettings = terminalWorkDirectory + $"\\{process}ui.t";
         public static string historyFile = terminalWorkDirectory + "\\History.db";
-        public static string addonDirectory = Directory.GetCurrentDirectory() + "\\Add-ons";
+        public static string addonDirectory = Application.StartupPath + "\\Add-ons";
         public static List<string> excludeDirectories = new List<string>() { "System Volume Information", "$Recycle.Bin" };
         public static List<string> excludeFiles = new List<string>() { "pagefile.sys" };
         public static bool eventCancelKey = false;
