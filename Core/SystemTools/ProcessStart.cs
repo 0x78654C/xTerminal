@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 
@@ -15,34 +16,46 @@ namespace Core.SystemTools
         /// <param name="asAdmin">Run as different user.</param>
         public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin)
         {
-            var process = new Process();
-            if (asAdmin)
+            try
             {
-                process.StartInfo = new ProcessStartInfo(input)
-                {
-                    Arguments = arguments,
-                    Verb = "runas"
-                };
-            }
-            else
-            {
-                process.StartInfo = new ProcessStartInfo(input)
-                {
-                    Arguments = arguments
-                };
-            }
+                var process = new Process();
 
-            if (fileCheck)
-            {
-                if (File.Exists(input))
+                if (asAdmin)
                 {
-                    process.Start();
+                    process.StartInfo = new ProcessStartInfo(input)
+                    {
+                        Arguments = arguments,
+                        Verb = "runas"
+                    };
+                }
+                else
+                {
+                    process.StartInfo = new ProcessStartInfo(input)
+                    {
+                        Arguments = arguments
+                    };
+                }
+
+                if (fileCheck)
+                {
+                    if (File.Exists(input))
+                    {
+                        process.Start();
+                        return;
+                    }
+                    FileSystem.ErrorWriteLine($"Couldn't find file \"{input}\" to execute");
                     return;
                 }
-                FileSystem.ErrorWriteLine($"Couldn't find file \"{input}\" to execute");
-                return;
+                process.Start();
             }
-            process.Start();
+            catch (System.ComponentModel.Win32Exception win)
+            {
+                FileSystem.ErrorWriteLine(win.Message);
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message);
+            }
         }
     }
 }
