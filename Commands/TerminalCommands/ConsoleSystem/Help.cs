@@ -54,6 +54,7 @@ This is the full list of commands that can be used in xTerminal:
     del       -- Deletes a file or folder without recover.  Use -h for additional parameters.
     cp        -- Check file/folder permissions.
     md5       -- Checks the md5 checksum of a file. Use -h for additional help.
+    sort      -- Sorts ascending/desceding data in a file. Use -h for additional help.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)

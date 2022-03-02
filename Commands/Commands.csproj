@@ -140,6 +140,7 @@
     <Compile Include="TerminalCommands\DirFiles\MakeDirectory.cs" />
     <Compile Include="TerminalCommands\DirFiles\MakeFile.cs" />
     <Compile Include="TerminalCommands\DirFiles\MD5Check.cs" />
+    <Compile Include="TerminalCommands\DirFiles\SortData.cs" />
     <Compile Include="TerminalCommands\DirFiles\StringView.cs" />
     <Compile Include="TerminalCommands\Games\FlappyBirds.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\Help.cs" />

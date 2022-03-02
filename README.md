@@ -122,6 +122,11 @@ This is the full list of commands that can be used in xTerminal:
                      md5 <file_name> : Display the MD5 CheckSUM of a file.
                      md5 -d <dire_name> : Display the MD5 CheckSUM list of all the files in a directory and subdirectories.
                      md5 -d <dire_name> -o <save_to_file> : Saves the MD5 CheckSUM list of all the files in a directory and subdirectories.
+    sort      -- Sorts ascending/descending data in a file. Use -h for additional help.
+                 Example 1: sort -a filePath  (Sort data ascending and displays it.)
+                 Example 2: sort -a filePath -o saveFilePath  (Sort data ascending and saves it to a file.)
+                 Example 3: sort -d filePath  (Sort data descending and displays it.)
+                 Example 4: sort -d filePath -o saveFilePath  (Sort data descending and saves it to a file.)
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
