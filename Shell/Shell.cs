@@ -31,8 +31,8 @@ namespace Shell
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
-        private static bool s_ctrlKey = false;
-        private static bool s_xKey = false;
+        private static int s_ctrlKey;
+        private static int s_xKey;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
         private static BackgroundWorker s_backgroundWorker;
 
@@ -158,19 +158,19 @@ namespace Shell
         static void KeyDown(KeyEventArgs e)
         {
             if (e.KeyData.ToString() == "RControlKey" || e.KeyData.ToString() == "LControlKey")
-                s_ctrlKey = true;
+                s_ctrlKey = DateTime.Now.Second;
 
             if (e.KeyData == Keys.X)
-                s_xKey = true;
+                s_xKey = DateTime.Now.Second;
 
-            if (s_xKey && s_ctrlKey && GlobalVariables.eventKeyFlagX)
+            if (s_xKey == s_ctrlKey && GlobalVariables.eventKeyFlagX)
             {
                 GlobalVariables.eventKeyFlagX = false;
                 GlobalVariables.eventCancelKey = true;
 
-                //Close flags for reuse.
-                s_xKey = false;
-                s_ctrlKey = false;
+                //Reset flags for reuse.
+                s_xKey = 0;
+                s_ctrlKey = 0;
             }
         }
 
