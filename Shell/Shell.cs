@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using System.Windows.Input;
 using SetConsoleColor = Core.SystemTools.UI;
 using SystemCmd = Core.Commands.SystemCommands;
 
