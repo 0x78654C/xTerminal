@@ -37,10 +37,12 @@ namespace Commands.TerminalCommands.Roslyn
                 fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
                 param = args.SplitByText(" -p ", 1);
                 CompileAndRun(fileName, param);
+                GC.Collect();
                 return;
             }
             args = FileSystem.SanitizePath(args, _currentLocation);
             CompileAndRun(args, param);
+            GC.Collect();
         }
 
         private void CompileAndRun(string fileName, string param)
@@ -54,8 +56,21 @@ namespace Commands.TerminalCommands.Roslyn
                 MetadataReference[] references = new MetadataReference[]
                 {
     MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location)
-                };
+    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\mscorlib.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Windows.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Windows.Forms.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Drawing.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Design.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Core.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Net.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Web.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Web.Extensions.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Management.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Management.Instrumentation.dll"),
+    MetadataReference.CreateFromFile($@"{Path.GetPathRoot(Environment.SystemDirectory)}Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.Security.dll")
+                 };
 
                 CSharpCompilation compilation = CSharpCompilation.Create(
                     assemblyName,
@@ -97,6 +112,9 @@ namespace Commands.TerminalCommands.Roslyn
                 _namesapce = "";
                 _codeToRun = "";
                 obj = null;
+                references = null;
+                compilation = null;
+                assembly = null;
                 type = null;
             }
             catch (Exception e)
