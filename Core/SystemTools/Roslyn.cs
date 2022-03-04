@@ -17,7 +17,7 @@ namespace Core.SystemTools
                 var b = AssemblyName.GetAssemblyName(path);
                 return true;
             }
-            catch (Exception e)
+            catch
             {
 
             }
