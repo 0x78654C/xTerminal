@@ -84,6 +84,10 @@ This is the full list of commands that can be used in xTerminal:
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
                    -h   : Displays this message.
+                   -n   : Displays first N lines from a file.
+                          Example: cat -n 10 <path_of_file_name>
+                   -l   : Displays data between two lines.
+                          Example: cat -l 10-20 <path_of_file_name>
                    -s   : Output lines containing a provided text from a file.
                           Example: cat -s <search_text> <file_search_in>
                    -so  : Saves the lines containing a provided text from a file.

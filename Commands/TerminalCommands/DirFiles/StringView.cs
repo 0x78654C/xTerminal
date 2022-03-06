@@ -16,6 +16,10 @@ namespace Commands.TerminalCommands.DirFiles
         private static string s_output = string.Empty;
         private static string s_helpMessage = @"Usage of cat command:
   -h   : Displays this message.
+  -n   : Displays first N lines from a file.
+           Example: cat -n 10 <path_of_file_name>
+  -l   : Displays data between two lines range.
+           Example: cat -l 10-20 <path_of_file_name>
   -s   : Output lines containing a provided text from a file.
            Example: cat -s <search_text> <file_search_in>
   -so  : Saves the lines containing a provided text from a file.
@@ -80,6 +84,27 @@ namespace Commands.TerminalCommands.DirFiles
 ;
                 switch (input[0])
                 {
+                    case "-n":
+                        string lineCounter = arg.Split(' ')[1];
+                        if (!FileSystem.IsNumberAllowed(lineCounter))
+                        {
+                            FileSystem.ErrorWriteLine("Parameter invalid. You need to provide how many lines you want to display!");
+                            return;
+                        }
+                        int lines = Int32.Parse(lineCounter);
+                        string filePath =FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1),s_currentDirectory);
+                        Core.Commands.CatCommand.OuputFirtsLines(filePath, lines);
+                        break;
+                    case "-l":
+                        string linesRange = arg.Split(' ')[1];
+                        if (!linesRange.Contains("-"))
+                        {
+                            FileSystem.ErrorWriteLine("Parameter invalid. You need to provide the range of lines for data display! Example: 10-20");
+                            return;
+                        }
+                        string pathFile = FileSystem.SanitizePath(arg.SplitByText(linesRange + " ", 1), s_currentDirectory);
+                        Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
+                        break;
                     case "-s":
                         fileName = input[2];
                         fileName = fileName.Replace(";", " ");

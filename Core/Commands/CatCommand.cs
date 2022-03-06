@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Core.Commands
@@ -145,9 +146,9 @@ namespace Core.Commands
             string oFile = FileOutput(file, currentDir, searchString);
             if (oFile.StartsWith("Line"))
             {
-               return $"---------------- {file} ----------------"
-                    +Environment.NewLine
-                    +FileOutput(file, currentDir, searchString);
+                return $"---------------- {file} ----------------"
+                     + Environment.NewLine
+                     + FileOutput(file, currentDir, searchString);
             }
             return null;
         }
@@ -222,6 +223,90 @@ namespace Core.Commands
         {
             s_linesCount = 0;
             s_linesCountName = 0;
+        }
+
+        /// <summary>
+        /// Check if file is emtpy.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        private static bool CheckFileContent(string fileName)
+        {
+            if (!File.Exists(fileName))
+            {
+                FileSystem.ErrorWriteLine($"File does not exist: {fileName}");
+                return false;
+            }
+            using (StringReader stringReader = new StringReader(fileName))
+            {
+                string historFileData = stringReader.ReadToEnd();
+                if (historFileData.Length > 0)
+                {
+                    return true;
+                }
+                FileSystem.ErrorWriteLine("{fileName} is empty!");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Display first N line from a file.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="linesCount"></param>
+        public static void OuputFirtsLines(string fileName, int linesCount)
+        {
+            if (CheckFileContent(fileName))
+            {
+                try
+                {
+                    var lines = File.ReadLines(fileName).Take(linesCount);
+                    foreach (var line in lines)
+                    {
+                        if (!string.IsNullOrEmpty(line))
+                        {
+                            Console.WriteLine(line);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    FileSystem.ErrorWriteLine(e.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Display content between two lines range.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="range"></param>
+        public static void OutputLinesRange(string fileName, string range)
+        {
+            if (CheckFileContent(fileName))
+            {
+                string firstLine = range.Split('-')[0];
+                string secondLine = range.Split('-')[1];
+                if (!FileSystem.IsNumberAllowed(firstLine) && !FileSystem.IsNumberAllowed(secondLine))
+                {
+                    FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
+                    return;
+                }
+                int first = Int32.Parse(firstLine);
+                int second = Int32.Parse(secondLine);
+
+                using (var streamReader = new StreamReader(fileName))
+                {
+                    for (int i = 0; i < second && !streamReader.EndOfStream; ++i)
+                    {
+                        var line = streamReader.ReadLine();
+
+                        if (i < first - 1)
+                            continue;
+                        Console.WriteLine(line);
+                    }
+                }
+            }
         }
     }
 }
