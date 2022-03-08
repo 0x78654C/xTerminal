@@ -462,16 +462,34 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             foreach (var file in files)
             {
-                if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
+                if (displaySizes)
                 {
-                    string formattedText = GetFormattedFileInfoText(file, displaySizes);
-                    if (saveToFile)
+                    if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
                     {
-                        s_listFiles.Add(file.Name);
+                        string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                        if (saveToFile)
+                        {
+                            s_listFiles.Add(file.Name);
+                        }
+                        else
+                        {
+                            DisplayFileInfoText(formattedText, highlightSearchText);
+                        }
                     }
-                    else
+                }
+                else
+                {
+                    if (!GlobalVariables.excludeFiles.Contains(file.Name))
                     {
-                        DisplayFileInfoText(formattedText, highlightSearchText);
+                        string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                        if (saveToFile)
+                        {
+                            s_listFiles.Add(file.Name);
+                        }
+                        else
+                        {
+                            DisplayFileInfoText(formattedText, highlightSearchText);
+                        }
                     }
                 }
             }
