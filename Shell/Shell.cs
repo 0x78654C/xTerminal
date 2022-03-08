@@ -94,7 +94,7 @@ namespace Shell
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
             }
 
-            // Title display applicaiton name and version + current directory.
+            // Title display application name, version + current directory.
             Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
 
             // Store xTerminal version.
@@ -107,6 +107,10 @@ namespace Shell
         /// <param name="command"></param>
         private void ExecuteCommands(string command)
         {
+            // Display running command on title.
+            Console.Title = command; 
+            
+            // Run xTerminal predifined commands.
             var c = Commands.CommandRepository.GetCommand(command);
             if (c != null)
             {
