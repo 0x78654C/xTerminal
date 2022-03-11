@@ -49,5 +49,11 @@ namespace Commands
 
             return !string.IsNullOrWhiteSpace(text);
         }
+
+        internal static string MiddleString(this string input, string firstParam, string secondParam)
+        {
+            string firstParamSplit = input.SplitByText(firstParam + " ", 1);
+            return firstParamSplit.SplitByText(" " + secondParam, 0);
+        }
     }
 }
