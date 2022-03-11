@@ -21,19 +21,19 @@ namespace Commands.TerminalCommands.DirFiles
   -l   : Displays data between two lines range.
            Example: cat -l 10-20 <path_of_file_name>
   -s   : Output lines containing a provided text from a file.
-           Example: cat -s <search_text> <file_search_in>
+           Example: cat -s <search_text> -f <file_search_in>
   -so  : Saves the lines containing a provided text from a file.
-           Example: cat -so <search_text> <file_search_in> -o <file_to_save>
+           Example: cat -so <search_text> -f <file_search_in> -o <file_to_save>
   -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
            Example1: cat -sa <search_text>
-           Example2: cat -sa <search_text> <part_of_file_name> 
+           Example2: cat -sa <search_text> -f <part_of_file_name> 
   -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
            Example1: cat -sao <search_text> -o <file_to_save>
-           Example2: cat -sao <search_text> <part_of_file_name> -o <file_to_save>
+           Example2: cat -sao <search_text> -f <part_of_file_name> -o <file_to_save>
   -sm  : Output lines containing a provided text from multiple fies in current directory.
-           Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
+           Example: cat -sm <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> 
   -smo : Saves the lines containing a provided text from multiple files in current directory.
-           Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
+           Example: cat -smo <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
   -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
   -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
            Example: cat -lfc <file_name_text>
@@ -106,14 +106,14 @@ namespace Commands.TerminalCommands.DirFiles
                         Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
                         break;
                     case "-s":
-                        fileName = input[2];
-                        fileName = fileName.Replace(";", " ");
-                        searchString = input[1];
+                        fileName = arg.SplitByText("-f ", 1);
+                        searchString = arg.MiddleString("-s","-f");
                         Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
                         break;
                     case "-sa":
-                        searchString = input[1];
+                        searchString = arg.MiddleString("-sa", "-f"); ;
                         fileName = "";
+                        fileSearchIn = arg.SplitByText("-f ", 1);
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
                             Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
@@ -127,12 +127,11 @@ namespace Commands.TerminalCommands.DirFiles
                         Console.WriteLine(s_output);
                         break;
                     case "-sao":
-                        searchString = input[1];
                         fileName = "";
+                        searchString = arg.MiddleString("-sao", "-f");
                         saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                         string startMessage = "";
-                        fileSearchIn = arg.SplitByText(searchString, 1);
-                        fileSearchIn = fileSearchIn.SplitByText(" -o", 0);
+                        fileSearchIn = arg.MiddleString("-f", "-o");
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
                             startMessage = $"---Searching in files containing '{fileSearchIn}' in name---\n\n";
@@ -154,33 +153,31 @@ namespace Commands.TerminalCommands.DirFiles
                         break;
                     case "-so":
                         {
-                            fileName = input[2];
-                            fileName = fileName.Replace(";", " ");
-                            searchString = input[1];
+                            fileName = arg.MiddleString("-f", "-o");
+                            searchString = arg.MiddleString("-so", "-f");
                             saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                             Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
                             break;
                         }
                     case "-sm":
                         fileName = input[2];
-                        fileName = fileName.Replace(";", " ");
-                        searchString = input[1];
-                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", false));
+                        fileName = arg.SplitByText("-f ",1);
+                        searchString = arg.MiddleString("-sm","-f");
+                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false));
                         break;
                     case "-smo":
                         {
-                            fileName = input[2];
-                            fileName = fileName.Replace(";", " ");
-                            searchString = input[1];
+                            fileName = arg.MiddleString("-f", "-o");
+                            searchString = arg.MiddleString("-smo", "-f"); 
                             saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
-                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, false));
+                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), saveToFile, false));
                             break;
                         }
                     case "-lfc":
                         {
                             try
                             {
-                                fileName = input[1];
+                                fileName = arg.SplitByText("-lfc ",1);
                                 int totalLinesCount = Core.Commands.CatCommand.LineCountsName(s_currentDirectory, fileName);
                                 Core.Commands.CatCommand.ClearCounter();
                                 Console.WriteLine($"Total lines in files that name contains '{fileName}' (without empty lines): {totalLinesCount}");
