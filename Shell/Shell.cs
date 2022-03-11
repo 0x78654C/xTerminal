@@ -19,6 +19,8 @@ namespace Shell
         private static readonly string s_accountName = GlobalVariables.accountName;    //extract current loged username
         private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
+        private static string s_intercept = "";
+        private static int s_ctrlCount = 0;
         private static string s_historyFilePath = GlobalVariables.terminalWorkDirectory;
         private static string s_passwordManagerDirectory = GlobalVariables.passwordManagerDirectory;
         private static List<string> s_listReg = new List<string>() { "UI" };
@@ -81,7 +83,7 @@ namespace Shell
             }
 
             // Reading cport time out setting and set default vaule if is emtpy.
-            string timeOut= RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut);
+            string timeOut = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut);
             if (timeOut == "")
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut, "500");
@@ -108,8 +110,8 @@ namespace Shell
         private void ExecuteCommands(string command)
         {
             // Display running command on title.
-            Console.Title = command; 
-            
+            Console.Title = command;
+
             // Run xTerminal predifined commands.
             var c = Commands.CommandRepository.GetCommand(command);
             if (c != null)
@@ -160,8 +162,43 @@ namespace Shell
         /// <param name="e"></param>
         static void KeyDown(KeyEventArgs e)
         {
+            if (e.KeyCode.ToString().Length == 1)
+            {
+                s_intercept += e.KeyData.ToString().ToLower();
+                s_ctrlCount = 0;
+            }
+
+            if (e.KeyCode == Keys.Back && !string.IsNullOrEmpty(s_intercept))
+                s_intercept = s_intercept.Substring(0, s_intercept.Length - 1);
+
+            if (e.KeyCode == Keys.Space)
+                s_intercept += " ";
+
+            if (e.KeyCode == Keys.Tab)
+                s_intercept += " ";
+
+            if (e.KeyData == Keys.Enter)
+            {
+                s_intercept = "";
+                s_ctrlCount = 0;
+            }
+
             if (e.KeyData.ToString() == "RControlKey" || e.KeyData.ToString() == "LControlKey")
+            {
                 s_ctrlKey = DateTime.Now.Second;
+                s_ctrlCount++;
+                if (s_ctrlCount == 2 && !string.IsNullOrEmpty(s_intercept))
+                {
+                    //Auto sugestion commands
+                    Core.Commands.AutoSugestionCommands.FileDirSugestion(s_intercept, "cd", s_currentDirectory, false);
+                    Core.Commands.AutoSugestionCommands.FileDirSugestion(s_intercept, "hex", s_currentDirectory, true);
+                    Core.Commands.AutoSugestionCommands.FileDirSugestion(s_intercept, "start", s_currentDirectory, true);
+                    
+                    //Reset flags.
+                    s_ctrlCount = 0;
+                    s_intercept = "";
+                }
+            }
 
             if (e.KeyData == Keys.X)
                 s_xKey = DateTime.Now.Second;
@@ -247,22 +284,25 @@ namespace Shell
                     {
                         SystemCmd.LockCmd();
                     }
-                    else if (s_input.Contains("speedtest"))
-                    {
-                        Execute(s_input, "", true);
-                    }
                     else if (s_input.StartsWith("cmd"))
                     {
-                        Execute(s_input, s_input, true);
+                        Execute(s_input, s_input);
                     }
                     else if (s_input.StartsWith("ps"))
                     {
-                        Execute(s_input, s_input, true);
+                        Execute(s_input, s_input);
                     }
                 }
 
                 // New command implementation by Scott.
-                ExecuteCommands(s_input);
+                if (GlobalVariables.autoSugestion)
+                {
+                    GlobalVariables.autoSugestion = false;
+                }
+                else
+                {
+                    ExecuteCommands(s_input);
+                }
 
                 GC.Collect();
 
@@ -272,11 +312,11 @@ namespace Shell
         //------------------
 
         //process execute 
-        public void Execute(string input, string args, bool waitForExit)
+        public void Execute(string input, string args)
         {
             if (input.StartsWith("cmd"))
             {
-                args = args.Split(' ').Count() >= 1 ? args.Replace("cmd ", "/c ") : args = args.Replace("cmd", "");
+                args = args.Split(' ').Count() >= 1 ? args.Replace("cmd ", "/c ") : args.Replace("cmd", "");
                 ExecutApp("cmd", args, true);
                 return;
             }
