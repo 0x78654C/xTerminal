@@ -29,6 +29,7 @@ namespace Core
         public static List<string> excludeDirectories = new List<string>() { "System Volume Information", "$Recycle.Bin" };
         public static List<string> excludeFiles = new List<string>() { "pagefile.sys" };
         public static bool eventCancelKey = false;
+        public static bool autoSugestion = false;
         public static bool eventKeyFlagX = false;
     }
 }
