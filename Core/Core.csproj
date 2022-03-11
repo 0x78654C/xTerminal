@@ -114,6 +114,7 @@
     <Compile Include="Registry.cs" />
     <Compile Include="SystemTools\ProcessStart.cs" />
     <Compile Include="SystemTools\Roslyn.cs" />
+    <Compile Include="SystemTools\AutoSugestion.cs" />
     <Compile Include="SystemTools\UI.cs" />
   </ItemGroup>
   <ItemGroup>
