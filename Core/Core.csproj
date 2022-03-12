@@ -96,7 +96,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\AutoSugestionCommands.cs" />
+    <Compile Include="Commands\AutoSuggestionCommands.cs" />
     <Compile Include="Commands\CatCommand.cs" />
     <Compile Include="Commands\SystemCommands.cs" />
     <Compile Include="Crc32.cs" />
@@ -115,7 +115,7 @@
     <Compile Include="Registry.cs" />
     <Compile Include="SystemTools\ProcessStart.cs" />
     <Compile Include="SystemTools\Roslyn.cs" />
-    <Compile Include="SystemTools\AutoSugestion.cs" />
+    <Compile Include="SystemTools\AutoSuggestion.cs" />
     <Compile Include="SystemTools\UI.cs" />
   </ItemGroup>
   <ItemGroup>
