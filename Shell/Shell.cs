@@ -156,12 +156,26 @@ namespace Shell
             catch { return false; }
         }
 
+      
         /// <summary>
         /// CTRL+X key event.
         /// </summary>
         /// <param name="e"></param>
         static void KeyDown(KeyEventArgs e)
         {
+            string keycode = e.KeyCode.ToString().ToLower();
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "d", 2, string.Empty, ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "numpad", 7, string.Empty, ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemminus", 8, "-", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemplus", 7, "+", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "add", 3, "+", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "substract", 9, "-", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "multiply", 9, "*", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "decimal", 7, ".", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemperiod", 9, ".", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "decimal", 7, "-", ()=> s_ctrlCount = 0);
+            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemquestion", 11, "-", ()=> s_ctrlCount = 0);
+
             if (e.KeyCode.ToString().Length == 1)
             {
                 s_intercept += e.KeyData.ToString().ToLower();
@@ -190,10 +204,22 @@ namespace Shell
                 if (s_ctrlCount == 2 && !string.IsNullOrEmpty(s_intercept))
                 {
                     //Auto sugestion commands
-                    Core.Commands.AutoSugestionCommands.FileDirSugestion(s_intercept, "cd", s_currentDirectory, false);
-                    Core.Commands.AutoSugestionCommands.FileDirSugestion(s_intercept, "hex", s_currentDirectory, true);
-                    Core.Commands.AutoSugestionCommands.FileDirSugestion(s_intercept, "start", s_currentDirectory, true);
-                    
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cd", s_currentDirectory, false);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "start", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, false);
+
                     //Reset flags.
                     s_ctrlCount = 0;
                     s_intercept = "";
@@ -295,9 +321,9 @@ namespace Shell
                 }
 
                 // New command implementation by Scott.
-                if (GlobalVariables.autoSugestion)
+                if (GlobalVariables.autoSuggestion)
                 {
-                    GlobalVariables.autoSugestion = false;
+                    GlobalVariables.autoSuggestion = false;
                 }
                 else
                 {
