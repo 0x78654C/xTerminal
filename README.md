@@ -25,6 +25,21 @@ A Linux like terminal for windows in C# with some extras ;).
  Install-Package Konscious.Security.Cryptography.Argon2
  ```
 
+ ## Auto suggestion for files and folders
+xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
+cat, cat, ls, odir, hex, frename, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
+
+Example:
+ ```
+ ~> cd win
+ ```
+ Double press CTRL key and will suggest you all the directories that starts with the letters 'win' from current location.
+
+  ```
+ ~> start ap
+ ```
+ Double press 'CTRL' key and will suggest you all the files that starts with the letters 'ap' from current location.
+
  ## Commands
 This is the full list of commands that can be used in xTerminal:
 
@@ -291,4 +306,8 @@ For that we use following command:
 * Using NeoVim in xTerminal:
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/3.bmp?raw=true)
+
+* Auto suggestion for files and folders :
+
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/5.bmp?raw=true)
 
