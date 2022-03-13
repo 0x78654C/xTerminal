@@ -211,7 +211,9 @@ namespace Shell
                     Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "start", s_currentDirectory, true);
                     Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
                     Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "frename", s_currentDirectory, true);
                     Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
+                    Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, false);
                     Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
                     Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
                     Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
