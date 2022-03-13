@@ -23,7 +23,7 @@ A Linux like terminal for windows in C# with some extras ;).
 
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
-cat, cat, ls, odir, hex, frename, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
+cd, cat, ls, odir, hex, frename, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
 
 Example:
  ```
