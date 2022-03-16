@@ -116,6 +116,7 @@
     <Compile Include="SystemTools\ProcessStart.cs" />
     <Compile Include="SystemTools\Roslyn.cs" />
     <Compile Include="SystemTools\AutoSuggestion.cs" />
+    <Compile Include="SystemTools\TopMost.cs" />
     <Compile Include="SystemTools\UI.cs" />
   </ItemGroup>
   <ItemGroup>
