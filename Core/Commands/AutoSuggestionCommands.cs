@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
 
 namespace Core.Commands
 {
@@ -15,7 +16,15 @@ namespace Core.Commands
         public static void FileDirSuggestion(string consoleInput, string command, string currentDirectory, bool isFile)
         {
             int commandLenght = command.Length + 1;
-
+          
+            if (consoleInput == command)
+            {
+                GlobalVariables.autoSuggestion = true;
+                GlobalVariables.commandOut = command;
+                Console.WriteLine("\r\n For auto suggestion use: command<SPACE KEY>start characters of files/directories");
+                SendKeys.Send("{ENTER}");
+                SendKeys.Send(consoleInput);
+            }
             if (consoleInput.StartsWith(command) && consoleInput.Length > command.Length)
             {
                 if (isFile)
@@ -23,13 +32,15 @@ namespace Core.Commands
                     GlobalVariables.autoSuggestion = true;
                     consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                     SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory);
-                    SendKeys.Send(command + " ");
+                    GlobalVariables.commandOut = command + " " + consoleInput;
+                    SendKeys.Send(command+" "+consoleInput);
                     return;
                 }
                 GlobalVariables.autoSuggestion = true;
                 consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                 SystemTools.AutoSuggestion.DirCompletion(consoleInput, currentDirectory);
-                SendKeys.Send(command+" ");
+                GlobalVariables.commandOut = command + " " + consoleInput;
+                SendKeys.Send(command + " " + consoleInput);
             }
         }
     }
