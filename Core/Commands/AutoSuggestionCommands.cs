@@ -16,7 +16,7 @@ namespace Core.Commands
         public static void FileDirSuggestion(string consoleInput, string command, string currentDirectory, bool isFile)
         {
             int commandLenght = command.Length + 1;
-          
+
             if (consoleInput == command)
             {
                 GlobalVariables.autoSuggestion = true;
