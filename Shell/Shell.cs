@@ -163,47 +163,47 @@ namespace Shell
         /// <param name="e"></param>
         static void KeyDown(KeyEventArgs e)
         {
-            string keycode = e.KeyCode.ToString().ToLower();
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "d", 2, string.Empty, () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "numpad", 7, string.Empty, () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemminus", 8, "-", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemplus", 7, "+", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "add", 3, "+", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "substract", 9, "-", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "multiply", 9, "*", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "decimal", 7, ".", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemperiod", 9, ".", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "decimal", 7, "-", () => s_ctrlCount = 0);
-            s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemquestion", 11, "-", () => s_ctrlCount = 0);
-
-            if (e.KeyCode.ToString().Length == 1)
-            {
-                s_intercept += e.KeyData.ToString().ToLower();
-                s_ctrlCount = 0;
-            }
-
-            if (e.KeyCode == Keys.Back && !string.IsNullOrEmpty(s_intercept))
-                s_intercept = s_intercept.Substring(0, s_intercept.Length - 1);
-
-            if (e.KeyCode == Keys.Space)
-                s_intercept += " ";
-
-            if (e.KeyCode == Keys.Tab)
-                s_intercept += " ";
-
-            if (e.KeyData == Keys.Enter)
-            {
-                s_intercept = "";
-                s_ctrlCount = 0;
-            }
-
-            if (e.KeyData == Keys.X)
-                s_xKey = DateTime.Now.Second;
-
             bool topMost = Core.SystemTools.TopMost.ApplicationIsActivated();
-
             if (topMost)
             {
+                string keycode = e.KeyCode.ToString().ToLower();
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "d", 2, string.Empty, () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "numpad", 7, string.Empty, () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemminus", 8, "-", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemplus", 7, "+", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "add", 3, "+", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "substract", 9, "-", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "multiply", 9, "*", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "decimal", 7, ".", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemperiod", 9, ".", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "decimal", 7, "-", () => s_ctrlCount = 0);
+                s_intercept += Core.SystemTools.AutoSuggestion.KeyConvertor(keycode, "oemquestion", 11, "-", () => s_ctrlCount = 0);
+
+                if (e.KeyCode.ToString().Length == 1)
+                {
+                    s_intercept += e.KeyData.ToString().ToLower();
+                    s_ctrlCount = 0;
+                }
+
+                if (e.KeyCode == Keys.Back && !string.IsNullOrEmpty(s_intercept))
+                    s_intercept = s_intercept.Substring(0, s_intercept.Length - 1);
+
+                if (e.KeyCode == Keys.Space)
+                    s_intercept += " ";
+
+                if (e.KeyCode == Keys.Tab)
+                    s_intercept += " ";
+
+                if (e.KeyData == Keys.Enter)
+                {
+                    s_intercept = "";
+                    s_ctrlCount = 0;
+                }
+
+                if (e.KeyData == Keys.X)
+                    s_xKey = DateTime.Now.Second;
+
+
                 if (e.KeyData.ToString() == "RControlKey" || e.KeyData.ToString() == "LControlKey")
                 {
                     s_ctrlKey = DateTime.Now.Second;
@@ -256,7 +256,7 @@ namespace Shell
         /// <param name="e"></param>
         private void KeyHook(object o, DoWorkEventArgs e)
         {
-           
+
             InterceptKeys.SetupHook(KeyDown);
             InterceptKeys.ReleaseHook();
         }
