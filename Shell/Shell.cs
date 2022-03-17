@@ -232,7 +232,7 @@ namespace Shell
 
                         //Reset flags.
                         s_ctrlCount = 0;
-                        s_intercept = "";
+                        s_intercept = GlobalVariables.commandOut;
                     }
                 }
 
