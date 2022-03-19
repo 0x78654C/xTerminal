@@ -430,69 +430,77 @@ namespace Commands.TerminalCommands.ConsoleSystem
         /// <param name="saveToFile">Save output to a file.</param>
         private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile)
         {
-            foreach (var dir in Directory.GetDirectories(s_currentDirectory))
+            try
             {
-                var directoryInfo = new DirectoryInfo(dir);
-                if (!GlobalVariables.excludeDirectories.Contains(directoryInfo.Name))
+                foreach (var dir in Directory.GetDirectories(s_currentDirectory))
                 {
-                    if (highlightSearchText.IsNotNullEmptyOrWhitespace() &&
-                    directoryInfo.Name.ContainsText(highlightSearchText))
+                    var directoryInfo = new DirectoryInfo(dir);
+                    if (!GlobalVariables.excludeDirectories.Contains(directoryInfo.Name))
                     {
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
-                    }
-                    else
-                    {
-                        if (saveToFile)
+                        if (highlightSearchText.IsNotNullEmptyOrWhitespace() &&
+                        directoryInfo.Name.ContainsText(highlightSearchText))
                         {
-                            s_listDirs.Add(directoryInfo.Name);
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
                         }
                         else
                         {
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                            if (saveToFile)
+                            {
+                                s_listDirs.Add(directoryInfo.Name);
+                            }
+                            else
+                            {
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                            }
                         }
                     }
                 }
             }
+            catch { }
         }
 
         private static void DisplayFiles(string highlightSearchText, bool displaySizes, bool saveToFile)
         {
-            // This LINQ statement converts a list of string file names to FileInfo objects
-            var files = Directory.GetFiles(s_currentDirectory).Select(f => new FileInfo(f));
-
-            foreach (var file in files)
+            try
             {
-                if (displaySizes)
+                // This LINQ statement converts a list of string file names to FileInfo objects
+                var files = Directory.GetFiles(s_currentDirectory).Select(f => new FileInfo(f));
+
+                foreach (var file in files)
                 {
-                    if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
+                    if (displaySizes)
                     {
-                        string formattedText = GetFormattedFileInfoText(file, displaySizes);
-                        if (saveToFile)
+                        if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
                         {
-                            s_listFiles.Add(file.Name);
-                        }
-                        else
-                        {
-                            DisplayFileInfoText(formattedText, highlightSearchText);
+                            string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                            if (saveToFile)
+                            {
+                                s_listFiles.Add(file.Name);
+                            }
+                            else
+                            {
+                                DisplayFileInfoText(formattedText, highlightSearchText);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    if (!GlobalVariables.excludeFiles.Contains(file.Name))
+                    else
                     {
-                        string formattedText = GetFormattedFileInfoText(file, displaySizes);
-                        if (saveToFile)
+                        if (!GlobalVariables.excludeFiles.Contains(file.Name))
                         {
-                            s_listFiles.Add(file.Name);
-                        }
-                        else
-                        {
-                            DisplayFileInfoText(formattedText, highlightSearchText);
+                            string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                            if (saveToFile)
+                            {
+                                s_listFiles.Add(file.Name);
+                            }
+                            else
+                            {
+                                DisplayFileInfoText(formattedText, highlightSearchText);
+                            }
                         }
                     }
                 }
             }
+            catch (UnauthorizedAccessException) { }
         }
 
         /// <summary>
