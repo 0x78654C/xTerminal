@@ -137,6 +137,7 @@
     <Compile Include="TerminalCommands\DirFiles\FCopy.cs" />
     <Compile Include="TerminalCommands\DirFiles\FMove.cs" />
     <Compile Include="TerminalCommands\DirFiles\FRename.cs" />
+    <Compile Include="TerminalCommands\DirFiles\Locate.cs" />
     <Compile Include="TerminalCommands\DirFiles\MakeDirectory.cs" />
     <Compile Include="TerminalCommands\DirFiles\MakeFile.cs" />
     <Compile Include="TerminalCommands\DirFiles\MD5Check.cs" />
