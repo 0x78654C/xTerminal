@@ -126,9 +126,16 @@ namespace Commands.TerminalCommands.DirFiles
                         Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
                         break;
                     case "-sa":
-                        searchString = arg.MiddleString("-sa", "-f"); ;
+                        if (arg.Contains(" -f "))
+                            searchString = arg.MiddleString("-sa", "-f");
+                        else
+                            searchString = arg.SplitByText("-sa ", 1);
                         fileName = "";
-                        fileSearchIn = arg.SplitByText("-f ", 1);
+                        if (arg.Contains(" -f "))
+                            fileSearchIn = arg.SplitByText("-f ", 1);
+                        else
+                            fileSearchIn = "";
+
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
                             Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
