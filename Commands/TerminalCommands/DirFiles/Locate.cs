@@ -6,6 +6,8 @@ using Core;
 
 namespace Commands.TerminalCommands.DirFiles
 {
+    /*Locate command for search files and directories*/
+
     class Locate : ITerminalCommand
     {
         public string Name => "locate";
@@ -57,6 +59,14 @@ namespace Commands.TerminalCommands.DirFiles
             }
         }
 
+
+        /// <summary>
+        /// Search file/directory in current directory and subdirectories by a specific text. 
+        /// </summary>
+        /// <param name="currentDirectory"></param>
+        /// <param name="fileName"></param>
+        /// <param name="outputFile"></param>
+        /// <param name="saveToFile"></param>
         private void SearchFile(string currentDirectory, string fileName, string outputFile,bool saveToFile)
         {
             try
