@@ -308,5 +308,48 @@ namespace Core.Commands
                 }
             }
         }
+
+        /// <summary>
+        /// Store readed data from a file to another file file line by line.
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="outputFile"></param>
+        private static void ReadStoreData(string file, string outputFile)
+        {
+            string line;
+            using (StreamReader reader = new StreamReader(file))
+            {
+                while ((line = reader.ReadLine()) != null)
+                {
+                    File.AppendAllText(outputFile, line + Environment.NewLine);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Concatenate files to one single file.
+        /// </summary>
+        /// <param name="argfiles"></param>
+        /// <param name="outputFIle"></param>
+        /// <param name="currentDirectory"></param>
+        public static void ConcatenateFiles(string argfiles, string outputFIle, string currentDirectory)
+        {
+            string sFile;
+            if (!argfiles.Contains(";"))
+            {
+                Console.WriteLine($"You need more than 1 file to concatenate and needs to be separated with ; character!");
+                return;
+            }
+
+            string[] files = argfiles.Split(';');
+            foreach (var file in files)
+            {
+                sFile = FileSystem.SanitizePath(file, currentDirectory);
+                if (!File.Exists(sFile))
+                    Console.WriteLine($"File '{sFile}' does not exist!");
+                else
+                    ReadStoreData(sFile, outputFIle);
+            }
+        }
     }
 }

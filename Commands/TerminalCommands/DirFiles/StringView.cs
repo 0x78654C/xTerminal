@@ -37,6 +37,8 @@ namespace Commands.TerminalCommands.DirFiles
   -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
   -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
            Example: cat -lfc <file_name_text>
+  -con : Concatenate text files to a single file.
+           Example: cat -con file1;file2;file3 -o fileOut
 ";
 
 
@@ -84,6 +86,19 @@ namespace Commands.TerminalCommands.DirFiles
 ;
                 switch (input[0])
                 {
+                    case "-con":
+                        string files = arg.MiddleString("-con", "-o");
+                        string outputFile = arg.SplitByText("-o ", 1);
+                        outputFile = FileSystem.SanitizePath(outputFile, s_currentDirectory);
+                        File.WriteAllText(outputFile, "");
+                        Core.Commands.CatCommand.ConcatenateFiles(files, outputFile, s_currentDirectory);
+                        string outFileData = File.ReadAllText(outputFile);
+                        if (outFileData.Length > 0)
+                            Console.WriteLine($"Data was saved to: {outputFile}");
+                        else
+                            Console.WriteLine("No file ware concatenated!");
+
+                        break;
                     case "-n":
                         string lineCounter = arg.Split(' ')[1];
                         if (!FileSystem.IsNumberAllowed(lineCounter))
@@ -92,7 +107,7 @@ namespace Commands.TerminalCommands.DirFiles
                             return;
                         }
                         int lines = Int32.Parse(lineCounter);
-                        string filePath =FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1),s_currentDirectory);
+                        string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
                         Core.Commands.CatCommand.OuputFirtsLines(filePath, lines);
                         break;
                     case "-l":
@@ -107,7 +122,7 @@ namespace Commands.TerminalCommands.DirFiles
                         break;
                     case "-s":
                         fileName = arg.SplitByText("-f ", 1);
-                        searchString = arg.MiddleString("-s","-f");
+                        searchString = arg.MiddleString("-s", "-f");
                         Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
                         break;
                     case "-sa":
@@ -161,14 +176,14 @@ namespace Commands.TerminalCommands.DirFiles
                         }
                     case "-sm":
                         fileName = input[2];
-                        fileName = arg.SplitByText("-f ",1);
-                        searchString = arg.MiddleString("-sm","-f");
+                        fileName = arg.SplitByText("-f ", 1);
+                        searchString = arg.MiddleString("-sm", "-f");
                         Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false));
                         break;
                     case "-smo":
                         {
                             fileName = arg.MiddleString("-f", "-o");
-                            searchString = arg.MiddleString("-smo", "-f"); 
+                            searchString = arg.MiddleString("-smo", "-f");
                             saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                             Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), saveToFile, false));
                             break;
@@ -177,7 +192,7 @@ namespace Commands.TerminalCommands.DirFiles
                         {
                             try
                             {
-                                fileName = arg.SplitByText("-lfc ",1);
+                                fileName = arg.SplitByText("-lfc ", 1);
                                 int totalLinesCount = Core.Commands.CatCommand.LineCountsName(s_currentDirectory, fileName);
                                 Core.Commands.CatCommand.ClearCounter();
                                 Console.WriteLine($"Total lines in files that name contains '{fileName}' (without empty lines): {totalLinesCount}");

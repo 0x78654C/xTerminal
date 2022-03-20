@@ -116,6 +116,8 @@ This is the full list of commands that can be used in xTerminal:
                    -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
                    -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
                           Example: cat -lfc <file_name_text>
+                   -con : Concatenate text files to a single file.
+                          Example: cat -con file1;file2;file3 -o fileOut
     mkdir     -- It creates a directory in the current place.
     mkfile    -- It creates a file in the current place.
     fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
