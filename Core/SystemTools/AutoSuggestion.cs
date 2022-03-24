@@ -78,8 +78,12 @@ namespace Core.SystemTools
             SendKeys.Send("{ENTER}");
         }
 
-        
-        private static int PadLenghtCheck(int fileDirNameLenght)
+        /// <summary>
+        /// Text check lenght and set 5 spaces to end of it if is bigger than 30 chars.
+        /// </summary>
+        /// <param name="fileDirNameLenght"></param>
+        /// <returns></returns>
+        public static int PadLenghtCheck(int fileDirNameLenght)
         {
             return (fileDirNameLenght > 30) ? fileDirNameLenght + 5 : 30;
         }
