@@ -4,16 +4,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace Shell
 {
 
     class Program
     {
+        private static string s_terminalWorkDirectory = GlobalVariables.terminalWorkDirectory;
+
         // Deletes current directory temp file.
         private static void DeleteCDFIle()
         {
+
+            // Creating the xTerminal directory under current user Appdata/Local.
+            if (!Directory.Exists(s_terminalWorkDirectory))
+                Directory.CreateDirectory(s_terminalWorkDirectory);
+
             var getFiles = Directory.GetFiles(GlobalVariables.terminalWorkDirectory);
             var listFilesID = new List<string>();
             var listProcessID = new List<string>();
