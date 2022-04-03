@@ -25,19 +25,21 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string gpuInfo = wmi.GetWMIDetails("SELECT * FROM Win32_VideoController");
             string modelInfo = wmi.GetWMIDetails("SELECT * FROM Win32_ComputerSystem");
             string coresInfo = wmi.GetWMIDetails("SELECT * FROM Win32_Processor");
-            Console.WriteLine("\n----------------------System Info---------------------\n");
+            Console.WriteLine("\n------------------------System Info------------------------\n");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "User logged");
             Console.WriteLine($": {GlobalVariables.accountName }");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "Machine Name");
             Console.WriteLine($": {GlobalVariables.computerName }");
             GetMachineModel(modelInfo);
-            Console.WriteLine("\n--------------------------OS--------------------------\n");
+            Console.WriteLine("\n----------------------------OS----------------------------\n");
             GetOSInfo(pcInfo);
-            Console.WriteLine("\n-----------------------Hardware-----------------------\n");
+            Console.WriteLine("\n-------------------------Hardware-------------------------\n");
             GetProcesorInfo(modelInfo, coresInfo);
             GetRAMInfo();
             GetGPUInfo(gpuInfo);
-            Console.WriteLine("\n------------------------------------------------------\n");
+            Console.WriteLine("\n-----------------------Storage Size-----------------------\n");
+            GetDrivesSize();
+            Console.WriteLine("\n----------------------------------------------------------\n");
         }
 
         /// <summary>
@@ -136,6 +138,21 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string ramAvailable = FileSystem.GetSize(ram.AvailablePhysicalMemory.ToString(), false);
             string ramTotal = FileSystem.GetSize(ram.TotalPhysicalMemory.ToString(), false);
             Console.WriteLine($": { ramAvailable} Available / {ramTotal} Total");
+        }
+
+        /// <summary>
+        /// Return the avaible free space and total space from installed drives.
+        /// </summary>
+        private void GetDrivesSize()
+        {
+            DriveInfo[] allDrives = DriveInfo.GetDrives();
+            foreach (var d in allDrives)
+            {
+                string totalSize = wmi.SizeConvert("Size "+d.TotalSize.ToString(),true);
+                string availableSize = wmi.SizeConvert("Size " + d.AvailableFreeSpace.ToString(),true);
+                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name}: ");
+                Console.Write($" Free: {availableSize} / Total: {totalSize} \n");
+            }
         }
 
         /// <summary>
