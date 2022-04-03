@@ -85,5 +85,39 @@ namespace Core.Hardware
             }
             return value;
         }
+
+        /// <summary>
+        /// Convert bytes to GB directly on WMI output
+        /// </summary>
+        /// <param name="data"> Input WMI data with Size(capacaty) parameter.</param>
+        /// <returns>string</returns>
+        public static string SizeConvert(string data, bool onlySize)
+        {
+            string wmiOut = string.Empty;
+            foreach (var wmiData in data.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (wmiData.Contains("Size"))
+                {
+                    double sizeDeviced = Convert.ToDouble(wmiData.Split(' ')[1]);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        sizeDeviced /= 1024;
+                    }
+                    sizeDeviced = Math.Round(sizeDeviced, 2);
+                    if (onlySize)
+                    {
+                        wmiOut += $"{sizeDeviced} GB" ;
+                    }
+                    else
+                    {
+                        wmiOut += $"Size: {sizeDeviced} GB" + Environment.NewLine;
+                    }
+                }
+
+                if (!onlySize)
+                    wmiOut += wmiData + Environment.NewLine;
+            }
+            return wmiOut;
+        }
     }
 }
