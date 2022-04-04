@@ -16,6 +16,8 @@ namespace Commands.TerminalCommands.DirFiles
 
     Example 1: locate <text> (Displays searched files/directories from current directory and subdirectories that includes a specific text.)
     Example 2: locate <text> -o <save_to_file> (Stores in to a file the searched files/directories from current directory and subdirectories that includes a specific text.)
+  
+Command be canceled with CTRL+X key combination.
 ";
 
         public void Execute(string arg)
@@ -39,19 +41,21 @@ namespace Commands.TerminalCommands.DirFiles
 
                 if(arg.Contains(" -o "))
                 {
-                    GlobalVariables.eventKeyFlagX = true;
                     string outputFile = arg.SplitByText(" -o ", 1);
                     outputFile = FileSystem.SanitizePath(outputFile, _currentLocation);
                     File.WriteAllText(outputFile, "");
                     string param = arg.SplitByText(" -o ", 0);
                     Console.WriteLine($"Searching for: {param}" + Environment.NewLine);
+                    GlobalVariables.eventKeyFlagX = true;
                     SearchFile(_currentLocation, param, outputFile, true);
+                    GlobalVariables.eventCancelKey = false;
                     Console.WriteLine($"Data saved in {outputFile}");
                     return;
                 }
-                GlobalVariables.eventKeyFlagX = true;
                 Console.WriteLine($"Searching for: {arg}" + Environment.NewLine);
+                GlobalVariables.eventKeyFlagX = true;
                 SearchFile(_currentLocation, arg,"",false);
+                GlobalVariables.eventCancelKey = false;
             }
             catch (Exception e)
             {
@@ -69,6 +73,7 @@ namespace Commands.TerminalCommands.DirFiles
         /// <param name="saveToFile"></param>
         private void SearchFile(string currentDirectory, string fileName, string outputFile,bool saveToFile)
         {
+     
             try
             {
                 var dirsList = new List<string>();
@@ -105,7 +110,8 @@ namespace Commands.TerminalCommands.DirFiles
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "DIR: " + dir);
                         }
                     }
-                    SearchFile(dir, fileName,outputFile,saveToFile);
+                    if (!GlobalVariables.eventCancelKey)
+                        SearchFile(dir, fileName, outputFile, saveToFile);
                 }
             }
             catch (UnauthorizedAccessException){}
