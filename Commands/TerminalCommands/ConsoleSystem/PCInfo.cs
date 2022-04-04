@@ -151,7 +151,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 string totalSize = wmi.SizeConvert("Size "+d.TotalSize.ToString(),true);
                 string availableSize = wmi.SizeConvert("Size " + d.AvailableFreeSpace.ToString(),true);
                 FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name}: ");
-                Console.Write($" Free: {availableSize} / Total: {totalSize} \n");
+                Console.Write($" Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n");
             }
         }
 
