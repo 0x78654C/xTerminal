@@ -228,7 +228,7 @@ namespace Shell
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, false);
+                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
 
                         //Reset flags.
                         s_ctrlCount = 0;
