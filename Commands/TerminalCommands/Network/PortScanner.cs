@@ -23,6 +23,7 @@ namespace Commands.TerminalCommands.Network
         {
             try
             {
+                GlobalVariables.eventCancelKey = false;
                 string cTimeOut = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut);
                 if (FileSystem.IsNumberAllowed(cTimeOut) && !string.IsNullOrEmpty(cTimeOut))
                     s_timeOut = Int32.Parse(cTimeOut);
@@ -74,10 +75,16 @@ namespace Commands.TerminalCommands.Network
                     int minPort = Int32.Parse(portsRange[0].Trim());
                     int maxPort = Int32.Parse(portsRange[1].Trim());
                     PortScan.RunPortScan(ipAddress, minPort, maxPort, s_timeOut);
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    GlobalVariables.eventCancelKey = false;
                     return;
                 }
                 int port = Int32.Parse(portData.Trim());
                 PortScan.RunPortScan(ipAddress, port, port, s_timeOut);
+                if (GlobalVariables.eventCancelKey)
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                GlobalVariables.eventCancelKey = false;
             }
             catch (Exception e)
             {
