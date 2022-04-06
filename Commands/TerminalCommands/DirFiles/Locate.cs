@@ -24,6 +24,7 @@ Command be canceled with CTRL+X key combination.
         {
             try
             {
+                GlobalVariables.eventCancelKey = false;
                 _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
                 if (arg==Name)
                 {
@@ -48,6 +49,8 @@ Command be canceled with CTRL+X key combination.
                     Console.WriteLine($"Searching for: {param}" + Environment.NewLine);
                     GlobalVariables.eventKeyFlagX = true;
                     SearchFile(_currentLocation, param, outputFile, true);
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     GlobalVariables.eventCancelKey = false;
                     Console.WriteLine($"Data saved in {outputFile}");
                     return;
@@ -55,6 +58,8 @@ Command be canceled with CTRL+X key combination.
                 Console.WriteLine($"Searching for: {arg}" + Environment.NewLine);
                 GlobalVariables.eventKeyFlagX = true;
                 SearchFile(_currentLocation, arg,"",false);
+                if (GlobalVariables.eventCancelKey)
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                 GlobalVariables.eventCancelKey = false;
             }
             catch (Exception e)
