@@ -56,6 +56,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
           Example: ls -cd <search_text>
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
+
+Commands can be canceled with CTRL+X key combination.
 ";
         public string Name => "ls";
         public void Execute(string args)
@@ -67,6 +69,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                                 File.ReadAllText(GlobalVariables.currentDirectory);
 
                 string[] arg = args.Split(' ');
+                GlobalVariables.eventCancelKey = false;
 
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
@@ -110,20 +113,26 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     {
                         searchedText = args.SplitByText("-se ", 1);
                         searchedText = searchedText.SplitByText(" -o", 0);
+                        GlobalVariables.eventKeyFlagX = true;
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
                         string saveData = args.SplitByText("-o ", 1);
                         string content = $"Searching for: {searchedText}\n";
                         content += string.Join("\n", s_listSearched);
                         content += $"\n\n    Search results: {s_listSearched.Count()} matches\n";
                         Console.WriteLine(FileSystem.SaveFileOutput(FileSystem.SanitizePath(saveData, s_currentDirectory), s_currentDirectory, content));
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         s_listSearched.Clear();
                         return;
                     }
                     searchedText = args.SplitByText("-se ", 1);
+                    GlobalVariables.eventKeyFlagX = true;
                     DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
                     Console.WriteLine($"Searching for: {searchedText}\n");
                     Console.WriteLine(string.Join("\n", s_listSearched));
                     Console.WriteLine($"\n    Search results: {s_listSearched.Count()} matches\n");
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     s_listSearched.Clear();
                     return;
                 }
@@ -141,7 +150,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                         dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -d -e ", "") : dirSearchIn.Replace("ls -d ", "");
                         string fileToSave = args.SplitByText("-o ", 1);
+                        GlobalVariables.eventKeyFlagX = true;
                         GetDuplicateFiles(dirSearchIn, extensions, fileToSave);
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         return;
                     }
 
@@ -153,10 +165,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         if (arg.ContainsParameter("-e"))
                             extensions = true;
                         string searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-d ", 1);
+                        GlobalVariables.eventKeyFlagX = true;
                         GetDuplicateFiles(FileSystem.SanitizePath(searchDir, s_currentDirectory), extensions);
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         return;
                     }
+                    GlobalVariables.eventKeyFlagX = true;
                     GetDuplicateFiles(s_currentDirectory, extensions);
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     return;
                 }
 
@@ -178,9 +196,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (arg.ContainsParameter("-c"))
                 {
                     Console.WriteLine($"\nCounting total directories/subdirectories and files on current location....\n");
+                    GlobalVariables.eventKeyFlagX = true;
                     DisplaySubDirectoryAndFileCounts(s_currentDirectory, string.Empty, string.Empty, false);
                     Console.WriteLine($"Total directories/subdirectories: {s_countDirectories}");
                     Console.WriteLine($"Total files (include subdirectories): {s_countFiles}");
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     ClearCounters();
                     return;
                 }
@@ -189,8 +210,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     if (!string.IsNullOrEmpty(arg.ParameterAfter("-cf")))
                     {
+                        GlobalVariables.eventKeyFlagX = true;
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, arg.ParameterAfter("-cf"), "", false);
                         Console.WriteLine($"Total files count that contains '{arg.ParameterAfter("-cf")}' (from subdirectories too): {s_countFilesText}\n");
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         ClearCounters();
                         return;
                     }
@@ -200,8 +224,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     if (!string.IsNullOrEmpty(arg.ParameterAfter("-cd")))
                     {
+                        GlobalVariables.eventKeyFlagX = true;
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd"), false);
                         Console.WriteLine($"Total directories/subdirectories count that name contains '{arg.ParameterAfter("-cd")}': {s_countDirectoriesText}\n");
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         ClearCounters();
                     }
                     return;
@@ -215,8 +242,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
                 else
                 {
+                    GlobalVariables.eventKeyFlagX = true;
                     // Display directory and file information
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false);
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                 }
 
             }
@@ -253,7 +283,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
-            string results = checkExtension ? $"List of duplicated files(extension check) in {dirToScan}: " + Environment.NewLine + Environment.NewLine : $"List of duplicated files in {dirToScan}:"+Environment.NewLine + Environment.NewLine;
+            string results = checkExtension ? $"List of duplicated files(extension check) in {dirToScan}: " + Environment.NewLine + Environment.NewLine : $"List of duplicated files in {dirToScan}:" + Environment.NewLine + Environment.NewLine;
 
             var allDupesBySize = Directory.GetFiles(dirToScan, "*", SearchOption.AllDirectories)
               .Select(f => new FileInfo(f))
@@ -272,6 +302,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 foreach (var group in item.GroupBy(t => t.Extension).Where(t => t.Count() > 1).Select(t => t))
                 {
+                    if (GlobalVariables.eventCancelKey)
+                        return;
                     dupesList.AddRange(DupesEnumerable(group).Select(t => t.ToArray()));
                 }
             }
@@ -327,9 +359,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static void SaveLSOutput(string path)
         {
             DisplayCurrentDirectoryFiles(false, "", true);
-            string dirList = "-----Directories-----"+Environment.NewLine;
+            string dirList = "-----Directories-----" + Environment.NewLine;
             dirList += string.Join(Environment.NewLine, s_listDirs);
-            string fileList = Environment.NewLine+"-------Files-------" +Environment.NewLine;
+            string fileList = Environment.NewLine + "-------Files-------" + Environment.NewLine;
             fileList += string.Join(Environment.NewLine, s_listFiles);
             string finalList = dirList + fileList;
             Console.WriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
@@ -379,7 +411,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     s_countDirectories++;
                 }
-                DisplaySubDirectoryAndFileCounts(dir, fileName, dirName, search);
+                if (!GlobalVariables.eventCancelKey)
+                    DisplaySubDirectoryAndFileCounts(dir, fileName, dirName, search);
             }
         }
 
@@ -434,6 +467,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 foreach (var dir in Directory.GetDirectories(s_currentDirectory))
                 {
+                    if (GlobalVariables.eventCancelKey)
+                        return;
+
                     var directoryInfo = new DirectoryInfo(dir);
                     if (!GlobalVariables.excludeDirectories.Contains(directoryInfo.Name))
                     {
@@ -468,6 +504,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 foreach (var file in files)
                 {
+                    if (GlobalVariables.eventCancelKey)
+                        return;
                     if (displaySizes)
                     {
                         if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
