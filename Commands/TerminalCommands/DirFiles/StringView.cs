@@ -39,6 +39,8 @@ namespace Commands.TerminalCommands.DirFiles
            Example: cat -lfc <file_name_text>
   -con : Concatenate text files to a single file.
            Example: cat -con file1;file2;file3 -o fileOut
+
+Commands can be canceled with CTRL+X key combination.
 ";
 
 
@@ -96,13 +98,16 @@ namespace Commands.TerminalCommands.DirFiles
                         string outputFile = arg.SplitByText("-o ", 1);
                         outputFile = FileSystem.SanitizePath(outputFile, s_currentDirectory);
                         File.WriteAllText(outputFile, "");
+                        GlobalVariables.eventKeyFlagX = true;
                         Core.Commands.CatCommand.ConcatenateFiles(files, outputFile, s_currentDirectory);
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        GlobalVariables.eventCancelKey = false;
                         string outFileData = File.ReadAllText(outputFile);
                         if (outFileData.Length > 0)
                             Console.WriteLine($"Data was saved to: {outputFile}");
                         else
                             Console.WriteLine("No file ware concatenated!");
-
                         break;
                     case "-n":
                         string lineCounter = arg.Split(' ')[1];
