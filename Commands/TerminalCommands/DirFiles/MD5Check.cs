@@ -18,15 +18,18 @@ namespace Commands.TerminalCommands.DirFiles
  md5 <file_name> : Display the MD5 CheckSUM of a file.
  md5 -d <dire_name> : Display the MD5 CheckSUM list of all the files in a directory and subdirectories.
  md5 -d <dire_name> -o <save_to_file> : Saves the MD5 CheckSUM list of all the files in a directory and subdirectories.
+
+Command md5 -d can be canceled with CTRL+X key combination.
 ";
         public void Execute(string arg)
         {
             try
             {
+                GlobalVariables.eventCancelKey = false;
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
                 // Display help message.
-                if(arg == $"{Name} -h")
+                if (arg == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
@@ -53,7 +56,10 @@ namespace Commands.TerminalCommands.DirFiles
                             return;
                         }
                         string fileSaved = FileSystem.SanitizePath(dParam.SplitByText(" -o ", 1), s_currentDirectory);
+                        GlobalVariables.eventKeyFlagX = true;
                         Console.WriteLine(FileSystem.SaveFileOutput(fileSaved, s_currentDirectory, MD5DirCheckFiles(dirPath)));
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         return;
                     }
                     string dirName = FileSystem.SanitizePath(arg.SplitByText(" -d ", 1), s_currentDirectory);
@@ -63,7 +69,10 @@ namespace Commands.TerminalCommands.DirFiles
                         return;
                     }
                     Console.WriteLine($"MD5 CheckSUM list for files located in {dirName}:\n");
+                    GlobalVariables.eventKeyFlagX = true;
                     Console.WriteLine(MD5DirCheckFiles(dirName));
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     return;
                 }
                 int argLenght = arg.Length - 4;
@@ -91,11 +100,12 @@ namespace Commands.TerminalCommands.DirFiles
             string retValue;
             foreach (var file in files)
             {
-                md5List.Add(MD5CheckSum(file,false));
+                md5List.Add(MD5CheckSum(file, false));
             }
             foreach (var dir in dirs)
             {
-                md5List.Add(MD5DirCheckFiles(dir));
+                if (!GlobalVariables.eventCancelKey)
+                    md5List.Add(MD5DirCheckFiles(dir));
             }
             retValue = string.Join("\n", md5List);
             return retValue;
