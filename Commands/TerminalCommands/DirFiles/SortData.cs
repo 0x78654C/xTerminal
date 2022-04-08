@@ -16,13 +16,16 @@ namespace Commands.TerminalCommands.DirFiles
     Example 2: sort -a filePath -o saveFilePath  (Sort data ascending and saves it to a file.)
     Example 3: sort -d filePath  (Sort data descending and displays it.)
     Example 4: sort -d filePath -o saveFilePath  (Sort data descending and saves it to a file.)
+
+Command running without saveing to file can be canceled with CTRL+X key combination.
 ";
 
         public void Execute(string arg)
         {
             try
             {
-                if(arg == $"{Name} -h")
+                GlobalVariables.eventCancelKey = false;
+                if (arg == $"{Name} -h")
                 {
                     Console.WriteLine(_helpMessage);
                     return;
@@ -30,12 +33,15 @@ namespace Commands.TerminalCommands.DirFiles
 
                 arg = arg.Replace($"{Name} ", "");
                 _currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-
+                GlobalVariables.eventKeyFlagX = true;
                 // Ascend sort.
                 AscendDataOutput(arg);
 
                 // Descend sort.
                 DescendDataOutput(arg);
+
+                if (GlobalVariables.eventCancelKey)
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
             }
             catch (Exception e)
             {
@@ -78,7 +84,11 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
                 foreach (var lineAscend in SortFileAscending(filePath))
+                {
+                    if (GlobalVariables.eventCancelKey)
+                        return;
                     Console.WriteLine(lineAscend);
+                }
             }
         }
 
@@ -117,7 +127,11 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
                 foreach (var lineAscend in SortFileDescending(filePath))
+                {
+                    if (GlobalVariables.eventCancelKey)
+                        return;
                     Console.WriteLine(lineAscend);
+                }
             }
         }
 
