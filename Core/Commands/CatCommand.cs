@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Core.Commands
 {
@@ -36,6 +37,9 @@ namespace Core.Commands
                 string line;
                 while ((line = streamReader.ReadLine()) != null)
                 {
+                    if (GlobalVariables.eventCancelKey)
+                        break;
+
                     lineCount++;
                     if (string.IsNullOrWhiteSpace(searchString))
                     {
@@ -48,8 +52,6 @@ namespace Core.Commands
                         output.AppendLine($"Line {lineCount} : {line}");
                     }
                 }
-
-                streamReader.Close();
             }
 
             if (!string.IsNullOrEmpty(savedFile))
@@ -57,7 +59,7 @@ namespace Core.Commands
                 return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
             }
 
-            return output.ToString();
+            return  output.ToString();
         }
 
 
@@ -113,7 +115,11 @@ namespace Core.Commands
                     foreach (var dir in directoryInfo)
                     {
                         string p = "";
-                        string oD = MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName);
+                        string oD = "";
+
+                        if (!GlobalVariables.eventCancelKey)
+                            oD = MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName);
+
                         if (!string.IsNullOrWhiteSpace(oD))
                         {
                             output.AppendLine(oD);
@@ -193,7 +199,8 @@ namespace Core.Commands
             var directories = new DirectoryInfo(currentDir).GetDirectories();
             foreach (var dir in directories)
             {
-                TotalLinesCounter(dir.FullName, fileName, fileCount);
+                if (!GlobalVariables.eventCancelKey)
+                    TotalLinesCounter(dir.FullName, fileName, fileCount);
             }
         }
 
@@ -269,6 +276,8 @@ namespace Core.Commands
                     {
                         if (!string.IsNullOrEmpty(line))
                         {
+                            if (GlobalVariables.eventCancelKey)
+                                break;
                             Console.WriteLine(line);
                         }
                     }
@@ -307,6 +316,8 @@ namespace Core.Commands
 
                         if (i < first - 1)
                             continue;
+                        if (GlobalVariables.eventCancelKey)
+                            break;
                         Console.WriteLine(line);
                     }
                 }
