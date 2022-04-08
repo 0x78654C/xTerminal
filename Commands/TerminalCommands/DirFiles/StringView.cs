@@ -46,6 +46,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             try
             {
+                GlobalVariables.eventCancelKey = false;
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 arg = arg.Replace("cat ", "");
                 string[] input = arg.Split(' ');
@@ -75,8 +76,12 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     if (input[0].Contains("-lc"))
                     {
+                        GlobalVariables.eventKeyFlagX = true;
                         int totalLinesCount = Core.Commands.CatCommand.LineCounts(s_currentDirectory);
                         Core.Commands.CatCommand.ClearCounter();
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        GlobalVariables.eventCancelKey = false;
                         Console.WriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
                         return;
                     }
@@ -108,7 +113,11 @@ namespace Commands.TerminalCommands.DirFiles
                         }
                         int lines = Int32.Parse(lineCounter);
                         string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
+                        GlobalVariables.eventKeyFlagX = true;
                         Core.Commands.CatCommand.OuputFirtsLines(filePath, lines);
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        GlobalVariables.eventCancelKey = false;
                         break;
                     case "-l":
                         string linesRange = arg.Split(' ')[1];
@@ -118,12 +127,20 @@ namespace Commands.TerminalCommands.DirFiles
                             return;
                         }
                         string pathFile = FileSystem.SanitizePath(arg.SplitByText(linesRange + " ", 1), s_currentDirectory);
+                        GlobalVariables.eventKeyFlagX = true;
                         Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        GlobalVariables.eventCancelKey = false;
                         break;
                     case "-s":
                         fileName = arg.SplitByText("-f ", 1);
                         searchString = arg.MiddleString("-s", "-f");
+                        GlobalVariables.eventKeyFlagX = true;
                         Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        GlobalVariables.eventCancelKey = false;
                         break;
                     case "-sa":
                         if (arg.Contains(" -f "))
@@ -139,29 +156,48 @@ namespace Commands.TerminalCommands.DirFiles
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
                             Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
+                            GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true, fileSearchIn);
                         }
                         else
                         {
+                            GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true);
                         }
                         s_output = string.IsNullOrWhiteSpace(s_output) ? "No files with names that contains that text!" : s_output;
                         Console.WriteLine(s_output);
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        GlobalVariables.eventCancelKey = false;
                         break;
                     case "-sao":
                         fileName = "";
-                        searchString = arg.MiddleString("-sao", "-f");
+                        if (arg.Contains(" -f "))
+                            searchString = arg.MiddleString("-sao", "-f");
+                        else
+                            searchString = arg.MiddleString("-sao", "-o");
                         saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                         string startMessage = "";
-                        fileSearchIn = arg.MiddleString("-f", "-o");
+                        if (arg.Contains(" -f ") && arg.Contains(" -o "))
+                            fileSearchIn = arg.MiddleString("-f", "-o");
+                        else
+                            fileSearchIn = "";
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
+                            GlobalVariables.eventKeyFlagX = true;
                             startMessage = $"---Searching in files containing '{fileSearchIn}' in name---\n\n";
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true, fileSearchIn);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
                         }
                         else
                         {
+                            GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
                         }
 
                         if (string.IsNullOrWhiteSpace(s_output))
@@ -178,21 +214,33 @@ namespace Commands.TerminalCommands.DirFiles
                             fileName = arg.MiddleString("-f", "-o");
                             searchString = arg.MiddleString("-so", "-f");
                             saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
+                            GlobalVariables.eventKeyFlagX = true;
                             Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
                             break;
                         }
                     case "-sm":
                         fileName = input[2];
                         fileName = arg.SplitByText("-f ", 1);
                         searchString = arg.MiddleString("-sm", "-f");
+                        GlobalVariables.eventKeyFlagX = true;
                         Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false));
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        GlobalVariables.eventCancelKey = false;
                         break;
                     case "-smo":
                         {
                             fileName = arg.MiddleString("-f", "-o");
                             searchString = arg.MiddleString("-smo", "-f");
                             saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
+                            GlobalVariables.eventKeyFlagX = true;
                             Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), saveToFile, false));
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
                             break;
                         }
                     case "-lfc":
@@ -200,8 +248,12 @@ namespace Commands.TerminalCommands.DirFiles
                             try
                             {
                                 fileName = arg.SplitByText("-lfc ", 1);
+                                GlobalVariables.eventKeyFlagX = true;
                                 int totalLinesCount = Core.Commands.CatCommand.LineCountsName(s_currentDirectory, fileName);
                                 Core.Commands.CatCommand.ClearCounter();
+                                if (GlobalVariables.eventCancelKey)
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                GlobalVariables.eventCancelKey = false;
                                 Console.WriteLine($"Total lines in files that name contains '{fileName}' (without empty lines): {totalLinesCount}");
                             }
                             catch (Exception e)
@@ -217,7 +269,7 @@ namespace Commands.TerminalCommands.DirFiles
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine(e.ToString());
             }
         }
     }
