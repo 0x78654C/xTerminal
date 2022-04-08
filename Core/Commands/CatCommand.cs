@@ -359,6 +359,8 @@ namespace Core.Commands
             string[] files = argfiles.Split(';');
             foreach (var file in files)
             {
+                if (GlobalVariables.eventCancelKey)
+                    return;
                 sFile = FileSystem.SanitizePath(file, currentDirectory);
                 if (!File.Exists(sFile))
                     Console.WriteLine($"File '{sFile}' does not exist!");
