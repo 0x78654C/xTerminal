@@ -147,7 +147,9 @@ This is the full list of commands that can be used in xTerminal:
     locate    -- Searches for files and directories, in the current directory and subdirectories that contains a specific text.
                  Example 1: locate <text> (Displays searched files/directories from current directory and subdirectories that includes a specific text.)
                  Example 2: locate <text> -o <save_to_file> (Stores in to a file the searched files/directories from current directory and subdirectories that includes a specific text.)
-
+    echo      -- Write/append data to a file.
+                 Example 1: echo hello world > path_to_file (Write data to file.)
+                 Example 2: echo hello world >> path_to_file (Append data to file.)
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)

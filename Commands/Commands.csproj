@@ -133,6 +133,7 @@
     <Compile Include="TerminalCommands\ConsoleSystem\ProcessKill.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
     <Compile Include="TerminalCommands\DirFiles\Delete.cs" />
+    <Compile Include="TerminalCommands\DirFiles\Echo.cs" />
     <Compile Include="TerminalCommands\DirFiles\Editor.cs" />
     <Compile Include="TerminalCommands\DirFiles\FCopy.cs" />
     <Compile Include="TerminalCommands\DirFiles\FMove.cs" />
