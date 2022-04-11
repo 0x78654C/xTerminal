@@ -274,7 +274,7 @@ Commands can be canceled with CTRL+X key combination.
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.ToString());
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
     }
