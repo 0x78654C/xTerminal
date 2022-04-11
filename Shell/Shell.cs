@@ -32,8 +32,8 @@ namespace Shell
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
-        private static int s_ctrlKey;
-        private static int s_xKey;
+        private static int s_ctrlKey = 1;
+        private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
         private static BackgroundWorker s_backgroundWorker;
 
@@ -182,7 +182,8 @@ namespace Shell
                 if (e.KeyCode.ToString().Length == 1)
                 {
                     s_intercept += e.KeyData.ToString().ToLower();
-                    s_ctrlCount = 0;
+                    //Reset flags for reuse.
+                    s_xKey = 0;
                 }
 
                 if (e.KeyCode == Keys.Back && !string.IsNullOrEmpty(s_intercept))
@@ -237,14 +238,15 @@ namespace Shell
                 }
 
 
-                if (s_xKey == s_ctrlKey && GlobalVariables.eventKeyFlagX)
+
+                if ((s_xKey == s_ctrlKey) && GlobalVariables.eventKeyFlagX)
                 {
                     GlobalVariables.eventKeyFlagX = false;
                     GlobalVariables.eventCancelKey = true;
 
                     //Reset flags for reuse.
                     s_xKey = 0;
-                    s_ctrlKey = 0;
+                    s_ctrlKey = 1;
                 }
             }
         }
