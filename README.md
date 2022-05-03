@@ -236,15 +236,15 @@ All xTerminal commands can be used from other terminals as <b>Command Line Argum
 
 namespace Test_Code
 {
-   class Test
+   public class Test
    {	
-	  staic void Main(string[] args)
+	  public void Main(string arg)
 	  {
 		// Do the stuff.
 	  }
    }
 }
-
+```
 
 ## Usage of the Password Manager:
 
