@@ -236,9 +236,9 @@ All xTerminal commands can be used from other terminals as <b>Command Line Argum
 
 namespace Test_Code
 {
-   public class Test
+   class Test
    {	
-	  public void Main(string arg)
+	  static void Main(string[] args)
 	  {
 		// Do the stuff.
 	  }
