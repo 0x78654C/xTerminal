@@ -236,21 +236,14 @@ All xTerminal commands can be used from other terminals as <b>Command Line Argum
 
 namespace Test_Code
 {
-   public class Test
+   class Test
    {	
-	  public void Main(string arg)
+	  staic void Main(string[] args)
 	  {
 		// Do the stuff.
 	  }
    }
 }
-
- ```
- xTerminal splits the code in following parts:
-  - namespace : Takes the name of the namespace. In this case: Test_Code 
-  - public class : Takes the name of the class. In this case: Test 
-  - Main : Is defined as entry point for the code to run.
-
 
 
 ## Usage of the Password Manager:
