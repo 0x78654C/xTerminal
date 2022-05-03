@@ -22,8 +22,6 @@ namespace Commands.TerminalCommands.Roslyn
         public string Name => "!";
 
         private string _codeToRun;
-        private string _namesapce;
-        private string _className;
         private bool _commandCheck = false;
         private string _currentLocation = string.Empty;
         private string _addonDir = string.Empty;
@@ -198,7 +196,7 @@ namespace Commands.TerminalCommands.Roslyn
                     assemblyName,
                     syntaxTrees: new[] { syntaxTree },
                     references: references,
-                    options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                    options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 
                 using (var ms = new MemoryStream())
                 {
@@ -223,21 +221,8 @@ namespace Commands.TerminalCommands.Roslyn
 
                     ms.Close();
                 }
-                Type type = assembly.GetType($"{_namesapce}.{_className}");
-                object obj = Activator.CreateInstance(type);
-                type.InvokeMember("Main",
-                    BindingFlags.Default | BindingFlags.InvokeMethod,
-                    null,
-                    obj,
-                    new object[] { param });
-                _className = "";
-                _namesapce = "";
-                _codeToRun = "";
-                obj = null;
-                references = null;
-                compilation = null;
-                assembly = null;
-                type = null;
+                MethodInfo myMethod = assembly.EntryPoint;
+                myMethod.Invoke(null, new object[] { new string[0] });
             }
             catch (Exception e)
             {
@@ -276,20 +261,6 @@ namespace Commands.TerminalCommands.Roslyn
                             return;
                         }
                         _codeToRun = File.ReadAllText(fileName);
-                        string[] fileLines = File.ReadAllLines(fileName);
-
-                        foreach (var line in fileLines)
-                        {
-                            if (line.ContainsText("namespace"))
-                            {
-                                _namesapce = line.Split(' ').ParameterAfter("namespace");
-                            }
-
-                            if (line.ContainsText("public class"))
-                            {
-                                _className = line.Split(' ').ParameterAfter("class");
-                            }
-                        }
                     }
                 }
             }
