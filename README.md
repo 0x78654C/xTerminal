@@ -21,6 +21,11 @@ A Linux like terminal for windows in C# with some extras ;).
  Install-Package Konscious.Security.Cryptography.Argon2
  ```
 
+ For DiffPlex use NuGet command in Commands project:
+  ```
+ Install-Package DiffPlex -Version 1.7.1
+ ```
+
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
 cd, cat, ls, odir, hex, frename, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
@@ -150,6 +155,11 @@ This is the full list of commands that can be used in xTerminal:
     echo      -- Write/append data to a file.
                  Example 1: echo hello world > path_to_file (Write data to file.)
                  Example 2: echo hello world >> path_to_file (Append data to file.)
+    diff      -- Outputs the difference between two files.
+                 Example 1: diff first_file_name;second_file_name                               : Display the difference from second file in comperison to first file.
+                 Example 2: diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comperison to first file.
+                 Example 3: diff first_file_name;second_file_name -f save_to_file_name          : Saves to file the difference from second file in comperison to first file.
+                 Example 4: diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comperison to first file.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
