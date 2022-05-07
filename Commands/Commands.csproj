@@ -69,6 +69,9 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DiffPlex, Version=1.7.1.0, Culture=neutral, PublicKeyToken=1d35e91d1bd7bc0f, processorArchitecture=MSIL">
+      <HintPath>..\packages\DiffPlex.1.7.1\lib\net40\DiffPlex.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.4.0.0-4.final\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
     </Reference>
@@ -133,6 +136,7 @@
     <Compile Include="TerminalCommands\ConsoleSystem\ProcessKill.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
     <Compile Include="TerminalCommands\DirFiles\Delete.cs" />
+    <Compile Include="TerminalCommands\DirFiles\Difference.cs" />
     <Compile Include="TerminalCommands\DirFiles\Echo.cs" />
     <Compile Include="TerminalCommands\DirFiles\Editor.cs" />
     <Compile Include="TerminalCommands\DirFiles\FCopy.cs" />
