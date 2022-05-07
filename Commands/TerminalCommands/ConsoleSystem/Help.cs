@@ -57,6 +57,7 @@ This is the full list of commands that can be used in xTerminal:
     sort      -- Sorts ascending/desceding data in a file. Use -h for additional help.
     locate    -- Searches for files and directories, in the current directory and subdirectories that contains a specific text. Use -h for additional help.
     echo      -- Write/append data to a file. Use -h for additional help.
+    diff      -- Outputs the difference between two files. Use -h for additional help.
                 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
