@@ -13,10 +13,10 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "diff";
         private string _currentLocation = string.Empty;
         private string _helpMessage = @"Usage of diff command:
- diff first_file_name;second_file_name                               : Display the difference from second file in comperison to first file.
- diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comperison to first file.
- diff first_file_name;second_file_name -f save_to_file_name          : Saves to file the difference from second file in comperison to first file.
- diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comperison to first file.
+ diff first_file_name;second_file_name                               : Display the difference from second file in comparison to first file.
+ diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
+ diff first_file_name;second_file_name -f save_to_file_name          : Saves to file the difference from second file in comparison to first file.
+ diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
 ";
         public void Execute(string args)
         {
