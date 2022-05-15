@@ -25,6 +25,9 @@ namespace Core.SystemTools
                     process.StartInfo = new ProcessStartInfo(input)
                     {
                         Arguments = arguments,
+                        UseShellExecute = false,
+                        RedirectStandardInput = true,
+                        RedirectStandardError = true,
                         Verb = "runas"
                     };
                 }
@@ -32,6 +35,9 @@ namespace Core.SystemTools
                 {
                     process.StartInfo = new ProcessStartInfo(input)
                     {
+                        UseShellExecute = false,
+                        RedirectStandardInput = true,
+                        RedirectStandardError = true,
                         Arguments = arguments
                     };
                 }
