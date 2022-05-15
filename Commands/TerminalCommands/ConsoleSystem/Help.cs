@@ -26,7 +26,7 @@ This is the full list of commands that can be used in xTerminal:
     start     -- Starts an application. Use -h for additional help.
     pkill     -- Kills a running process by name or id. Use -h for additional help.
     clear     -- Clears the console.
-    cd        -- Sets the current directory. (cd .. for parent directory).
+    cd        -- Sets the current directory. (cd .. for parent directory, cd ../.. and so on for multi backward directory navigation).
     odir      -- Open current directory or other directory path provided with Windows Explorer.
     ps        -- Opens Windows Powershell.
     cmd       -- Opens Windows Command Prompt.
