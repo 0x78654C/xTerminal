@@ -7,13 +7,13 @@ using System.Text.RegularExpressions;
 namespace Commands.TerminalCommands.ConsoleSystem
 {
     /*
-     Setting te currnet directory
+     Setting te current directory
      */
     public class CurrentDirectory : ITerminalCommand
     {
         private static string s_newLocation = string.Empty;
         private static string s_currentLocation = string.Empty;
-
+        private static string[] s_exceptionPath = { ".", "..\\", ".\\", "./", "...", "\\", "/",@"..\.." };
         public string Name => "cd";
 
         public void Execute(string arg)
@@ -41,7 +41,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     else if (s_newLocation == "..")
                     {
                         int parseLocation = Regex.Matches(s_currentLocation, @"\\").Count;
-                        if (s_currentLocation.Length != 3)
+
+                        if (s_currentLocation.Length > 3)
                         {
                             string lastDirectory = s_currentLocation.Split('\\')[parseLocation];
                             if (parseLocation == 1)
@@ -55,11 +56,26 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         }
                         else
                         {
-                            File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
+                            s_currentLocation = s_currentLocation.Substring(0, 3);
+                            File.WriteAllText(GlobalVariables.currentDirectory, s_currentLocation);
+                            return;
                         }
+                    }
+                    else if (s_newLocation.StartsWith("../"))
+                    {
+                        BackWardNavigation();
                     }
                     else
                     {
+                        if(s_newLocation.Contains("/"))
+                        {
+                            Console.WriteLine($"Wrong path separator format!");
+                            return;
+                        }
+
+                        if (s_exceptionPath.ContainsParameter(s_newLocation))
+                            return;
+
                         pathCombine = Path.Combine(s_currentLocation, s_newLocation); // combine locations
                         if (Directory.Exists(pathCombine))
                         {
@@ -91,6 +107,44 @@ namespace Commands.TerminalCommands.ConsoleSystem
             int parrentIndex = dirLenght - lastDirLength;
             output = dir.Substring(0, parrentIndex - 1);
             return output;
+        }
+
+        /// <summary>
+        /// Backward multi directory navigation.
+        /// </summary>
+        private void BackWardNavigation()
+        {
+            int count = 1;
+            int parseBackSlash = Regex.Matches(s_newLocation, "/..",RegexOptions.ExplicitCapture).Count + 1;
+            int parseLocation = Regex.Matches(s_currentLocation, @"\\").Count;
+            if (parseLocation < parseBackSlash)
+                return;
+
+            if (parseBackSlash == parseLocation)
+            {
+                s_currentLocation = s_currentLocation.Substring(0, 3);
+                File.WriteAllText(GlobalVariables.currentDirectory, s_currentLocation);
+                return;
+            }
+
+            if (s_currentLocation.Length > 3)
+            {
+                if (parseLocation > 0)
+                {
+                    while (count <= parseBackSlash)
+                    {
+                        count++;
+                        s_currentLocation = GetParentDir(s_currentLocation);
+                    }
+                    File.WriteAllText(GlobalVariables.currentDirectory, s_currentLocation);
+                    return;
+                }
+            }
+            else
+            {
+                s_currentLocation = GetParentDir(s_currentLocation);
+                File.WriteAllText(GlobalVariables.currentDirectory, s_currentLocation);
+            }
         }
     }
 }
