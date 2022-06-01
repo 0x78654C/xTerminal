@@ -61,6 +61,7 @@ This is the full list of commands that can be used in xTerminal:
                          Example: ls -cf <search_text>
                    -cd : Counts directories from current directory and subdirectories with name containing a specific text.
                          Example: ls -cd <search_text>
+                   -ct : Display creation date time of files and folders from current directory.
                    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
     ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
