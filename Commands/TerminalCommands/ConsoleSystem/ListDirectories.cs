@@ -30,7 +30,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
-        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-se" };
+        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-se", "-ct" };
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
    .GroupBy(t => t.Md5)
    .Where(t => t.Count() > 1)
@@ -54,6 +54,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
           Example: ls -cf <search_text>
     -cd : Counts directories from current directory and subdirectories with name containing a specific text.
           Example: ls -cd <search_text>
+    -ct : Display creation date time of files and folders from current directory.
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
 
@@ -103,6 +104,17 @@ Commands can be canceled with CTRL+X key combination.
                     {
                         s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                     }
+                }
+
+                // List file/folder creation time.
+                if (arg.ContainsParameter("-ct"))
+                {
+                    GlobalVariables.eventKeyFlagX = true;
+                    // Display directory and file information
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false,true);
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    return;
                 }
 
                 // List files/folders containing a specific text in name.
@@ -244,7 +256,7 @@ Commands can be canceled with CTRL+X key combination.
                 {
                     GlobalVariables.eventKeyFlagX = true;
                     // Display directory and file information
-                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false);
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false,false);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                 }
@@ -358,7 +370,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="path">Path to file</param>
         private static void SaveLSOutput(string path)
         {
-            DisplayCurrentDirectoryFiles(false, "", true);
+            DisplayCurrentDirectoryFiles(false, "", true,false);
             string dirList = "-----Directories-----" + Environment.NewLine;
             dirList += string.Join(Environment.NewLine, s_listDirs);
             string fileList = Environment.NewLine + "-------Files-------" + Environment.NewLine;
@@ -422,7 +434,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="displaySizes">Display size of files.</param>
         /// <param name="highlightSearchText">Thext to be highlighted in files or directories names.</param>
         /// <param name="saveToFile">Save output to a file.</param>
-        private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile)
+        private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile, bool creationTime)
         {
             if (!Directory.Exists(s_currentDirectory))
             {
@@ -432,13 +444,13 @@ Commands can be canceled with CTRL+X key combination.
 
             if (saveToFile)
             {
-                DisplaySubDirectories(highlightSearchText, saveToFile);
-                DisplayFiles(highlightSearchText, displaySizes, saveToFile);
+                DisplaySubDirectories(highlightSearchText, saveToFile, creationTime);
+                DisplayFiles(highlightSearchText, displaySizes, saveToFile, creationTime);
             }
             else
             {
-                DisplaySubDirectories(highlightSearchText, saveToFile);
-                DisplayFiles(highlightSearchText, displaySizes, saveToFile);
+                DisplaySubDirectories(highlightSearchText, saveToFile, creationTime);
+                DisplayFiles(highlightSearchText, displaySizes, saveToFile, creationTime);
             }
 
             if (displaySizes)
@@ -461,7 +473,7 @@ Commands can be canceled with CTRL+X key combination.
         /// </summary>
         /// <param name="highlightSearchText">Thext to be highlighted in files or directories names.</param>
         /// <param name="saveToFile">Save output to a file.</param>
-        private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile)
+        private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile, bool creationTime)
         {
             try
             {
@@ -486,7 +498,10 @@ Commands can be canceled with CTRL+X key combination.
                             }
                             else
                             {
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                                if (creationTime)
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, FileSystem.GetCreationDateDirInfo(directoryInfo));
+                                else
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
                             }
                         }
                     }
@@ -495,7 +510,7 @@ Commands can be canceled with CTRL+X key combination.
             catch { }
         }
 
-        private static void DisplayFiles(string highlightSearchText, bool displaySizes, bool saveToFile)
+        private static void DisplayFiles(string highlightSearchText, bool displaySizes, bool saveToFile, bool creationTime)
         {
             try
             {
@@ -517,7 +532,10 @@ Commands can be canceled with CTRL+X key combination.
                             }
                             else
                             {
-                                DisplayFileInfoText(formattedText, highlightSearchText);
+                                if (creationTime)
+                                    Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                else
+                                    DisplayFileInfoText(formattedText, highlightSearchText);
                             }
                         }
                     }
@@ -532,7 +550,10 @@ Commands can be canceled with CTRL+X key combination.
                             }
                             else
                             {
-                                DisplayFileInfoText(formattedText, highlightSearchText);
+                                if (creationTime)
+                                    Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                else
+                                    DisplayFileInfoText(formattedText, highlightSearchText);
                             }
                         }
                     }
