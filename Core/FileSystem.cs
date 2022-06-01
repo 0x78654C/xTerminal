@@ -259,5 +259,25 @@ namespace Core
         {
             return !s_regexNumber.IsMatch(text);
         }
+
+        /// <summary>
+        /// Get file creation date time.
+        /// </summary>
+        /// <param name="fileInfo"></param>
+        /// <returns></returns>
+        public static string GetCreationDateFileInfo(FileInfo fileInfo)
+        {
+            return fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}";
+        }
+
+        /// <summary>
+        /// Get directory creation date time.
+        /// </summary>
+        /// <param name="directoryInfo"></param>
+        /// <returns></returns>
+        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo)
+        {
+            return directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
+        }
     }
 }
