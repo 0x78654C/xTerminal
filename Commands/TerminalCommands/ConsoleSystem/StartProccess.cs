@@ -20,52 +20,58 @@ Can use with following parameter:
 
         public void Execute(string args)
         {
+            try
+            {
+                // Set directory, to be used in other functions
+                s_currentDirectory =
+                                File.ReadAllText(GlobalVariables.currentDirectory);
+                if (args.Length == 5)
+                {
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
+                int argsLength = args.Length - 6;
+                args = args.Substring(6, argsLength);
+                string param = args.Split(' ').First();
+                string paramApp = string.Empty;
 
-            // Set directory, to be used in other functions
-            s_currentDirectory =
-                            File.ReadAllText(GlobalVariables.currentDirectory);
-            if (args.Length == 5)
-            {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
-                return;
-            }
-            int argsLength = args.Length - 6;
-            args = args.Substring(6, argsLength);
-            string param = args.Split(' ').First();
-            string paramApp = string.Empty;
+                if (args.Contains("-p"))
+                {
+                    paramApp = args.SplitByText(" -p ", 1);
+                    args = args.SplitByText(" -p ", 0);
+                }
+                if (args == "-h")
+                {
+                    Console.WriteLine(_helpMessage);
+                    return;
+                }
+                if (args.Contains(@"\"))
+                {
+                    if (param == "-u")
+                    {
+                        args = args.Replace("-u ", "");
+                        args = FileSystem.SanitizePath(args, s_currentDirectory);
 
-            if (args.Contains("-p"))
-            {
-                paramApp = args.SplitByText(" -p ", 1);
-                args = args.SplitByText(" -p ", 0);
-            }
-            if (args == "-h")
-            {
-                Console.WriteLine(_helpMessage);
-                return;
-            }
-            if (args.Contains(@"\"))
-            {
+                        StartApplication(args, paramApp, true);
+                        return;
+                    }
+                    StartApplication(args, paramApp, false);
+                    return;
+                }
+                args = FileSystem.SanitizePath(args, s_currentDirectory);
+
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    args = FileSystem.SanitizePath(args, s_currentDirectory);
-
                     StartApplication(args, paramApp, true);
                     return;
                 }
                 StartApplication(args, paramApp, false);
-                return;
             }
-            args = FileSystem.SanitizePath(args, s_currentDirectory);
-
-            if (param == "-u")
-            {
-                args = args.Replace("-u ", "");
-                StartApplication(args, paramApp, true);
-                return;
+            catch (Exception e)
+            { 
+                FileSystem.ErrorWriteLine(e.Message);
             }
-            StartApplication(args, paramApp, false);
         }
 
         /// <summary>
