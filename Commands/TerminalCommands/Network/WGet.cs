@@ -20,28 +20,34 @@ namespace Commands.TerminalCommands.Network
         private static string s_urlSecond;
         private static Stopwatch s_stopWatch;
         private static TimeSpan s_timeSpan;
-        private static readonly WebClient s_client = new WebClient();
+        private static bool s_pingCheck = false;
+        private static WebClient s_client;
         private static MatchCollection s_match2;
         private static MatchCollection s_match;
-        private static BackgroundWorker s_worker;
-        private static BackgroundWorker s_workerDirectory;
         private static AutoResetEvent s_resetEvent = new AutoResetEvent(false);
         private static string s_helpMessage = @"Usage: wget <url> . Or with paramters:
 
    -h : Display this message.
    -o : Save to a specific directory.
-        Example2: wget <url> -o <directory_path>
+        Example: wget <url> -o <directory_path>
+
+    WGet command can be used with --noping parameter for disable ping check on hostname/ip.
+        Example: wget <url> -o <directory_path> --noping
 ";
         public void Execute(string arg)
         {
-            s_worker = new BackgroundWorker();
-            s_worker.DoWork += DoWork_Download;
-            s_worker.WorkerReportsProgress = true;
+            if (arg.Contains("--noping"))
+            {
+                s_pingCheck = false;
+                arg = arg.Replace("--noping", string.Empty);
+            }
+            else
+            {
+                s_pingCheck = true;
+            }
 
-            s_workerDirectory = new BackgroundWorker();
-            s_workerDirectory.DoWork += DoWork_DownloadDirectory;
-            s_workerDirectory.WorkerReportsProgress = true;
-
+            ActivateTls();
+            s_client = new WebClient();
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             if (arg.Length == 4)
@@ -56,26 +62,20 @@ namespace Commands.TerminalCommands.Network
             }
             try
             {
-                if (NetWork.IntertCheck())
+                if (s_pingCheck)
                 {
-                    int argLenght = arg.Length - 5;
-                    string input = arg.Substring(5, argLenght);  //url input
-                    Console.WriteLine(s_urlFirst);
-                    if (input.Contains("-o"))
+                    if (NetWork.IntertCheck())
                     {
-                        s_urlFirst = input.SplitByText("-o", 1);
-                        s_urlSecond = input.SplitByText("-o", 0);
-                        s_workerDirectory.RunWorkerAsync();
-                        s_resetEvent.WaitOne();
-                        return;
+                        RunWGet(arg);
                     }
-                    
-                    s_worker.RunWorkerAsync();
-                    s_resetEvent.WaitOne();
+                    else
+                    {
+                        FileSystem.ErrorWriteLine("No internet connection!");
+                    }
                 }
                 else
                 {
-                    FileSystem.ErrorWriteLine("No internet connection!");
+                    RunWGet(arg);
                 }
             }
             catch (Exception e)
@@ -83,8 +83,32 @@ namespace Commands.TerminalCommands.Network
                 FileSystem.ErrorWriteLine(e.Message);
             }
         }
+
+        private static void ActivateTls()
+        {
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
+                | SecurityProtocolType.Tls11
+                | SecurityProtocolType.Tls
+                | SecurityProtocolType.Ssl3;
+        }
+
+        private static void RunWGet(string param)
+        {
+            int argLenght = param.Length - 5;
+            string input = param.Substring(5, argLenght);  //url input
+            Console.WriteLine(s_urlFirst);
+            if (input.Contains("-o"))
+            {
+                s_urlFirst = input.SplitByText("-o", 1).Trim();
+                s_urlSecond = input.SplitByText("-o", 0).Trim();
+                DownloadDirectory();
+                return;
+            }
+            Download();
+        }
         //Download file directly in root path
-        private static void DoWork_Download(object sender, DoWorkEventArgs e)
+        private static void Download()
         {
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
             int parse;
@@ -101,7 +125,6 @@ namespace Commands.TerminalCommands.Network
             s_stopWatch.Start();
             s_client.DownloadFile(source, dlocation + @"\" + fileUrl);
             FileInfo fileInfo = new FileInfo(dlocation + @"\" + fileUrl);
-            s_worker.ReportProgress(Convert.ToInt32(fileInfo.Length));
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
@@ -110,7 +133,7 @@ namespace Commands.TerminalCommands.Network
         }
 
         // Download file in diffrent path from root
-        private static void DoWork_DownloadDirectory(object sender, DoWorkEventArgs e)
+        private static void DownloadDirectory()
         {
             if (!Directory.Exists(s_urlFirst))
             {
@@ -133,7 +156,6 @@ namespace Commands.TerminalCommands.Network
             s_stopWatch.Start();
             s_client.DownloadFile(source, s_urlFirst + @"\" + fileUrl2);
             FileInfo fileInfo = new FileInfo(s_urlFirst + @"\" + fileUrl2);
-            s_workerDirectory.ReportProgress(Convert.ToInt32(fileInfo.Length));
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + s_urlFirst + @"\" + fileUrl2);
