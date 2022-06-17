@@ -11,8 +11,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_currentDirectory = string.Empty;
         public string Name => "start";
         private string _helpMessage = @"Usage: start <file_name> OR start <file_name> -p <file_paramters>
-Can use with following parameter:
-    -h : Display this message.
+Can be used with the following parameters:
+    -h : Displays this message.
     -u : Can run process with different user.
          Example1: start -u <file_name>
          Example2: start -u <file_name> -p <file_paramters>

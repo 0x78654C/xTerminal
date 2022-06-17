@@ -19,7 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 Console.WriteLine("Command history log cleared!");
                 return;
             }
-            Console.WriteLine("File '" + s_historyFile + "' dose not exist!");
+            Console.WriteLine($"File '{s_historyFile}' does not exist!");
         }
     }
 }

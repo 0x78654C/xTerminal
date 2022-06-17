@@ -27,7 +27,7 @@ namespace Commands.TerminalCommands.Roslyn
         private string _addonDir = string.Empty;
         private string _helpMessage = @"
  Usage: ! <command_name>
- Can be used with the follwing parameters:
+ Can be used with the following parameters:
 
    -h     :  Displays help message.
    -p     :  Uses command with parameters.
@@ -37,7 +37,7 @@ namespace Commands.TerminalCommands.Roslyn
                 Example: ! -add <file_name_with_code> -c <command_name>|<command_description>
    -del   :  Deletes an Add-on.
                 Example: ! -del <command_name>
-   -list  :  Display the list of the saved add-ons with description.
+   -list  :  Displays the list of the saved add-ons with description.
 ";
 
 
@@ -86,7 +86,7 @@ namespace Commands.TerminalCommands.Roslyn
         {
             string fileName;
             string description;
-            string outList = "List of Add-ons commands:\n\n";
+            string outList = "List of Add-on commands:\n\n";
             if (!Directory.Exists(addonDir))
             {
                 FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
@@ -165,7 +165,7 @@ namespace Commands.TerminalCommands.Roslyn
                     string fileContent = $"//D:{description}" + Environment.NewLine;
                     fileContent += stringReader.ReadToEnd();
                     File.WriteAllText(addonDir + $"\\{command}.x", fileContent);
-                    Console.WriteLine($"Add '{command}' added!");
+                    Console.WriteLine($"Add-on '{command}' added!");
                 }
             }
             catch (Exception e)
@@ -180,7 +180,7 @@ namespace Commands.TerminalCommands.Roslyn
                 ParseCode(addonDir, command);
                 if (_commandCheck)
                 {
-                    Console.WriteLine($"The following add-on does not exist: {command}");
+                    Console.WriteLine($"The following Add-on does not exist: {command}");
                     _commandCheck = false;
                     return;
                 }

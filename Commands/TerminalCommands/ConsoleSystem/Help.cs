@@ -30,21 +30,21 @@ This is the full list of commands that can be used in xTerminal:
     odir      -- Open current directory or other directory path provided with Windows Explorer.
     ps        -- Opens Windows Powershell.
     cmd       -- Opens Windows Command Prompt.
-    reboot    -- It force reboots the Windows OS.
-    shutdown  -- It force shutdown the Windows OS.
-    logoff    -- It force logoff current user.
-    lock      -- Locks the screen(similar to Win+L key combination).
+    reboot    -- Forces reboot of the Windows OS.
+    shutdown  -- Forces shutdown of the Windows OS.
+    logoff    -- Forces logoff of the current user.
+    lock      -- Locks the screen (similar to Win+L key combination).
     bios      -- Displays BIOS information on local machine or remote. Use -h for additional parameters.
     sinfo     -- Displays Storage devices information on local machine or remote. Use -h for additional parameters.
-    hex       -- Display a hex dump of a file. Use -h for additional parameters.
-    pcinfo    -- Display System Information.
+    hex       -- Displays a hex dump of a file. Use -h for additional parameters.
+    pcinfo    -- Displays System Information.
     nt        -- Starts new xTerminal console.
                  -u : Starts new xTerminal console with other user option.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
-    mkdir     -- It creates a directory in the current place.
-    mkfile    -- It creates a file in the current place.
+    mkdir     -- Creates a directory in the current place.
+    mkfile    -- Ccreates a file in the current place.
     fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
     frename   -- Renames a file in a specific directory(s).
                  Example: frename <old_file_name> -o <new_file_name>
@@ -66,7 +66,7 @@ This is the full list of commands that can be used in xTerminal:
     extip     -- Displays the current external IP address.
     wget      -- Download files from a specific website. Use -h for additional help.
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
-    ping      -- Pings a IP/Hostname.  Use -h for additional parameters.
+    ping      -- Pings a IP/Hostname. Use -h for additional parameters.
     cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
 
     -----------------C# Core Runner and Add-ons -------------

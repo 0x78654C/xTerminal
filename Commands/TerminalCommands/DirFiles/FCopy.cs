@@ -67,10 +67,10 @@ namespace Commands.TerminalCommands.DirFiles
                 if (arg == $"{Name} -h")
                 {
                     Console.WriteLine(@"Usage of fcopy command:
-    fcopy <source_file> -o <destination_file>. Can bee used with following parameters:
-    fcopy -h : displays this message    
-    fcopy -ca <destination_directory> : copy all files from current directory in a specific directory
-    fcopy -ca : copy source files in same directory
+    fcopy <source_file> -o <destination_file>. Can be used with the following parameters:
+    fcopy -h : Displays this message
+    fcopy -ca <destination_directory> : Copies all files from the current directory to a specific directory
+    fcopy -ca : Copies source files in the same directory
 ");
                     return;
                 }
@@ -92,10 +92,10 @@ namespace Commands.TerminalCommands.DirFiles
                                 int woIndex = 0;
                                 int wIndex = 0;
                                 int countF = Regex.Matches(file, @"\\").Count;
-                                //we get the file name
+                                // We get the file name
                                 string delilmiterSplitF = file.Split('\\')[countF];
 
-                                //we check if file is already indexed or not
+                                // We check if file is already indexed or not
                                 if (delilmiterSplitF.StartsWith("(") && delilmiterSplitF.Contains(") - "))
                                 {
                                     string fileNameSplit2 = delilmiterSplitF.Split(')')[1];
@@ -124,7 +124,7 @@ namespace Commands.TerminalCommands.DirFiles
                                     }
                                     else
                                     {
-                                        Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                                        Console.WriteLine($"Source file '{Source}' does not exist!" + Environment.NewLine);
                                     }
                                 }
 
@@ -140,7 +140,7 @@ namespace Commands.TerminalCommands.DirFiles
                                 }
 
 
-                                //copy module
+                                // Copy module
                                 if (File.Exists(Source))
                                 {
                                     if (!File.Exists(Destination))
@@ -202,11 +202,11 @@ namespace Commands.TerminalCommands.DirFiles
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                                    Console.WriteLine($"Source file '{Source}' does not exist!" + Environment.NewLine);
                                 }
                                 //-------------------------
 
-                                //Grabing destination file crc
+                                // Grabing destination file crc
                                 using (var crc32 = Crc32.Create())
                                 {
                                     using (var stream = File.OpenRead(Destination))
@@ -227,7 +227,7 @@ namespace Commands.TerminalCommands.DirFiles
                                 else
                                 {
                                     File.Delete(Destination);
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC dose not match! File was not copied." + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC does not match! File was not copied." + Environment.NewLine);
                                     FilesErrorCopy.Add(Source);
                                 }
                             }
@@ -244,10 +244,10 @@ namespace Commands.TerminalCommands.DirFiles
                                 int woIndex = 0;
                                 int wIndex = 0;
                                 int countF = Regex.Matches(file, @"\\").Count;
-                                //we get the file name
+                                // We get the file name
                                 string delilmiterSplitF = file.Split('\\')[countF];
 
-                                //we check if file is already indexed or not
+                                // We check if file is already indexed or not
                                 if (delilmiterSplitF.StartsWith("(") && delilmiterSplitF.Contains(") - "))
                                 {
                                     string fileNameSplit2 = delilmiterSplitF.Split(')')[1];
@@ -262,7 +262,7 @@ namespace Commands.TerminalCommands.DirFiles
                                 FileCount--;
                                 Source = file;
 
-                                //check if source is current path
+                                // Check if source is current path
                                 if (!Source.Contains(":") || !Source.Contains(@"\"))
                                 {
                                     Source = dlocation + Source;
@@ -282,7 +282,7 @@ namespace Commands.TerminalCommands.DirFiles
                                     }
                                     else
                                     {
-                                        Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                                        Console.WriteLine($"Source file '{Source}' does not exist!" + Environment.NewLine);
                                     }
                                 }
 
@@ -298,7 +298,7 @@ namespace Commands.TerminalCommands.DirFiles
                                 }
 
 
-                                //copy module
+                                // Copy module
                                 if (File.Exists(Source))
                                 {
                                     if (!File.Exists(Destination))
@@ -363,11 +363,11 @@ namespace Commands.TerminalCommands.DirFiles
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                                    Console.WriteLine($"Source file '{Source}' does not exist!" + Environment.NewLine);
                                 }
                                 //-------------------------
 
-                                //Grabing destination file crc
+                                // Grabing destination file crc
                                 using (var crc32 = Crc32.Create())
                                 {
                                     using (var stream = File.OpenRead(Destination))
@@ -388,7 +388,7 @@ namespace Commands.TerminalCommands.DirFiles
                                 else
                                 {
                                     File.Delete(Destination);
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC dose not match! File was not copied." + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC does not match! File was not copied." + Environment.NewLine);
                                     FilesErrorCopy.Add(Source);
                                 }
                             }
@@ -415,7 +415,7 @@ namespace Commands.TerminalCommands.DirFiles
                         }
                         else
                         {
-                            Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                            Console.WriteLine($"Source file '{Source}' does not exist!" + Environment.NewLine);
                         }
                     }
 
@@ -426,7 +426,7 @@ namespace Commands.TerminalCommands.DirFiles
                         Destination = dlocation + Destination;
                     }
 
-                    //copy module
+                    // Copy module
                     if (File.Exists(Source))
                     {
                         if (!File.Exists(Destination))
@@ -435,12 +435,12 @@ namespace Commands.TerminalCommands.DirFiles
                         }
                         else
                         {
-                            Console.WriteLine($"Destination file '{Destination}' already exist!" + Environment.NewLine);
+                            Console.WriteLine($"Destination file '{Destination}' already exists!" + Environment.NewLine);
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"Source file '{Source}' dose not exist!" + Environment.NewLine);
+                        Console.WriteLine($"Source file '{Source}' does not exist!" + Environment.NewLine);
                     }
                     //-------------------------
                     //Grabing destination file crc
@@ -461,7 +461,7 @@ namespace Commands.TerminalCommands.DirFiles
                     else
                     {
                         File.Delete(Destination);
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC dose not match! File was not copied." + Environment.NewLine);
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC does not match! File was not copied." + Environment.NewLine);
                         FilesErrorCopy.Add(Source);
                     }
                 }

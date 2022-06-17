@@ -40,13 +40,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         private static string s_helpMessage = @"Usage of ls command:
     -h  : Displays this message.
-    -d  : Display duplicate files in a directory and subdirectories.
+    -d  : Displays duplicate files in a directory and subdirectories.
           Example1: ls -d <directory_path>
           Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
           Example3: ls -d <directory_path> -o <file_to_save>
           Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
     -s  : Displays size of files in current directory and subdirectories.
-    -se : List recursively files and directories containing a specific text.
+    -se : Recursively lists files and directories containing a specific text.
           Example1: ls -se <search_text>
           Example2: ls -se <search_text> -o <file_to_save>
     -c  : Counts files and directories and subdirectories from current directory.
@@ -54,7 +54,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
           Example: ls -cf <search_text>
     -cd : Counts directories from current directory and subdirectories with name containing a specific text.
           Example: ls -cd <search_text>
-    -ct : Display creation date time of files and folders from current directory.
+    -ct : Displays creation date time of files and folders from current directory.
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
 
@@ -207,7 +207,7 @@ Commands can be canceled with CTRL+X key combination.
 
                 if (arg.ContainsParameter("-c"))
                 {
-                    Console.WriteLine($"\nCounting total directories/subdirectories and files on current location....\n");
+                    Console.WriteLine($"\nCounting total directories/subdirectories and files on current location...\n");
                     GlobalVariables.eventKeyFlagX = true;
                     DisplaySubDirectoryAndFileCounts(s_currentDirectory, string.Empty, string.Empty, false);
                     Console.WriteLine($"Total directories/subdirectories: {s_countDirectories}");
@@ -224,7 +224,7 @@ Commands can be canceled with CTRL+X key combination.
                     {
                         GlobalVariables.eventKeyFlagX = true;
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, arg.ParameterAfter("-cf"), "", false);
-                        Console.WriteLine($"Total files count that contains '{arg.ParameterAfter("-cf")}' (from subdirectories too): {s_countFilesText}\n");
+                        Console.WriteLine($"Total files count that contains '{arg.ParameterAfter("-cf")}' (including subdirectories): {s_countFilesText}\n");
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         ClearCounters();
@@ -264,7 +264,7 @@ Commands can be canceled with CTRL+X key combination.
             }
             catch (IndexOutOfRangeException)
             {
-                FileSystem.ErrorWriteLine("The command parameters were not valid");
+                FileSystem.ErrorWriteLine("The command parameters were invalid!");
             }
             catch (UnauthorizedAccessException)
             {

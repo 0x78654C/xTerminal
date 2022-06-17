@@ -14,10 +14,10 @@ namespace Commands.TerminalCommands.DirFiles
         private string _currentLocation;
         private static string s_helpMessage = @"Usage of locate command:
 
-    Example 1: locate <text> (Displays searched files/directories from current directory and subdirectories that includes a specific text.)
+    Example 1: locate <text> (Displays searched files/directories from the current directory and subdirectories that includes a specific text.)
     Example 2: locate <text> -o <save_to_file> (Stores in to a file the searched files/directories from current directory and subdirectories that includes a specific text.)
   
-Command be canceled with CTRL+X key combination.
+Command can be canceled with CTRL+X key combination.
 ";
 
         public void Execute(string arg)

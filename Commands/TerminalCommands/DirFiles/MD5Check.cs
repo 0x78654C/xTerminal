@@ -15,8 +15,8 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "md5";
         private static string s_currentDirectory;
         private static string s_helpMessage = @"Usage of MD5 command:
- md5 <file_name> : Display the MD5 CheckSUM of a file.
- md5 -d <dire_name> : Display the MD5 CheckSUM list of all the files in a directory and subdirectories.
+ md5 <file_name> : Displays the MD5 CheckSUM of a file.
+ md5 -d <dire_name> : Displays the MD5 CheckSUM list of all the files in a directory and subdirectories.
  md5 -d <dire_name> -o <save_to_file> : Saves the MD5 CheckSUM list of all the files in a directory and subdirectories.
 
 Command md5 -d can be canceled with CTRL+X key combination.
@@ -139,7 +139,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                     else
                     {
                         if (fileCheck)
-                            retValue = "File " + arg + " dose not exist!";
+                            retValue = $"File {arg} does not exist!";
                     }
                 }
                 else
@@ -158,7 +158,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                     else
                     {
                         if (fileCheck)
-                            retValue += "File " + cDir + @"\" + arg + " dose not exist!";
+                            retValue += $"File {cDir}\\{arg} does not exist!";
                     }
                 }
                 return retValue;

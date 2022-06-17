@@ -175,7 +175,7 @@ namespace Commands.TerminalCommands.Games
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine();
             Console.WriteLine("||---------------------- FLAPPY BIRD ---------------------||");
-            Console.WriteLine("                    ** Console verion **");
+            Console.WriteLine("                    ** Console version **");
             Console.WriteLine("                        <<< HELP >>>");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -198,7 +198,7 @@ namespace Commands.TerminalCommands.Games
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine();
             Console.WriteLine("||---------------------- FLAPPY BIRD ---------------------||");
-            Console.WriteLine("                    ** Console verion **");
+            Console.WriteLine("                    ** Console version **");
             Console.WriteLine("                      <<< CREDITS >>>");
             Console.WriteLine();
             Console.WriteLine();
@@ -225,14 +225,14 @@ namespace Commands.TerminalCommands.Games
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine();
             Console.WriteLine("||---------------------- FLAPPY BIRD ---------------------||");
-            Console.WriteLine("                    ** Console verion **");
+            Console.WriteLine("                    ** Console version **");
             Console.WriteLine("                        <<< HELPS >>>");
             Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("         Keep the bird flying and avoiding the pipes");
-            Console.WriteLine("     Don't let him touch the ground or the top of window");
+            Console.WriteLine("           Keep the bird flying and avoid the pipes");
+            Console.WriteLine("     Don't let him touch the ground or the top of the window");
             Console.WriteLine();
             Console.WriteLine("    Keyboard buttons: - Press Spacebar to raise the bird");
             Console.WriteLine("                      - Press R to restart game");

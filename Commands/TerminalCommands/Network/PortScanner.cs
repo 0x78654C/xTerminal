@@ -12,15 +12,15 @@ namespace Commands.TerminalCommands.Network
         private static bool s_pingCheck= false;
         private static string s_helpMessage = @"Usage of cport command:
 
-    Example 1: cport IPAddress/HostName -p 80   (checks if port 80 is open)
-    Example 2: cport IPAddress/HostName -p 1-200   (checks if any port is open from 1 to 200)
-    Example 3: cport stimeout 100   (Set check port time out in milliseconds. Default value is 500.)
+    Example 1: cport IPAddress/HostName -p 80   (Checks if port 80 is open)
+    Example 2: cport IPAddress/HostName -p 1-200   (Checks if any port from 1 to 200 is open)
+    Example 3: cport stimeout 100   (Sets check port time out in milliseconds. Default value is 500)
     Example 4: cport rtimeout   (Reads the current time out value)
          
-    cport check command can be used with --noping parameter for disable ping check on hostname/ip.
-    Example: cport IPAddress/HostName -p 80 --noping    
+    cport check command can be used with --noping parameter to disable ping check on hostname/ip.
+    Example: cport IPAddress/HostName -p 80 --noping
 
-    Port range scan can be canceled with CTRL+X key combination.    
+    Port range scan can be canceled with CTRL+X key combination.
 ";
 
         public void Execute(string args)

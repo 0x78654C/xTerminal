@@ -8,7 +8,7 @@ namespace Commands.TerminalCommands.Network
     public class ExternalIp : ITerminalCommand
     {
         /*
-         * Display machine external IP.
+         * Display machine's external IP.
          */
         public string Name => "extip";
 
@@ -22,7 +22,7 @@ namespace Commands.TerminalCommands.Network
                              .Matches(externalIP)[0].ToString();
                 Console.WriteLine("Your external IP address is: " + externalIP);
             }
-            catch { FileSystem.ErrorWriteLine("Canno't verify external IP. Check your internet connection!"); }
+            catch { FileSystem.ErrorWriteLine("Cannot verify external IP address. Check your internet connection!"); }
         }
     }
 }
