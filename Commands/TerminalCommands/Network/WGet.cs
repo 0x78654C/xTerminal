@@ -7,6 +7,9 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CheckType = Core.FileSystem.CheckType;
+using System.Net.Http;
+using System.Threading.Tasks;
+
 namespace Commands.TerminalCommands.Network
 {
     public class WGet : ITerminalCommand
@@ -21,7 +24,7 @@ namespace Commands.TerminalCommands.Network
         private static Stopwatch s_stopWatch;
         private static TimeSpan s_timeSpan;
         private static bool s_pingCheck = false;
-        private static WebClient s_client;
+        private static HttpClient s_client;
         private static MatchCollection s_match2;
         private static MatchCollection s_match;
         private static AutoResetEvent s_resetEvent = new AutoResetEvent(false);
@@ -47,7 +50,7 @@ namespace Commands.TerminalCommands.Network
             }
 
             ActivateTls();
-            s_client = new WebClient();
+            s_client = new HttpClient();
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             if (arg.Length == 4)
@@ -55,7 +58,7 @@ namespace Commands.TerminalCommands.Network
                 Console.WriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
-            if (arg ==$"{Name} -h")
+            if (arg == $"{Name} -h")
             {
                 Console.WriteLine(s_helpMessage);
                 return;
@@ -80,7 +83,7 @@ namespace Commands.TerminalCommands.Network
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine(e.ToString());
             }
         }
 
@@ -102,13 +105,13 @@ namespace Commands.TerminalCommands.Network
             {
                 s_urlFirst = input.SplitByText("-o", 1).Trim();
                 s_urlSecond = input.SplitByText("-o", 0).Trim();
-                DownloadDirectory();
+                Task.Run(() => DownloadDirectory()).Wait();
                 return;
             }
-            Download();
+            Task.Run(() => DownloadDirectory()).Wait();
         }
         //Download file directly in root path
-        private static void Download()
+        private static async Task Download()
         {
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
             int parse;
@@ -123,8 +126,14 @@ namespace Commands.TerminalCommands.Network
             Console.WriteLine($"Downloading {fileUrl} in {dlocation} .......");
             var source = new Uri(s_urlFirst);
             s_stopWatch.Start();
-            s_client.DownloadFile(source, dlocation + @"\" + fileUrl);
-            FileInfo fileInfo = new FileInfo(dlocation + @"\" + fileUrl);
+            var fileName = $"{s_urlFirst}\\{fileUrl}";
+            using (var s = await s_client.GetStreamAsync(source))
+            {
+                using (var fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await s.CopyToAsync(fs);
+                }
+            }
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
@@ -133,7 +142,7 @@ namespace Commands.TerminalCommands.Network
         }
 
         // Download file in diffrent path from root
-        private static void DownloadDirectory()
+        private static async Task DownloadDirectory()
         {
             if (!Directory.Exists(s_urlFirst))
             {
@@ -154,8 +163,14 @@ namespace Commands.TerminalCommands.Network
             Console.WriteLine($"Downloading {fileUrl2} in {s_urlFirst}\\ .......");
             var source = new Uri(s_urlSecond);
             s_stopWatch.Start();
-            s_client.DownloadFile(source, s_urlFirst + @"\" + fileUrl2);
-            FileInfo fileInfo = new FileInfo(s_urlFirst + @"\" + fileUrl2);
+            var fileName = $"{s_urlFirst}\\{fileUrl2}";
+            using (var s = await s_client.GetStreamAsync(source))
+            {
+                using (var fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await s.CopyToAsync(fs);
+                }
+            }
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + s_urlFirst + @"\" + fileUrl2);
