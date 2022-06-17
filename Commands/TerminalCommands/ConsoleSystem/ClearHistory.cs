@@ -11,6 +11,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         private static readonly string s_historyFile = GlobalVariables.historyFile;
         public string Name => "chistory";
+        public string Name => "chistory";
 
         public void Execute(string arg)
         {
@@ -23,7 +24,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
                 catch
                 {
-                    Console.WriteLine("Clearing command history log failed!");
+                    FileSystem.ErrorWriteLine("Clearing command history log failed!");
                 }
                 return;
             }
