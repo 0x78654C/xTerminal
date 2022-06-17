@@ -10,12 +10,12 @@ namespace Commands.TerminalCommands.UI
         private string _regUI;
         List<string> _colors = new List<string>() { "darkred", "darkgreen", "darkyellow", "darkmagenta", "darkcyan", "darkgray", "darkblue", "red", "green", "yellow", "white", "magenta", "cyan", "gray", "blue" };
         List<string> _indicators = new List<string>() { ">", "->", "=>", "$", ">>" };
-        private string _helpMessage = @"Usage of  UI PS1(Prompt string 1) command:
- ::Predifined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
-                      red, green, yellow, white, magenta, cyan, gray, blue 
- ::Predifined indicators: > , ->, =>, $, >>
+        private string _helpMessage = @"Usage of UI PS1 (Prompt string 1) command:
+ ::Predefined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
+                      red, green, yellow, white, magenta, cyan, gray, blue
+ ::Predefined Indicators: >, ->, =>, $, >>
 
- -h : Displys this help message.
+ -h : Displays this help message.
  -u : Enables or disables current user@machine information with a predefined color from list:
        Example1: ui -u -c <color> :e  -- enables information with a predefined color from list.
        Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
@@ -71,7 +71,7 @@ namespace Commands.TerminalCommands.UI
                 return;
             }
 
-            // Display help message
+            // Display help message.
             if (arg == $"{Name} -h")
             {
                 Console.WriteLine(_helpMessage);

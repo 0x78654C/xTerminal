@@ -8,7 +8,8 @@ using PasswordValidator = Core.Encryption.PasswordValidator;
 
 namespace Commands.TerminalCommands.PasswordManager
 {
-    /*Simple password manager to store localy sensitive authentification data from a specific application.
+    /*
+      Simple password manager to locally store sensitive authentification data from a specific application.
       Using Rijndael AES-256bit encryption for data and Argon2 for master password hash.
      */
     public class PManager : ITerminalCommand
@@ -16,10 +17,10 @@ namespace Commands.TerminalCommands.PasswordManager
         public string Name => "pwm";
         private static int s_tries = 0;
         private static JavaScriptSerializer s_serializer;
-        private static string s_helpMessage = @"A simple password manager to store locally the authentication data encrypted for a application using Rijndael AES-256 and Argon2 for password hash.
+        private static string s_helpMessage = @"A simple password manager to locally store the authentification data encrypted for an application using Rijndael AES-256 and Argon2 for password hash.
 Usage of Password Manager commands:
-  -h       : Display this message.
-  -createv : Create a new vault.
+  -h       : Displays this message.
+  -createv : Creates a new vault.
   -delv    : Deletes an existing vault.
   -listv   : Displays the current vaults.
   -addapp  : Adds a new application to vault.
@@ -74,7 +75,7 @@ Usage of Password Manager commands:
             s_tries++;
             if (s_tries >= 3)
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "You have exceeded the number of tries!");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "You have exceeded the maximum number of tries!");
                 s_tries = 0;
                 return true;
             }
@@ -103,7 +104,7 @@ Usage of Password Manager commands:
                 }
                 else if (string.Join("\n", vaultFiles).Contains($"{vaultName}.x"))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} already exist!");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} already exists!");
                 }
                 else
                 {
@@ -243,7 +244,7 @@ Usage of Password Manager commands:
         }
 
         /// <summary>
-        /// Add new application to a current vault.
+        /// Add new application to the current vault.
         /// </summary>
         private static void AddPasswords()
         {
@@ -614,7 +615,7 @@ Usage of Password Manager commands:
         /// <summary>
         /// Color a word from a string.
         /// </summary>
-        /// <param name="beforeText">Text to be added befor word.</param>
+        /// <param name="beforeText">Text to be added before word.</param>
         /// <param name="word">Word to be colored.</param>
         /// <param name="afterText">Text after the colored word.</param>
         /// <param name="color">Console color for the metioned word.</param>

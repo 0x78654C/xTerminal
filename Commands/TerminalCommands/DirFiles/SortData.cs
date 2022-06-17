@@ -12,12 +12,12 @@ namespace Commands.TerminalCommands.DirFiles
         private string _currentDirectory;
         private string _helpMessage = @"Usage of sort command:
 
-    Example 1: sort -a filePath  (Sort data ascending and displays it.)
-    Example 2: sort -a filePath -o saveFilePath  (Sort data ascending and saves it to a file.)
-    Example 3: sort -d filePath  (Sort data descending and displays it.)
-    Example 4: sort -d filePath -o saveFilePath  (Sort data descending and saves it to a file.)
+    Example 1: sort -a filePath  (Sorts data in ascending order and displays it.)
+    Example 2: sort -a filePath -o saveFilePath  (Sorts data in ascending order and saves it to a file.)
+    Example 3: sort -d filePath  (Sorts data in descending order and displays it.)
+    Example 4: sort -d filePath -o saveFilePath  (Sorts data in descending order and saves it to a file.)
 
-Command running without saveing to file can be canceled with CTRL+X key combination.
+Command running without saving to file can be canceled with CTRL+X key combination.
 ";
 
         public void Execute(string arg)

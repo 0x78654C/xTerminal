@@ -25,13 +25,13 @@ namespace Commands.TerminalCommands.Network
         private static MatchCollection s_match2;
         private static MatchCollection s_match;
         private static AutoResetEvent s_resetEvent = new AutoResetEvent(false);
-        private static string s_helpMessage = @"Usage: wget <url> . Or with paramters:
+        private static string s_helpMessage = @"Usage: wget <url> . Or with parameters:
 
    -h : Display this message.
    -o : Save to a specific directory.
         Example: wget <url> -o <directory_path>
 
-    WGet command can be used with --noping parameter for disable ping check on hostname/ip.
+    WGet command can be used with --noping parameter to disable ping check on hostname/ip.
         Example: wget <url> -o <directory_path> --noping
 ";
         public void Execute(string arg)
@@ -128,7 +128,7 @@ namespace Commands.TerminalCommands.Network
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
-            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds ");
+            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds");
             s_resetEvent.Set();
         }
 
@@ -143,7 +143,7 @@ namespace Commands.TerminalCommands.Network
 
             if (!FileSystem.CheckPermission(s_urlFirst, true, CheckType.Directory))
             {
-                FileSystem.ErrorWriteLine($"Access denied to direcotry: {s_urlFirst}");
+                FileSystem.ErrorWriteLine($"Access denied to directory: {s_urlFirst}");
                 return;
             }
 
@@ -159,7 +159,7 @@ namespace Commands.TerminalCommands.Network
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + s_urlFirst + @"\" + fileUrl2);
-            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds ");
+            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds");
             s_resetEvent.Set();
         }
     }

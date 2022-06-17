@@ -107,7 +107,7 @@ namespace Commands.TerminalCommands.DirFiles
                                     Console.Write("- ");
                                     break;
                                 default:
-                                    Console.ForegroundColor = ConsoleColor.Gray; // compromise for dark or light background
+                                    Console.ForegroundColor = ConsoleColor.Gray; // Compromise for dark or light background
                                     Console.Write("  ");
                                     break;
                             }
@@ -163,7 +163,7 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     return;
                 }
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Only 2 files can be compared!");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Only two files can be compared!");
             }
             catch (Exception e)
             {

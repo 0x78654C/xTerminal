@@ -40,7 +40,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             if (!fileInfo.Exists)
             {
-                Console.WriteLine("History file not exists!");
+                Console.WriteLine("History file does not exist!");
                 return false;
             }
 

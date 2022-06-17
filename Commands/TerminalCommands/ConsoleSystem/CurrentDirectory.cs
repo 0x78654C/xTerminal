@@ -36,7 +36,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
-                        Console.WriteLine($"Directory '{s_newLocation}'\\ dose not exist!");
+                        Console.WriteLine($"Directory '{s_newLocation}'\\ does not exist!");
                     }
                     else if (s_newLocation == "..")
                     {
@@ -84,7 +84,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
-                        Console.WriteLine($"Directory '{pathCombine}' dose not exist!");
+                        Console.WriteLine($"Directory '{pathCombine}' does not exist!");
                     }
                     return;
                 }

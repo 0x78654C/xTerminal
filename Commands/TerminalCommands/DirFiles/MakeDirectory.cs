@@ -14,14 +14,14 @@ namespace Commands.TerminalCommands.DirFiles
                 int argLength = arg.Length - 6;
 
                 string input = arg.Substring(6, argLength);
-                string newlocation = File.ReadAllText(GlobalVariables.currentDirectory); ; //get the new location
-                string locinput = newlocation + input; //new location+input
+                string newlocation = File.ReadAllText(GlobalVariables.currentDirectory); ; // Get the new location
+                string locinput = newlocation + input; // New location+input
                 if (input.Contains(":") && input.Contains(@"\"))
                 {
                     try
                     {
                         Directory.CreateDirectory(input);
-                        Console.WriteLine("Directory " + input + " is created!");
+                        Console.WriteLine($"Directory {input} is created!");
                     }
                     catch (Exception)
                     {
@@ -33,7 +33,7 @@ namespace Commands.TerminalCommands.DirFiles
                     try
                     {
                         Directory.CreateDirectory(locinput);
-                        Console.WriteLine("Directory " + locinput + " is created!");
+                        Console.WriteLine($"Directory {locinput} is created!");
                     }
                     catch (Exception)
                     {
