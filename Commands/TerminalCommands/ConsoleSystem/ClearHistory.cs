@@ -11,7 +11,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         private static readonly string s_historyFile = GlobalVariables.historyFile;
         public string Name => "chistory";
-        public string Name => "chistory";
 
         public void Execute(string arg)
         {
