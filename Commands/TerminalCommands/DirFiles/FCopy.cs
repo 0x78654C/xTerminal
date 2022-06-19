@@ -118,8 +118,8 @@ namespace Commands.TerminalCommands.DirFiles
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
-                                            sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSizeString(Source));
+                                            sizeSourceFiles += FileSystem.GetFileSize(Source);
                                         }
                                     }
                                     else
@@ -213,8 +213,8 @@ namespace Commands.TerminalCommands.DirFiles
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
-                                        sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSizeString(Destination));
+                                        sizeDestinationFiles += FileSystem.GetFileSize(Destination);
                                     }
                                 }
                                 //--------------------------------
@@ -276,8 +276,8 @@ namespace Commands.TerminalCommands.DirFiles
                                         {
                                             var hash = crc32.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
-                                            sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
+                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSizeString(Source));
+                                            sizeSourceFiles += FileSystem.GetFileSize(Source);
                                         }
                                     }
                                     else
@@ -374,8 +374,8 @@ namespace Commands.TerminalCommands.DirFiles
                                     {
                                         var hash = crc32.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
-                                        sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
+                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSizeString(Destination));
+                                        sizeDestinationFiles += FileSystem.GetFileSize(Destination);
                                     }
                                 }
                                 //--------------------------------
@@ -409,8 +409,8 @@ namespace Commands.TerminalCommands.DirFiles
                             {
                                 var hash = crc32.ComputeHash(stream);
                                 crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
-                                sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
+                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSizeString(Source));
+                                sizeSourceFiles += FileSystem.GetFileSize(Source);
                             }
                         }
                         else
@@ -450,7 +450,7 @@ namespace Commands.TerminalCommands.DirFiles
                         {
                             var hash = crc32.ComputeHash(stream);
                             crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                            Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
+                            Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSizeString(Destination));
                         }
                     }
 

@@ -456,7 +456,7 @@ Commands can be canceled with CTRL+X key combination.
             if (displaySizes)
             {
                 string currentDirectorySize =
-                    FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
+                    FileSystem.GetDirectorySizeString(new DirectoryInfo(s_currentDirectory));
 
                 Console.WriteLine("---------------------------------------------\n");
                 Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
@@ -499,7 +499,7 @@ Commands can be canceled with CTRL+X key combination.
                             else
                             {
                                 if (creationTime)
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, FileSystem.GetCreationDateDirInfo(directoryInfo));
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, FileSystem.GetCreationDateString(directoryInfo));
                                 else
                                     FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
                             }
@@ -523,7 +523,7 @@ Commands can be canceled with CTRL+X key combination.
                         return;
                     if (displaySizes)
                     {
-                        if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
+                        if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.HasFilePermissions(file.FullName, false))
                         {
                             string formattedText = GetFormattedFileInfoText(file, displaySizes);
                             if (saveToFile)
@@ -533,7 +533,7 @@ Commands can be canceled with CTRL+X key combination.
                             else
                             {
                                 if (creationTime)
-                                    Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                    Console.WriteLine(FileSystem.GetCreationDateString(file));
                                 else
                                     DisplayFileInfoText(formattedText, highlightSearchText);
                             }
@@ -551,7 +551,7 @@ Commands can be canceled with CTRL+X key combination.
                             else
                             {
                                 if (creationTime)
-                                    Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                    Console.WriteLine(FileSystem.GetCreationDateString(file));
                                 else
                                     DisplayFileInfoText(formattedText, highlightSearchText);
                             }
@@ -571,7 +571,7 @@ Commands can be canceled with CTRL+X key combination.
         private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
         {
             return displaySizes
-                ? fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}"
+                ? fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSizeString(fileInfo.DirectoryName + "\\" + fileInfo.Name)}"
                 : fileInfo.Name;
         }
 
