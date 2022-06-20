@@ -1,125 +1,87 @@
 ﻿using System;
 using System.IO;
+using System.Security.AccessControl;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Core
 {
-    public class FileSystem
+    public static class FileSystem
     {
         private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };  // Array with types of store data
-        private static readonly Regex s_regexNumber = new Regex("[^0-9.-]+"); //regex that matches disallowed text
 
         /// <summary>
-        /// Get the size of a file.
+        /// Gets the size of a file in megabytes.
         /// </summary>
-        /// <param name="fileName"> Specify the file path.</param>
-        /// <param name="fixedSize">Type of check</param>
-        /// <returns>string</returns>
-        public static string GetFileSize(string fileName, bool fixedSize)
+        /// <param name="fileName">Path to the file.</param>
+        /// <returns>Size of a file in megabytes.</returns>
+        public static double GetFileSize(string fileName)
         {
-            double len = new FileInfo(fileName).Length;
-            if (fixedSize)
-            {
-                string sLen = String.Format("{0:0.##}", len);
-                double fLen = Convert.ToDouble(sLen);
-                for (int i = 0; i < 2; i++)
-                {
-                    fLen /= 1024;
-                }
-                return fLen.ToString();
-            }
-            else
-            {
-                int order = 0;
-                while (len >= 1024 && order < s_sizes.Length - 1)
-                {
-                    order++;
-                    len /= 1024;
-                }
-                return String.Format("{0:0.##} {1}", len, s_sizes[order]);
-            }
+            return new FileInfo(fileName).Length / (double)(1024 * 1024);
         }
 
         /// <summary>
-        /// Convert bytes as string to size information,
+        /// Gets the size of a file, formatted as a string with a size unit postfix.
         /// </summary>
-        /// <param name="fileSize">Bytes in string format</param>
-        /// <param name="fixedSize">Type of check.</param>
-        /// <returns></returns>
-        public static string GetSize(string fileSize, bool fixedSize)
+        /// <param name="fileName">Path to the file.</param>
+        /// <returns>File size formatted with a size unit.</returns>
+        public static string GetFileSizeString(string fileName)
         {
-            double len = Convert.ToDouble(fileSize);
-            if (fixedSize)
-            {
-                string sLen = String.Format("{0:0.##}", len);
-                double fLen = Convert.ToDouble(sLen);
-                for (int i = 0; i < 2; i++)
-                {
-                    fLen /= 1024;
-                }
-                return fLen.ToString();
-            }
-            else
-            {
-                int order = 0;
-                while (len >= 1024 && order < s_sizes.Length - 1)
-                {
-                    order++;
-                    len /= 1024;
-                }
-                return String.Format("{0:0.##} {1}", len, s_sizes[order]);
-            }
+            double length = new FileInfo(fileName).Length;
+            return GetFileSizeString(length);
         }
 
         /// <summary>
-        /// Return size of a directory.
+        /// Gets the size of a file, formatted as a string with a size unit postfix.
+        /// </summary>
+        /// <param name="fileSize">Size of the file in bytes.</param>
+        /// <returns>File size formatted with a size unit.</returns>
+        public static string GetFileSizeString(double fileSize)
+        {
+            int order = Math.Min(s_sizes.Length - 1, (int)Math.Log(fileSize, 1024));
+            fileSize /= Math.Pow(1024, order);
+            return $"{fileSize:0.##} {s_sizes[order]}";
+        }
+
+        /// <summary>
+        /// Gets size of a directory.
         /// </summary>
         /// <param name="info">Directory info of a specificic path directory.</param>
         /// <returns>string</returns>
-        public static string GetDirSize(DirectoryInfo info)
+        public static string GetDirectorySizeString(DirectoryInfo info)
         {
-            int order = 0;
-            double length = DirectorySize(info);
-            while (length >= 1024 && order < s_sizes.Length - 1)
-            {
-                order++;
-                length /= 1024;
-            }
-            return String.Format("{0:0.##} {1}", length, s_sizes[order]);
+            return GetFileSizeString(GetDirectorySize(info));
         }
 
         /// <summary>
-        /// Grab size in bytes from every file in a directory and sub directory.
+        /// Grabs size in bytes from every file in a directory and sub directory.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        private static double DirectorySize(DirectoryInfo directoryInfo)
+        private static double GetDirectorySize(DirectoryInfo directoryInfo)
         {
             double size = 0;
 
-            FileInfo[] fileInfos = directoryInfo.GetFiles();
-            foreach (var fileInfo in fileInfos)
+            foreach (var fileInfo in directoryInfo.EnumerateFiles())
             {
                 size += fileInfo.Length;
             }
 
-            DirectoryInfo[] directoryInfos = directoryInfo.GetDirectories();
-            foreach (var dirInfo in directoryInfos)
+            foreach (var dirInfo in directoryInfo.EnumerateDirectories())
             {
-                if (CheckPermission(dirInfo.FullName, true, CheckType.Directory) == true)
+                if (HasFilePermissions(dirInfo.FullName, displayMessage: true))
                 {
-                    size += DirectorySize(dirInfo);
+                    size += GetDirectorySize(dirInfo);
                 }
             }
+
             return size;
         }
 
         /// <summary>
-        /// Change color of a specific line in console.
+        /// Prints out a line of text to the console, using specified color.
         /// </summary>
-        /// <param name="color"></param>
-        /// <param name="text"></param>
+        /// <param name="color">Color to be used.</param>
+        /// <param name="text">Text to be printed.</param>
         public static void ColorConsoleTextLine(ConsoleColor color, string text)
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
@@ -129,10 +91,10 @@ namespace Core
         }
 
         /// <summary>
-        /// Change color of a specific text in console.
+        /// Prints out text to the console, using specified color.
         /// </summary>
-        /// <param name="color"></param>
-        /// <param name="text"></param>
+        /// <param name="color">Color to be used.</param>
+        /// <param name="text">Text to be printed.</param>
         public static void ColorConsoleText(ConsoleColor color, string text)
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
@@ -142,52 +104,33 @@ namespace Core
         }
 
         /// <summary>
-        /// Check write permission to a directory or file.
+        /// Checks write permissions to a directory or a file.
         /// </summary>
-        /// <param name="path">Path to the directory or fie you want to check.</param>
-        /// <param name="checkType">File or Directory</param>
-        /// <returns>bool</returns>
-        public static bool CheckPermission(string path, bool displayMessage, CheckType checkType)
+        /// <param name="path">Path to the directory/file you want to check permissions for.</param>
+        /// <param name="displayMessage">Whether a message should be displayed when permissions are insufficient.</param>
+        /// <returns>True if permissions are sufficient, otherwise false.</returns>
+        public static bool HasFilePermissions(string path, bool displayMessage)
         {
-            switch (checkType)
+            FileAttributes fileAttributes = File.GetAttributes(path);
+            FileSystemSecurity securityInfo = ((fileAttributes & FileAttributes.Directory) == 0) ?
+                (FileSystemSecurity)
+                File.GetAccessControl(path) :
+                Directory.GetAccessControl(path);
+            try
             {
-                case CheckType.Directory:
-                    try
-                    {
-                        var dirInfo = new DirectoryInfo(path).GetAccessControl();
-                        if (dirInfo.AreAccessRulesProtected)
-                        {
-                            if (displayMessage)
-                                Console.WriteLine($"Access to the path: {path} is denied!");
-                            return false;
-                        }
-                        return true;
-                    }
-                    catch
-                    {
-                        return false;
-                    }
-
-                case CheckType.File:
-                    var fileInfo = new FileInfo(path).GetAccessControl();
-                    if (fileInfo.AreAccessRulesProtected)
-                    {
-                        if (displayMessage)
-                            Console.WriteLine($"Access to the file: {path} is denied!");
-                        return false;
-                    }
-                    return true;
-
-                default:
+                if (securityInfo.AreAccessRulesProtected)
+                {
+                    if (displayMessage)
+                        Console.WriteLine($"Access to the path: {path} is denied!");
                     return false;
+                }
+                return true;
             }
-        }
+            catch
+            {
+            }
 
-        // Check permission types
-        public enum CheckType
-        {
-            Directory,
-            File
+            return false;
         }
 
         /// <summary>
@@ -198,7 +141,7 @@ namespace Core
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Error: {text}");
+            Console.Error.WriteLine($"Error: {text}");
             Console.ForegroundColor = currentForeground;
         }
 
@@ -224,7 +167,7 @@ namespace Core
         /// <param name="currentDir">Terminal current directory.</param>
         /// <param name="contents">Data to be saved.</param>
         /// <param name="unicode">Unicode format for hex dump file./param>
-        /// <returns>string</returns>
+        /// <returns>Message about the result of this operation.</returns>
         public static string SaveFileOutput(string path, string currentDir, string contents, bool unicode = false)
         {
             path = SanitizePath(path, currentDir);
@@ -251,33 +194,13 @@ namespace Core
         }
 
         /// <summary>
-        /// Check text if contains numbers only.
+        /// Gets creation time for a file/directory, formatted as a string.
         /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        public static bool IsNumberAllowed(string text)
+        /// <param name="fileSystemInfo">Information about the file/directory.</param>
+        /// <returns>Creation time of a file/directory, formatted as a string.</returns>
+        public static string GetCreationDateString(FileSystemInfo fileSystemInfo)
         {
-            return !s_regexNumber.IsMatch(text);
-        }
-
-        /// <summary>
-        /// Get file creation date time.
-        /// </summary>
-        /// <param name="fileInfo"></param>
-        /// <returns></returns>
-        public static string GetCreationDateFileInfo(FileInfo fileInfo)
-        {
-            return fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}";
-        }
-
-        /// <summary>
-        /// Get directory creation date time.
-        /// </summary>
-        /// <param name="directoryInfo"></param>
-        /// <returns></returns>
-        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo)
-        {
-            return directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
+            return $"{fileSystemInfo.Name,-40}{fileSystemInfo.CreationTime.ToLocalTime()}";
         }
     }
 }

@@ -5,7 +5,6 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
-using CheckType = Core.FileSystem.CheckType;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -149,7 +148,7 @@ namespace Commands.TerminalCommands.Network
                 return;
             }
 
-            if (!FileSystem.CheckPermission(s_urlFirst, true, CheckType.Directory))
+            if (!FileSystem.HasFilePermissions(s_urlFirst, true))
             {
                 FileSystem.ErrorWriteLine($"Access denied to directory: {s_urlFirst}");
                 return;
