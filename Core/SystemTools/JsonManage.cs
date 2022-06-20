@@ -2,22 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
+using System.Web.Script.Serialization;
 
 namespace Core.SystemTools
 {
     public static class JsonManage
     {
-        public static string Serialize<T>(T value)
-        {
-            return JsonSerializer.Serialize(value);
-        }
-
-        public static T Deserialize<T>(string text)
-        {
-            return JsonSerializer.Deserialize<T>(text);
-        }
-
         /// <summary>
         /// Read data from JSON file.
         /// </summary>
@@ -26,7 +16,8 @@ namespace Core.SystemTools
         /// <returns></returns>
         public static T ReadJsonFromFile<T>(string filePath)
         {
-            return JsonSerializer.Deserialize<T>(File.ReadAllText(filePath));
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            return serializer.Deserialize<T>(File.ReadAllText(filePath));
         }
 
         /// <summary>
@@ -36,7 +27,8 @@ namespace Core.SystemTools
         /// <param name="ob"></param>
         public static void CreateJsonFile(string filePath, object ob)
         {
-            File.WriteAllText(filePath, JsonSerializer.Serialize(ob));
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            File.WriteAllText(filePath, serializer.Serialize(ob));
         }
 
         /// <summary>
