@@ -135,8 +135,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             var ram = new Microsoft.VisualBasic.Devices.ComputerInfo();
             FileSystem.ColorConsoleText(ConsoleColor.Green, "RAM");
-            string ramAvailable = FileSystem.GetFileSizeString((double)ram.AvailablePhysicalMemory);
-            string ramTotal = FileSystem.GetFileSizeString((double)ram.TotalPhysicalMemory);
+            string ramAvailable = FileSystem.GetSize(ram.AvailablePhysicalMemory.ToString(), false);
+            string ramTotal = FileSystem.GetSize(ram.TotalPhysicalMemory.ToString(), false);
             Console.WriteLine($": { ramAvailable} Available / {ramTotal} Total");
         }
 

@@ -111,11 +111,12 @@ Commands can be canceled with CTRL+X key combination.
                         break;
                     case "-n":
                         string lineCounter = arg.Split(' ')[1];
-                        if (!int.TryParse(lineCounter, out int lines))
+                        if (!FileSystem.IsNumberAllowed(lineCounter))
                         {
                             FileSystem.ErrorWriteLine("Invalid parameter. You need to provide how many lines you want to display!");
                             return;
                         }
+                        int lines = Int32.Parse(lineCounter);
                         string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
                         GlobalVariables.eventKeyFlagX = true;
                         Core.Commands.CatCommand.OuputFirtsLines(filePath, lines);

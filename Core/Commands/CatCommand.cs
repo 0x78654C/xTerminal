@@ -300,11 +300,13 @@ namespace Core.Commands
             {
                 string firstLine = range.Split('-')[0];
                 string secondLine = range.Split('-')[1];
-                if (!int.TryParse(firstLine, out int first) || !int.TryParse(secondLine, out int second))
+                if (!FileSystem.IsNumberAllowed(firstLine) && !FileSystem.IsNumberAllowed(secondLine))
                 {
                     FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
                     return;
                 }
+                int first = Int32.Parse(firstLine);
+                int second = Int32.Parse(secondLine);
 
                 using (var streamReader = new StreamReader(fileName))
                 {
