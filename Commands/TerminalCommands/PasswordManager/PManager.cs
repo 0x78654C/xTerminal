@@ -1,9 +1,9 @@
 ﻿using Core;
-using Core.SystemTools;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Web.Script.Serialization;
 using PasswordValidator = Core.Encryption.PasswordValidator;
 
 namespace Commands.TerminalCommands.PasswordManager
@@ -16,6 +16,7 @@ namespace Commands.TerminalCommands.PasswordManager
     {
         public string Name => "pwm";
         private static int s_tries = 0;
+        private static JavaScriptSerializer s_serializer;
         private static string s_helpMessage = @"A simple password manager to locally store the authentification data encrypted for an application using Rijndael AES-256 and Argon2 for password hash.
 Usage of Password Manager commands:
   -h       : Displays this message.
@@ -296,7 +297,8 @@ Usage of Password Manager commands:
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    var outJson = JsonManage.Deserialize<Dictionary<string, string>>(line);
+                    s_serializer = new JavaScriptSerializer();
+                    var outJson = s_serializer.Deserialize<Dictionary<string, string>>(line);
                     if (line.Length > 0)
                     {
                         if (outJson["site/application"] == application && outJson["account"] == account)
@@ -317,7 +319,8 @@ Usage of Password Manager commands:
                     { "account", account },
                     { "password", password },
                 };
-            string encryptdata = Core.Encryption.AES.Encrypt(decryptVault + "\n" + JsonManage.Serialize(keyValues), masterPassword);
+            s_serializer = new JavaScriptSerializer();
+            string encryptdata = Core.Encryption.AES.Encrypt(decryptVault + "\n" + s_serializer.Serialize(keyValues), masterPassword);
             if (File.Exists(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x"))
             {
                 File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x", encryptdata);
@@ -363,7 +366,8 @@ Usage of Password Manager commands:
                 {
                     if (line.Contains(application) && line.Length > 0)
                     {
-                        var outJson = JsonManage.Deserialize<Dictionary<string, string>>(line);
+                        s_serializer = new JavaScriptSerializer();
+                        var outJson = s_serializer.Deserialize<Dictionary<string, string>>(line);
                         if (outJson["site/application"].Contains(application))
                         {
                             Console.WriteLine("-------------------------");
@@ -471,7 +475,8 @@ Usage of Password Manager commands:
                     if (line.Length > 0)
                     {
                         listApps.Add(line);
-                        var outJson = JsonManage.Deserialize<Dictionary<string, string>>(line);
+                        s_serializer = new JavaScriptSerializer();
+                        var outJson = s_serializer.Deserialize<Dictionary<string, string>>(line);
                         if (outJson["site/application"] == application && outJson["account"] == accountName)
                         {
                             listApps.Remove(line);
@@ -569,9 +574,10 @@ Usage of Password Manager commands:
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
+                    s_serializer = new JavaScriptSerializer();
                     if (line.Length > 0)
                     {
-                        var outJson = JsonManage.Deserialize<Dictionary<string, string>>(line);
+                        var outJson = s_serializer.Deserialize<Dictionary<string, string>>(line);
                         if (outJson["site/application"] == application && outJson["account"] == accountName)
                         {
                             var keyValues = new Dictionary<string, object>
@@ -581,7 +587,7 @@ Usage of Password Manager commands:
                                  { "password", password },
                             };
                             accountCheck = true;
-                            listApps.Add(JsonManage.Serialize(keyValues));
+                            listApps.Add(s_serializer.Serialize(keyValues));
                         }
                         else
                         {
