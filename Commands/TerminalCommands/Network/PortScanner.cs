@@ -29,7 +29,9 @@ namespace Commands.TerminalCommands.Network
             {
                 GlobalVariables.eventCancelKey = false;
                 string cTimeOut = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut);
-                if (!int.TryParse(cTimeOut, out s_timeOut))
+                if (FileSystem.IsNumberAllowed(cTimeOut) && !string.IsNullOrEmpty(cTimeOut))
+                    s_timeOut = Int32.Parse(cTimeOut);
+                else
                 {
                     s_timeOut = 500;
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut, "500");
