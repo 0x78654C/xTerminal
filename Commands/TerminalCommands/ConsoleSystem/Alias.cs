@@ -23,6 +23,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 if (args.StartsWith("del"))
                     DeleteCommand(args, s_aliasFile);
+
+                if (args.StartsWith("list"))
+                    ListCommands(s_aliasFile);
             }
             catch (Exception e)
             {
@@ -40,8 +43,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string commandAlias = arg.SplitByText("add ", 1);
             if (commandAlias.Contains("|"))
             {
-                string commandName = commandAlias.Split('|')[0];
-                string command = commandAlias.Split('|')[1];
+                string commandName = commandAlias.Split('|')[0].Trim();
+                string command = commandAlias.Split('|')[1].Trim();
                 if (CheckCommandName(s_aliasFile, commandName))
                 {
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{commandName} alias command already exist!");
@@ -75,6 +78,25 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             Json.DeleteJsonData<AliasC>(s_aliasFile, f => f.Where(t => t.CommandName == delAliasCommand));
             Console.WriteLine($"{delAliasCommand} alias command was deleted!");
+        }
+
+        /// <summary>
+        /// List stored alias commands.
+        /// </summary>
+        /// <param name="aliasJsonFile"></param>
+        private static void ListCommands(string aliasJsonFile)
+        {
+            if (!File.Exists(aliasJsonFile))
+            {
+                FileSystem.ErrorWriteLine("Alias file dose not exist!");
+                return;
+            }
+            var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
+            Console.WriteLine("List alias commands:\n");
+            foreach(var ac in aliasCommands)
+            {
+                Console.WriteLine($"{ac.CommandName} | {ac.Command}");
+            }
         }
 
         /// <summary>
