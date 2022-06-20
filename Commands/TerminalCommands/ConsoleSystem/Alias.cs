@@ -1,16 +1,15 @@
 ﻿using Core;
 using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Json = Core.SystemTools.JsonManage;
+using AliasC = Core.SystemTools.AliasC;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
     public class Alias : ITerminalCommand
     {
+        /* Alias commands manager. */
 
         public string Name => "alias";
         private static string s_aliasFile = GlobalVariables.aliasFile;
@@ -18,47 +17,76 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
-
                 args = args.Replace("alias ", String.Empty);
                 if (args.StartsWith("add"))
-                {
-                    string commandAlias = args.SplitByText("add ", 1);
-                    if (commandAlias.Contains("|"))
-                    {
-                        string commandName = commandAlias.Split('|')[0];
-                        string command = commandAlias.Split('|')[1];
-                        AddCommand(commandName, command);
-                        Console.WriteLine($"Alias command {commandName} was added!");
-                    }
-                    else
-                        FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
-                }
-            }catch(Exception e)
+                    AddCommand(args, s_aliasFile);
+
+                if (args.StartsWith("del"))
+                    DeleteCommand(args, s_aliasFile);
+            }
+            catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.ToString());
             }
         }
 
-        private static void AddCommand(string commandName, string command)
+        /// <summary>
+        /// Add alias commands and instructions to Json file.
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <param name="aliasJsonFile"></param>
+        private static void AddCommand(string arg, string aliasJsonFile)
         {
-           if (!File.Exists(s_aliasFile))
-                Json.CreateJsonFile(s_aliasFile, new { CommandName= commandName, Command= command});
-           Json.UpdateJsonFile(s_aliasFile, new AliasC { CommandName = commandName, Command = command });
+            string commandAlias = arg.SplitByText("add ", 1);
+            if (commandAlias.Contains("|"))
+            {
+                string commandName = commandAlias.Split('|')[0];
+                string command = commandAlias.Split('|')[1];
+                if (CheckCommandName(s_aliasFile, commandName))
+                {
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{commandName} alias command already exist!");
+                    return;
+                }
+                Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command });
+                Console.WriteLine($"Alias command {commandName} was added!");
+            }
+            else
+                FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
         }
 
-        private static void DeleteCommand(string commandName)
+        /// <summary>
+        /// Delete alias commands from Json file.
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <param name="aliasJsonFile"></param>
+        private static void DeleteCommand(string arg, string aliasJsonFile)
         {
-            if(!File.Exists(s_aliasFile))
+            string delAliasCommand = arg.SplitByText("del ", 1);
+            if (!File.Exists(aliasJsonFile))
             {
                 FileSystem.ErrorWriteLine("Alias file dose not exist!");
                 return;
             }
-            Json.DeleteJsonData<AliasC>(s_aliasFile, f => f.Where(t => t.CommandName == commandName));
+
+            if (!CheckCommandName(aliasJsonFile, delAliasCommand))
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{delAliasCommand} does not exist!");
+                return;
+            }
+            Json.DeleteJsonData<AliasC>(s_aliasFile, f => f.Where(t => t.CommandName == delAliasCommand));
+            Console.WriteLine($"{delAliasCommand} alias command was deleted!");
         }
-    }
-    class AliasC
-    {
-        public string CommandName { get; set; }
-        public string Command { get; set; }
+
+        /// <summary>
+        /// Check if alias command exist.
+        /// </summary>
+        /// <param name="aliasJsonFile"></param>
+        /// <param name="commandName"></param>
+        /// <returns></returns>
+        private static bool CheckCommandName(string aliasJsonFile, string commandName)
+        {
+            var item = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
+            return (item.Any(t => t.CommandName == commandName));
+        }
     }
 }
