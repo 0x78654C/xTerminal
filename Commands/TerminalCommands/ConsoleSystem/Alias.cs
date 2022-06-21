@@ -67,7 +67,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string delAliasCommand = arg.SplitByText("del ", 1);
             if (!File.Exists(aliasJsonFile))
             {
-                FileSystem.ErrorWriteLine("Alias file dose not exist!");
+                FileSystem.ErrorWriteLine("Alias file does not exist!");
                 return;
             }
 
