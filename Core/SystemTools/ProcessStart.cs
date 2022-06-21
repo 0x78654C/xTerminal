@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 
-
 namespace Core.SystemTools
 {
     public class ProcessStart
@@ -47,12 +46,14 @@ namespace Core.SystemTools
                     if (File.Exists(input))
                     {
                         process.Start();
+                        process.WaitForExit();
                         return;
                     }
                     FileSystem.ErrorWriteLine($"Couldn't find file \"{input}\" to execute");
                     return;
                 }
                 process.Start();
+                process.WaitForExit();
             }
             catch (System.ComponentModel.Win32Exception win)
             {
