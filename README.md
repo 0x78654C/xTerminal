@@ -179,6 +179,8 @@ This is the full list of commands that can be used in xTerminal:
                     -h : Display this message.
                     -o : Save to a specific directory.
                          Example2: wget <url> -o <directory_path>
+                 WGet command can be used with --noping parameter to disable ping check on hostname/ip.
+                 Example: wget <url> -o <directory_path> --noping
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname.
                  Example 1: ping google.com  (for normal ping with 4 replies)
@@ -190,6 +192,8 @@ This is the full list of commands that can be used in xTerminal:
                  Example 2: cport IPAddress/HostName -p 1-200   (checks if any port is open from 1 to 200)
                  Example 3: cport stimeout 100   (Set check port time out in milliseconds. Default value is 500.)
                  Example 4: cport rtimeout   (Reads the current time out value)
+                 Cport check command can be used with --noping parameter to disable ping check on hostname/ip.
+                 Example: cport IPAddress/HostName -p 80 --noping
 
     ---------------- C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
