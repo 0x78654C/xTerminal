@@ -221,8 +221,9 @@ namespace Commands.TerminalCommands.Roslyn
 
                     ms.Close();
                 }
+                string[] paramAr = { param }; 
                 MethodInfo myMethod = assembly.EntryPoint;
-                myMethod.Invoke(null, new object[] { new string[0] });
+                myMethod.Invoke(null, new object[] { paramAr });
             }
             catch (Exception e)
             {
