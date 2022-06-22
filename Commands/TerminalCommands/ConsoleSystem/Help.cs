@@ -40,6 +40,7 @@ This is the full list of commands that can be used in xTerminal:
     pcinfo    -- Displays System Information.
     nt        -- Starts new xTerminal console.
                  -u : Starts new xTerminal console with other user option.
+    alias     -- Create alias commands for built in xTerminal commands. Use -h for additional parameters.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -89,10 +90,7 @@ This is the full list of commands that can be used in xTerminal:
     snake     -- Play Snake game in console!
 
     ------------------------Support -------------------------
-    If you like this application and want to support the project you can always buy me a crypto coffee :D. Thank you very much for your support, I appreciate it!
-    
-    Bitcoin:   bc1qe6z79u5f62c3v5lh6nt3hfcj683etyx65s5nch
-    Ethereum:  0x7Aedd83d94b350624f4FDb4dF7eC3a2A7caA9952
+    If you like this application and want to support the project just buy your self a coffee and have a nice day ;).
 
                         ";
 
