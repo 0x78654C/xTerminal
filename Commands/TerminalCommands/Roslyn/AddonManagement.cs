@@ -156,9 +156,9 @@ namespace Commands.TerminalCommands.Roslyn
                 }
 
                 string argParse = dirFirst.SplitByText(" -c ", 1);
-                string command = argParse.Split('|')[0];
+                string command = argParse.Split('|')[0].Trim();
                 int countSpace = Regex.Matches(argument, " ").Count;
-                string description = argument.Split('|')[1];
+                string description = argument.Split('|')[1].Trim();
 
                 using (StreamReader stringReader = new StreamReader(file))
                 {
