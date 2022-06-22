@@ -1,12 +1,14 @@
 ﻿using Core;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CheckType = Core.FileSystem.CheckType;
+using System.Net.Http;
+using System.Threading.Tasks;
+
 namespace Commands.TerminalCommands.Network
 {
     public class WGet : ITerminalCommand
@@ -20,28 +22,34 @@ namespace Commands.TerminalCommands.Network
         private static string s_urlSecond;
         private static Stopwatch s_stopWatch;
         private static TimeSpan s_timeSpan;
-        private static readonly WebClient s_client = new WebClient();
+        private static bool s_pingCheck = false;
+        private static HttpClient s_client;
         private static MatchCollection s_match2;
         private static MatchCollection s_match;
-        private static BackgroundWorker s_worker;
-        private static BackgroundWorker s_workerDirectory;
         private static AutoResetEvent s_resetEvent = new AutoResetEvent(false);
-        private static string s_helpMessage = @"Usage: wget <url> . Or with paramters:
+        private static string s_helpMessage = @"Usage: wget <url> . Or with parameters:
 
    -h : Display this message.
    -o : Save to a specific directory.
-        Example2: wget <url> -o <directory_path>
+        Example: wget <url> -o <directory_path>
+
+    WGet command can be used with --noping parameter to disable ping check on hostname/ip.
+        Example: wget <url> -o <directory_path> --noping
 ";
         public void Execute(string arg)
         {
-            s_worker = new BackgroundWorker();
-            s_worker.DoWork += DoWork_Download;
-            s_worker.WorkerReportsProgress = true;
+            if (arg.Contains("--noping"))
+            {
+                s_pingCheck = false;
+                arg = arg.Replace("--noping", string.Empty);
+            }
+            else
+            {
+                s_pingCheck = true;
+            }
 
-            s_workerDirectory = new BackgroundWorker();
-            s_workerDirectory.DoWork += DoWork_DownloadDirectory;
-            s_workerDirectory.WorkerReportsProgress = true;
-
+            ActivateTls();
+            s_client = new HttpClient();
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             if (arg.Length == 4)
@@ -49,42 +57,60 @@ namespace Commands.TerminalCommands.Network
                 Console.WriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
-            if (arg ==$"{Name} -h")
+            if (arg == $"{Name} -h")
             {
                 Console.WriteLine(s_helpMessage);
                 return;
             }
             try
             {
-                if (NetWork.IntertCheck())
+                if (s_pingCheck)
                 {
-                    int argLenght = arg.Length - 5;
-                    string input = arg.Substring(5, argLenght);  //url input
-                    Console.WriteLine(s_urlFirst);
-                    if (input.Contains("-o"))
+                    if (NetWork.IntertCheck())
                     {
-                        s_urlFirst = input.SplitByText("-o", 1);
-                        s_urlSecond = input.SplitByText("-o", 0);
-                        s_workerDirectory.RunWorkerAsync();
-                        s_resetEvent.WaitOne();
-                        return;
+                        RunWGet(arg);
                     }
-                    
-                    s_worker.RunWorkerAsync();
-                    s_resetEvent.WaitOne();
+                    else
+                    {
+                        FileSystem.ErrorWriteLine("No internet connection!");
+                    }
                 }
                 else
                 {
-                    FileSystem.ErrorWriteLine("No internet connection!");
+                    RunWGet(arg);
                 }
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine(e.ToString());
             }
         }
+
+        private static void ActivateTls()
+        {
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
+                | SecurityProtocolType.Tls11
+                | SecurityProtocolType.Tls
+                | SecurityProtocolType.Ssl3;
+        }
+
+        private static void RunWGet(string param)
+        {
+            int argLenght = param.Length - 5;
+            string input = param.Substring(5, argLenght);  //url input
+            Console.WriteLine(s_urlFirst);
+            if (input.Contains("-o"))
+            {
+                s_urlFirst = input.SplitByText("-o", 1).Trim();
+                s_urlSecond = input.SplitByText("-o", 0).Trim();
+                Task.Run(() => DownloadDirectory()).Wait();
+                return;
+            }
+            Task.Run(() => DownloadDirectory()).Wait();
+        }
         //Download file directly in root path
-        private static void DoWork_Download(object sender, DoWorkEventArgs e)
+        private static async Task Download()
         {
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
             int parse;
@@ -99,18 +125,23 @@ namespace Commands.TerminalCommands.Network
             Console.WriteLine($"Downloading {fileUrl} in {dlocation} .......");
             var source = new Uri(s_urlFirst);
             s_stopWatch.Start();
-            s_client.DownloadFile(source, dlocation + @"\" + fileUrl);
-            FileInfo fileInfo = new FileInfo(dlocation + @"\" + fileUrl);
-            s_worker.ReportProgress(Convert.ToInt32(fileInfo.Length));
+            var fileName = $"{s_urlFirst}\\{fileUrl}";
+            using (var s = await s_client.GetStreamAsync(source))
+            {
+                using (var fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await s.CopyToAsync(fs);
+                }
+            }
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
-            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds ");
+            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds");
             s_resetEvent.Set();
         }
 
         // Download file in diffrent path from root
-        private static void DoWork_DownloadDirectory(object sender, DoWorkEventArgs e)
+        private static async Task DownloadDirectory()
         {
             if (!Directory.Exists(s_urlFirst))
             {
@@ -120,7 +151,7 @@ namespace Commands.TerminalCommands.Network
 
             if (!FileSystem.CheckPermission(s_urlFirst, true, CheckType.Directory))
             {
-                FileSystem.ErrorWriteLine($"Access denied to direcotry: {s_urlFirst}");
+                FileSystem.ErrorWriteLine($"Access denied to directory: {s_urlFirst}");
                 return;
             }
 
@@ -131,13 +162,18 @@ namespace Commands.TerminalCommands.Network
             Console.WriteLine($"Downloading {fileUrl2} in {s_urlFirst}\\ .......");
             var source = new Uri(s_urlSecond);
             s_stopWatch.Start();
-            s_client.DownloadFile(source, s_urlFirst + @"\" + fileUrl2);
-            FileInfo fileInfo = new FileInfo(s_urlFirst + @"\" + fileUrl2);
-            s_workerDirectory.ReportProgress(Convert.ToInt32(fileInfo.Length));
+            var fileName = $"{s_urlFirst}\\{fileUrl2}";
+            using (var s = await s_client.GetStreamAsync(source))
+            {
+                using (var fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await s.CopyToAsync(fs);
+                }
+            }
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
             Console.WriteLine("Downloaded in " + s_urlFirst + @"\" + fileUrl2);
-            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds ");
+            Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds");
             s_resetEvent.Set();
         }
     }

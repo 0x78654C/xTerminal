@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.DirFiles
            Example: cat -n 10 <path_of_file_name>
   -l   : Displays data between two lines range.
            Example: cat -l 10-20 <path_of_file_name>
-  -s   : Output lines containing a provided text from a file.
+  -s   : Outputs lines containing a provided text from a file.
            Example: cat -s <search_text> -f <file_search_in>
   -so  : Saves the lines containing a provided text from a file.
            Example: cat -so <search_text> -f <file_search_in> -o <file_to_save>
@@ -37,7 +37,7 @@ namespace Commands.TerminalCommands.DirFiles
   -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
   -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
            Example: cat -lfc <file_name_text>
-  -con : Concatenate text files to a single file.
+  -con : Concatenates text files to a single file.
            Example: cat -con file1;file2;file3 -o fileOut
 
 Commands can be canceled with CTRL+X key combination.
@@ -107,13 +107,13 @@ Commands can be canceled with CTRL+X key combination.
                         if (outFileData.Length > 0)
                             Console.WriteLine($"Data was saved to: {outputFile}");
                         else
-                            Console.WriteLine("No file ware concatenated!");
+                            Console.WriteLine("No files were concatenated!");
                         break;
                     case "-n":
                         string lineCounter = arg.Split(' ')[1];
                         if (!FileSystem.IsNumberAllowed(lineCounter))
                         {
-                            FileSystem.ErrorWriteLine("Parameter invalid. You need to provide how many lines you want to display!");
+                            FileSystem.ErrorWriteLine("Invalid parameter. You need to provide how many lines you want to display!");
                             return;
                         }
                         int lines = Int32.Parse(lineCounter);
@@ -128,7 +128,7 @@ Commands can be canceled with CTRL+X key combination.
                         string linesRange = arg.Split(' ')[1];
                         if (!linesRange.Contains("-"))
                         {
-                            FileSystem.ErrorWriteLine("Parameter invalid. You need to provide the range of lines for data display! Example: 10-20");
+                            FileSystem.ErrorWriteLine("Invalid parameter. You need to provide the range of lines for data display! Example: 10-20");
                             return;
                         }
                         string pathFile = FileSystem.SanitizePath(arg.SplitByText(linesRange + " ", 1), s_currentDirectory);
@@ -169,7 +169,7 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true);
                         }
-                        s_output = string.IsNullOrWhiteSpace(s_output) ? "No files with names that contains that text!" : s_output;
+                        s_output = string.IsNullOrWhiteSpace(s_output) ? "No file names contain that text!" : s_output;
                         Console.WriteLine(s_output);
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
@@ -207,7 +207,7 @@ Commands can be canceled with CTRL+X key combination.
 
                         if (string.IsNullOrWhiteSpace(s_output))
                         {
-                            Console.WriteLine("No files with names that contains that text!");
+                            Console.WriteLine("No file names contain that text!");
                         }
                         else
                         {

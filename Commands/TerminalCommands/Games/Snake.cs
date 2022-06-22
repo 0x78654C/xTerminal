@@ -99,7 +99,7 @@ namespace Commands.TerminalCommands.Games
                     }
                 }
             }
-            Console.WriteLine($"Game Over Score:{_score}");
+            Console.WriteLine($"Game Over Score: {_score}");
             return;
         }
 
@@ -142,7 +142,7 @@ namespace Commands.TerminalCommands.Games
                         throw new ArgumentOutOfRangeException();
                 }
 
-                // check if out side bounds of map or we have hit our own tail\other part of snake
+                // Check if out side bounds of map or we have hit our own tail\other part of snake
                 if (point.X >= _display.Length || point.Y >= _display[0].Length || point.X < 0 || point.Y < 0 ||
                     _snake.Skip(1).Contains(point))
                 {
@@ -167,7 +167,7 @@ namespace Commands.TerminalCommands.Games
                 item.Value = SnakeChar;
                 OutPutDisplayItem(item);
                 if (item.Point.X != head.X ||
-                    item.Point.Y != head.Y) // if head is same space tail was we don't want to blank it
+                    item.Point.Y != head.Y) // If head is same space tail was we don't want to blank it
                 {
                     UpdateDisplayElementFromPoint(tail, Empty);
                 }

@@ -18,11 +18,13 @@ namespace Core
         public static string regCportTimeOut = "cportTimeOut";
         public static string commandOut { get; set; }
         public static string version { get; set; }
+        public static string aliasParameters = string.Empty;
         public static readonly string accountName = Environment.UserName;
         public static string rootPath = $"{Path.GetPathRoot(Environment.SystemDirectory)}Users\\{accountName}\\";
         public static readonly string computerName = Environment.MachineName;
         public static string terminalWorkDirectory = $"{Path.GetPathRoot(Environment.SystemDirectory)}Users\\{accountName}\\AppData\\Local\\xTerminal";
         public static string passwordManagerDirectory = $"{terminalWorkDirectory}\\Pwm\\";
+        public static string aliasFile = $"{terminalWorkDirectory}\\alias.json";
         public static string currentDirectory = terminalWorkDirectory + $"\\{process}cDir.t";
         public static string uiSettings = terminalWorkDirectory + $"\\{process}ui.t";
         public static string historyFile = terminalWorkDirectory + "\\History.db";

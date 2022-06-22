@@ -97,6 +97,14 @@ This is the full list of commands that can be used in xTerminal:
     pcinfo    -- Display System Information.
     nt        -- Starts new xTerminal console.
                    -u : Starts new xTerminal console with other user option.
+    alias     -- Create alias commands for built in xTerminal commands.
+                   -add   :  Creates a alias command with parammeters (alias <commandName>|<parameters>).
+                             Example: alias -add lz|ls -s (Creates a command lz that will run parameter ls -s)
+                   -del   :  Deletes a alias command.
+                             Example: alias -del lz (Deletes lz command and parameters for it.)
+                   -list  :  List all alias commands.
+                   -clear :  Clears all alias commands.
+                 Attention: Alias commands cannot overwrite terminal commands!
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

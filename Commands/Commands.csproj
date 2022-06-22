@@ -124,6 +124,7 @@
     <Compile Include="CommandRepository.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="ITerminalCommand.cs" />
+    <Compile Include="TerminalCommands\ConsoleSystem\Alias.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\ClearHistory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\CommandHistory.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\BiosInfo.cs" />

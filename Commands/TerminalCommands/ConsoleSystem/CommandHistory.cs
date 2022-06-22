@@ -34,40 +34,40 @@ namespace Commands.TerminalCommands.ConsoleSystem
         }
 
         // We check if history file has any data in it.
-        private static bool CheckHistoryFileLength(string historyFileName)
+        private static bool FileHasContent(string historyFileName)
         {
-            if (!File.Exists(historyFileName))
+            FileInfo fileInfo = new FileInfo(historyFileName);
+
+            if (!fileInfo.Exists)
             {
-                Console.WriteLine("History file not exists!");
+                Console.WriteLine("History file does not exist!");
                 return false;
             }
-            using (StringReader stringReader = new StringReader(historyFileName))
+
+            if (fileInfo.Length < 0)
             {
-                string historFileData = stringReader.ReadToEnd();
-                if (historFileData.Length > 0)
-                {
-                    return true;
-                }
                 Console.WriteLine("No commands in list!");
                 return false;
             }
+
+            return true;
         }
 
         /// <summary>
         /// Output the commands from history.
         /// </summary>
         /// <param name="historyFileName">Path to history command file.</param>
-        /// <param name="linesNumber">Number of commnands to be displayed.</param>
+        /// <param name="linesNumber">Number of commands to be displayed.</param>
         private static void OutputHistoryCommands(string historyFileName, int linesNumber)
         {
-            if (CheckHistoryFileLength(historyFileName) == false)
+            if (!FileHasContent(historyFileName))
             {
                 return;
             }
 
             if (linesNumber > 100)
             {
-                FileSystem.ErrorWriteLine("Only 100 commands can be displayed!");
+                FileSystem.ErrorWriteLine("Only up to 100 commands can be displayed!");
                 return;
             }
 
@@ -77,21 +77,25 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
 
-            int index = 0;
-            int linesCount = File.ReadAllLines(historyFileName).Count();
-            var lines = File.ReadLines(historyFileName).Skip(linesCount - linesNumber);
-
-            foreach (var line in lines)
+            string[] lines;
+            try
             {
-                if (index <= linesNumber)
-                {
-                    if (!string.IsNullOrEmpty(line))
-                    {
-                        FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
-                    }
-                    index++;
-                }
+                lines = File.ReadAllLines(historyFileName);
+            }
+            catch
+            {
+                FileSystem.ErrorWriteLine("Reading history file failed!");
+                return;
+            }
+
+            var filteredLines = lines
+                .Skip(lines.Length - linesNumber)
+                .Where(line => !string.IsNullOrEmpty(line))
+                .Take(linesNumber);
+            foreach (string line in filteredLines)
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
             }
         }
     }

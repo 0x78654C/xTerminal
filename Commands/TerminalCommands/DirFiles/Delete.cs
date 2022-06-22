@@ -10,9 +10,9 @@ namespace Commands.TerminalCommands.DirFiles
         private string _currentLocation;
         private string _helpMessage = @"Usage of del command:
     -h  : Displays this message. 
-    -a  : Deletes all files and directories in current directory. 
-    -af : Deletes all files in current directory. 
-    -ad : Deletes all directories in current directory. 
+    -a  : Deletes all files and directories in the current directory. 
+    -af : Deletes all files in the current directory. 
+    -ad : Deletes all directories in the current directory. 
 ";
 
         public void Execute(string args)
@@ -78,27 +78,27 @@ namespace Commands.TerminalCommands.DirFiles
         {
             try
             {
-                string input = arg;              // geting location input        
+                string input = arg; // Geting location input        
 
-                //checking the cureent locaiton in folder
+                // Checking the current locaiton in folder
                 if (input.Contains(":") && input.Contains(@"\"))
                 {
                     try
                     {
-                        // get the file attributes for file or directory
+                        // Get the file attributes for file or directory
                         FileAttributes attr = File.GetAttributes(input);
 
                         if (attr.HasFlag(FileAttributes.Directory))
                         {
                             var dir = new DirectoryInfo(input);
                             RecursiveDeleteDir(dir);
-                            Console.WriteLine("Directory " + input + " deleted!");
+                            Console.WriteLine($"Directory {input} deleted!");
                         }
                         else
                         {
                             File.SetAttributes(input, FileAttributes.Normal);
                             File.Delete(input);
-                            Console.WriteLine("File " + input + " deleted!");
+                            Console.WriteLine($"File {input} deleted!");
                         }
                     }
                     catch (Exception e)
@@ -110,7 +110,7 @@ namespace Commands.TerminalCommands.DirFiles
                 {
                     try
                     {
-                        // get the file attributes for file or directory
+                        // Get the file attributes for file or directory
                         FileAttributes attr = File.GetAttributes(currentLocation + input);
 
                         if (attr.HasFlag(FileAttributes.Directory))
@@ -146,7 +146,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             if (!directory.Exists)
             {
-                FileSystem.ErrorWriteLine("Directory '{directory}' does not exist!");
+                FileSystem.ErrorWriteLine($"Directory '{directory}' does not exist!");
                 return;
             }
 

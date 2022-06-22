@@ -7,7 +7,7 @@ namespace Commands.TerminalCommands.Network
     public class CheckDomain : ITerminalCommand
     {
         /*
-         Check  if an IP dor domain is down.
+         Check if an IP dor domain is down.
          */
         public string Name => "icheck";
 
@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.Network
             }
             catch
             {
-                FileSystem.ErrorWriteLine("You must specify a domain or an IP address to check . Ex.: icheck google.com");
+                FileSystem.ErrorWriteLine("You must specify a domain or an IP address to check. Eg.: icheck google.com");
             }
         }
     }

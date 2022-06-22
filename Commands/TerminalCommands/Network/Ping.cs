@@ -16,7 +16,7 @@ Example 1: ping google.com  (for normal ping with 4 replies)
 Example 2: ping google.com -t 10  (for 10 replies)
 Example 3: ping google.com -t  (infinite replies)
 
-Ping with -t can be canceled with CTRL+X key combination.    
+Ping with -t can be canceled with CTRL+X key combination.
 ";
 
         public void Execute(string args)

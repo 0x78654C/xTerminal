@@ -148,8 +148,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
             DriveInfo[] allDrives = DriveInfo.GetDrives();
             foreach (var d in allDrives)
             {
-                string totalSize = wmi.SizeConvert("Size "+d.TotalSize.ToString(),true);
-                string availableSize = wmi.SizeConvert("Size " + d.AvailableFreeSpace.ToString(),true);
+                string totalSize = wmi.SizeConvert($"Size {d.TotalSize}", true);
+                string availableSize = wmi.SizeConvert($"Size {d.AvailableFreeSpace}", true);
                 FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name}: ");
                 Console.Write($" Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n");
             }

@@ -13,7 +13,7 @@ namespace Commands.TerminalCommands.Roslyn
     public class Compiler : ITerminalCommand
     {
         /*
-         Compiles C# in memory usint Roslyn 
+         Compiles C# in memory using Roslyn 
          */
         public string Name => "ccs";
         private string _codeToRun;
@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.Roslyn
             string param = string.Empty;
             if (args.Length == 3)
             {
-                FileSystem.ErrorWriteLine($"You must provide an C# file for complile.");
+                FileSystem.ErrorWriteLine($"You must provide a C# file for compilation.");
                 return;
             }
 

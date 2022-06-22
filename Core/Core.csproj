@@ -113,6 +113,8 @@
     <Compile Include="PortScan.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Registry.cs" />
+    <Compile Include="SystemTools\AliasC.cs" />
+    <Compile Include="SystemTools\JsonManage.cs" />
     <Compile Include="SystemTools\ProcessStart.cs" />
     <Compile Include="SystemTools\Roslyn.cs" />
     <Compile Include="SystemTools\AutoSuggestion.cs" />

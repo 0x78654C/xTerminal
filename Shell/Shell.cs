@@ -114,9 +114,12 @@ namespace Shell
 
             // Run xTerminal predifined commands.
             var c = Commands.CommandRepository.GetCommand(command);
-            if (c != null)
+            if (c != null || !string.IsNullOrEmpty(GlobalVariables.aliasParameters))
             {
+                if (!string.IsNullOrEmpty(GlobalVariables.aliasParameters))
+                    command = GlobalVariables.aliasParameters;
                 c.Execute(command);
+                GlobalVariables.aliasParameters=string.Empty;
             }
         }
 

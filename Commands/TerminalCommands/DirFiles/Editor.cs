@@ -38,7 +38,7 @@ namespace Commands.TerminalCommands.DirFiles
                     Console.WriteLine("Your New editor is: " + set);
                     return;
                 }
-                FileSystem.ErrorWriteLine($"File {set} dose not exist");
+                FileSystem.ErrorWriteLine($"File {set} does not exist!");
                 return;
             }
             catch
@@ -46,7 +46,7 @@ namespace Commands.TerminalCommands.DirFiles
                 file = FileSystem.SanitizePath(file, dlocation);
                 if (string.IsNullOrEmpty(file))
                 {
-                    Console.WriteLine("You must type the file name for edit!");
+                    Console.WriteLine("You must type name of the file to be edited!");
                     return;
                 }
                 ProcessCall(file, File.Exists(cEditor) ? cEditor : "notepad");
