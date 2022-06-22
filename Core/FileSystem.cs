@@ -198,7 +198,7 @@ namespace Core
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Error: {text}");
+            Console.Error.WriteLine($"Error: {text}");
             Console.ForegroundColor = currentForeground;
         }
 
