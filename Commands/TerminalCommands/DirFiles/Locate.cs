@@ -88,7 +88,7 @@ Command can be canceled with CTRL+X key combination.
                 foreach (var file in filesList)
                 {
                     FileInfo fileInfo = new FileInfo(file);
-                    if (fileInfo.Name.ToLower().Contains(fileName.ToLower()) && FileSystem.CheckPermission(fileInfo.FullName, false, FileSystem.CheckType.Directory))
+                    if (fileInfo.Name.ToLower().Contains(fileName.ToLower()))
                     {
                         if (saveToFile)
                         {
@@ -104,7 +104,7 @@ Command can be canceled with CTRL+X key combination.
                 foreach (var dir in dirsList)
                 {
                     DirectoryInfo directoryInfo = new DirectoryInfo(dir);
-                    if (directoryInfo.Name.ToLower().Contains(fileName.ToLower()) && FileSystem.CheckPermission(directoryInfo.FullName, false, FileSystem.CheckType.Directory))
+                    if (directoryInfo.Name.ToLower().Contains(fileName.ToLower()))
                     {
                         if (saveToFile)
                         {
@@ -119,7 +119,7 @@ Command can be canceled with CTRL+X key combination.
                         SearchFile(dir, fileName, outputFile, saveToFile);
                 }
             }
-            catch (UnauthorizedAccessException){}
+            catch {}
         }
     }
 }
