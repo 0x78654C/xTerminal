@@ -107,7 +107,8 @@ namespace Commands.TerminalCommands.Network
                 Task.Run(() => DownloadDirectory()).Wait();
                 return;
             }
-            Task.Run(() => DownloadDirectory()).Wait();
+            s_urlFirst = input;
+            Task.Run(() => Download()).Wait();
         }
         //Download file directly in root path
         private static async Task Download()
@@ -125,7 +126,7 @@ namespace Commands.TerminalCommands.Network
             Console.WriteLine($"Downloading {fileUrl} in {dlocation} .......");
             var source = new Uri(s_urlFirst);
             s_stopWatch.Start();
-            var fileName = $"{s_urlFirst}\\{fileUrl}";
+            var fileName = $"{dlocation}\\{fileUrl}";
             using (var s = await s_client.GetStreamAsync(source))
             {
                 using (var fs = new FileStream(fileName, FileMode.Create))
@@ -135,7 +136,7 @@ namespace Commands.TerminalCommands.Network
             }
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
-            Console.WriteLine("Downloaded in " + dlocation + @"\" + fileUrl);
+            Console.WriteLine($"Downloaded in { dlocation}{ fileUrl}");
             Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds");
             s_resetEvent.Set();
         }
