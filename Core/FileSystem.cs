@@ -97,21 +97,21 @@ namespace Core
         private static double DirectorySize(DirectoryInfo directoryInfo)
         {
             double size = 0;
-
-            FileInfo[] fileInfos = directoryInfo.GetFiles();
-            foreach (var fileInfo in fileInfos)
+            try
             {
-                size += fileInfo.Length;
-            }
+                FileInfo[] fileInfos = directoryInfo.GetFiles();
+                foreach (var fileInfo in fileInfos)
+                {
+                    size += fileInfo.Length;
+                }
 
-            DirectoryInfo[] directoryInfos = directoryInfo.GetDirectories();
-            foreach (var dirInfo in directoryInfos)
-            {
-                if (CheckPermission(dirInfo.FullName, true, CheckType.Directory) == true)
+                DirectoryInfo[] directoryInfos = directoryInfo.GetDirectories();
+                foreach (var dirInfo in directoryInfos)
                 {
                     size += DirectorySize(dirInfo);
                 }
             }
+            catch { }
             return size;
         }
 

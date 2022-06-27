@@ -523,7 +523,7 @@ Commands can be canceled with CTRL+X key combination.
                         return;
                     if (displaySizes)
                     {
-                        if (!GlobalVariables.excludeFiles.Contains(file.Name) && FileSystem.CheckPermission(file.FullName, false, FileSystem.CheckType.File))
+                        if (!GlobalVariables.excludeFiles.Contains(file.Name))
                         {
                             string formattedText = GetFormattedFileInfoText(file, displaySizes);
                             if (saveToFile)
