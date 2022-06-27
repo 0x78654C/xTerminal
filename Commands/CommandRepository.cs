@@ -63,7 +63,6 @@ namespace Commands
         {
             if (!File.Exists(aliasJsonFile))
             {
-                FileSystem.ErrorWriteLine("Alias file does not exist!");
                 return string.Empty;
             }
             string command = string.Empty;
