@@ -458,7 +458,7 @@ Commands can be canceled with CTRL+X key combination.
                 string currentDirectorySize =
                     FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
 
-                Console.WriteLine("---------------------------------------------\n");
+                Console.WriteLine("----------------------------------------------\n");
                 Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
             }
 
