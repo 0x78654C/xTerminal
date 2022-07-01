@@ -64,7 +64,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message+ "\n Use alias -clear if alias file if is corrupted. File will be recreated by adding new command!");
+                FileSystem.ErrorWriteLine(e.Message+ " Check command!\nUse alias -clear if alias file if is corrupted. File will be recreated by adding new command!");
             }
         }
 
@@ -79,6 +79,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
             if (commandAlias.Contains("|"))
             {
                 string commandName = commandAlias.Split('|')[0].Trim();
+                if (commandName.Length < 2)
+                {
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Command name should be at least 2 characters long!");
+                    return;
+                }
                 string command = commandAlias.Split('|')[1].Trim();
                 if (File.Exists(aliasJsonFile) && CheckCommandName(s_aliasFile, commandName))
                 {
@@ -112,7 +117,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
             Json.DeleteJsonData<AliasC>(s_aliasFile, f => f.Where(t => t.CommandName == delAliasCommand));
-            Console.WriteLine($"'{delAliasCommand}' command was deleted!");
+            Console.WriteLine($"Alias command '{delAliasCommand}' was deleted!");
         }
 
         /// <summary>
