@@ -33,6 +33,7 @@ namespace Core
         public static List<string> excludeFiles = new List<string>() { "pagefile.sys" };
         public static bool eventCancelKey = false;
         public static bool autoSuggestion = false;
+        public static bool aliasRunFlag = false;
         public static bool eventKeyFlagX = false;
     }
 }
