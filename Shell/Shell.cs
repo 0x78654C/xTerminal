@@ -111,15 +111,30 @@ namespace Shell
         {
             // Display running command on title.
             Console.Title = command;
-
+         
             // Run xTerminal predifined commands.
             var c = Commands.CommandRepository.GetCommand(command);
+            CheckAliasCommandRun(GlobalVariables.aliasParameters);
             if (c != null || !string.IsNullOrEmpty(GlobalVariables.aliasParameters))
             {
                 if (!string.IsNullOrEmpty(GlobalVariables.aliasParameters))
                     command = GlobalVariables.aliasParameters;
+
                 c.Execute(command);
-                GlobalVariables.aliasParameters=string.Empty;
+                GlobalVariables.aliasParameters = string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Return info message if alias command parameter is wrong xterminal commmand.
+        /// </summary>
+        /// <param name="aliasParameter"></param>
+        private void CheckAliasCommandRun(string aliasParameter)
+        {
+            if (string.IsNullOrEmpty(aliasParameter) && GlobalVariables.aliasRunFlag)
+            {
+                Console.WriteLine("Check alias command parameter format!");
+                GlobalVariables.aliasRunFlag = false;
             }
         }
 
@@ -410,11 +425,11 @@ namespace Shell
                 {
                     if (s_userColor != "green")
                     {
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName }@{computerName}:");
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName}@{computerName}:");
                     }
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}:");
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName}@{computerName}:");
                     }
                 }
 
@@ -447,11 +462,11 @@ namespace Shell
             {
                 if (s_userColor != "green")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName }@{computerName}:");
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName}@{computerName}:");
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName }@{computerName}:");
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName}@{computerName}:");
                 }
             }
             if (s_cdColor != "cyan")
