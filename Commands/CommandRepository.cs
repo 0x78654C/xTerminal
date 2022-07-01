@@ -36,6 +36,7 @@ namespace Commands
         {
             if (string.IsNullOrWhiteSpace(commandLine))
             {
+                GlobalVariables.aliasRunFlag = false;
                 return null;
             }
 
@@ -47,8 +48,11 @@ namespace Commands
                 && !s_shellCommands.Contains(commandLine) && !commandLine.StartsWith("cmd") && !commandLine.StartsWith("ps"))
             {
                 string alias= GetAliasCommand(commandName, s_aliasFile);
-                if (string.IsNullOrEmpty(alias) || !s_terminalCommands.TryGetValue(alias.Split().First(),out terminalCommandOut))
+                if (string.IsNullOrEmpty(alias) || !s_terminalCommands.TryGetValue(alias.Split().First(), out terminalCommandOut))
+                {
                     Console.WriteLine($"Unknown command: {commandLine}");
+                    GlobalVariables.aliasParameters = string.Empty;
+                }
             }
             return terminalCommandOut;
         }
@@ -72,6 +76,7 @@ namespace Commands
                 if (alias.CommandName == commandName)
                 {
                     command = alias.Command;
+                    GlobalVariables.aliasRunFlag = true;
                     GlobalVariables.aliasParameters = command;
                 }
             }
