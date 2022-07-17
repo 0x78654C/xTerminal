@@ -122,6 +122,7 @@ namespace Shell
 
                 c.Execute(command);
                 GlobalVariables.aliasParameters = string.Empty;
+                GlobalVariables.aliasRunFlag = false;
             }
         }
 
@@ -133,7 +134,7 @@ namespace Shell
         {
             if (string.IsNullOrEmpty(aliasParameter) && GlobalVariables.aliasRunFlag)
             {
-                Console.WriteLine("Check alias command parameter format!");
+                Console.Error.WriteLine("Check alias command parameter format!");
                 GlobalVariables.aliasRunFlag = false;
             }
         }
