@@ -19,16 +19,14 @@ namespace Commands
                         .Select(t => Activator.CreateInstance(t))
                         .Cast<ITerminalCommand>()
                         .ToDictionary(command => command.Name, StringComparer.InvariantCulture);
+        
         private static readonly List<string> s_shellCommands = new List<string>() { "reboot", "logoff", "lock", "shutdown" };
 
         public static ITerminalCommand GetCommand(string[] args)
         {
             if (args == null || args.Length == 0)
-            {
-                // Maybe display an error message here
                 return null;
-            }
-
+            
             return GetCommand(string.Join(" ", args));
         }
 
