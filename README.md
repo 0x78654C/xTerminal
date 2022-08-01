@@ -102,6 +102,8 @@ This is the full list of commands that can be used in xTerminal:
                              Example: alias -add lz|ls -s (Creates a command lz that will run parameter ls -s)
                    -del   :  Deletes a alias command.
                              Example: alias -del lz (Deletes lz command and parameters for it.)
+                   -update:  Update a alias command.
+                             Example: alias -update lz|ls -ct (Updates command lz with new parameters. Works if command already exist!)
                    -list  :  List all alias commands.
                    -clear :  Clears all alias commands.
                  Attention: Alias commands cannot overwrite terminal commands!
