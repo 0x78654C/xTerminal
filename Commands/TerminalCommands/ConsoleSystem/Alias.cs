@@ -14,13 +14,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         public string Name => "alias";
         private static string s_aliasFile = GlobalVariables.aliasFile;
-        private static List<string> s_paramList = new List<string> { "-del", "-add", "-list", "-clear" };
+        private static List<string> s_paramList = new List<string> { "-del", "-add", "-list", "-clear", "-update" };
         private static string s_helpMessage = @"Usage of alias commands:
 
  -add   :  Creates a alias command with parammeters (alias <commandName>|<parameters>).
            Example: alias -add lz|ls -s (Creates a command lz that will run parameter ls -s)
  -del   :  Deletes a alias command.
            Example: alias -del lz (Deletes lz command and parameters for it.)
+ -update:  Update a alias command.
+           Example: alias -update lz|ls -ct (Updates command lz with new parameters. Works if command already exist!)
  -list  :  List all alias commands.
 
  -clear :  Clears all alias commands.
@@ -54,17 +56,20 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     AddCommand(args, s_aliasFile);
 
                 if (args.StartsWith("-del"))
-                    DeleteCommand(args, s_aliasFile);
+                    DeleteCommand(args, s_aliasFile, true);
 
                 if (args.StartsWith("-list"))
                     ListCommands(s_aliasFile);
 
                 if (args.StartsWith("-clear"))
                     ClearAliasCommands(s_aliasFile);
+
+                if (args.StartsWith("-update"))
+                    UpdateCommands(args, s_aliasFile);
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message+ " Check command!\nUse alias -clear if alias file if is corrupted. File will be recreated by adding new command!");
+                FileSystem.ErrorWriteLine(e.Message + " Check command!\nUse alias -clear if alias file if is corrupted. File will be recreated by adding new command!");
             }
         }
 
@@ -102,22 +107,59 @@ namespace Commands.TerminalCommands.ConsoleSystem
         /// </summary>
         /// <param name="arg"></param>
         /// <param name="aliasJsonFile"></param>
-        private static void DeleteCommand(string arg, string aliasJsonFile)
+        /// <param name="updateFlag"></param>
+        private static void DeleteCommand(string arg, string aliasJsonFile, bool updateFlag)
         {
-            string delAliasCommand = arg.SplitByText("-del ", 1);
-            if (!File.Exists(aliasJsonFile))
+            string delAliasCommand;
+            if (updateFlag)
+                delAliasCommand = arg.SplitByText("-del ", 1);
+            else
+                delAliasCommand = arg;
+
+            if (!File.Exists(aliasJsonFile) && updateFlag)
             {
                 FileSystem.ErrorWriteLine("Alias file does not exist! You need to first add a command.");
                 return;
             }
 
-            if (!CheckCommandName(aliasJsonFile, delAliasCommand))
+            if (!CheckCommandName(aliasJsonFile, delAliasCommand) && updateFlag)
             {
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{delAliasCommand} does not exist!");
                 return;
             }
             Json.DeleteJsonData<AliasC>(s_aliasFile, f => f.Where(t => t.CommandName == delAliasCommand));
-            Console.WriteLine($"Alias command '{delAliasCommand}' was deleted!");
+            if (updateFlag)
+                Console.WriteLine($"Alias command '{delAliasCommand}' was deleted!");
+        }
+
+        /// <summary>
+        /// Update alias commands from Json file.
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <param name="aliasJsonFile"></param>
+        private static void UpdateCommands(string arg, string aliasJsonFile)
+        {
+            string updateAliasCommand = arg.SplitByText("-update ", 1);
+            if (updateAliasCommand.Contains("|"))
+            {
+                if (!File.Exists(aliasJsonFile))
+                {
+                    FileSystem.ErrorWriteLine("Alias file does not exist! You need to first add a command.");
+                    return;
+                }
+                string commandName = updateAliasCommand.Split('|')[0].Trim();
+                string command = updateAliasCommand.Split('|')[1].Trim();
+                if (!CheckCommandName(aliasJsonFile, commandName))
+                {
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{commandName} does not exist!");
+                    return;
+                }
+                DeleteCommand(commandName,aliasJsonFile, false);
+                Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command });
+                Console.WriteLine($"Alias command '{commandName}' was updated!");
+            }
+            else
+                FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
         }
 
         /// <summary>
