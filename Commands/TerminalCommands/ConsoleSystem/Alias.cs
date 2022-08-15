@@ -86,7 +86,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 string commandName = commandAlias.Split('|')[0].Trim();
                 if (commandName.Length < 2)
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Command name should be at least 2 characters long!");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command name should be at least 2 characters long!");
+                    return;
+                }
+                if (commandName.Length > 14)
+                {
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command name should be maxim 14 characters!");
                     return;
                 }
                 string command = commandAlias.Split('|')[1].Trim();
