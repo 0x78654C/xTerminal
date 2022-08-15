@@ -157,6 +157,16 @@ namespace Commands.TerminalCommands.Roslyn
 
                 string argParse = dirFirst.SplitByText(" -c ", 1);
                 string command = argParse.Split('|')[0].Trim();
+                if(command.Length < 2)
+                {
+                    FileSystem.ErrorWriteLine("Command name should be at least 2 characters long!");
+                    return;
+                }
+                if(command.Length > 14)
+                {
+                    FileSystem.ErrorWriteLine($"Command name should be maxim 14 characters!");
+                    return;
+                }
                 int countSpace = Regex.Matches(argument, " ").Count;
                 string description = argument.Split('|')[1].Trim();
 
