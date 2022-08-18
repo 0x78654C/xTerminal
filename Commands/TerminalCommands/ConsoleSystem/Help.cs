@@ -38,8 +38,7 @@ This is the full list of commands that can be used in xTerminal:
     sinfo     -- Displays Storage devices information on local machine or remote. Use -h for additional parameters.
     hex       -- Displays a hex dump of a file. Use -h for additional parameters.
     pcinfo    -- Displays System Information.
-    nt        -- Starts new xTerminal console.
-                 -u : Starts new xTerminal console with other user option.
+    nt        -- Starts new xTerminal console. Use -h for additional parameters.
     alias     -- Create alias commands for built in xTerminal commands. Use -h for additional parameters.
 
     ---------------------- File System ---------------------
