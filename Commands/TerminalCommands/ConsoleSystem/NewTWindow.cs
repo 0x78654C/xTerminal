@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -9,9 +10,24 @@ namespace Commands.TerminalCommands.ConsoleSystem
     class NewTWindow : ITerminalCommand
     {
         public string Name => "nt";
-        public void Execute(string arg)
+        private static string s_helpMessage = @"Usage of nt command:
+    nt    : Opens new terminal window.
+    nt -u : Opens new terminal window as administrator.
+";
+        public void Execute(string args)
         {
-            if (arg.ContainsText("-u"))
+
+            if (args.Length > 2 && !args.Contains("-u"))
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
+            if (args == $"{Name} -h")
+            {
+                Console.WriteLine(s_helpMessage);
+                return;
+            }
+            if (args.ContainsText("-u"))
             {
                 Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "\\xTerminal.exe", "", true, true);
                 return;

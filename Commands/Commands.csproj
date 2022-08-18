@@ -161,6 +161,7 @@
     <Compile Include="TerminalCommands\Network\InternetSpeed.cs" />
     <Compile Include="TerminalCommands\Network\Ping.cs" />
     <Compile Include="TerminalCommands\Network\PortScanner.cs" />
+    <Compile Include="TerminalCommands\Network\WakeOverLan.cs" />
     <Compile Include="TerminalCommands\Network\WGet.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\StartProccess.cs" />
     <Compile Include="TerminalCommands\ConsoleSystem\Clear.cs" />

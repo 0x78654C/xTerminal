@@ -120,6 +120,8 @@
     <Compile Include="SystemTools\AutoSuggestion.cs" />
     <Compile Include="SystemTools\TopMost.cs" />
     <Compile Include="SystemTools\UI.cs" />
+    <Compile Include="WakeOverLAN.cs" />
+    <Compile Include="WOLUdpClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

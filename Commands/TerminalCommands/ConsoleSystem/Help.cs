@@ -38,8 +38,7 @@ This is the full list of commands that can be used in xTerminal:
     sinfo     -- Displays Storage devices information on local machine or remote. Use -h for additional parameters.
     hex       -- Displays a hex dump of a file. Use -h for additional parameters.
     pcinfo    -- Displays System Information.
-    nt        -- Starts new xTerminal console.
-                 -u : Starts new xTerminal console with other user option.
+    nt        -- Starts new xTerminal console. Use -h for additional parameters.
     alias     -- Create alias commands for built in xTerminal commands. Use -h for additional parameters.
 
     ---------------------- File System ---------------------
@@ -69,6 +68,7 @@ This is the full list of commands that can be used in xTerminal:
     email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname. Use -h for additional parameters.
     cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
+    wol       -- Sends Wake over LAN packet to a machine.  Use -h for additional parameters.
 
     -----------------C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
