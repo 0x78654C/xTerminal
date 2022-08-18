@@ -34,13 +34,12 @@ namespace Commands.TerminalCommands.Network
                 {
                     port = Int32.Parse(args.SplitByText("-port ", 1).Trim());
                 }
-                Console.WriteLine($"{ipAddress} {macAddress} {port}");
                 WakeOverLAN wakeOverLAN = new WakeOverLAN(ipAddress, macAddress, port);
                 wakeOverLAN.Wake();
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine($"{e.ToString()}. Check parameters!");
+                FileSystem.ErrorWriteLine($"{e.Message}. Check parameters!");
             }
         }
     }
