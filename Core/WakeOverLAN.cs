@@ -34,7 +34,7 @@ namespace Core
         {
             if (string.IsNullOrEmpty(IP) || string.IsNullOrEmpty(MAC) || Port == 0)
             {
-                Log.ErrorWriteLine("Check parameters!");
+                Log.ErrorWriteLine("Parameters should not be empty!");
                 return;
             }
 
@@ -78,6 +78,7 @@ namespace Core
                     }
                     client.Send(bytes, byteCount);
                     Log.ColorConsoleTextLine(ConsoleColor.Green, $"WOL packet is sent to IP: {IP} / MAC: {MAC}");
+                    client.Close();
                 }
                 else
                 {
