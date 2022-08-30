@@ -1,130 +1,56 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{589BCB52-0184-4C70-BD85-095C0755F536}</ProjectGuid>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Core</RootNamespace>
-    <AssemblyName>Core</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <LangVersion>8.0</LangVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
     <OutputPath>..\Release\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
     <OutputPath>..\..\Release\xTerminal\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'x64|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>8.0</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release x64|AnyCPU'">
     <OutputPath>bin\Release x64\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>8.0</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\x64\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>..\..\Release\xTerminal64\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'x64|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\x64\x64\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release x64|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\x64\Release x64\</OutputPath>
     <Optimize>true</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Konscious.Security.Cryptography.Argon2, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Konscious.Security.Cryptography.Argon2.1.2.1\lib\net46\Konscious.Security.Cryptography.Argon2.dll</HintPath>
-    </Reference>
-    <Reference Include="Konscious.Security.Cryptography.Blake2, Version=1.0.9.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Konscious.Security.Cryptography.Blake2.1.0.9\lib\net46\Konscious.Security.Cryptography.Blake2.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Windows\assembly\GAC_MSIL\System.Management.Automation\1.0.0.0__31bf3856ad364e35\System.Management.Automation.dll</HintPath>
     </Reference>
     <Reference Include="System.Management.Instrumentation" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\AutoSuggestionCommands.cs" />
-    <Compile Include="Commands\CatCommand.cs" />
-    <Compile Include="Commands\SystemCommands.cs" />
-    <Compile Include="Crc32.cs" />
-    <Compile Include="eMailS.cs" />
-    <Compile Include="Encryption\AES.cs" />
-    <Compile Include="Encryption\Argon2.cs" />
-    <Compile Include="Encryption\PasswordValidator.cs" />
-    <Compile Include="FileSystem.cs" />
-    <Compile Include="GlobalVariables.cs" />
-    <Compile Include="Hardware\WMIDetails.cs" />
-    <Compile Include="HexDump.cs" />
-    <Compile Include="InterceptKeys.cs" />
-    <Compile Include="NetWork.cs" />
-    <Compile Include="PortScan.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Registry.cs" />
-    <Compile Include="SystemTools\AliasC.cs" />
-    <Compile Include="SystemTools\JsonManage.cs" />
-    <Compile Include="SystemTools\ProcessStart.cs" />
-    <Compile Include="SystemTools\Roslyn.cs" />
-    <Compile Include="SystemTools\AutoSuggestion.cs" />
-    <Compile Include="SystemTools\TopMost.cs" />
-    <Compile Include="SystemTools\UI.cs" />
-    <Compile Include="WakeOverLAN.cs" />
-    <Compile Include="WOLUdpClient.cs" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+    <PackageReference Include="System.Management" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.2.1" />
+    <PackageReference Include="Konscious.Security.Cryptography.Blake2" Version="1.0.9" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

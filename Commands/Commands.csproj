@@ -1,196 +1,63 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.props" Condition="Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.props')" />
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{AE8425C8-0F5B-4D39-85EE-D12941FF4E65}</ProjectGuid>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Commands</RootNamespace>
-    <AssemblyName>Commands</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
     <OutputPath>..\..\Release\xTerminal\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'x64|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release x64|AnyCPU'">
     <OutputPath>bin\Release x64\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\x64\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>..\..\Release\xTerminal64\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'x64|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\x64\x64\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release x64|x64'">
-    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\x64\Release x64\</OutputPath>
     <Optimize>true</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DiffPlex, Version=1.7.1.0, Culture=neutral, PublicKeyToken=1d35e91d1bd7bc0f, processorArchitecture=MSIL">
-      <HintPath>..\packages\DiffPlex.1.7.1\lib\net40\DiffPlex.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.4.0.0-4.final\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.4.0.0-4.final\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="System" />
-    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Collections.Immutable, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Collections.Immutable.5.0.0\lib\net461\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Windows\assembly\GAC_MSIL\System.Management.Automation\1.0.0.0__31bf3856ad364e35\System.Management.Automation.dll</HintPath>
     </Reference>
-    <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Reflection.Metadata, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Reflection.Metadata.5.0.0\lib\net461\System.Reflection.Metadata.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.5.0.0\lib\net45\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Text.Encoding.CodePages, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Text.Encoding.CodePages.4.5.1\lib\net461\System.Text.Encoding.CodePages.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandRepository.cs" />
-    <Compile Include="ExtensionMethods.cs" />
-    <Compile Include="ITerminalCommand.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\Alias.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\ClearHistory.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\CommandHistory.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\BiosInfo.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\CheckPermission.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\CurrentDirectory.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\HexViewer.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\NewTWindow.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\OpenDirectory.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\PCInfo.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\ProcessKill.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\StorageInfo.cs" />
-    <Compile Include="TerminalCommands\DirFiles\Delete.cs" />
-    <Compile Include="TerminalCommands\DirFiles\Difference.cs" />
-    <Compile Include="TerminalCommands\DirFiles\Echo.cs" />
-    <Compile Include="TerminalCommands\DirFiles\Editor.cs" />
-    <Compile Include="TerminalCommands\DirFiles\FCopy.cs" />
-    <Compile Include="TerminalCommands\DirFiles\FMove.cs" />
-    <Compile Include="TerminalCommands\DirFiles\FRename.cs" />
-    <Compile Include="TerminalCommands\DirFiles\Locate.cs" />
-    <Compile Include="TerminalCommands\DirFiles\MakeDirectory.cs" />
-    <Compile Include="TerminalCommands\DirFiles\MakeFile.cs" />
-    <Compile Include="TerminalCommands\DirFiles\MD5Check.cs" />
-    <Compile Include="TerminalCommands\DirFiles\SortData.cs" />
-    <Compile Include="TerminalCommands\DirFiles\StringView.cs" />
-    <Compile Include="TerminalCommands\Games\FlappyBirds.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\Help.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\ListDirectories.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TerminalCommands\Games\Snake.cs" />
-    <Compile Include="TerminalCommands\Network\NetworkInterfaceCheck.cs" />
-    <Compile Include="TerminalCommands\Network\CheckDomain.cs" />
-    <Compile Include="TerminalCommands\Network\EmailClient.cs" />
-    <Compile Include="TerminalCommands\Network\ExternalIp.cs" />
-    <Compile Include="TerminalCommands\Network\InternetSpeed.cs" />
-    <Compile Include="TerminalCommands\Network\Ping.cs" />
-    <Compile Include="TerminalCommands\Network\PortScanner.cs" />
-    <Compile Include="TerminalCommands\Network\WakeOverLan.cs" />
-    <Compile Include="TerminalCommands\Network\WGet.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\StartProccess.cs" />
-    <Compile Include="TerminalCommands\ConsoleSystem\Clear.cs" />
-    <Compile Include="TerminalCommands\PasswordManager\PManager.cs" />
-    <Compile Include="TerminalCommands\Roslyn\Compiler.cs" />
-    <Compile Include="TerminalCommands\Roslyn\AddonManagement.cs" />
-    <Compile Include="TerminalCommands\UI\UIManagement.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj">
-      <Project>{589bcb52-0184-4c70-bd85-095c0755f536}</Project>
-      <Name>Core</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
+    <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.targets'))" />
-  </Target>
-  <Import Project="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.targets" Condition="Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.2\build\Microsoft.CodeAnalysis.Analyzers.targets')" />
+  <ItemGroup>
+    <PackageReference Include="DiffPlex" Version="1.7.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.0.0-4.final" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.0-4.final" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="5.0.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.1" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
 </Project>
