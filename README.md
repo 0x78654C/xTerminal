@@ -9,7 +9,7 @@ A Linux like terminal for windows in C# with some extras ;).
 
 ## Requirements:
 
-.NET Framework 4.7.2
+.NET 6 Runtime
 
  For Roslyn C# code runner use NuGet command in Commands project:
  ```
