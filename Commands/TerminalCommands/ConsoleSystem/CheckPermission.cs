@@ -1,6 +1,7 @@
 ﻿using Core;
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -8,6 +9,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     /*
      Checks the permission attributes for a file or directory. 
      */
+    [SupportedOSPlatform("windows")]
     class CheckPermission : ITerminalCommand
     {
         public string Name => "cp";

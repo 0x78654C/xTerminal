@@ -5,10 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.DirFiles
 {
+    [SupportedOSPlatform("windows")]
     public class FMove : ITerminalCommand
     {
         public string Name => "fmove";
