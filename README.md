@@ -162,7 +162,17 @@ This is the full list of commands that can be used in xTerminal:
                  Example 4: sort -d filePath -o saveFilePath  (Sort data descending and saves it to a file.)
     locate    -- Searches for files and directories, in the current directory and subdirectories that contains a specific text.
                  Example 1: locate <text> (Displays searched files/directories from current directory and subdirectories that includes a specific text.)
-                 Example 2: locate <text> -o <save_to_file> (Stores in to a file the searched files/directories from current directory and subdirectories that includes a specific text.)
+                 Example 2: locate <text> -o <save_to_file> (Stores in to a file the searched files/directories from current directory and subdirectories that includes a specific text.)                   
+                 Parameters:
+                     -s  : Displays searched files/directories from the current directory and subdirectories that starts with a specific text.
+                            Example 1: locate -s <text>
+                            Example 2: locate -s <text> -o <save_to_file>
+                     -e  : Displays searched files/directories from the current directory and subdirectories that ends with a specific text.
+                            Example 1: locate -e <text>
+                            Example 2: locate -e <text> -o <save_to_file>
+                     -eq : Displays searched files/directories from the current directory and subdirectories that equals a specific text.
+                            Example 1: locate -eq <text>
+                            Example 2: locate -eq <text> -o <save_to_file>
     echo      -- Write/append data to a file.
                  Example 1: echo hello world > path_to_file (Write data to file.)
                  Example 2: echo hello world >> path_to_file (Append data to file.)
