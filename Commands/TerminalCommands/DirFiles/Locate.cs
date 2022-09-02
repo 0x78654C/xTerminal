@@ -17,6 +17,17 @@ namespace Commands.TerminalCommands.DirFiles
 
     Example 1: locate <text> (Displays searched files/directories from the current directory and subdirectories that includes a specific text.)
     Example 2: locate <text> -o <save_to_file> (Stores in to a file the searched files/directories from current directory and subdirectories that includes a specific text.)
+   
+    Parameters:
+     -s  : Displays searched files/directories from the current directory and subdirectories that starts with a specific text.
+            Example 1: locate -s <text>
+            Example 2: locate -s <text> -o <save_to_file>
+     -e  : Displays searched files/directories from the current directory and subdirectories that ends with a specific text.
+            Example 1: locate -e <text>
+            Example 2: locate -e <text> -o <save_to_file>
+     -eq : Displays searched files/directories from the current directory and subdirectories that equals a specific text.
+            Example 1: locate -eq <text>
+            Example 2: locate -eq <text> -o <save_to_file>
   
 Command can be canceled with CTRL+X key combination.
 ";
@@ -25,6 +36,7 @@ Command can be canceled with CTRL+X key combination.
         {
             try
             {
+                var action=ActionFind.Contains;
                 GlobalVariables.eventCancelKey = false;
                 _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
                 if (arg == Name)
@@ -41,6 +53,24 @@ Command can be canceled with CTRL+X key combination.
                     return;
                 }
 
+                if(arg.Contains("-s "))
+                {
+                    arg = arg.Replace("-s ", string.Empty);
+                    action = ActionFind.StartsWith;
+                }
+
+                if (arg.Contains("-e "))
+                {
+                    arg = arg.Replace("-e ", string.Empty);
+                    action = ActionFind.EndsWith;
+                }
+
+                if (arg.Contains("-eq "))
+                {
+                    arg = arg.Replace("-eq ", string.Empty);
+                    action = ActionFind.Equal;
+                }
+
                 if (arg.Contains(" -o "))
                 {
                     string outputFile = arg.SplitByText(" -o ", 1);
@@ -49,7 +79,7 @@ Command can be canceled with CTRL+X key combination.
                     string param = arg.SplitByText(" -o ", 0);
                     Console.WriteLine($"Searching for: {param}" + Environment.NewLine);
                     GlobalVariables.eventKeyFlagX = true;
-                    SearchFile(_currentLocation, param, outputFile, true, ActionFind.Contains);
+                    SearchFile(_currentLocation, param, outputFile, true, action);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     GlobalVariables.eventCancelKey = false;
@@ -58,7 +88,7 @@ Command can be canceled with CTRL+X key combination.
                 }
                 Console.WriteLine($"Searching for: {arg}" + Environment.NewLine);
                 GlobalVariables.eventKeyFlagX = true;
-                SearchFile(_currentLocation, arg, "", false, ActionFind.Contains);
+                SearchFile(_currentLocation, arg, "", false, action);
                 if (GlobalVariables.eventCancelKey)
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                 GlobalVariables.eventCancelKey = false;
