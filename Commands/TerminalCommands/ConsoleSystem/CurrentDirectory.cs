@@ -73,6 +73,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             return;
                         }
 
+                        if (s_newLocation == "\\..")
+                            return;
+
                         if (s_exceptionPath.ContainsParameter(s_newLocation))
                             return;
 

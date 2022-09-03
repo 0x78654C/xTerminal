@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.Games
 {
+    [SupportedOSPlatform("windows")]
     public class FlappyBirds : ITerminalCommand
     {
         public string Name => "flappy";

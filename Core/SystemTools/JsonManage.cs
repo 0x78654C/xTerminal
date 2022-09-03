@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web.Script.Serialization;
+using System.Text.Json;
 
 namespace Core.SystemTools
 {
@@ -16,8 +16,7 @@ namespace Core.SystemTools
         /// <returns></returns>
         public static T ReadJsonFromFile<T>(string filePath)
         {
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            return serializer.Deserialize<T>(File.ReadAllText(filePath));
+            return JsonSerializer.Deserialize<T>(File.ReadAllText(filePath));
         }
 
         /// <summary>
@@ -27,8 +26,7 @@ namespace Core.SystemTools
         /// <param name="ob"></param>
         public static void CreateJsonFile(string filePath, object ob)
         {
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            File.WriteAllText(filePath, serializer.Serialize(ob));
+            File.WriteAllText(filePath, JsonSerializer.Serialize(ob));
         }
 
         /// <summary>

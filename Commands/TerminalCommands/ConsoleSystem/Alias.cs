@@ -5,9 +5,11 @@ using System.Linq;
 using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("windows")]
     public class Alias : ITerminalCommand
     {
         /* Alias commands manager. */

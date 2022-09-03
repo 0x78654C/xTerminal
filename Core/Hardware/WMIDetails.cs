@@ -2,9 +2,11 @@
 using System.Linq;
 using System.Management;
 using System.Text;
+using System.Runtime.Versioning;
 
 namespace Core.Hardware
 {
+    [SupportedOSPlatform("windows")]
     public static class WMIDetails
     {
         /// <summary>

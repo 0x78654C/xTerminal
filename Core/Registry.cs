@@ -1,11 +1,12 @@
 ﻿using Microsoft.Win32;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 
 namespace Core
 {
+    [SupportedOSPlatform("windows")]
     public class RegistryManagement
     {
-
         /// <summary>
         /// Registry key check
         /// </summary>

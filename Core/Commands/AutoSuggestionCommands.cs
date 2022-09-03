@@ -15,33 +15,37 @@ namespace Core.Commands
         /// <param name="isFile">If sugestion is for file.</param>
         public static void FileDirSuggestion(string consoleInput, string command, string currentDirectory, bool isFile)
         {
-            int commandLenght = command.Length + 1;
+            try
+            {
+                int commandLenght = command.Length + 1;
 
-            if (consoleInput == command)
-            {
-                GlobalVariables.autoSuggestion = true;
-                GlobalVariables.commandOut = command;
-                Console.WriteLine("\r\n For auto suggestion use: command<SPACE KEY>start characters of files/directories");
-                SendKeys.Send("{ENTER}");
-                SendKeys.Send(consoleInput);
-            }
-            if (consoleInput.StartsWith(command) && consoleInput.Length > command.Length)
-            {
-                if (isFile)
+                if (consoleInput == command)
                 {
                     GlobalVariables.autoSuggestion = true;
-                    consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
-                    SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory);
-                    GlobalVariables.commandOut = command + " " + consoleInput;
-                    SendKeys.Send(command+" "+consoleInput);
-                    return;
+                    GlobalVariables.commandOut = command;
+                    Console.WriteLine("\r\n For auto suggestion use: command<SPACE KEY>start characters of files/directories");
+                    SendKeys.Send("{ENTER}");
+                    SendKeys.Send(consoleInput);
                 }
-                GlobalVariables.autoSuggestion = true;
-                consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
-                SystemTools.AutoSuggestion.DirCompletion(consoleInput, currentDirectory);
-                GlobalVariables.commandOut = command + " " + consoleInput;
-                SendKeys.Send(command + " " + consoleInput);
+                if (consoleInput.StartsWith(command) && consoleInput.Length > command.Length)
+                {
+                    if (isFile)
+                    {
+                        GlobalVariables.autoSuggestion = true;
+                        consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
+                        SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory);
+                        GlobalVariables.commandOut = command + " " + consoleInput;
+                        SendKeys.Send(command + " " + consoleInput);
+                        return;
+                    }
+                    GlobalVariables.autoSuggestion = true;
+                    consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
+                    SystemTools.AutoSuggestion.DirCompletion(consoleInput, currentDirectory);
+                    GlobalVariables.commandOut = command + " " + consoleInput;
+                    SendKeys.Send(command + " " + consoleInput);
+                }
             }
+            catch { }
         }
     }
 }

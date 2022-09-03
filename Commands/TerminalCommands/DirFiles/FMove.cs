@@ -5,10 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-
+using System.Runtime.Versioning;
+using System.Security.Cryptography;
 
 namespace Commands.TerminalCommands.DirFiles
 {
+    [SupportedOSPlatform("windows")]
     public class FMove : ITerminalCommand
     {
         public string Name => "fmove";
@@ -113,15 +115,15 @@ namespace Commands.TerminalCommands.DirFiles
                                 Source = dlocation + delilmiterSplitF;
 
 
-                                using (var crc32 = Crc32.Create())
+                                using (var md5 = MD5.Create())
                                 {
                                     if (File.Exists(Source))
                                     {
                                         using (var stream = File.OpenRead(Source))
                                         {
-                                            var hash = crc32.ComputeHash(stream);
+                                            var hash = md5.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
+                                            Console.WriteLine("Source File: " + Source + " | MD5: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
                                             sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                                         }
                                     }
@@ -210,13 +212,13 @@ namespace Commands.TerminalCommands.DirFiles
                                 //-------------------------
 
                                 //Grabing destination file crc
-                                using (var crc32 = Crc32.Create())
+                                using (var md5 = MD5.Create())
                                 {
                                     using (var stream = File.OpenRead(Destination))
                                     {
-                                        var hash = crc32.ComputeHash(stream);
+                                        var hash = md5.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
+                                        Console.WriteLine("Destination File: " + Destination + " | MD5: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
                                         sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
                                     }
                                 }
@@ -226,12 +228,12 @@ namespace Commands.TerminalCommands.DirFiles
                                 if (crcSource == crcDestination)
                                 {
                                     File.Delete(Source);
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "MD5 match! File was moved OK!" + Environment.NewLine);
                                 }
                                 else
                                 {
                                     File.Delete(Destination);
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC does not match! File was not moved." + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "MD5 does not match! File was not moved." + Environment.NewLine);
                                     FilesErrorCopy.Add(Source);
                                 }
                             }
@@ -271,15 +273,15 @@ namespace Commands.TerminalCommands.DirFiles
                                     Source = dlocation + Source;
                                 }
 
-                                using (var crc32 = Crc32.Create())
+                                using (var md5 = MD5.Create())
                                 {
                                     if (File.Exists(Source))
                                     {
                                         using (var stream = File.OpenRead(Source))
                                         {
-                                            var hash = crc32.ComputeHash(stream);
+                                            var hash = md5.ComputeHash(stream);
                                             crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                            Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
+                                            Console.WriteLine("Source File: " + Source + " | MD5: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
                                             sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                                         }
                                     }
@@ -371,13 +373,13 @@ namespace Commands.TerminalCommands.DirFiles
                                 //-------------------------
 
                                 //Grabing destination file crc
-                                using (var crc32 = Crc32.Create())
+                                using (var md5 = MD5.Create())
                                 {
                                     using (var stream = File.OpenRead(Destination))
                                     {
-                                        var hash = crc32.ComputeHash(stream);
+                                        var hash = md5.ComputeHash(stream);
                                         crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                        Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
+                                        Console.WriteLine("Destination File: " + Destination + " | MD5: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
                                         sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
                                     }
                                 }
@@ -387,12 +389,12 @@ namespace Commands.TerminalCommands.DirFiles
                                 if (crcSource == crcDestination)
                                 {
                                     File.Delete(Source);
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "MD5 match! File was moved OK!" + Environment.NewLine);
                                 }
                                 else
                                 {
                                     File.Delete(Destination);
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC does not match! File was not moved." + Environment.NewLine);
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "MD5 does not match! File was not moved." + Environment.NewLine);
                                     FilesErrorCopy.Add(Source);
                                 }
                             }
@@ -406,15 +408,15 @@ namespace Commands.TerminalCommands.DirFiles
                     {
                         Source = dlocation + Source;
                     }
-                    using (var crc32 = Crc32.Create())
+                    using (var md5 = MD5.Create())
                     {
                         if (File.Exists(Source))
                         {
                             using (var stream = File.OpenRead(Source))
                             {
-                                var hash = crc32.ComputeHash(stream);
+                                var hash = md5.ComputeHash(stream);
                                 crcSource = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                                Console.WriteLine("Source File: " + Source + " | CRC: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
+                                Console.WriteLine("Source File: " + Source + " | MD5: " + crcSource + " | Size: " + FileSystem.GetFileSize(Source, false));
                                 sizeSourceFiles += Double.Parse(FileSystem.GetFileSize(Source, true));
                             }
                         }
@@ -449,13 +451,13 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     //-------------------------
                     //Grabing destination file crc
-                    using (var crc32 = Crc32.Create())
+                    using (var md5 = MD5.Create())
                     {
                         using (var stream = File.OpenRead(Destination))
                         {
-                            var hash = crc32.ComputeHash(stream);
+                            var hash = md5.ComputeHash(stream);
                             crcDestination = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                            Console.WriteLine("Destination File: " + Destination + " | CRC: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
+                            Console.WriteLine("Destination File: " + Destination + " | MD5: " + crcDestination + " | Size: " + FileSystem.GetFileSize(Destination, false));
                             sizeDestinationFiles += Double.Parse(FileSystem.GetFileSize(Destination, true));
                         }
                     }
@@ -463,12 +465,12 @@ namespace Commands.TerminalCommands.DirFiles
                     if (crcSource == crcDestination)
                     {
                         File.Delete(Source);
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "CRC match! File was moved OK!" + Environment.NewLine);
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "MD5 match! File was moved OK!" + Environment.NewLine);
                     }
                     else
                     {
                         File.Delete(Destination);
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "CRC does not match! File was not moved." + Environment.NewLine);
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "MD5 does not match! File was not moved." + Environment.NewLine);
                         FilesErrorCopy.Add(Source);
                     }
                 }
@@ -486,7 +488,7 @@ namespace Commands.TerminalCommands.DirFiles
                 else
                 {
                     FileSystem.ErrorWriteLine(x.Message);
-                    FileSystem.ErrorWriteLine("\nCommand should look like this: fcopy source_file target_file");
+                    FileSystem.ErrorWriteLine("\nCommand should look like this: fcopy source_file -o target_file");
                 }
 
             }
@@ -502,7 +504,7 @@ namespace Commands.TerminalCommands.DirFiles
 
                 if (!string.IsNullOrWhiteSpace(ErrorCopy))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "List of files not moved. CRC missmatch:\n\r" + ErrorCopy + Environment.NewLine);
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "List of files not moved. MD5 missmatch:\n\r" + ErrorCopy + Environment.NewLine);
                     Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() + " | Total Size: " + sizeSourceRound + " MB");
                     Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
                 }

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Core
 {
+    [SupportedOSPlatform("windows")]
     public class FileSystem
     {
         private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };  // Array with types of store data

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Script.Serialization;
+using System.Text.Json;
 
 namespace Core.Encryption
 {
@@ -24,7 +24,7 @@ namespace Core.Encryption
         {
             try
             {
-                RijndaelManaged aes = new RijndaelManaged();
+                var aes = Aes.Create("AesManaged");
                 aes.KeySize = 256;
                 aes.BlockSize = 128;
                 aes.Padding = PaddingMode.PKCS7;
@@ -42,10 +42,9 @@ namespace Core.Encryption
                     { "value", encryptedText },
                     { "mac", mac },
                 };
-                JavaScriptSerializer serializer = new JavaScriptSerializer();
                 Argon2.s_argon2.Reset();
                 Argon2.s_argon2.Dispose();
-                return Convert.ToBase64String(encoding.GetBytes(serializer.Serialize(keyValues)));
+                return Convert.ToBase64String(encoding.GetBytes(JsonSerializer.Serialize(keyValues)));
             }
             catch (Exception e)
             {
@@ -63,7 +62,7 @@ namespace Core.Encryption
         {
             try
             {
-                RijndaelManaged aes = new RijndaelManaged();
+                var aes = Aes.Create("AesManaged");
                 aes.KeySize = 256;
                 aes.BlockSize = 128;
                 aes.Padding = PaddingMode.PKCS7;
@@ -71,8 +70,7 @@ namespace Core.Encryption
                 aes.Key = Argon2.Argon2HashPassword(password);
                 byte[] base64Decoded = Convert.FromBase64String(plainText);
                 string base64DecodedStr = encoding.GetString(base64Decoded);
-                JavaScriptSerializer ser = new JavaScriptSerializer();
-                var payload = ser.Deserialize<Dictionary<string, string>>(base64DecodedStr);
+                var payload = JsonSerializer.Deserialize<Dictionary<string, string>>(base64DecodedStr);
                 aes.IV = Convert.FromBase64String(payload["iv"]);
                 ICryptoTransform AESDecrypt = aes.CreateDecryptor(aes.Key, aes.IV);
                 byte[] buffer = Convert.FromBase64String(payload["value"]);
