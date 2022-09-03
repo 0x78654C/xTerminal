@@ -8,10 +8,11 @@ using System.Linq;
 using System.Windows.Forms;
 using SetConsoleColor = Core.SystemTools.UI;
 using SystemCmd = Core.Commands.SystemCommands;
+using System.Runtime.Versioning;
 
 namespace Shell
 {
-
+    [SupportedOSPlatform("windows")]
     public class Shell
     {
         //declaring variables
@@ -43,11 +44,8 @@ namespace Shell
         // Function for store current path in directory by current process id.
         private void StoreCurrentDirectory()
         {
-
             if (!File.Exists(GlobalVariables.currentDirectory))
-            {
                 File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
-            }
         }
 
         /// <summary>
@@ -111,7 +109,7 @@ namespace Shell
         {
             // Display running command on title.
             Console.Title = command;
-         
+
             // Run xTerminal predifined commands.
             var c = Commands.CommandRepository.GetCommand(command);
             CheckAliasCommandRun(GlobalVariables.aliasParameters);
@@ -277,7 +275,6 @@ namespace Shell
         /// <param name="e"></param>
         private void KeyHook(object o, DoWorkEventArgs e)
         {
-
             InterceptKeys.SetupHook(KeyDown);
             InterceptKeys.ReleaseHook();
         }
@@ -286,11 +283,12 @@ namespace Shell
         //Entry point of shell
         public void Run(string[] args)
         {
-            // Start keyhook event on background for CTRL+X .
-            s_backgroundWorker = new BackgroundWorker();
-            s_backgroundWorker.DoWork += KeyHook;
-            s_backgroundWorker.RunWorkerAsync();
-
+            //// Start keyhook event on background for CTRL+X .
+            //s_backgroundWorker = new BackgroundWorker();
+            //s_backgroundWorker.DoWork += KeyHook;
+            //s_backgroundWorker.RunWorkerAsync();
+            InterceptKeys.SetupHook(KeyDown);
+            InterceptKeys.ReleaseHook();
 
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
@@ -360,7 +358,6 @@ namespace Shell
                 {
                     ExecuteCommands(s_input);
                 }
-
                 GC.Collect();
 
             } while (s_input != "exit");
