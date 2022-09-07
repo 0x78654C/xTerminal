@@ -1,4 +1,5 @@
 ﻿using Core;
+using Core.SystemTools;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using GetRef = Core.SystemTools.Roslyn;
 
 namespace Commands.TerminalCommands.Roslyn
 {
@@ -18,6 +20,7 @@ namespace Commands.TerminalCommands.Roslyn
         public string Name => "ccs";
         private string _codeToRun;
         private string _currentLocation = string.Empty;
+        private string[] _commandLineArgs;
         public void Execute(string args)
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
@@ -48,15 +51,13 @@ namespace Commands.TerminalCommands.Roslyn
         {
             try
             {
+                SplitArguments splitArguments = new SplitArguments(param);
+                _commandLineArgs = splitArguments.CommandLineToArgs() ?? Array.Empty<string>();
                 ParseCode(fileName);
                 Assembly assembly = null;
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun);
                 string assemblyName = Path.GetRandomFileName();
-                string assemblyPath = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
-                var references = Directory.GetFiles(assemblyPath).Where(t => t.EndsWith(".dll"))
-        .Where(t => Core.SystemTools.Roslyn.IsManaged(t))
-        .Select(t => MetadataReference.CreateFromFile(t)).ToArray();
-
+                var references = GetRef.References();
                 CSharpCompilation compilation = CSharpCompilation.Create(
                     assemblyName,
                     syntaxTrees: new[] { syntaxTree },
@@ -75,7 +76,8 @@ namespace Commands.TerminalCommands.Roslyn
 
                         foreach (Diagnostic diagnostic in failures)
                         {
-                            Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                            var lineError = diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1;
+                            Console.Error.WriteLine("{0}: {1} -> line {2}", diagnostic.Id, diagnostic.GetMessage(),lineError);
                         }
                     }
                     else
@@ -87,7 +89,7 @@ namespace Commands.TerminalCommands.Roslyn
                     ms.Close();
                 }
                 MethodInfo myMethod = assembly.EntryPoint;
-                myMethod.Invoke(null, new object[] { new string[0] });
+                myMethod.Invoke(null, new object[] { _commandLineArgs });
             }
             catch (Exception e)
             {

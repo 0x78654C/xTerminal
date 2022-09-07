@@ -1,4 +1,5 @@
 ﻿using Core;
+using Core.SystemTools;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -8,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using GetRef = Core.SystemTools.Roslyn;
 
 namespace Commands.TerminalCommands.Roslyn
 {
@@ -22,6 +24,7 @@ namespace Commands.TerminalCommands.Roslyn
         public string Name => "!";
 
         private string _codeToRun;
+        private string[] _commandLineArgs;
         private bool _commandCheck = false;
         private string _currentLocation = string.Empty;
         private string _addonDir = string.Empty;
@@ -187,6 +190,8 @@ namespace Commands.TerminalCommands.Roslyn
         {
             try
             {
+                SplitArguments splitArguments = new SplitArguments(param);
+                _commandLineArgs = splitArguments.CommandLineToArgs() ?? Array.Empty<string>();
                 ParseCode(addonDir, command);
                 if (_commandCheck)
                 {
@@ -197,10 +202,7 @@ namespace Commands.TerminalCommands.Roslyn
                 Assembly assembly = null;
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun);
                 string assemblyName = Path.GetRandomFileName();
-                string assemblyPath = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
-                var references = Directory.GetFiles(assemblyPath).Where(t => t.EndsWith(".dll"))
-.Where(t => Core.SystemTools.Roslyn.IsManaged(t))
-.Select(t => MetadataReference.CreateFromFile(t)).ToArray();
+                var references = GetRef.References();
 
                 CSharpCompilation compilation = CSharpCompilation.Create(
                     assemblyName,
@@ -231,9 +233,8 @@ namespace Commands.TerminalCommands.Roslyn
 
                     ms.Close();
                 }
-                string[] paramAr = { param }; 
                 MethodInfo myMethod = assembly.EntryPoint;
-                myMethod.Invoke(null, new object[] { paramAr });
+                myMethod.Invoke(null, new object[] { _commandLineArgs });
             }
             catch (Exception e)
             {
