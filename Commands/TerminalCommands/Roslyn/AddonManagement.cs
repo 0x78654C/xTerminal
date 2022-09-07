@@ -222,7 +222,8 @@ namespace Commands.TerminalCommands.Roslyn
 
                         foreach (Diagnostic diagnostic in failures)
                         {
-                            Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                            var lineError = diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1;
+                            Console.Error.WriteLine("{0}: {1} -> line {2}", diagnostic.Id, diagnostic.GetMessage(), lineError);
                         }
                     }
                     else
