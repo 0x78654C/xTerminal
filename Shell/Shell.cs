@@ -36,7 +36,6 @@ namespace Shell
         private static int s_ctrlKey = 1;
         private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
-        private static BackgroundWorker s_backgroundWorker;
 
         //-------------------------------
 
@@ -268,25 +267,10 @@ namespace Shell
             }
         }
 
-        /// <summary>
-        /// Hook key event on KeyDown press.
-        /// </summary>
-        /// <param name="o"></param>
-        /// <param name="e"></param>
-        private void KeyHook(object o, DoWorkEventArgs e)
-        {
-            InterceptKeys.SetupHook(KeyDown);
-            InterceptKeys.ReleaseHook();
-        }
-
-
         //Entry point of shell
         public void Run(string[] args)
         {
-            //// Start keyhook event on background for CTRL+X .
-            //s_backgroundWorker = new BackgroundWorker();
-            //s_backgroundWorker.DoWork += KeyHook;
-            //s_backgroundWorker.RunWorkerAsync();
+            // Hook key event on KeyDown press.
             InterceptKeys.SetupHook(KeyDown);
             InterceptKeys.ReleaseHook();
 
