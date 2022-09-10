@@ -64,5 +64,44 @@ namespace Core.SystemTools
                 FileSystem.ErrorWriteLine(e.Message);
             }
         }
+
+        /// <summary>
+        /// Process execution in separate window with no args.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="asAdmin"></param>
+        public static void ProcessExecute(string input, bool asAdmin)
+        {
+            try
+            {
+                var process = new Process();
+
+                if (asAdmin)
+                {
+                    process.StartInfo = new ProcessStartInfo(input)
+                    {
+                        UseShellExecute = true,
+                        Verb = "runas"
+                    };
+                }
+                else
+                {
+                    process.StartInfo = new ProcessStartInfo(input)
+                    {
+                        UseShellExecute = true,
+                        WindowStyle= ProcessWindowStyle.Normal
+                };
+                }
+                process.Start();
+            }
+            catch (System.ComponentModel.Win32Exception win)
+            {
+                FileSystem.ErrorWriteLine(win.Message);
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message);
+            }
+        }
     }
 }
