@@ -27,9 +27,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string coresInfo = wmi.GetWMIDetails("SELECT * FROM Win32_Processor");
             Console.WriteLine("\n------------------------System Info------------------------\n");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "User logged");
-            Console.WriteLine($": {GlobalVariables.accountName }");
+            Console.WriteLine($": {GlobalVariables.accountName}");
             FileSystem.ColorConsoleText(ConsoleColor.Green, "Machine Name");
-            Console.WriteLine($": {GlobalVariables.computerName }");
+            Console.WriteLine($": {GlobalVariables.computerName}");
             GetMachineModel(modelInfo);
             Console.WriteLine("\n----------------------------OS----------------------------\n");
             GetOSInfo(pcInfo);
@@ -60,7 +60,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         {
                             string outParam = lineOS.Split(':')[1];
                             FileSystem.ColorConsoleText(ConsoleColor.Green, $"{param}");
-                            Console.WriteLine($": {outParam }");
+                            Console.WriteLine($": {outParam}");
                         }
                     }
                 }
@@ -85,7 +85,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         {
                             string outParam = lineOS.Split(':')[1];
                             FileSystem.ColorConsoleText(ConsoleColor.Green, $"{param}");
-                            Console.WriteLine($": {outParam }");
+                            Console.WriteLine($": {outParam}");
                         }
                     }
                 }
@@ -137,7 +137,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             FileSystem.ColorConsoleText(ConsoleColor.Green, "RAM");
             string ramAvailable = FileSystem.GetSize(ram.AvailablePhysicalMemory.ToString(), false);
             string ramTotal = FileSystem.GetSize(ram.TotalPhysicalMemory.ToString(), false);
-            Console.WriteLine($": { ramAvailable} Available / {ramTotal} Total");
+            Console.WriteLine($": {ramAvailable} Available / {ramTotal} Total");
         }
 
         /// <summary>
@@ -145,14 +145,18 @@ namespace Commands.TerminalCommands.ConsoleSystem
         /// </summary>
         private void GetDrivesSize()
         {
-            DriveInfo[] allDrives = DriveInfo.GetDrives();
-            foreach (var d in allDrives)
+            try
             {
-                string totalSize = wmi.SizeConvert($"Size {d.TotalSize}", true);
-                string availableSize = wmi.SizeConvert($"Size {d.AvailableFreeSpace}", true);
-                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name}: ");
-                Console.Write($" Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n");
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
+                foreach (var d in allDrives)
+                {
+                    string totalSize = wmi.SizeConvert($"Size {d.TotalSize}", true);
+                    string availableSize = wmi.SizeConvert($"Size {d.AvailableFreeSpace}", true);
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name}: ");
+                    Console.Write($" Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n");
+                }
             }
+            catch { }
         }
 
         /// <summary>
