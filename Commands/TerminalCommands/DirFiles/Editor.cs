@@ -68,7 +68,6 @@ namespace Commands.TerminalCommands.DirFiles
                 Arguments = file
             };
             process.Start();
-            process.WaitForExit();
         }
     }
 }
