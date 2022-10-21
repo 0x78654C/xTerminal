@@ -35,10 +35,10 @@ Can be used with the following parameters:
                 string param = args.Split(' ').First();
                 string paramApp = string.Empty;
 
-                if (args.Contains("-p"))
+                if (args.Contains("-param"))
                 {
-                    paramApp = args.SplitByText(" -p ", 1);
-                    args = args.SplitByText(" -p ", 0);
+                    paramApp = args.SplitByText(" -param ", 1);
+                    args = args.SplitByText(" -param ", 0);
                 }
                 if (args == "-h")
                 {
