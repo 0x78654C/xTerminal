@@ -32,7 +32,6 @@ namespace Core.Hardware
 
                     sb.AppendLine($"{item.Name}: {FormatOutputValue(wmi_HD[item.Name]) }");
                 }
-
                 sb.AppendLine(Environment.NewLine + string.Join("", Enumerable.Range(1, 30).Select(t => '-')) + Environment.NewLine);
             }
             return sb.ToString();
