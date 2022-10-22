@@ -49,6 +49,7 @@ namespace Core
                 {
                     Console.Write($" {args.PortNum} | ");
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"Open");
+                    Thread.Sleep(5);
                 }
                 else
                 {
@@ -56,6 +57,7 @@ namespace Core
                     {
                         Console.Write($" {args.PortNum} | ");
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Close");
+                        Thread.Sleep(5);
                     }
                 }
             };
@@ -155,10 +157,12 @@ namespace Core
                 Socket socket = null;
                 try
                 {
-
                     TcpClient tcpClient = new TcpClient();
-                    IAsyncResult ar = tcpClient.BeginConnect(Host, port, null, true);
-                    return ar.AsyncWaitHandle.WaitOne(timeOut, false);
+                    //IAsyncResult ar = tcpClient.BeginConnect(Host, port, null, true);
+
+                    // Experimental test.
+                    bool arOut = tcpClient.ConnectAsync(Host, port).Wait(timeOut);
+                    return arOut;
                 }
                 catch (SocketException ex)
                 {
@@ -188,7 +192,7 @@ namespace Core
                         GlobalVariables.eventCancelKey = false;
                         return;
                     }
-                    CheckPort(port,timeOut, progress);
+                    CheckPort(port, timeOut, progress);
                 }
             }
 
