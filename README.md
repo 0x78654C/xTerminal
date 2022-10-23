@@ -67,11 +67,14 @@ This is the full list of commands that can be used in xTerminal:
     ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
     start     -- Starts an application. Ex.: start <file_name> OR start <file_name> -p <file_paramters>.
-                 Can use following parameter:
-                   -h : Display this message.
-                   -u : Can run process with different user.
-                        Example1: start -u <file_name>
-                        Example2: start -u <file_name> -p <file_paramters>
+                 Can be used with the following parameters:
+                   -h    : Displays this message.
+                   -u    : Can run process with different user.
+                   -we   : Wait for process to exit.
+                   -param: Start process with specified parameters.
+                         Example1: start -u <file_name>
+                         Example2: start -u <file_name> -param <file_paramters>
+                 Both examples can be used with -we parameter.
     pkill     -- Kills a running process by name or id.
                  Example1: pkill <process_name>
                  Example2: pkill -i <process_id>
