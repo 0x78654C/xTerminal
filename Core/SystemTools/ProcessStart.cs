@@ -13,7 +13,7 @@ namespace Core.SystemTools
         /// <param name="arguments">Specific file arguments.</param>
         /// <param name="fileCheck">Check file if exists before process exection. </param>
         /// <param name="asAdmin">Run as different user.</param>
-        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin)
+        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
         {
             try
             {
@@ -21,24 +21,26 @@ namespace Core.SystemTools
 
                 if (asAdmin)
                 {
-                    process.StartInfo = new ProcessStartInfo(input)
+                    process.StartInfo = new ProcessStartInfo(input);
+                    process.StartInfo.Arguments = arguments;
+                    process.StartInfo.UseShellExecute = false;
+                    if (!waitForExit)
                     {
-                        Arguments = arguments,
-                        UseShellExecute = false,
-                        RedirectStandardInput = true,
-                        RedirectStandardError = true,
-                        Verb = "runas"
-                    };
+                        process.StartInfo.RedirectStandardInput = true;
+                        process.StartInfo.RedirectStandardError = true;
+                    }
+                    process.StartInfo.Verb = "runas";
                 }
                 else
                 {
-                    process.StartInfo = new ProcessStartInfo(input)
+                    process.StartInfo = new ProcessStartInfo(input);
+                    process.StartInfo.UseShellExecute = false;
+                    if (!waitForExit)
                     {
-                        UseShellExecute = false,
-                        RedirectStandardInput = true,
-                        RedirectStandardError = true,
-                        Arguments = arguments
-                    };
+                        process.StartInfo.RedirectStandardInput = true;
+                        process.StartInfo.RedirectStandardError = true;
+                    }
+                    process.StartInfo.Arguments = arguments;
                 }
 
                 if (fileCheck)
@@ -46,12 +48,16 @@ namespace Core.SystemTools
                     if (File.Exists(input))
                     {
                         process.Start();
+                        if (waitForExit)
+                            process.WaitForExit();
                         return;
                     }
                     FileSystem.ErrorWriteLine($"Couldn't find file \"{input}\" to execute");
                     return;
                 }
                 process.Start();
+                if (waitForExit)
+                    process.WaitForExit();
             }
             catch (System.ComponentModel.Win32Exception win)
             {
@@ -87,8 +93,8 @@ namespace Core.SystemTools
                     process.StartInfo = new ProcessStartInfo(input)
                     {
                         UseShellExecute = true,
-                        WindowStyle= ProcessWindowStyle.Normal
-                };
+                        WindowStyle = ProcessWindowStyle.Normal
+                    };
                 }
                 process.Start();
             }
