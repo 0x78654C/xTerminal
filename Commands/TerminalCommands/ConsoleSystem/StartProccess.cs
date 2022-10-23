@@ -10,12 +10,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         private static string s_currentDirectory = string.Empty;
         public string Name => "start";
-        private string _helpMessage = @"Usage: start <file_name> OR start <file_name> -p <file_paramters>
+        private string _helpMessage = @"Usage: start <file_name> OR start <file_name> -param <file_paramters>
 Can be used with the following parameters:
-    -h : Displays this message.
-    -u : Can run process with different user.
+    -h    : Displays this message.
+    -u    : Can run process with different user.
+    -we   : Wait for process to exit.
+    -param: Start process with specified parameters.
          Example1: start -u <file_name>
-         Example2: start -u <file_name> -p <file_paramters>
+         Example2: start -u <file_name> -param <file_paramters>
+Both examples can be used with -we parameter.
 ";
 
         public void Execute(string args)
@@ -34,6 +37,13 @@ Can be used with the following parameters:
                 args = args.Substring(6, argsLength);
                 string param = args.Split(' ').First();
                 string paramApp = string.Empty;
+                bool waitForExit = false;
+
+                if(args.Contains("-we"))
+                {
+                    args = args.Replace("-we".Trim(), string.Empty);
+                    waitForExit = true;
+                }
 
                 if (args.Contains("-param"))
                 {
@@ -52,10 +62,10 @@ Can be used with the following parameters:
                         args = args.Replace("-u ", "");
                         args = FileSystem.SanitizePath(args, s_currentDirectory);
 
-                        StartApplication(args, paramApp, true);
+                        StartApplication(args, paramApp, true, waitForExit);
                         return;
                     }
-                    StartApplication(args, paramApp, false);
+                    StartApplication(args, paramApp, false, waitForExit);
                     return;
                 }
                 args = FileSystem.SanitizePath(args, s_currentDirectory);
@@ -63,10 +73,10 @@ Can be used with the following parameters:
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    StartApplication(args, paramApp, true);
+                    StartApplication(args, paramApp, true, waitForExit);
                     return;
                 }
-                StartApplication(args, paramApp, false);
+                StartApplication(args, paramApp, false, waitForExit);
             }
             catch (Exception e)
             { 
@@ -80,7 +90,7 @@ Can be used with the following parameters:
         /// <param name="inputCommand">Path to procces required to be started.</param>
         /// <param name="arg">Arguments</param>
         /// <param name="admin">Use other user for run procces.</param>
-        private void StartApplication(string inputCommand, string arg, bool admin)
+        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit)
         {
             try
             {
@@ -93,10 +103,10 @@ Can be used with the following parameters:
                 }
                 if (admin)
                 {
-                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true);
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit);
                     return;
                 }
-                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false);
+                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit);
                 return;
             }
             catch (Exception e)
