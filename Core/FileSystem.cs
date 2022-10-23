@@ -213,7 +213,7 @@ namespace Core
             dirPath = SanitizePath(dirPath, currentDirectory);
             if (Directory.Exists(dirPath))
             {
-                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath, false, false);
+                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath, false, false,false);
                 return;
             }
             Console.WriteLine($"Directory '{dirPath}' does not exist!");
