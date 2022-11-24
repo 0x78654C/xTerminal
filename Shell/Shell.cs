@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using SetConsoleColor = Core.SystemTools.UI;
+using ProccessManage = Core.SystemTools.ProcessStart;
 using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 
@@ -112,9 +113,9 @@ namespace Shell
             // Run xTerminal predifined commands.
             var c = Commands.CommandRepository.GetCommand(command);
             CheckAliasCommandRun(GlobalVariables.aliasParameters);
-            if (c != null || !string.IsNullOrEmpty(GlobalVariables.aliasParameters))
+            if (c != null || !string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
             {
-                if (!string.IsNullOrEmpty(GlobalVariables.aliasParameters))
+                if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                     command = GlobalVariables.aliasParameters;
 
                 c.Execute(command);
@@ -325,11 +326,11 @@ namespace Shell
                     }
                     else if (s_input.StartsWith("cmd"))
                     {
-                        Execute(s_input, s_input);
+                        ProccessManage.Execute(s_input, s_input);
                     }
                     else if (s_input.StartsWith("ps"))
                     {
-                        Execute(s_input, s_input);
+                        ProccessManage.Execute(s_input, s_input);
                     }
                 }
 
@@ -347,39 +348,6 @@ namespace Shell
             } while (s_input != "exit");
         }
 
-        //------------------
-
-        //process execute 
-        public void Execute(string input, string args)
-        {
-            if (input.StartsWith("cmd"))
-            {
-                args = args.Split(' ').Count() >= 1 ? args.Replace("cmd ", "/c ") : args.Replace("cmd", "");
-                ExecutApp("cmd", args, true);
-                return;
-            }
-            if (input.StartsWith("ps"))
-            {
-                args = args.Split(' ').Count() >= 1 ? args.Replace("ps", "") : args.Replace("ps ", "");
-                ExecutApp("powershell", args, true);
-                return;
-            }
-        }
-
-        private void ExecutApp(string processName, string arg, bool waitForExit)
-        {
-            var process = new Process();
-            process.StartInfo = new ProcessStartInfo(processName)
-            {
-                UseShellExecute = false,
-                WorkingDirectory = s_currentDirectory,
-                Arguments = arg
-            };
-            process.Start();
-            if (waitForExit)
-                process.WaitForExit();
-        }
-        //------------------------
 
         // We set the name of the current user logged in and machine on console.
         private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName, string uiSettings)
