@@ -6,6 +6,7 @@ using System.Reflection;
 using Core;
 using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
+using Core.SystemTools;
 
 namespace Commands
 {
@@ -43,13 +44,16 @@ namespace Commands
             // Get the first word from the parameters. This should be the command name
             string commandName = commandLine.Split().First();
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
-                && !s_shellCommands.Contains(commandLine) && !commandLine.StartsWith("cmd") && !commandLine.StartsWith("ps"))
+                && !s_shellCommands.Contains(commandLine))
             {
                 string alias= GetAliasCommand(commandName, s_aliasFile);
                 if (string.IsNullOrEmpty(alias) || !s_terminalCommands.TryGetValue(alias.Split().First(), out terminalCommandOut))
                 {
-                    Console.WriteLine($"Unknown command: {commandLine}");
-                    GlobalVariables.aliasParameters = string.Empty;
+                    if (!commandLine.StartsWith("cmd") && !commandLine.StartsWith("ps") && !GlobalVariables.aliasRunFlag)
+                    {
+                        Console.WriteLine($"Unknown command: {commandLine}");
+                    }
+                    GlobalVariables.aliasParameters = " ";
                 }
             }
             return terminalCommandOut;
@@ -69,6 +73,7 @@ namespace Commands
             }
             string command = string.Empty;
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
+            
             foreach (var alias in aliasCommands)
             {
                 if (alias.CommandName == commandName)
@@ -78,6 +83,13 @@ namespace Commands
                     GlobalVariables.aliasParameters = command;
                 }
             }
+
+            if (command.StartsWith("cmd") || command.StartsWith("ps"))
+            {
+                ProcessStart.Execute(command, command);
+                return string.Empty;
+            }
+
             return command;
         }
     }
