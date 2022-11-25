@@ -14,7 +14,7 @@ namespace Core.SystemTools
         /// <param name="arguments">Specific file arguments.</param>
         /// <param name="fileCheck">Check file if exists before process exection. </param>
         /// <param name="asAdmin">Run as different user.</param>
-        private static string s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
+        private static string s_currentDirectory;
         public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
         {
             try
@@ -117,6 +117,7 @@ namespace Core.SystemTools
         /// <param name="args"></param>
         public static void Execute(string input, string args)
         {
+            s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             if (input.StartsWith("cmd"))
             {
                 args = args.Split(' ').Count() >= 1 ? args.Replace("cmd ", "/c ") : args.Replace("cmd", "");
