@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Sockets;
-using System.Threading;
+using System.Runtime.Versioning;
 
 namespace Core
 {
+    [SupportedOSPlatform("windows")]
     // <summary>
     /// Use Sockets to Scan the Ports on a Machine.
     /// </summary>
@@ -18,6 +19,9 @@ namespace Core
 
     public class PortScan
     {
+
+        public static List<string> opennedPports = new List<string>();
+
         /// <summary>
         /// Run port scan for check active/ non active.
         /// </summary>
@@ -42,28 +46,7 @@ namespace Core
 
             PortScanner cps = new PortScanner(ipAddress, minPort, maxPort);
             var progress = new Progress<PortScanner.PortScanResult>();
-
-            progress.ProgressChanged += (sender, args) =>
-            {
-                if (args.IsPortOpen)
-                {
-                    Console.Write($" {args.PortNum} | ");
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"Open");
-                    Thread.Sleep(5);
-                }
-                else
-                {
-                    if (minPort == maxPort)
-                    {
-                        Console.Write($" {args.PortNum} | ");
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Close");
-                        Thread.Sleep(5);
-                    }
-                }
-            };
-
             cps.Scan(progress, timeOut);
-            Thread.Sleep(5);
             cps.LastPortScanSummary();
         }
 
@@ -158,16 +141,20 @@ namespace Core
                 try
                 {
                     TcpClient tcpClient = new TcpClient();
-                    //IAsyncResult ar = tcpClient.BeginConnect(Host, port, null, true);
 
-                    // Experimental test.
                     bool arOut = tcpClient.ConnectAsync(Host, port).Wait(timeOut);
+                    if (arOut)
+                        opennedPports.Add($"{port}|Open");
+                    else
+                        opennedPports.Add($"{port}|Close");
+
                     return arOut;
                 }
                 catch (SocketException ex)
                 {
                     if (ex.SocketErrorCode == SocketError.ConnectionRefused)
                     {
+                        opennedPports.Add($"{port}|Close");
                         return false;
                     }
                 }
@@ -179,7 +166,7 @@ namespace Core
                     }
                     socket?.Close();
                 }
-
+                opennedPports.Add($"{port}|Close");
                 return false;
             }
 
@@ -203,6 +190,23 @@ namespace Core
                     ? "0"
                     : string.Join(",", _openPorts);
 
+                int countPorts = opennedPports.Count;
+
+                foreach(var port in opennedPports)
+                {
+                    var portData = port.Split('|');
+                    if(countPorts==1 && portData[1] == "Close")
+                    {
+                        Console.Write($" {portData[0]} | ");
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Close");
+                    }
+                    else if(portData[1] == "Open")
+                    {
+                        Console.Write($" {portData[0]} | ");
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"Open");
+                    }
+                }
+                opennedPports.Clear();
                 Console.WriteLine();
                 Console.WriteLine("-----------------");
                 Console.WriteLine("Port Scan Results");
