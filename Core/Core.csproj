@@ -47,4 +47,7 @@
     <PackageReference Include="Konscious.Security.Cryptography.Blake2" Version="1.0.9" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenAI.Api.Client\OpenAI.Api.Client.csproj" />
+  </ItemGroup>
 </Project>
