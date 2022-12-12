@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <TargetFrameworks>net6.0</TargetFrameworks>
+    </PropertyGroup>
+
+</Project>
