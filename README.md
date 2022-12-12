@@ -258,6 +258,11 @@ This is the full list of commands that can be used in xTerminal:
                      -updatea  : Updates account's password for an application in a vault.
                      -lista   : Displays the existing applications in a vault.
 
+    ------------------------ OpenAI -------------------------
+    cgpt      -- Ask OpenAI(chatGPT) questions and display answer in terminal.
+                 Example 1: cgpt -setkey key_from_openai (Store the API key provided by OpenAI.com)
+                 Example 2: cgpt question_you_want_to_ask (Display the answer for your question)
+
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
     snake     -- Play Snake game in console!(Created by https://github.com/mkbmain)
