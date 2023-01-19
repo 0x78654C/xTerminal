@@ -149,7 +149,6 @@ namespace Commands.TerminalCommands.Roslyn
                 }
                 string dirFirst = argument.SplitByText("-add ", 1);
                 string dir = dirFirst.SplitByText(" -c ", 0);
-                Console.WriteLine(dir);
                 string file = FileSystem.SanitizePath(dir, _currentLocation);
 
                 if (!File.Exists(file))
