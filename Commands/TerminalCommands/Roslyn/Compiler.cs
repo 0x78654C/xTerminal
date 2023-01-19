@@ -21,11 +21,32 @@ namespace Commands.TerminalCommands.Roslyn
         private string _codeToRun;
         private string _currentLocation = string.Empty;
         private string[] _commandLineArgs;
+        private string _helpMessage = @"
+ Usage: ! <command_name>
+ Can be used with the following parameters:
+
+   -h     :  Displays help message.
+   -p     :  Uses command with parameters.
+                Example: ccs <file_name> -p <parameters>
+";
+
         public void Execute(string args)
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
             string param = string.Empty;
+            if (args.Length == 1)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
+
+            if (args == $"{Name} -h")
+            {
+                Console.WriteLine(_helpMessage);
+                return;
+            }
+
             if (args.Length == 3)
             {
                 FileSystem.ErrorWriteLine($"You must provide a C# file for compilation.");
