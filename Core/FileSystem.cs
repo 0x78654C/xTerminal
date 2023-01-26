@@ -135,11 +135,11 @@ namespace Core
         /// </summary>
         /// <param name="color"></param>
         /// <param name="text"></param>
-        public static void ColorConsoleText(ConsoleColor color, string text)
+        public static void ColorConsoleText(ConsoleColor color, object data)
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = color;
-            Console.Write(text);
+            Console.Write(data);
             Console.ForegroundColor = currentForeground;
         }
 
@@ -196,11 +196,11 @@ namespace Core
         /// Write error output in color Red.
         /// </summary>
         /// <param name="text"></param>
-        public static void ErrorWriteLine(string text)
+        public static void ErrorWriteLine(object data)
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine($"Error: {text}");
+            Console.Error.WriteLine($"Error: {data}");
             Console.ForegroundColor = currentForeground;
         }
 
