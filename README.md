@@ -110,6 +110,10 @@ This is the full list of commands that can be used in xTerminal:
                    -list  :  List all alias commands.
                    -clear :  Clears all alias commands.
                  Attention: Alias commands cannot overwrite terminal commands!
+    shred     -- Overwrites and deletes a file that will be difficult to recover after. Use -h for additional help.
+                   Example: shred <file_path> :   Will shred the file with the default of 3 passes.
+                   -i     :  Will shred the file with the specified number!
+                             Example: shred <file_path> -i <number_of_passes>
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
