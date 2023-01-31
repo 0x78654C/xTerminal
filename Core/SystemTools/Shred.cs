@@ -44,7 +44,7 @@ namespace Core.SystemTools
 
                 var sectors = Math.Ceiling(new FileInfo(_filePath).Length / 512.0);
                 var dummyBuffer = new byte[512];
-                var cProvier = new RNGCryptoServiceProvider();
+                var cProvier = RandomNumberGenerator.Create();
 
                 var input = new FileStream(_filePath, FileMode.Open);
                 for (int currentWrite = 0; currentWrite < _writePasses; currentWrite++)
@@ -58,10 +58,11 @@ namespace Core.SystemTools
                         input.Write(dummyBuffer, 0, dummyBuffer.Length);
                     }
                 }
+                
                 input.SetLength(0);
                 input.Close();
-
-                var dateTime = new DateTime(DateTime.Now.Year + 50, 1, 1, 5, 8, 0);
+                var num = RandomNumberGenerator.GetInt32(1,12);
+                var dateTime = new DateTime(DateTime.Now.Year - num, num, num+9, num+5, num+num, 0);
                 File.SetCreationTime(_filePath, dateTime);
                 File.SetLastWriteTime(_filePath, dateTime);
                 File.SetLastAccessTime(_filePath, dateTime);
