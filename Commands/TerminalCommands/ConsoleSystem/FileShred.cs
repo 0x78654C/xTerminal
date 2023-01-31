@@ -2,13 +2,15 @@
 using Core.SystemTools;
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("Windows")]
     public class FileShred : ITerminalCommand
     {
         public string Name => "shred";
-        Shred shred;
+        private Shred _shred;
         private static string s_helpMessage = @"Usage of shred command:
   shred <file_path> :   Will shred the file with the default of 3 passes.
   shred <file_path> -i <number_of_passes> :   Will shred the file with the specified number!
@@ -37,13 +39,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     int passes = Int32.Parse(args.SplitByText("-i ", 1).Trim());
                     string filePath = args.SplitByText(" -i", 0).Trim();
                     string fileSanitizeI = FileSystem.SanitizePath(filePath, currentDirectory);
-                    shred = new Shred(fileSanitizeI, passes);
-                    shred.ShredFile();
+                    _shred = new Shred(fileSanitizeI, passes);
+                    _shred.ShredFile();
                     return;
                 }
                 string fileSanitize = FileSystem.SanitizePath(args, currentDirectory);
-                shred = new Shred(fileSanitize, 0);
-                shred.ShredFile();
+                _shred = new Shred(fileSanitize, 0);
+                _shred.ShredFile();
             }
             catch (Exception ex)
             {
