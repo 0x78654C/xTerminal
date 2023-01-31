@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
 namespace Commands.TerminalCommands.DirFiles
 {
+    [SupportedOSPlatform("Windows")]
     public class MD5Check : ITerminalCommand
     {
         /*
@@ -151,7 +153,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                             using (var stream = File.OpenRead(cDir + @"\" + arg))
                             {
                                 var hash = md5.ComputeHash(stream);
-                                retValue = cDir + @"\" + arg + "   MD5: " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                                retValue = cDir + arg + "   MD5: " + BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                             }
                         }
                     }
