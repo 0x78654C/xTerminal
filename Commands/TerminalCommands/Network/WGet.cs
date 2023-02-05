@@ -30,6 +30,7 @@ namespace Commands.TerminalCommands.Network
         private static string s_helpMessage = @"Usage: wget <url> . Or with parameters:
 
    -h : Display this message.
+ --tls: Activate tls1,tls2,tls3 and ssl3
    -o : Save to a specific directory.
         Example: wget <url> -o <directory_path>
 
@@ -38,6 +39,18 @@ namespace Commands.TerminalCommands.Network
 ";
         public void Execute(string arg)
         {
+            if (arg == $"{Name} -h")
+            {
+                Console.WriteLine(s_helpMessage);
+                return;
+            }
+
+            if (arg.Length == 4)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
+
             if (arg.Contains("--noping"))
             {
                 s_pingCheck = false;
@@ -48,22 +61,15 @@ namespace Commands.TerminalCommands.Network
                 s_pingCheck = true;
             }
 
-            ActivateTls();
-            s_client = new HttpClient();
-            s_timeSpan = new TimeSpan();
-            s_stopWatch = new Stopwatch();
-            if (arg.Length == 4)
-            {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
-                return;
-            }
-            if (arg == $"{Name} -h")
-            {
-                Console.WriteLine(s_helpMessage);
-                return;
-            }
             try
             {
+                if (arg.Contains("--tls"))
+                    ActivateTls();
+                s_client = new HttpClient();
+                s_timeSpan = new TimeSpan();
+                s_stopWatch = new Stopwatch();
+
+
                 if (s_pingCheck)
                 {
                     if (NetWork.IntertCheck())
@@ -82,7 +88,7 @@ namespace Commands.TerminalCommands.Network
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.ToString());
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
 
