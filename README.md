@@ -196,6 +196,7 @@ This is the full list of commands that can be used in xTerminal:
     extip     -- Displays the current external IP address.
     wget      -- Download files from a specific website.
                     -h : Display this message.
+                  --tls: Activate tls1,tls2,tls3 and ssl3
                     -o : Save to a specific directory.
                          Example2: wget <url> -o <directory_path>
                  WGet command can be used with --noping parameter to disable ping check on hostname/ip.
