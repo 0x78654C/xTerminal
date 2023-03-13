@@ -359,3 +359,7 @@ For that we use following command:
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/5.bmp?raw=true)
 
+* Video presentation :
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/8ANjPhTE17w/0.jpg)](https://www.youtube.com/watch?v=8ANjPhTE17w)
+
