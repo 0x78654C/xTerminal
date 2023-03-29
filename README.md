@@ -359,3 +359,10 @@ For that we use following command:
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/5.bmp?raw=true)
 
+* Video presentation :
+
+
+https://user-images.githubusercontent.com/13780514/224794373-5fbab892-9a52-425f-bd71-005265995cc2.mp4
+
+
+
