@@ -15,6 +15,9 @@ namespace Core.SystemTools
         /// <param name="fileCheck">Check file if exists before process exection. </param>
         /// <param name="asAdmin">Run as different user.</param>
         private static string s_currentDirectory;
+
+        private static string GetExecutablePath(string executableFilePath)  => Path.GetDirectoryName(executableFilePath);
+       
         public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
         {
             try
@@ -25,6 +28,7 @@ namespace Core.SystemTools
                 {
                     process.StartInfo = new ProcessStartInfo(input);
                     process.StartInfo.Arguments = arguments;
+                    process.StartInfo.WorkingDirectory = GetExecutablePath(input);
                     process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
                     {
@@ -36,6 +40,7 @@ namespace Core.SystemTools
                 else
                 {
                     process.StartInfo = new ProcessStartInfo(input);
+                    process.StartInfo.WorkingDirectory = GetExecutablePath(input);
                     process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
                     {
