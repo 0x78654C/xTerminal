@@ -16,6 +16,11 @@ namespace Core.SystemTools
         /// <param name="asAdmin">Run as different user.</param>
         private static string s_currentDirectory;
 
+        /// <summary>
+        /// Get path of assembly.
+        /// </summary>
+        /// <param name="executableFilePath"></param>
+        /// <returns></returns>
         private static string GetExecutablePath(string executableFilePath)  => Path.GetDirectoryName(executableFilePath);
        
         public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
