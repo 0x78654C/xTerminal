@@ -41,6 +41,7 @@ This is the full list of commands that can be used in xTerminal:
     nt        -- Starts new xTerminal console. Use -h for additional parameters.
     alias     -- Create alias commands for built in xTerminal commands. Use -h for additional parameters.
     shred     -- Overwrites and deletes a file that will be difficult to recover after. Use -h for additional help.
+    fsig      -- Check file type singatures (magic numbers). Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
