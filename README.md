@@ -114,6 +114,11 @@ This is the full list of commands that can be used in xTerminal:
                    Example: shred <file_path> :   Will shred the file with the default of 3 passes.
                    -i     :  Will shred the file with the specified number!
                              Example: shred <file_path> -i <number_of_passes>
+    fsig      -- Check file type singatures (magic numbers). Use -h for additional help.
+     	           fsig <file_path>      : Display file path, extension, hex signature, and signature description.
+ 	               fsig <file_path> -ext : Display extension only.
+ 	               fsig -h               : Display this help message.
+              Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signatures
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
