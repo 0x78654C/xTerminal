@@ -36,5 +36,6 @@ namespace Core
         public static bool autoSuggestion = false;
         public static bool aliasRunFlag = false;
         public static bool eventKeyFlagX = false;
+        public static readonly string magicNunmbers= Application.StartupPath + @"\ext_list.txt";
     }
 }
