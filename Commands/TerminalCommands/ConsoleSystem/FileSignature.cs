@@ -17,6 +17,12 @@ namespace Core.SystemTools
  	fsig <file_path> -ext : Display extension only.
  	fsig -h               : Display this help message.
 
+
+List must be in same place with xTerminal.exe file and named ext_list.txt
+List format: <hex signature>|<extension(s)>|Description
+    Example:
+4D 5A|exe, scr, sys, dll, fon, cpl, iec, ime, rs, tsp, mz|DOS MZ executable and its descendants (including NE and PE) 
+
 Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signatures
 ";
         private readonly string _extFile = GlobalVariables.magicNunmbers;
