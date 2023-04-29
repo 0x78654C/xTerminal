@@ -12,7 +12,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             string helpMGS = $@"
 ----------------------------------------------------------------
-xTerminal Copyright @ 2020-2022 0x078654c
+xTerminal Copyright @ 2020-2023 0x078654c
 Version: {GlobalVariables.version.Substring(0, GlobalVariables.version.Length - 2)}
 Contact: xcoding.dev@gmail.com
 ----------------------------------------------------------------
