@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.IO;
 
 namespace Core
 {
@@ -18,6 +19,8 @@ namespace Core
      */
     public class HexDump
     {
+
+        private static char[] s_hexChars = "0123456789ABCDEF".ToCharArray();
         /// <summary>
         /// Hex dump
         /// </summary>
@@ -29,7 +32,6 @@ namespace Core
             if (bytes == null) return "<null>";
             int bytesLength = bytes.Length;
 
-            char[] HexChars = "0123456789ABCDEF".ToCharArray();
 
             int firstHexColumn =
                   8                   // 8 characters for the address
@@ -50,14 +52,14 @@ namespace Core
 
             for (int i = 0; i < bytesLength; i += bytesPerLine)
             {
-                line[0] = HexChars[(i >> 28) & 0xF];
-                line[1] = HexChars[(i >> 24) & 0xF];
-                line[2] = HexChars[(i >> 20) & 0xF];
-                line[3] = HexChars[(i >> 16) & 0xF];
-                line[4] = HexChars[(i >> 12) & 0xF];
-                line[5] = HexChars[(i >> 8) & 0xF];
-                line[6] = HexChars[(i >> 4) & 0xF];
-                line[7] = HexChars[(i >> 0) & 0xF];
+                line[0] = s_hexChars[(i >> 28) & 0xF];
+                line[1] = s_hexChars[(i >> 24) & 0xF];
+                line[2] = s_hexChars[(i >> 20) & 0xF];
+                line[3] = s_hexChars[(i >> 16) & 0xF];
+                line[4] = s_hexChars[(i >> 12) & 0xF];
+                line[5] = s_hexChars[(i >> 8) & 0xF];
+                line[6] = s_hexChars[(i >> 4) & 0xF];
+                line[7] = s_hexChars[(i >> 0) & 0xF];
 
                 int hexColumn = firstHexColumn;
                 int charColumn = firstCharColumn;
@@ -74,13 +76,93 @@ namespace Core
                     else
                     {
                         byte b = bytes[i + j];
-                        line[hexColumn] = HexChars[(b >> 4) & 0xF];
-                        line[hexColumn + 1] = HexChars[b & 0xF];
+                        line[hexColumn] = s_hexChars[(b >> 4) & 0xF];
+                        line[hexColumn + 1] = s_hexChars[b & 0xF];
                         line[charColumn] = (b < 32 ? '·' : (char)b);
                     }
                     hexColumn += 3;
                     charColumn++;
                 }
+                result.Append(line);
+            }
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Get hex from file.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        public static string GetHex(string fileName)
+        {
+            var outHex = "";
+
+            try
+            {
+                if (File.Exists(fileName))
+                {
+                    using (var stream = File.OpenRead(fileName))
+                    {
+                        var size = stream.Length < 50 ? (int)stream.Length : 50;
+                        var buffe = new byte[size];
+                        var read = stream.Read(buffe, 0, size);
+                        outHex=Hex(buffe, size);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                outHex = e.Message;
+            }
+            return outHex;
+        }
+
+
+        /// <summary>
+        /// Hex dump bytes only
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="bytesPerLine"></param>
+        /// <returns></returns>
+        public static string HexBytes(byte[] bytes, int bytesPerLine = 50)
+        {
+            if (bytes is null) return "<null>";
+            var bytesLength = bytes.Length;
+
+            var firstCharColumn = 0
+                                  + bytesPerLine * 3
+                                  + (bytesPerLine - 1) / 8;
+
+
+            var lineLength = firstCharColumn
+                             + bytesPerLine
+                             + Environment.NewLine.Length;
+
+            var line = (new string(' ', lineLength - Environment.NewLine.Length) + Environment.NewLine).ToCharArray();
+            var expectedLines = (bytesLength + bytesPerLine - 1) / bytesPerLine;
+            var result = new StringBuilder(expectedLines * lineLength);
+
+            for (var i = 0; i < bytesLength; i += bytesPerLine)
+            {
+                var hexColumn = 0;
+
+                for (var j = 0; j < bytesPerLine; j++)
+                {
+                    if (i + j >= bytesLength)
+                    {
+                        line[hexColumn] = ' ';
+                        line[hexColumn + 1] = ' ';
+                    }
+                    else
+                    {
+                        var b = bytes[i + j];
+                        line[hexColumn] = s_hexChars[(b >> 4) & 0xF];
+                        line[hexColumn + 1] = s_hexChars[b & 0xF];
+                    }
+
+                    hexColumn += 3;
+                }
+
                 result.Append(line);
             }
             return result.ToString();

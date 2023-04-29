@@ -1,9 +1,11 @@
 ﻿using Core;
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("Windows")]
     public class HexViewer : ITerminalCommand
     {
         /*
