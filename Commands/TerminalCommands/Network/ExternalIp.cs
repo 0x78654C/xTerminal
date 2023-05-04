@@ -1,10 +1,12 @@
 ﻿using Core;
 using System;
 using System.Net;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class ExternalIp : ITerminalCommand
     {
         /*

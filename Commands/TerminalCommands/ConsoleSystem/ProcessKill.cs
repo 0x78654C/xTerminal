@@ -1,12 +1,14 @@
 ﻿using Core;
 using System;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
     /*
      Kill an active process by name.
      */
+    [SupportedOSPlatform("Windows")]
     class ProcessKill : ITerminalCommand
     {
         public string Name => "pkill";

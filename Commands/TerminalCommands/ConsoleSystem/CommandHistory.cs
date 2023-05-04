@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -9,6 +10,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
      Outputs the stored commands in history.db file under the user profile.
      Max numbers of output is 100. 
      */
+    [SupportedOSPlatform("Windows")]
     public class CommandHistory : ITerminalCommand
     {
         public string Name => "ch";

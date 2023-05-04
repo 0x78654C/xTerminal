@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Versioning;
 using Core;
 
 namespace Commands.TerminalCommands.DirFiles
 {
     /*Sort ascending/descending data in files. */
+    [SupportedOSPlatform("Windows")]
     class SortData : ITerminalCommand
     {
         public string Name => "sort";

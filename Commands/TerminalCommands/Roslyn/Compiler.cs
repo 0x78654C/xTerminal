@@ -8,10 +8,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using GetRef = Core.SystemTools.Roslyn;
 
 namespace Commands.TerminalCommands.Roslyn
 {
+    [SupportedOSPlatform("Windows")]
     public class Compiler : ITerminalCommand
     {
         /*

@@ -8,9 +8,11 @@ using System.Threading;
 using CheckType = Core.FileSystem.CheckType;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class WGet : ITerminalCommand
     {
         public string Name => "wget";

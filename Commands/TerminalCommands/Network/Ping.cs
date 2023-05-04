@@ -1,8 +1,10 @@
 ﻿using Core;
 using System;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class Ping : ITerminalCommand
     {
         /*

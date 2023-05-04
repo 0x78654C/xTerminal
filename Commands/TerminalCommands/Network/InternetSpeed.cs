@@ -1,9 +1,11 @@
 ﻿using Core;
 using System;
 using System.Net;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class InternetSpeed : ITerminalCommand
     {
         public string Name => "ispeed";

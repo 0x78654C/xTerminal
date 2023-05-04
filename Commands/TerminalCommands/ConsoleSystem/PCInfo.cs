@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Versioning;
 using wmi = Core.Hardware.WMIDetails;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("Windows")]
     public class PCInfo : ITerminalCommand
     {
         /*

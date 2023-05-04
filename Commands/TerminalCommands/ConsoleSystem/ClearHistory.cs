@@ -1,12 +1,14 @@
 ﻿using Core;
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
     /*
      Clears the commands from history file. Stored in History.db under current user profile.
      */
+    [SupportedOSPlatform("Windows")]
     public class ClearHistory : ITerminalCommand
     {
         private static readonly string s_historyFile = GlobalVariables.historyFile;

@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using ping = Core.NetWork;
 using Wmi = Core.Hardware.WMIDetails;
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("Windows")]
     public class StorageInfo : ITerminalCommand
     {
         /// <summary>

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Core;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 
 namespace Commands.TerminalCommands.DirFiles
 {
+    [SupportedOSPlatform("Windows")]
     class Difference : ITerminalCommand
     {
         /*Diff command class for compare two files line by line.*/

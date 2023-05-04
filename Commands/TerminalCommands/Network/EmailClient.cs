@@ -1,9 +1,11 @@
 ﻿using Core;
 using System;
+using System.Runtime.Versioning;
 using PasswordValidator = Core.Encryption.PasswordValidator;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class EmailClient : ITerminalCommand
     {
         private static string s_mailFrom = string.Empty;

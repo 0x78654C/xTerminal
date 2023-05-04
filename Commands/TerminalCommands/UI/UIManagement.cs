@@ -1,9 +1,11 @@
 ﻿using Core;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.UI
 {
+    [SupportedOSPlatform("Windows")]
     public class UIManagement : ITerminalCommand
     {
 

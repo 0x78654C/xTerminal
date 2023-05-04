@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using Core;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class PortScanner : ITerminalCommand
     {
         /* Connection status check for an port (opened or closed) */

@@ -2,9 +2,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace Core.SystemTools
 {
+    [SupportedOSPlatform("Windows")]
     public class ProcessStart
     {
         /// <summary>

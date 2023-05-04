@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Net.Mail;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace Core
 {
     //Class for sending emails (gmail, yahoo, microsoft all)
-
+    [SupportedOSPlatform("Windows")]
     public class eMailS
     {
         /// <summary>

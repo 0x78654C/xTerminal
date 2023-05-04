@@ -10,9 +10,6 @@ namespace Commands.TerminalCommands.Network
          */
         public string Name => "ifconfig";
 
-        public void Execute(string args)
-        {
-            Console.WriteLine(NetWork.ShowNicConfiguragion());
-        }
+        public void Execute(string args) => Console.WriteLine(NetWork.ShowNicConfiguragion());
     }
 }

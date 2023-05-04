@@ -1,8 +1,10 @@
 ﻿using Core;
 using System.IO;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("Windows")]
     public class OpenDirectory : ITerminalCommand
     {
         /*

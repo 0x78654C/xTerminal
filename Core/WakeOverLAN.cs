@@ -3,10 +3,12 @@ using System.Net;
 using System.Globalization;
 using Log = Core.FileSystem;
 using System.Text.RegularExpressions;
+using System.Runtime.Versioning;
 
 namespace Core
 {
     /* Class for send WOL magic packet. */
+    [SupportedOSPlatform("Windows")]
     public class WakeOverLAN
     {
         private string IP { get; set; }

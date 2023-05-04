@@ -2,9 +2,11 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.DirFiles
 {
+    [SupportedOSPlatform("Windows")]
     public class Editor : ITerminalCommand
     {
         public string Name => "edit";

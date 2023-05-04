@@ -2,12 +2,14 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
     public class StartProccess : ITerminalCommand
     {
+        [SupportedOSPlatform("Windows")]
         private static string s_currentDirectory = string.Empty;
         public string Name => "start";
         private string _helpMessage = @"Usage: start <file_name> OR start <file_name> -param <file_paramters>

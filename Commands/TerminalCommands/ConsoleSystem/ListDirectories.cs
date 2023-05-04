@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -16,6 +17,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     }
 
     /* ls command class*/
+    [SupportedOSPlatform("Windows")]
     public class ListDirectories : ITerminalCommand
     {
         private static string s_currentDirectory = string.Empty;

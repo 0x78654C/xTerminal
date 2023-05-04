@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using ping = Core.NetWork;
 using wmi = Core.Hardware.WMIDetails;
 
@@ -7,7 +8,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     /*
      Bios information display for local or remote user using WMI.
      */
-
+    [SupportedOSPlatform("Windows")]
     public class BiosInfo : ITerminalCommand
     {
         public string Name => "bios";

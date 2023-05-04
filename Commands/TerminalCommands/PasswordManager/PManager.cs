@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text.Json;
 using PasswordValidator = Core.Encryption.PasswordValidator;
 
@@ -12,6 +13,7 @@ namespace Commands.TerminalCommands.PasswordManager
       Simple password manager to locally store sensitive authentification data from a specific application.
       Using Rijndael AES-256bit encryption for data and Argon2 for master password hash.
      */
+    [SupportedOSPlatform("Windows")]
     public class PManager : ITerminalCommand
     {
         public string Name => "pwm";

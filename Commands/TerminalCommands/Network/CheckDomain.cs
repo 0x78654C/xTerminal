@@ -1,9 +1,11 @@
 ﻿using Core;
 using System;
+using System.Runtime.Versioning;
 using ping = Core.NetWork;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class CheckDomain : ITerminalCommand
     {
         /*

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using System.Windows.Forms;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -6,7 +7,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     /*
      * Start new terminal window.
      */
-
+    [SupportedOSPlatform("Windows")]
     class NewTWindow : ITerminalCommand
     {
         public string Name => "nt";

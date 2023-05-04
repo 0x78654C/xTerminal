@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using Core;
 
 namespace Commands.TerminalCommands.Network
 {
     /*Wake over LAN command class.*/
+    [SupportedOSPlatform("Windows")]
     public class WakeOverLan : ITerminalCommand
     {
         private const int _port = 9;

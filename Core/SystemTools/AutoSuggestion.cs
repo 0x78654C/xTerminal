@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Windows.Forms;
 
 namespace Core.SystemTools
 {
+    [SupportedOSPlatform("Windows")]
     public class AutoSuggestion
     {
         /// <summary>

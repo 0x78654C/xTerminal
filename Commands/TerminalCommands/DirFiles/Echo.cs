@@ -1,10 +1,12 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Versioning;
 using Core;
 
 namespace Commands.TerminalCommands.DirFiles
 {
     /* Implementation of echo command for wirte/append data to a file. */
+    [SupportedOSPlatform("Windows")]
     public class Echo : ITerminalCommand
     {
         public string Name => "echo";

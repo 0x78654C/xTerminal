@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace Core.SystemTools
 {
+    [SupportedOSPlatform("Windows")]
     public class SplitArguments
     {
         /*
