@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 
 namespace Core
 {
+    [SupportedOSPlatform("Windows")]
     /*Network class for check Ping and Internet connection.*/
     public class NetWork
     {
@@ -203,6 +205,30 @@ namespace Core
                 }
             }
             return nicOuptut;
+        }
+
+        /// <summary>
+        /// Return gateweay
+        /// </summary>
+        /// <returns></returns>
+        public static string GetGetewayIp()
+        {
+            string gateway = string.Empty;
+
+            foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                {
+                    foreach (GatewayIPAddressInformation gatewayIPAddress in networkInterface.GetIPProperties().GatewayAddresses)
+                    {
+                        if (gatewayIPAddress.Address.ToString().Trim().Length > 2)
+                        {
+                            gateway +=gatewayIPAddress.Address.ToString();
+                        }
+                    }
+                }
+            }
+            return gateway;
         }
     }
 }
