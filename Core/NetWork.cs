@@ -1,9 +1,15 @@
-﻿using System;
+﻿using Core.SystemTools;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Core
 {
@@ -196,9 +202,9 @@ namespace Core
 
                     var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
                     nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
-                    nicOuptut += $"Description:".PadRight(15, ' ') + $"{ networkInterface.Description}\n";
-                    nicOuptut += $"IP Address: \n{ ipAddress} \n";
-                    nicOuptut += $"MASK: \n{ mask}\n";
+                    nicOuptut += $"Description:".PadRight(15, ' ') + $"{networkInterface.Description}\n";
+                    nicOuptut += $"IP Address: \n{ipAddress} \n";
+                    nicOuptut += $"MASK: \n{mask}\n";
                     nicOuptut += $"Gateway: \n{gateway}\n";
                     nicOuptut += $"MAC Address: ".PadRight(15, ' ') + $"{mac}\n";
                     nicOuptut += $"DNS: \n{dnsAddr}\n";
@@ -214,21 +220,124 @@ namespace Core
         public static string GetGetewayIp()
         {
             string gateway = string.Empty;
-
             foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
-            {
                 if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-                {
                     foreach (GatewayIPAddressInformation gatewayIPAddress in networkInterface.GetIPProperties().GatewayAddresses)
-                    {
                         if (gatewayIPAddress.Address.ToString().Trim().Length > 2)
-                        {
-                            gateway +=gatewayIPAddress.Address.ToString();
-                        }
-                    }
-                }
-            }
+                            gateway += gatewayIPAddress.Address.ToString();
             return gateway;
+        }
+
+        /// <summary>
+        /// Return you unicast IP Address
+        /// </summary>
+        /// <returns></returns>
+        public static string GetYourIp()
+        {
+            string ipAddress = string.Empty;
+            foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                        foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
+                            if(!unicastIPAddress.Address.IsIPv6LinkLocal)
+                                 ipAddress += unicastIPAddress.Address;
+            return ipAddress;
+        }
+
+        public static string GetMacAddress(string ipAddress)
+        {
+            string macAddress = string.Empty;
+            System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
+            pProcess.StartInfo.FileName = "arp";
+            pProcess.StartInfo.Arguments = "-a " + ipAddress;
+            pProcess.StartInfo.UseShellExecute = false;
+            pProcess.StartInfo.RedirectStandardOutput = true;
+            pProcess.StartInfo.CreateNoWindow = true;
+            pProcess.Start();
+            string strOutput = pProcess.StandardOutput.ReadToEnd();
+            string[] substrings = strOutput.Split('-');
+            if (substrings.Length >= 8)
+            {
+                macAddress = substrings[3].Substring(Math.Max(0, substrings[3].Length - 2))
+                         + "-" + substrings[4] + "-" + substrings[5] + "-" + substrings[6]
+                         + "-" + substrings[7] + "-"
+                         + substrings[8].Substring(0, 2);
+                return macAddress;
+            }
+
+            else
+            {
+                return "not found";
+            }
+        }
+
+        /// <summary>
+        /// Inititialize the Get IP and MAC from IP
+        /// </summary>
+        public static List<IPAndMac> GetIPsAndMac(string localIp)
+        {
+            var arpStream = ProcessStart.ExecuteAppWithOutput("arp", $"-a -N {localIp}");
+            List<string> result = new List<string>();
+            while (!arpStream.EndOfStream)
+            {
+                var line = arpStream.ReadLine().Trim();
+                result.Add(line);
+            }
+
+            return result.Where(x => !string.IsNullOrEmpty(x) && (x.Contains("dynamic")))
+                .Select(x =>
+                {
+                    string[] parts = x.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+                    return new IPAndMac { IP = parts[0].Trim(), MAC = parts[1].Trim() };
+                }).ToList();
+        }
+
+        /// <summary>
+        /// Find MAC address form IP.
+        /// </summary>
+        /// <param name="ip"></param>
+        /// <returns></returns>
+        public static string FindMacFromIp(string ip)
+        {
+            var init = GetIPsAndMac("127.0.0.1");
+            IPAndMac item = null;
+            try
+            {
+                item = init.SingleOrDefault(x => x.IP == ip);
+                if (item == null)
+                    return null;
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message);
+            }
+            return item.MAC;
+        }
+
+        /// <summary>
+        /// Find Ip from MAC function.
+        /// </summary>
+        /// <param name="macAddress"></param>
+        /// <returns></returns>
+        public static string FindIPFromMacAddress(string macAddress)
+        {
+            try
+            {
+                string command = $"Get-NetNeighbor -LinkLayerAddress {macAddress} | Select -ExpandProperty ipaddress";
+                string psOut = PSScript.RunScript(command).Split('\n')[1];
+                return psOut;
+
+            }
+            catch (Exception)
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Possible spoof attack to be ongoning!");
+            }
+            return "";
+        }
+
+        public class IPAndMac
+        {
+            public string IP { get; set; }
+            public string MAC { get; set; }
         }
     }
 }
