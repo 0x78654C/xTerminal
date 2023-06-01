@@ -1,10 +1,12 @@
 ﻿using Core.SystemTools;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
@@ -21,6 +23,9 @@ namespace Core
         private static PingReply s_pingReply;
         private static int s_success = 0;
         private static int s_failure = 0;
+
+        [DllImport("iphlpapi.dll", ExactSpelling = true)]
+        public static extern int SendARP(int destIP, int srcIP, byte[] macAddr, ref uint physicalAddrLen);
 
         /// <summary>
         /// Verifies if IP is up or not
@@ -141,7 +146,6 @@ namespace Core
         /// Output the ping result.
         /// </summary>
         /// <param name="address"></param>
-        /// <param name="pingReplys"></param>
         private static void GetReply(string address)
         {
             if (PingHost(address))
@@ -237,38 +241,43 @@ namespace Core
             string ipAddress = string.Empty;
             foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
                 if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-                        foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
-                            if(!unicastIPAddress.Address.IsIPv6LinkLocal)
-                                 ipAddress += unicastIPAddress.Address;
+                    foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
+                        if (!unicastIPAddress.Address.IsIPv6LinkLocal)
+                            ipAddress += unicastIPAddress.Address;
             return ipAddress;
         }
 
+        /// <summary>
+        /// Get MAC address from IP
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <returns></returns>
         public static string GetMacAddress(string ipAddress)
         {
             string macAddress = string.Empty;
-            System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
-            pProcess.StartInfo.FileName = "arp";
-            pProcess.StartInfo.Arguments = "-a " + ipAddress;
-            pProcess.StartInfo.UseShellExecute = false;
-            pProcess.StartInfo.RedirectStandardOutput = true;
-            pProcess.StartInfo.CreateNoWindow = true;
-            pProcess.Start();
-            string strOutput = pProcess.StandardOutput.ReadToEnd();
-            string[] substrings = strOutput.Split('-');
-            if (substrings.Length >= 8)
+            try
             {
-                macAddress = substrings[3].Substring(Math.Max(0, substrings[3].Length - 2))
-                         + "-" + substrings[4] + "-" + substrings[5] + "-" + substrings[6]
-                         + "-" + substrings[7] + "-"
-                         + substrings[8].Substring(0, 2);
-                return macAddress;
-            }
+                IPAddress dst = IPAddress.Parse(ipAddress); // the destination IP address
+                byte[] macAddr = new byte[6];
+                uint macAddrLen = (uint)macAddr.Length;
 
-            else
-            {
-                return "not found";
+                if (SendARP(BitConverter.ToInt32(dst.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
+                    FileSystem.ErrorWriteLine("SendARP failed.");
+
+                string[] str = new string[(int)macAddrLen];
+                for (int i = 0; i < macAddrLen; i++)
+                    str[i] = macAddr[i].ToString("x2");
+
+                macAddress = string.Join(":", str);
             }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine($"[SendARP] Something went wrong: {e.Message}");
+                macAddress = string.Empty;
+            }
+            return macAddress;
         }
+
 
         /// <summary>
         /// Inititialize the Get IP and MAC from IP
@@ -287,51 +296,8 @@ namespace Core
                 .Select(x =>
                 {
                     string[] parts = x.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
-                    return new IPAndMac { IP = parts[0].Trim(), MAC = parts[1].Trim() };
+                    return new IPAndMac { IP = parts[0].Trim(), MAC = parts[1].Trim().Replace("-",":") };
                 }).ToList();
-        }
-
-        /// <summary>
-        /// Find MAC address form IP.
-        /// </summary>
-        /// <param name="ip"></param>
-        /// <returns></returns>
-        public static string FindMacFromIp(string ip)
-        {
-            var init = GetIPsAndMac("127.0.0.1");
-            IPAndMac item = null;
-            try
-            {
-                item = init.SingleOrDefault(x => x.IP == ip);
-                if (item == null)
-                    return null;
-            }
-            catch (Exception e)
-            {
-                FileSystem.ErrorWriteLine(e.Message);
-            }
-            return item.MAC;
-        }
-
-        /// <summary>
-        /// Find Ip from MAC function.
-        /// </summary>
-        /// <param name="macAddress"></param>
-        /// <returns></returns>
-        public static string FindIPFromMacAddress(string macAddress)
-        {
-            try
-            {
-                string command = $"Get-NetNeighbor -LinkLayerAddress {macAddress} | Select -ExpandProperty ipaddress";
-                string psOut = PSScript.RunScript(command).Split('\n')[1];
-                return psOut;
-
-            }
-            catch (Exception)
-            {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Possible spoof attack to be ongoning!");
-            }
-            return "";
         }
 
         public class IPAndMac
