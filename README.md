@@ -222,6 +222,7 @@ This is the full list of commands that can be used in xTerminal:
     wol       -- Sends Wake over LAN packet to a machine.
                  Example 1:  wol -ip IP_Address -mac MAC_Address                   : sends wake packet for ip/mac.
                  Example 2:  wol -ip IP_Address -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
+    dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
 
     ---------------- C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:

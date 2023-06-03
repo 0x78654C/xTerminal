@@ -71,6 +71,7 @@ This is the full list of commands that can be used in xTerminal:
     ping      -- Pings a IP/Hostname. Use -h for additional parameters.
     cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
     wol       -- Sends Wake over LAN packet to a machine.  Use -h for additional parameters.
+    dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
 
     -----------------C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
