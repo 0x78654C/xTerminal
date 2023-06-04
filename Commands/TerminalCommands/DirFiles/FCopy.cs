@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using Microsoft.CodeAnalysis;
 
 namespace Commands.TerminalCommands.DirFiles
 {
@@ -14,21 +15,223 @@ namespace Commands.TerminalCommands.DirFiles
     public class FCopy : ITerminalCommand
     {
         public string Name => "fcopy";
+        private string _sourceMd5 = string.Empty;
+        private string _destinationMd5 = string.Empty;
+        private double _sizeSource = 0;
+        private double _sizeDestination = 0;
+        private int _count = 0;
+        private static string s_helpMessage = @"Usage of fcopy command:
+    fcopy <source_file> -o <destination_file>. Can be used with the following parameters:
+    fcopy -h : Displays this message
+    fcopy -ca <destination_directory> : Copies all files from the current directory to a specific directory
+    fcopy -ca : Copies source files in the same directory";
 
 
+        /// <summary>
+        /// Sanitize arguments
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <returns></returns>
         private string GetParam(string arg)
         {
-            if (arg.Contains("-ca"))
-            {
+            if (arg.Contains(" - ca"))
                 arg = arg.Replace("fcopy -ca ", string.Empty);
-            }
             else
-            {
                 arg = arg.Replace("fcopy ", string.Empty);
-            }
             return arg;
         }
         public void Execute(string arg)
+        {
+
+            // Run old version  of fcopy
+            // OldFCopy(arg);
+            //TODO: implement command cancel with ctrl+x
+            try
+            {
+                FCopyRun(arg);
+            }
+            catch (UnauthorizedAccessException u)
+            {
+                FileSystem.ErrorWriteLine(u.Message);
+            }
+            catch (Exception x)
+            {
+                if (x.Message.Contains("is being used by another process"))
+                {
+                    FileSystem.ErrorWriteLine(x.Message);
+                }
+                else
+                {
+                    FileSystem.ErrorWriteLine(x.Message);
+                    FileSystem.ErrorWriteLine("\nCommand should look like this: fcopy source_file -o target_file");
+                }
+            }
+        }
+
+
+        private void FCopyRun(string param)
+        {
+            if (param == $"{Name} -h")
+            {
+                Console.WriteLine(s_helpMessage);
+                return;
+            }
+
+            if (param.Length == 5)
+            {
+                Console.WriteLine($"Use -h param for {Name} command usage!");
+                return;
+            }
+
+            param = GetParam(param);
+            var currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
+
+            SimpleCopy(param, currentLocation);
+
+        }
+
+        /// <summary>
+        /// Check file srouce and destination MD5 hash.
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="source"></param>
+        private void GetMD5File(string filePath, bool source)
+        {
+            if (source)
+            {
+                using (var md5 = MD5.Create())
+                {
+                    using (var stream = File.OpenRead(filePath))
+                    {
+                        var hash = md5.ComputeHash(stream);
+                        _sourceMd5 = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        Console.WriteLine("Source File: " + filePath + " | MD5: " + _sourceMd5 + " | Size: " + FileSystem.GetFileSize(filePath, false));
+                        _sizeSource += Double.Parse(FileSystem.GetFileSize(filePath, true));
+                    }
+                }
+            }
+            else
+            {
+                using (var md5 = MD5.Create())
+                {
+                    using (var stream = File.OpenRead(filePath))
+                    {
+                        var hash = md5.ComputeHash(stream);
+                        _destinationMd5 = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        Console.WriteLine("Destination File: " + filePath + " | MD5: " + _destinationMd5 + " | Size: " + FileSystem.GetFileSize(filePath, false));
+                        _sizeDestination += Double.Parse(FileSystem.GetFileSize(filePath, true));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if source file has same MD5 has as destination file.
+        /// </summary>
+        private bool IsSameMD5 => _sourceMd5 == _destinationMd5;
+
+
+        /// <summary>
+        /// Simple file copy.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <param name="currentLocation"></param>
+        private void SimpleCopy(string param, string currentLocation)
+        {
+            var sourceFile = param.SplitByText(" -o ", 0).Trim();
+            var destinationFile = param.SplitByText(" -o ", 1).Trim();
+
+            sourceFile = FileSystem.SanitizePath(sourceFile, currentLocation);
+            destinationFile = FileSystem.SanitizePath(destinationFile, currentLocation);
+
+            if (!File.Exists(sourceFile))
+            {
+                Console.WriteLine($"Source file '{sourceFile}' does not exist!" + Environment.NewLine);
+                return;
+            }
+
+            GetMD5File(sourceFile, true);
+
+            if (!File.Exists(destinationFile))
+            {
+                File.Copy(sourceFile, destinationFile);
+            }
+            else
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Destination file '{destinationFile}' already exist!\nDo you want to copy with new file name? Yes[Y] or No[N]");
+                var consoleInput = Console.ReadLine();
+                if (consoleInput.Trim().ToLower() == "y")
+                {
+                    destinationFile = FileRename(destinationFile);
+                    File.Copy(sourceFile, destinationFile);
+                }
+                else
+                    return;
+            }
+
+            GetMD5File(destinationFile, false);
+
+            if (IsSameMD5)
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "MD5 match! File was copied OK!" + Environment.NewLine);
+            }
+            else
+            {
+                if (File.Exists(destinationFile))
+                    File.Delete(destinationFile);
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "MD5 does not match! File was not copied." + Environment.NewLine);
+            }
+        }
+
+        /// <summary>
+        /// Create new file name for destination file if exists.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        private string FileRename(string fileName)
+        {
+            var fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
+            var fileExt = new FileInfo(fileName).Extension;
+            var filePath = Path.GetDirectoryName(fileName);
+            var newFileName = string.Empty;
+            while (true)
+            {
+                _count++;
+                newFileName = filePath + @"\" + fileNameNoExt + $"_{_count}_" + fileExt;
+                if (!File.Exists(newFileName))
+                    break;
+            }
+            _count = 0;
+            return newFileName;
+        }
+        /*WIP
+        private void SetFinalCopyMessage()
+        {
+            string ErrorCopy = string.Join("\n\r", FilesErrorCopy);
+            var files = Directory.GetFiles(dlocation);
+            var countFilesS = files.Count();
+            var dfiles = Directory.GetFiles(NewPath);
+            var countFilesD = dfiles.Count();
+
+            double sizeSourceRound = Math.Round(sizeSourceFiles, 2);
+            double sizeDestinationRound = Math.Round(sizeDestinationFiles, 2);
+
+            if (!string.IsNullOrWhiteSpace(ErrorCopy))
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "List of files not copied/moved. MD5 missmatch:\n\r" + ErrorCopy + Environment.NewLine);
+                Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() + " | Total Size: " + sizeSourceRound + " MB");
+                Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
+            }
+            else
+            {
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Cyan, "\n\r----- All files are copied -----\n\r");
+                Console.WriteLine("Total Files Source Directory: " + countFilesS.ToString() + " | Total Size: " + sizeSourceRound + " MB");
+                Console.WriteLine("Total Files Destination Directory: " + countFilesD.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
+            }
+        }
+        */
+
+        private void OldFCopy(string arg)
         {
 
             Console.WriteLine(" ");
