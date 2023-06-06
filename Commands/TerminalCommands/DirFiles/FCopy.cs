@@ -45,9 +45,6 @@ namespace Commands.TerminalCommands.DirFiles
         }
         public void Execute(string arg)
         {
-
-            // Run old version  of fcopy
-            // OldFCopy(arg);
             //TODO: implement command cancel with ctrl+x
             try
             {
