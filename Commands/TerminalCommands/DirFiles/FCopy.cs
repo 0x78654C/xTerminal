@@ -3,13 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using Microsoft.CodeAnalysis;
-using System.Windows.Forms;
-using System.Diagnostics;
 
 namespace Commands.TerminalCommands.DirFiles
 {
@@ -48,7 +44,6 @@ namespace Commands.TerminalCommands.DirFiles
         }
         public void Execute(string arg)
         {
-            //TODO: implement command cancel with ctrl+x
             try
             {
                 FCopyRun(arg);
