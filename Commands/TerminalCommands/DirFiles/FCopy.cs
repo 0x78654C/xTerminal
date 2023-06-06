@@ -27,8 +27,11 @@ namespace Commands.TerminalCommands.DirFiles
     fcopy <source_file> -o <destination_file>. Can be used with the following parameters:
     fcopy -h : Displays this message
     fcopy -ca <destination_directory> : Copies all files from the current directory to a specific directory
-    fcopy -ca : Copies source files in the same directory";
+    fcopy -ca : Copies source files in the same directory
 
+    fcopy -ca command can be canceled with CTRL+X key combination.
+";
+    
 
         /// <summary>
         /// Sanitize arguments
@@ -103,6 +106,7 @@ namespace Commands.TerminalCommands.DirFiles
                     destination = currentLocation;
                 }
                 MultipleCopy(source, destination, currentLocation);
+                GlobalVariables.eventCancelKey = false;
                 ClearVars();
                 return;
             }
@@ -175,8 +179,15 @@ namespace Commands.TerminalCommands.DirFiles
             destinationDirectory = FileSystem.SanitizePath(destinationDirectory, currentLocation);
 
             var files = Directory.GetFiles(sourceDirectory);
+            GlobalVariables.eventKeyFlagX = true;
             foreach (var file in files)
             {
+                if (GlobalVariables.eventCancelKey)
+                {
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    break;
+                }
+
                 var fileInfo = new FileInfo(file);
                 var fileName = fileInfo.Name;
                 var fileDestinationName = $"{destinationDirectory}\\{fileName}";
