@@ -27,7 +27,6 @@ namespace Commands.TerminalCommands.DirFiles
 
     fcopy -ca command can be canceled with CTRL+X key combination.
 ";
-    
 
         /// <summary>
         /// Sanitize arguments
@@ -42,6 +41,11 @@ namespace Commands.TerminalCommands.DirFiles
                 arg = arg.Replace("fcopy ", string.Empty);
             return arg;
         }
+
+        /// <summary>
+        /// Main function run.
+        /// </summary>
+        /// <param name="arg"></param>
         public void Execute(string arg)
         {
             try
@@ -245,9 +249,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             _errorCopy = new List<string>();
             if (IsSameMD5)
-            {
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "MD5 match! File was copied OK!" + Environment.NewLine);
-            }
             else
             {
                 _errorCopy.Add(destinationFile);
