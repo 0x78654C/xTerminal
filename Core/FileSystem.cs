@@ -247,39 +247,29 @@ namespace Core
         /// <param name="path">File path.</param>
         /// <param name="currentDir">Terminal current direcotory.</param>
         /// <returns>string</returns>
-        public static string SanitizePath(string path, string currentDir)
-        {
-            return path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}{path}";
-        }
+        public static string SanitizePath(string path, string currentDir) => path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}{path}";
+    
 
         /// <summary>
         /// Check text if contains numbers only.
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        public static bool IsNumberAllowed(string text)
-        {
-            return !s_regexNumber.IsMatch(text);
-        }
+        public static bool IsNumberAllowed(string text)=> !s_regexNumber.IsMatch(text);
 
         /// <summary>
         /// Get file creation date time.
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateFileInfo(FileInfo fileInfo)
-        {
-            return fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}";
-        }
-
+        public static string GetCreationDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}";
+  
         /// <summary>
         /// Get directory creation date time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo)
-        {
-            return directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
-        }
+        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
+
     }
 }
