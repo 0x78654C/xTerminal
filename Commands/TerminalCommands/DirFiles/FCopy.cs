@@ -20,9 +20,11 @@ namespace Commands.TerminalCommands.DirFiles
         private int _count = 0;
         private List<string> _errorCopy;
         private static string s_helpMessage = @"Usage of fcopy command:
-    fcopy <source_file> -o <destination_file>. Can be used with the following parameters:
+    fcopy <source_file> -o <destination_file>. 
+    
+    Can be used with the following parameters:
     fcopy -h : Displays this message
-    fcopy -ca <destination_directory> : Copies all files from the current directory to a specific directory
+    fcopy -ca <source_directory> -o <destination_directory> : Copies all files fro the source directory to a specific directory.
     fcopy -ca : Copies source files in the same directory
 
     fcopy -ca command can be canceled with CTRL+X key combination.
@@ -65,7 +67,7 @@ namespace Commands.TerminalCommands.DirFiles
                 else
                 {
                     FileSystem.ErrorWriteLine(x.Message);
-                    FileSystem.ErrorWriteLine("\nCommand should look like this: fcopy source_file -o target_file");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"\nUse -h param for {Name} command usage!");
                 }
             }
         }
@@ -139,7 +141,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             if (!File.Exists(sourceFile))
             {
-                Console.WriteLine($"Source file '{sourceFile}' does not exist!" + Environment.NewLine);
+                FileSystem.ErrorWriteLine($"Source file '{sourceFile}' does not exist!" + Environment.NewLine);
                 return;
             }
 
@@ -151,11 +153,16 @@ namespace Commands.TerminalCommands.DirFiles
             }
             else
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Destination file '{destinationFile}' already exist!\nDo you want to copy with new file name? Yes[Y] or No[N]");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Destination file '{destinationFile}' already exist!\nDo you want to copy with new file name? Yes[Y], No[N], Cancel[C]");
                 var consoleInput = Console.ReadLine();
                 if (consoleInput.Trim().ToLower() == "y")
                 {
                     destinationFile = FileRename(destinationFile);
+                    File.Copy(sourceFile, destinationFile);
+                }
+                else if(consoleInput.Trim().ToLower() == "n")
+                {
+                    File.Delete(destinationFile);
                     File.Copy(sourceFile, destinationFile);
                 }
                 else
@@ -228,7 +235,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             if (!string.IsNullOrWhiteSpace(ErrorCopy))
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "List of files not copied/moved. MD5 missmatch:\n\r" + ErrorCopy + Environment.NewLine);
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "List of files not copied. MD5 missmatch:\n\r" + ErrorCopy + Environment.NewLine);
                 Console.WriteLine("Total Files Source Directory: " + countFilesSource.ToString() + " | Total Size: " + sizeSourceRound + " MB");
                 Console.WriteLine("Total Files Destination Directory: " + countFilesDestination.ToString() + " | Total Size: " + sizeDestinationRound + " MB \n\r");
             }
