@@ -23,9 +23,9 @@ namespace Commands.TerminalCommands.DirFiles
     fcopy <source_file> -o <destination_file>. 
     
     Can be used with the following parameters:
-    fcopy -h : Displays this message
+    fcopy -h : Displays this message.
     fcopy -ca <source_directory> -o <destination_directory> : Copies all files from the source directory to a specific directory.
-    fcopy -ca : Copies source files in the same directory
+    fcopy -ca : Copies source files in the same directory.
 
     fcopy -ca command can be canceled with CTRL+X key combination.
 ";
