@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Versioning;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -271,5 +272,54 @@ namespace Core
         /// <returns></returns>
         public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
 
+        /// <summary>
+        /// Get MD5 and size of a specific file.
+        /// - Method used in fcopy and fmove command  -
+        /// </summary>
+        /// <param name="sourceMD5"></param>
+        /// <param name="sizeSource"></param>
+        /// <param name="destinationMD5"></param>
+        /// <param name="sizeDestination"></param>
+        /// <param name="filePath"></param>
+        /// <param name="source"></param>
+        public static void GetMD5File(ref string sourceMD5, ref double sizeSource, ref string destinationMD5, ref double sizeDestination, string filePath, bool source)
+        {
+            if (source)
+            {
+                using (var md5 = MD5.Create())
+                {
+                    using (var stream = File.OpenRead(filePath))
+                    {
+                        var hash = md5.ComputeHash(stream);
+                        sourceMD5 = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        FileSystem.ColorConsoleText(ConsoleColor.Blue, "Source File: ");
+                        Console.Write(filePath);
+                        FileSystem.ColorConsoleText(ConsoleColor.Blue, " MD5: ");
+                        Console.Write(sourceMD5);
+                        FileSystem.ColorConsoleText(ConsoleColor.Blue, " Size: ");
+                        Console.WriteLine(FileSystem.GetFileSize(filePath, false));
+                        sizeSource += Double.Parse(FileSystem.GetFileSize(filePath, true));
+                    }
+                }
+            }
+            else
+            {
+                using (var md5 = MD5.Create())
+                {
+                    using (var stream = File.OpenRead(filePath))
+                    {
+                        var hash = md5.ComputeHash(stream);
+                        destinationMD5 = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        FileSystem.ColorConsoleText(ConsoleColor.Blue, "Destination File: ");
+                        Console.Write(filePath);
+                        FileSystem.ColorConsoleText(ConsoleColor.Blue, " MD5: ");
+                        Console.Write(destinationMD5);
+                        FileSystem.ColorConsoleText(ConsoleColor.Blue, " Size: ");
+                        Console.WriteLine(FileSystem.GetFileSize(filePath, false));
+                        sizeDestination += Double.Parse(FileSystem.GetFileSize(filePath, true));
+                    }
+                }
+            }
+        }
     }
 }
