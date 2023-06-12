@@ -47,7 +47,7 @@ Host B will typically be the default gateway, or the router.
                 {
                     if(arp.MAC == gatewayMAC)
                     {
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "[-] ARP spoof detected from:");
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "[-]Possbile ARP spoof detection from:");
                         DisplayUIAttack(arp.IP, arp.MAC);
                         isAttack = true;
                         break;
