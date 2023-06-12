@@ -23,8 +23,8 @@ namespace Core.SystemTools
         /// </summary>
         /// <param name="executableFilePath"></param>
         /// <returns></returns>
-        private static string GetExecutablePath(string executableFilePath)  => Path.GetDirectoryName(executableFilePath);
-       
+        private static string GetExecutablePath(string executableFilePath) => Path.GetDirectoryName(executableFilePath);
+
         public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
         {
             try
@@ -157,6 +157,25 @@ namespace Core.SystemTools
             process.Start();
             if (waitForExit)
                 process.WaitForExit();
+        }
+
+        /// <summary>
+        /// Run application and show output.
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="arguments"></param>
+        /// <returns></returns>
+        public static StreamReader ExecuteAppWithOutput(string app, string arguments = "")
+        {
+            var processStartInfo = new ProcessStartInfo();
+            processStartInfo.UseShellExecute = false;
+            processStartInfo.Arguments = arguments;
+            processStartInfo.RedirectStandardOutput = true;
+            processStartInfo.FileName = app;
+            processStartInfo.CreateNoWindow = true;
+            var process = Process.Start(processStartInfo);
+            process.WaitForExit();
+            return process.StandardOutput;
         }
     }
 }

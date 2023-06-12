@@ -1,11 +1,21 @@
-﻿using System;
+﻿using Core.SystemTools;
+using System;
+using System.CodeDom;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Core
 {
+    [SupportedOSPlatform("Windows")]
     /*Network class for check Ping and Internet connection.*/
     public class NetWork
     {
@@ -13,6 +23,9 @@ namespace Core
         private static PingReply s_pingReply;
         private static int s_success = 0;
         private static int s_failure = 0;
+
+        [DllImport("iphlpapi.dll", ExactSpelling = true)]
+        public static extern int SendARP(int destIP, int srcIP, byte[] macAddr, ref uint physicalAddrLen);
 
         /// <summary>
         /// Verifies if IP is up or not
@@ -133,7 +146,6 @@ namespace Core
         /// Output the ping result.
         /// </summary>
         /// <param name="address"></param>
-        /// <param name="pingReplys"></param>
         private static void GetReply(string address)
         {
             if (PingHost(address))
@@ -194,15 +206,104 @@ namespace Core
 
                     var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
                     nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
-                    nicOuptut += $"Description:".PadRight(15, ' ') + $"{ networkInterface.Description}\n";
-                    nicOuptut += $"IP Address: \n{ ipAddress} \n";
-                    nicOuptut += $"MASK: \n{ mask}\n";
+                    nicOuptut += $"Description:".PadRight(15, ' ') + $"{networkInterface.Description}\n";
+                    nicOuptut += $"IP Address: \n{ipAddress} \n";
+                    nicOuptut += $"MASK: \n{mask}\n";
                     nicOuptut += $"Gateway: \n{gateway}\n";
                     nicOuptut += $"MAC Address: ".PadRight(15, ' ') + $"{mac}\n";
                     nicOuptut += $"DNS: \n{dnsAddr}\n";
                 }
             }
             return nicOuptut;
+        }
+
+        /// <summary>
+        /// Return gateweay
+        /// </summary>
+        /// <returns></returns>
+        public static string GetGetewayIp()
+        {
+            string gateway = string.Empty;
+            foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                    foreach (GatewayIPAddressInformation gatewayIPAddress in networkInterface.GetIPProperties().GatewayAddresses)
+                        if (gatewayIPAddress.Address.ToString().Trim().Length > 2)
+                            gateway += gatewayIPAddress.Address.ToString();
+            return gateway;
+        }
+
+        /// <summary>
+        /// Return you unicast IP Address
+        /// </summary>
+        /// <returns></returns>
+        public static string GetYourIp()
+        {
+            string ipAddress = string.Empty;
+            foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+                if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                    foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
+                        if (!unicastIPAddress.Address.IsIPv6LinkLocal)
+                            ipAddress += unicastIPAddress.Address;
+            return ipAddress;
+        }
+
+        /// <summary>
+        /// Get MAC address from IP
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <returns></returns>
+        public static string GetMacAddress(string ipAddress)
+        {
+            string macAddress = string.Empty;
+            try
+            {
+                IPAddress dst = IPAddress.Parse(ipAddress); // the destination IP address
+                byte[] macAddr = new byte[6];
+                uint macAddrLen = (uint)macAddr.Length;
+
+                if (SendARP(BitConverter.ToInt32(dst.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
+                    FileSystem.ErrorWriteLine("SendARP failed.");
+
+                string[] str = new string[(int)macAddrLen];
+                for (int i = 0; i < macAddrLen; i++)
+                    str[i] = macAddr[i].ToString("x2");
+
+                macAddress = string.Join(":", str);
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine($"[SendARP] Something went wrong: {e.Message}");
+                macAddress = string.Empty;
+            }
+            return macAddress;
+        }
+
+
+        /// <summary>
+        /// Inititialize the Get IP and MAC from IP
+        /// </summary>
+        public static List<IPAndMac> GetIPsAndMac(string localIp)
+        {
+            var arpStream = ProcessStart.ExecuteAppWithOutput("arp", $"-a -N {localIp}");
+            List<string> result = new List<string>();
+            while (!arpStream.EndOfStream)
+            {
+                var line = arpStream.ReadLine().Trim();
+                result.Add(line);
+            }
+
+            return result.Where(x => !string.IsNullOrEmpty(x) && (x.Contains("dynamic")))
+                .Select(x =>
+                {
+                    string[] parts = x.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+                    return new IPAndMac { IP = parts[0].Trim(), MAC = parts[1].Trim().Replace("-",":") };
+                }).ToList();
+        }
+
+        public class IPAndMac
+        {
+            public string IP { get; set; }
+            public string MAC { get; set; }
         }
     }
 }
