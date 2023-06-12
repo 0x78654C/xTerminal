@@ -11,6 +11,7 @@ namespace Commands.TerminalCommands.DirFiles
     [SupportedOSPlatform("windows")]
     public class FMove : ITerminalCommand
     {
+        //TODO: beautify a bit fmove and fcopy
         public string Name => "fmove";
         private string _sourceMd5 = string.Empty;
         private string _destinationMd5 = string.Empty;
@@ -129,7 +130,7 @@ namespace Commands.TerminalCommands.DirFiles
                 return;
             }
 
-            GetMD5File(sourceFile, true);
+            FileSystem.GetMD5File(ref _sourceMd5,ref _sizeSource,ref _destinationMd5,ref _sizeDestination, sourceFile, true);
 
             if (!File.Exists(destinationFile))
             {
@@ -154,7 +155,8 @@ namespace Commands.TerminalCommands.DirFiles
                 }
             }
 
-            GetMD5File(destinationFile, false);
+            // GetMD5File(destinationFile, false);
+            FileSystem.GetMD5File(ref _sourceMd5, ref _sizeSource, ref _destinationMd5, ref _sizeDestination, destinationFile, false);
             CheckMD5Destination(destinationFile,sourceFile);
         }
 
@@ -192,17 +194,21 @@ namespace Commands.TerminalCommands.DirFiles
                 if (File.Exists(fileDestinationName))
                 {
                     var fileDestination = FileRename(fileDestinationName);
-                    GetMD5File(file, true);
+                    //GetMD5File(file, true);
+                    FileSystem.GetMD5File(ref _sourceMd5, ref _sizeSource, ref _destinationMd5, ref _sizeDestination, file, true);
                     File.Copy(file, fileDestination);
-                    GetMD5File(fileDestination, false);
+                    //GetMD5File(fileDestination, false);
+                    FileSystem.GetMD5File(ref _sourceMd5, ref _sizeSource, ref _destinationMd5, ref _sizeDestination, fileDestination, false);
                     CheckMD5Destination(fileDestination,file);
                     _count = 0;
                 }
                 else
                 {
-                    GetMD5File(file, true);
+                    //GetMD5File(file, true);
+                    FileSystem.GetMD5File(ref _sourceMd5, ref _sizeSource, ref _destinationMd5, ref _sizeDestination, file, true);
                     File.Copy(file, fileDestinationName);
-                    GetMD5File(fileDestinationName, false);
+                    //GetMD5File(fileDestinationName, false);
+                    FileSystem.GetMD5File(ref _sourceMd5, ref _sizeSource, ref _destinationMd5, ref _sizeDestination, fileDestinationName, false);
                     CheckMD5Destination(fileDestinationName,file);
                 }
             }
@@ -227,41 +233,6 @@ namespace Commands.TerminalCommands.DirFiles
                 if (File.Exists(destinationFile))
                     File.Delete(destinationFile);
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Red, "MD5 does not match! File was not moved." + Environment.NewLine);
-            }
-        }
-
-        /// <summary>
-        /// Check file srouce and destination MD5 hash.
-        /// </summary>
-        /// <param name="filePath"></param>
-        /// <param name="source"></param>
-        private void GetMD5File(string filePath, bool source)
-        {
-            if (source)
-            {
-                using (var md5 = MD5.Create())
-                {
-                    using (var stream = File.OpenRead(filePath))
-                    {
-                        var hash = md5.ComputeHash(stream);
-                        _sourceMd5 = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                        Console.WriteLine("Source File: " + filePath + " | MD5: " + _sourceMd5 + " | Size: " + FileSystem.GetFileSize(filePath, false));
-                        _sizeSource += Double.Parse(FileSystem.GetFileSize(filePath, true));
-                    }
-                }
-            }
-            else
-            {
-                using (var md5 = MD5.Create())
-                {
-                    using (var stream = File.OpenRead(filePath))
-                    {
-                        var hash = md5.ComputeHash(stream);
-                        _destinationMd5 = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                        Console.WriteLine("Destination File: " + filePath + " | MD5: " + _destinationMd5 + " | Size: " + FileSystem.GetFileSize(filePath, false));
-                        _sizeDestination += Double.Parse(FileSystem.GetFileSize(filePath, true));
-                    }
-                }
             }
         }
 
