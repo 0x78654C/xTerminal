@@ -277,7 +277,7 @@ namespace Shell
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
             // Setting up the title.
-            s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2);
+            //s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2); //TODO: enable when no Revision version
             Console.Title = s_terminalTitle;
 
             if (ExecuteParamCommands(args)) { return; };

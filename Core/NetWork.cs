@@ -1,17 +1,13 @@
 ﻿using Core.SystemTools;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace Core
 {
@@ -228,6 +224,7 @@ namespace Core
                 if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                     foreach (GatewayIPAddressInformation gatewayIPAddress in networkInterface.GetIPProperties().GatewayAddresses)
                         if (gatewayIPAddress.Address.ToString().Trim().Length > 2)
+                            if(!gatewayIPAddress.Address.ToString().Contains(":"))
                             gateway += gatewayIPAddress.Address.ToString();
             return gateway;
         }
@@ -243,6 +240,7 @@ namespace Core
                 if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                     foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
                         if (!unicastIPAddress.Address.IsIPv6LinkLocal)
+                            if(!unicastIPAddress.Address.ToString().Contains(":"))
                             ipAddress += unicastIPAddress.Address;
             return ipAddress;
         }
