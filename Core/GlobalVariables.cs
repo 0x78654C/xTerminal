@@ -37,5 +37,7 @@ namespace Core
         public static bool aliasRunFlag = false;
         public static bool eventKeyFlagX = false;
         public static readonly string magicNunmbers= Application.StartupPath + @"\ext_list.txt";
+        public static bool isPipeCommand = false;
+        public static string pipeCmdOutput { get; set; }
     }
 }
