@@ -116,7 +116,23 @@ namespace Shell
                 if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                     command = GlobalVariables.aliasParameters;
 
-                c.Execute(command);
+                // Pipe line command execution.
+                if (command.Contains("|"))
+                {
+                    GlobalVariables.isPipeCommand = true;
+                    var commandSplit = command.Split('|');
+                    var count = 0;
+                    foreach (var cmd in commandSplit)
+                    {
+                        var cmdExecute = cmd.Trim();
+                        if (count == 0)
+                            GlobalVariables.pipeCmdOutput = cmdExecute;
+                        c.Execute(GlobalVariables.pipeCmdOutput);
+                        count++;
+                    }
+                }
+                else
+                    c.Execute(command);
                 GlobalVariables.aliasParameters = string.Empty;
                 GlobalVariables.aliasRunFlag = false;
             }
