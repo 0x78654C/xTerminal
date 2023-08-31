@@ -119,12 +119,23 @@ Commands can be canceled with CTRL+X key combination.
                             return;
                         }
                         int lines = Int32.Parse(lineCounter);
-                        string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
                         GlobalVariables.eventKeyFlagX = true;
-                        Core.Commands.CatCommand.OuputFirtsLines(filePath, lines);
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                        GlobalVariables.eventCancelKey = false;
+                        if (GlobalVariables.isPipeCommand)
+                        {
+                            var dataPipe = GlobalVariables.pipeCmdOutput;
+                            Core.Commands.CatCommand.OutputFirstLinesFromString(dataPipe, lines);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        else
+                        {
+                            string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
+                            Core.Commands.CatCommand.OutputFirtsLines(filePath, lines);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
                         break;
                     case "-l":
                         string linesRange = arg.Split(' ')[1];
