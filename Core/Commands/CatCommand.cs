@@ -267,7 +267,7 @@ namespace Core.Commands
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="linesCount"></param>
-        public static void OuputFirtsLines(string fileName, int linesCount)
+        public static void OutputFirtsLines(string fileName, int linesCount)
         {
             if (CheckFileContent(fileName))
             {
@@ -289,6 +289,22 @@ namespace Core.Commands
                     FileSystem.ErrorWriteLine(e.Message);
                 }
             }
+        }
+
+        /// <summary>
+        /// Output first N lines from string.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="linesCount"></param>
+        public static void OutputFirstLinesFromString(string data, int linesCount)
+        {
+            if (string.IsNullOrEmpty(data))
+                return;
+            var reader = new StringReader(data);
+            string line;
+            while ((line = reader.ReadLine()) != null)
+                for (int i = 0; i < linesCount; i++)
+                    Console.WriteLine(line);
         }
 
         /// <summary>
