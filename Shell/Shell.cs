@@ -127,7 +127,7 @@ namespace Shell
                         var cmdExecute = cmd.Trim();
                         if (count == 0)
                             GlobalVariables.pipeCmdOutput = cmdExecute;
-                        c.Execute(GlobalVariables.pipeCmdOutput);
+                        c.Execute(cmdExecute);
                         count++;
                     }
                 }
