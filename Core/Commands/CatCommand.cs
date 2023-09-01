@@ -302,9 +302,13 @@ namespace Core.Commands
                 return;
             var reader = new StringReader(data);
             string line;
+            int count = 0;
             while ((line = reader.ReadLine()) != null)
-                for (int i = 0; i < linesCount; i++)
-                    Console.WriteLine(line);
+            {
+                if (count == linesCount) break;
+                Console.WriteLine(line);
+                count++;
+            }
         }
 
         /// <summary>
