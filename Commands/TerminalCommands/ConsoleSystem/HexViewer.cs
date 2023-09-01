@@ -1,4 +1,5 @@
 ﻿using Core;
+using Microsoft.CodeAnalysis;
 using System;
 using System.IO;
 using System.Runtime.Versioning;
@@ -28,7 +29,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 if (args.Length == 3)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!"); 
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 if (args == $"{Name} -h")
@@ -76,13 +77,23 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 byte[] getBytes = File.ReadAllBytes(file);
                 if (saveToFile)
                 {
+                    if (GlobalVariables.isPipeCommand)
+                    {
+                        FileSystem.ErrorWriteLine("You cannot save to file when using with pipe command!");
+                        return;
+                    }
                     Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
                     return;
                 }
-                Console.WriteLine(HexDump.Hex(getBytes, 16));
+                if (GlobalVariables.isPipeCommand)
+                {
+                    GlobalVariables.pipeCmdOutput = HexDump.Hex(getBytes, 16);
+                    return;
+                }
+                else
+                    Console.WriteLine(HexDump.Hex(getBytes, 16));
                 return;
             }
-
             FileSystem.ErrorWriteLine($"File {file} does not exist");
         }
     }
