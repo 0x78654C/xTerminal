@@ -125,11 +125,14 @@ namespace Shell
                     foreach (var cmd in commandSplit)
                     {
                         var cmdExecute = cmd.Trim();
+                        c = Commands.CommandRepository.GetCommand(cmdExecute);
                         if (count == 0)
                             GlobalVariables.pipeCmdOutput = cmdExecute;
+
                         c.Execute(cmdExecute);
                         count++;
                     }
+                    GlobalVariables.isPipeCommand = false;
                 }
                 else
                     c.Execute(command);
@@ -293,7 +296,7 @@ namespace Shell
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
             // Setting up the title.
-            //s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2); //TODO: enable when no Revision version
+            s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2);
             Console.Title = s_terminalTitle;
 
             if (ExecuteParamCommands(args)) { return; };
