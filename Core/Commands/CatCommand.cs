@@ -14,6 +14,7 @@ namespace Core.Commands
 
         private static int s_linesCount = 0;
         private static int s_linesCountName = 0;
+
         /// <summary>
         /// Output to console specific lines from a file containing a specific string.
         /// </summary>
@@ -63,6 +64,53 @@ namespace Core.Commands
 
             return output.ToString();
         }
+
+        /// <summary>
+        /// Output to console specific lines from a text data containing a specific string.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="searchString"></param>
+        /// <param name="currentDir"></param>
+        /// <param name="savedFile"></param>
+        /// <returns></returns>
+        public static string StringSearchOutput(string input,string currentDir, string searchString, string savedFile = null)
+        {
+            var output = new StringBuilder();
+            int lineCount = 0;
+
+            if (string.IsNullOrEmpty(input))
+            {
+                FileSystem.ErrorWriteLine("There is no data provided to search in it!");
+                return output.ToString();
+            }
+
+            using (var streamReader = new StringReader(input))
+            {
+                string line;
+                while ((line = streamReader.ReadLine()) != null)
+                {
+                    if (GlobalVariables.eventCancelKey)
+                        break;
+
+                    lineCount++;
+                    if (string.IsNullOrWhiteSpace(searchString))
+                    {
+                        output.AppendLine(line);
+                        continue;
+                    }
+
+                    if (line.ToLower().Contains(searchString.ToLower()))
+                        output.AppendLine($"Line {lineCount} : {line}");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(savedFile))
+                return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
+
+            return output.ToString();
+        }
+
+
 
 
         /// <summary>
