@@ -166,7 +166,7 @@ Commands can be canceled with CTRL+X key combination.
 
                         if (GlobalVariables.isPipeCommand)
                         {
-                            searchString = arg.SplitByText("-s",1);
+                            searchString = arg.SplitByText("-s ",1);
                             GlobalVariables.eventKeyFlagX = true;
                             Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
                             if (GlobalVariables.eventCancelKey)
