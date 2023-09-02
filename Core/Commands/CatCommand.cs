@@ -61,7 +61,7 @@ namespace Core.Commands
                 return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
             }
 
-            return  output.ToString();
+            return output.ToString();
         }
 
 
@@ -318,18 +318,36 @@ namespace Core.Commands
         /// <param name="range"></param>
         public static void OutputLinesRange(string fileName, string range)
         {
-            if (CheckFileContent(fileName))
-            {
-                string firstLine = range.Split('-')[0];
-                string secondLine = range.Split('-')[1];
-                if (!FileSystem.IsNumberAllowed(firstLine) && !FileSystem.IsNumberAllowed(secondLine))
-                {
-                    FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
-                    return;
-                }
-                int first = Int32.Parse(firstLine);
-                int second = Int32.Parse(secondLine);
+            //if (!CheckFileContent(fileName))
+            //    return;
 
+            string firstLine = range.Split('-')[0];
+            string secondLine = range.Split('-')[1];
+            if (!FileSystem.IsNumberAllowed(firstLine) && !FileSystem.IsNumberAllowed(secondLine))
+            {
+                FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
+                return;
+            }
+            int first = Int32.Parse(firstLine);
+            int second = Int32.Parse(secondLine);
+            if (GlobalVariables.isPipeCommand)
+            {
+                using (var streamReader = new StringReader(fileName))
+                {
+                    for (int i = 0; i < second; ++i)
+                    {
+                        var line = streamReader.ReadLine();
+
+                        if (i < first - 1)
+                            continue;
+                        if (GlobalVariables.eventCancelKey)
+                            break;
+                        Console.WriteLine(line);
+                    }
+                }
+            }
+            else
+            {
                 using (var streamReader = new StreamReader(fileName))
                 {
                     for (int i = 0; i < second && !streamReader.EndOfStream; ++i)

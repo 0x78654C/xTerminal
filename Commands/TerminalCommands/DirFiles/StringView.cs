@@ -144,12 +144,23 @@ Commands can be canceled with CTRL+X key combination.
                             FileSystem.ErrorWriteLine("Invalid parameter. You need to provide the range of lines for data display! Example: 10-20");
                             return;
                         }
-                        string pathFile = FileSystem.SanitizePath(arg.SplitByText(linesRange + " ", 1), s_currentDirectory);
-                        GlobalVariables.eventKeyFlagX = true;
-                        Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                        GlobalVariables.eventCancelKey = false;
+                        if (GlobalVariables.isPipeCommand)
+                        {
+                            GlobalVariables.eventKeyFlagX = true;
+                            Core.Commands.CatCommand.OutputLinesRange(GlobalVariables.pipeCmdOutput, linesRange);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        else
+                        {
+                            string pathFile = FileSystem.SanitizePath(arg.SplitByText(linesRange + " ", 1), s_currentDirectory);
+                            GlobalVariables.eventKeyFlagX = true;
+                            Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
                         break;
                     case "-s":
                         fileName = arg.SplitByText("-f ", 1);
