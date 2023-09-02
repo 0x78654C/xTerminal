@@ -253,14 +253,27 @@ Commands can be canceled with CTRL+X key combination.
                         break;
                     case "-so":
                         {
-                            fileName = arg.MiddleString("-f", "-o");
-                            searchString = arg.MiddleString("-so", "-f");
-                            saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
-                            GlobalVariables.eventKeyFlagX = true;
-                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
-                            if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                            GlobalVariables.eventCancelKey = false;
+                            if (GlobalVariables.isPipeCommand)
+                            {
+                                searchString = arg.MiddleString("-so", "-o");
+                                saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
+                                GlobalVariables.eventKeyFlagX = true;
+                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, saveToFile));
+                                if (GlobalVariables.eventCancelKey)
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                GlobalVariables.eventCancelKey = false;
+                            }
+                            else
+                            {
+                                fileName = arg.MiddleString("-f", "-o");
+                                searchString = arg.MiddleString("-so", "-f");
+                                saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
+                                GlobalVariables.eventKeyFlagX = true;
+                                Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
+                                if (GlobalVariables.eventCancelKey)
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                GlobalVariables.eventCancelKey = false;
+                            }
                             break;
                         }
                     case "-sm":
