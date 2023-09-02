@@ -59,6 +59,7 @@ namespace Core.Commands
 
             if (!string.IsNullOrEmpty(savedFile))
             {
+                savedFile = FileSystem.SanitizePath(savedFile, currentDir);
                 return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
             }
 
@@ -105,7 +106,10 @@ namespace Core.Commands
             }
 
             if (!string.IsNullOrEmpty(savedFile))
+            {
+                savedFile = FileSystem.SanitizePath(savedFile, currentDir);
                 return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
+            }
 
             return output.ToString();
         }
