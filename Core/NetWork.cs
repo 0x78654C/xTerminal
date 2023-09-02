@@ -1,6 +1,7 @@
 ﻿using Core.SystemTools;
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -119,14 +120,24 @@ namespace Core
         /// </summary>
         private static void FinalReplayOutput()
         {
-            Console.WriteLine("\n---------------------------------------------------\n");
-            Console.Write($" Total status count: Success ");
-            FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
-            Console.Write(" Failure ");
-            FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString() + "\n");
-            GlobalVariables.eventKeyFlagX = false;
-            s_failure = 0;
-            s_success = 0;
+            if (GlobalVariables.isPipeCommand)
+            {
+                GlobalVariables.pipeCmdOutput += $"\n---------------------------------------------------\n  Total status count: Success {s_success.ToString()} Failure {s_failure.ToString()}\n";
+                GlobalVariables.eventKeyFlagX = false;
+                s_failure = 0;
+                s_success = 0;
+            }
+            else
+            {
+                Console.WriteLine("\n---------------------------------------------------\n");
+                Console.Write($" Total status count: Success ");
+                FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
+                Console.Write(" Failure ");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString() + "\n");
+                GlobalVariables.eventKeyFlagX = false;
+                s_failure = 0;
+                s_success = 0;
+            }
         }
 
         /// <summary>
@@ -156,12 +167,18 @@ namespace Core
                     s_failure++;
                 else
                     s_success++;
-                Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
+                if (GlobalVariables.isPipeCommand)
+                    GlobalVariables.pipeCmdOutput += $"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}\n";
+                else
+                 Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
             }
             else
             {
                 s_failure++;
-                Console.WriteLine($"{address} is down!");
+                if (GlobalVariables.isPipeCommand)
+                    GlobalVariables.pipeCmdOutput += $"{address} is down!\n";
+                else
+                    Console.WriteLine($"{address} is down!");
             }
         }
 
