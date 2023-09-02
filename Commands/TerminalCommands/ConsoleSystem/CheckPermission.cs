@@ -19,6 +19,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string input;
             try
             {
+                if (GlobalVariables.isPipeCommand)
+                    GlobalVariables.pipeCmdOutput = "";
                 string tabs = "\t";
                 int argLenght = arg.Length - 3;
                 input = arg.Substring(3, argLenght);
@@ -41,9 +43,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
                 Console.WriteLine("Permissions of directory: " + input);
                 foreach (FileSystemAccessRule ace in acl)
-                {
                     PermissionOut(ace, tabs);
-                }
             }
             else
             {
@@ -52,21 +52,31 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 AuthorizationRuleCollection acl = dSecurity.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount));
                 Console.WriteLine("Permissions of file: " + input);
                 foreach (FileSystemAccessRule ace in acl)
-                {
                     PermissionOut(ace, tabs);
-                }
             }
         }
 
         // Ouput the permission of a file or directory.
         private void PermissionOut(FileSystemAccessRule ace, string tabs)
         {
-            Console.WriteLine("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}\n",
-                tabs,
-                ace.IdentityReference.Value,
-                ace.AccessControlType,
-                ace.FileSystemRights,
-                ace.IsInherited);
+            if (GlobalVariables.isPipeCommand)
+            {
+                GlobalVariables.pipeCmdOutput += string.Format("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}",
+                     tabs,
+                     ace.IdentityReference.Value,
+                     ace.AccessControlType,
+                     ace.FileSystemRights,
+                     ace.IsInherited);
+            }
+            else
+            {
+                Console.WriteLine("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}\n",
+          tabs,
+          ace.IdentityReference.Value,
+          ace.AccessControlType,
+          ace.FileSystemRights,
+          ace.IsInherited);
+            }
         }
     }
 }
