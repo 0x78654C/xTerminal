@@ -132,7 +132,8 @@ namespace Shell
                         c.Execute(cmdExecute);
                         count++;
                     }
-                    GlobalVariables.isPipeCommand = false;
+                    GlobalVariables.isPipeCommand = false; 
+                    GlobalVariables.pipeCmdOutput = string.Empty;
                 }
                 else
                     c.Execute(command);
