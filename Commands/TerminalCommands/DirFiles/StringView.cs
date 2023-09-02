@@ -163,13 +163,26 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         break;
                     case "-s":
-                        fileName = arg.SplitByText("-f ", 1);
-                        searchString = arg.MiddleString("-s", "-f");
-                        GlobalVariables.eventKeyFlagX = true;
-                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                        GlobalVariables.eventCancelKey = false;
+
+                        if (GlobalVariables.isPipeCommand)
+                        {
+                            searchString = arg.SplitByText("-s",1);
+                            GlobalVariables.eventKeyFlagX = true;
+                            Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        else
+                        {
+                            fileName = arg.SplitByText("-f ", 1);
+                            searchString = arg.MiddleString("-s", "-f");
+                            GlobalVariables.eventKeyFlagX = true;
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
                         break;
                     case "-sa":
                         if (arg.Contains(" -f "))
@@ -292,7 +305,7 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         break;
                     default:
-                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg, s_currentDirectory));
+                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
                         break;
                 }
             }
