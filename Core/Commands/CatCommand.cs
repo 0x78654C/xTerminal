@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Core.Commands
 {
@@ -92,14 +91,14 @@ namespace Core.Commands
                 {
                     if (GlobalVariables.eventCancelKey)
                         break;
-
+                    
                     lineCount++;
                     if (string.IsNullOrWhiteSpace(searchString))
                     {
                         output.AppendLine(line);
                         continue;
                     }
-
+                    
                     if (line.ToLower().Contains(searchString.ToLower()))
                         output.AppendLine($"Line {lineCount} : {line}");
                 }
