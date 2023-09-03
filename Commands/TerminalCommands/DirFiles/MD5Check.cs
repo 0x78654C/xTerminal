@@ -70,9 +70,13 @@ Command md5 -d can be canceled with CTRL+X key combination.
                         FileSystem.ErrorWriteLine($"Directory {dirName} does not exist!");
                         return;
                     }
-                    Console.WriteLine($"MD5 CheckSUM list for files located in {dirName}:\n");
+                    if(!GlobalVariables.isPipeCommand)
+                         Console.WriteLine($"MD5 CheckSUM list for files located in {dirName}:\n");
                     GlobalVariables.eventKeyFlagX = true;
-                    Console.WriteLine(MD5DirCheckFiles(dirName));
+                    if (GlobalVariables.isPipeCommand)
+                        GlobalVariables.pipeCmdOutput = MD5DirCheckFiles(dirName);
+                    else
+                        Console.WriteLine(MD5DirCheckFiles(dirName));
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     return;
