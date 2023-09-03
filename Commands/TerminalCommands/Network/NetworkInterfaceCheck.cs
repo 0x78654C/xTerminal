@@ -1,8 +1,10 @@
 ﻿using Core;
 using System;
+using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.Network
 {
+    [SupportedOSPlatform("Windows")]
     public class NetworkInterfaceCheck : ITerminalCommand
     {
         /*
@@ -10,6 +12,12 @@ namespace Commands.TerminalCommands.Network
          */
         public string Name => "ifconfig";
 
-        public void Execute(string args) => Console.WriteLine(NetWork.ShowNicConfiguragion());
+        public void Execute(string args)
+        {
+            if (GlobalVariables.isPipeCommand)
+                GlobalVariables.pipeCmdOutput = NetWork.ShowNicConfiguragion();
+            else
+                Console.WriteLine(NetWork.ShowNicConfiguragion());
+        }
     }
 }
