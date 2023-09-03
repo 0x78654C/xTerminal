@@ -14,8 +14,10 @@ namespace Commands.TerminalCommands.DirFiles
         private string _helpMessage = @"Usage of echo command:
     >   : Write data to a file.
           Example: echo hello world > path_to_file
+          (Works as pipe command)
     >>  : Append data to a file. 
           Example: echo hello world >> path_to_file
+          (Works as pipe command)
 ";
 
         public void Execute(string arg)
@@ -40,9 +42,18 @@ namespace Commands.TerminalCommands.DirFiles
                 if (arg.Contains(" > "))
                 {
                     string inputData = string.Empty;
-                    if (!arg.StartsWith("echo >"))
-                        inputData = arg.MiddleString("echo", ">");
-                    string fileOutput = FileSystem.SanitizePath(arg.SplitByText(" > ", 1), _currentLocation);
+                    string fileOutput = string.Empty;
+                    if (GlobalVariables.isPipeCommand)
+                    {
+                        inputData = GlobalVariables.pipeCmdOutput;
+                        fileOutput = FileSystem.SanitizePath(arg.SplitByText(" > ", 1).Trim(), _currentLocation);
+                    }
+                    else
+                    {
+                        if (!arg.StartsWith("echo >"))
+                            inputData = arg.MiddleString("echo", ">");
+                        fileOutput = FileSystem.SanitizePath(arg.SplitByText(" > ", 1).Trim(), _currentLocation);
+                    }
                     File.WriteAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Data saved in {fileOutput}");
@@ -52,9 +63,18 @@ namespace Commands.TerminalCommands.DirFiles
                 if (arg.Contains(">>"))
                 {
                     string inputData = string.Empty;
-                    if (!arg.StartsWith("echo >"))
-                        inputData = arg.MiddleString("echo", ">");
-                    string fileOutput = FileSystem.SanitizePath(arg.SplitByText(" >> ", 1), _currentLocation);
+                    string fileOutput = string.Empty;
+                    if (GlobalVariables.isPipeCommand)
+                    {
+                        inputData = GlobalVariables.pipeCmdOutput;
+                        fileOutput = FileSystem.SanitizePath(arg.SplitByText(" >> ", 1).Trim(), _currentLocation);
+                    }
+                    else
+                    {
+                        if (!arg.StartsWith("echo >"))
+                            inputData = arg.MiddleString("echo", ">");
+                        fileOutput = FileSystem.SanitizePath(arg.SplitByText(" >> ", 1).Trim(), _currentLocation);
+                    }
                     File.AppendAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Data added to {fileOutput}");
