@@ -89,7 +89,10 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
-                    Console.WriteLine(lineAscend);
+                    if (GlobalVariables.isPipeCommand)
+                        GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
+                    else
+                        Console.WriteLine(lineAscend);
                 }
             }
         }
@@ -132,7 +135,10 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
-                    Console.WriteLine(lineAscend);
+                    if (GlobalVariables.isPipeCommand)
+                        GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
+                    else
+                        Console.WriteLine(lineAscend);
                 }
             }
         }
