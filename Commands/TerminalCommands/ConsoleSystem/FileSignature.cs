@@ -119,7 +119,10 @@ Description:   {description}
                 break;
             }
             if (isExtFound)
-                Console.WriteLine(outMessage);
+                if (GlobalVariables.isPipeCommand)
+                    GlobalVariables.pipeCmdOutput += $"{outMessage}\n";
+                else
+                    Console.WriteLine(outMessage);
             else if (!_isIterated)
             {
                 _isIterated = true;
