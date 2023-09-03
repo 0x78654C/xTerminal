@@ -86,7 +86,8 @@ Command can be canceled with CTRL+X key combination.
                     Console.WriteLine($"Data saved in {outputFile}");
                     return;
                 }
-                Console.WriteLine($"Searching for: {arg}" + Environment.NewLine);
+                if(!GlobalVariables.isPipeCommand)
+                    Console.WriteLine($"Searching for: {arg}" + Environment.NewLine);
                 GlobalVariables.eventKeyFlagX = true;
                 SearchFile(_currentLocation, arg, "", false, action);
                 if (GlobalVariables.eventCancelKey)
@@ -129,7 +130,10 @@ Command can be canceled with CTRL+X key combination.
                         }
                         else
                         {
-                            Console.WriteLine("File: " + file);
+                            if (GlobalVariables.isPipeCommand)
+                                GlobalVariables.pipeCmdOutput += $"File: {file}\n";
+                            else
+                                Console.WriteLine($"File: {file}");
                         }
                     }
                 }
@@ -146,7 +150,10 @@ Command can be canceled with CTRL+X key combination.
                         }
                         else
                         {
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "DIR: " + dir);
+                            if (GlobalVariables.isPipeCommand)
+                                GlobalVariables.pipeCmdOutput += $"DIR: {dir}\n";
+                            else
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"DIR: {dir}");
                         }
                     }
                     if (!GlobalVariables.eventCancelKey)
