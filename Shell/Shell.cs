@@ -117,7 +117,7 @@ namespace Shell
                     command = GlobalVariables.aliasParameters;
 
                 // Pipe line command execution.
-                if (command.Contains("|"))
+                if (command.Contains("|") && !command.Contains("alias"))
                 {
                     GlobalVariables.isPipeCommand = true;
                     var commandSplit = command.Split('|');
