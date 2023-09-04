@@ -33,17 +33,22 @@ namespace Core
         {
             if (minPort == maxPort)
             {
-                Console.Write($"> Checking port {minPort} on ");
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{ipAddress}");
-                Console.WriteLine($"...\n");
+                if (!GlobalVariables.isPipeCommand)
+                {
+                    Console.Write($"> Checking port {minPort} on ");
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{ipAddress}");
+                    Console.WriteLine($"...\n");
+                }
             }
             else
             {
-                Console.Write($"> Checking ports {minPort}-{maxPort} on ");
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{ipAddress}");
-                Console.WriteLine($"...\n");
+                if (!GlobalVariables.isPipeCommand)
+                {
+                    Console.Write($"> Checking ports {minPort}-{maxPort} on ");
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{ipAddress}");
+                    Console.WriteLine($"...\n");
+                }
             }
-
             PortScanner cps = new PortScanner(ipAddress, minPort, maxPort);
             var progress = new Progress<PortScanner.PortScanResult>();
             cps.Scan(progress, timeOut);
@@ -191,29 +196,43 @@ namespace Core
                     : string.Join(",", _openPorts);
 
                 int countPorts = opennedPports.Count;
-
-                foreach(var port in opennedPports)
+                if (GlobalVariables.isPipeCommand)
+                    GlobalVariables.pipeCmdOutput = string.Empty;
+                foreach (var port in opennedPports)
                 {
                     var portData = port.Split('|');
-                    if(countPorts==1 && portData[1] == "Close")
+                    if (countPorts == 1 && portData[1] == "Close")
                     {
-                        Console.Write($" {portData[0]} | ");
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Close");
+                        if (GlobalVariables.isPipeCommand)
+                            GlobalVariables.pipeCmdOutput += $" {portData[0]} | Close\n";
+                        else
+                        {
+                            Console.Write($" {portData[0]} | ");
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Close");
+                        }
                     }
-                    else if(portData[1] == "Open")
+                    else if (portData[1] == "Open")
                     {
-                        Console.Write($" {portData[0]} | ");
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"Open");
+                        if (GlobalVariables.isPipeCommand)
+                            GlobalVariables.pipeCmdOutput += $" {portData[0]} | Open\n";
+                        else
+                        {
+                            Console.Write($" {portData[0]} | ");
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"Open");
+                        }
                     }
                 }
                 opennedPports.Clear();
-                Console.WriteLine();
-                Console.WriteLine("-----------------");
-                Console.WriteLine("Port Scan Results");
-                Console.WriteLine("-----------------");
-                Console.WriteLine();
-                Console.WriteLine($"Open Ports......: {openPorts}");
-                Console.WriteLine();
+                if (!GlobalVariables.isPipeCommand)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("-----------------");
+                    Console.WriteLine("Port Scan Results");
+                    Console.WriteLine("-----------------");
+                    Console.WriteLine();
+                    Console.WriteLine($"Open Ports......: {openPorts}");
+                    Console.WriteLine();
+                }
                 GlobalVariables.eventKeyFlagX = false;
             }
         }
