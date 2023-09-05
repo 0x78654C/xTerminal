@@ -91,12 +91,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command name should be at least 2 characters long!");
                     return;
                 }
+
                 if (commandName.Length > 14)
                 {
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command name should be maxim 14 characters!");
                     return;
                 }
-                string command = commandAlias.Split('|')[1].Trim();
+                //string command = commandAlias.Split('|')[1].Trim();
+               // string command = commandAlias.SplitByText($"{commandName}", 1).SplitByText("|",1).Trim();
+                string command = ParseAlias(commandAlias);
                 if (File.Exists(aliasJsonFile) && CheckCommandName(s_aliasFile, commandName))
                 {
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{commandName} alias command already exist!");
@@ -167,6 +170,17 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             else
                 FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
+        }
+
+        /// <summary>
+        /// Parse alias command name from command to run.
+        /// </summary>
+        /// <param name="alias"></param>
+        /// <returns></returns>
+        private static string ParseAlias(string alias)
+        {
+            var command = alias.Split('|')[0];
+            return alias.SplitByText($"{command}|", 1);
         }
 
         /// <summary>
