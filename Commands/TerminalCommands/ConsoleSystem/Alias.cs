@@ -97,8 +97,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command name should be maxim 14 characters!");
                     return;
                 }
-                //string command = commandAlias.Split('|')[1].Trim();
-               // string command = commandAlias.SplitByText($"{commandName}", 1).SplitByText("|",1).Trim();
                 string command = ParseAlias(commandAlias);
                 if (File.Exists(aliasJsonFile) && CheckCommandName(s_aliasFile, commandName))
                 {
