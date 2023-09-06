@@ -101,44 +101,50 @@ namespace Shell
 
         /// <summary>
         /// Execute predifined xTerminal commands.
-        /// </summary>
-        /// <param name="command"></param>
+        /// </summary> 
         private void ExecuteCommands(string command)
         {
-            // Display running command on title.
-            Console.Title = command;
-
-            // Run xTerminal predifined commands.
-            var c = Commands.CommandRepository.GetCommand(command);
-            CheckAliasCommandRun(GlobalVariables.aliasParameters);
-            if (c != null || !string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
+            try
             {
-                if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
-                    command = GlobalVariables.aliasParameters;
+                // Display running command on title.
+                Console.Title = command;
 
-                // Pipe line command execution.
-                if (command.Contains("|") && !command.Contains("alias"))
+                // Run xTerminal predifined commands.
+                var c = Commands.CommandRepository.GetCommand(command);
+                CheckAliasCommandRun(GlobalVariables.aliasParameters);
+
+                if (c != null || !string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                 {
-                    GlobalVariables.isPipeCommand = true;
-                    var commandSplit = command.Split('|');
-                    var count = 0;
-                    foreach (var cmd in commandSplit)
-                    {
-                        var cmdExecute = cmd.Trim();
-                        c = Commands.CommandRepository.GetCommand(cmdExecute);
-                        if (count == 0)
-                            GlobalVariables.pipeCmdOutput = cmdExecute;
+                    if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
+                        command = GlobalVariables.aliasParameters;
 
-                        c.Execute(cmdExecute);
-                        count++;
+                    // Pipe line command execution.
+                    if (command.Contains("|") && !command.Contains("alias"))
+                    {
+                        GlobalVariables.isPipeCommand = true;
+                        var commandSplit = command.Split('|');
+                        var count = 0;
+                        foreach (var cmd in commandSplit)
+                        {
+                            var cmdExecute = cmd.Trim();
+                            c = Commands.CommandRepository.GetCommand(cmdExecute);
+                            if (count == 0)
+                                GlobalVariables.pipeCmdOutput = cmdExecute;
+
+                            c.Execute(cmdExecute);
+                            count++;
+                        }
+                        GlobalVariables.isPipeCommand = false;
+                        GlobalVariables.pipeCmdOutput = string.Empty;
                     }
-                    GlobalVariables.isPipeCommand = false; 
-                    GlobalVariables.pipeCmdOutput = string.Empty;
+                    else
+                        c.Execute(command);
+                    GlobalVariables.aliasParameters = string.Empty;
+                    GlobalVariables.aliasRunFlag = false;
                 }
-                else
-                    c.Execute(command);
-                GlobalVariables.aliasParameters = string.Empty;
-                GlobalVariables.aliasRunFlag = false;
+            }catch(Exception e)
+            {
+                FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
             }
         }
 
