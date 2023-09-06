@@ -78,7 +78,7 @@ namespace Commands
             {
                 if (alias.CommandName == commandName)
                 {
-                    command = alias.Command;
+                    command = alias.Command.Trim();
                     GlobalVariables.aliasRunFlag = true;
                     GlobalVariables.aliasParameters = command;
                 }
@@ -89,7 +89,6 @@ namespace Commands
                 ProcessStart.Execute(command, command);
                 return string.Empty;
             }
-
             return command;
         }
     }
