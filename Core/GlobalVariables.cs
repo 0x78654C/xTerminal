@@ -39,5 +39,6 @@ namespace Core
         public static readonly string magicNunmbers= Application.StartupPath + @"\ext_list.txt";
         public static bool isPipeCommand = false;
         public static string pipeCmdOutput { get; set; }
+        public static int pipeCmdCount { get; set; } = 0;
     }
 }
