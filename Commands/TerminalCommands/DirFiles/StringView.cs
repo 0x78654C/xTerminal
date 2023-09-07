@@ -1,5 +1,6 @@
 ﻿using Core;
 using System;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Runtime.Versioning;
 
@@ -166,9 +167,12 @@ Commands can be canceled with CTRL+X key combination.
 
                         if (GlobalVariables.isPipeCommand)
                         {
-                            searchString = arg.SplitByText("-s ",1);
+                            searchString = arg.SplitByText("-s ", 1);
                             GlobalVariables.eventKeyFlagX = true;
-                            Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
+                            if (GlobalVariables.pipeCmdCount > 0)
+                                GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "");
+                            else
+                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                             GlobalVariables.eventCancelKey = false;
