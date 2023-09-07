@@ -93,7 +93,7 @@ Commands can be canceled with CTRL+X key combination.
                     Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg, s_currentDirectory));
                     return;
                 }
-;
+
                 switch (input[0])
                 {
                     case "-con":
