@@ -123,6 +123,7 @@ namespace Shell
                     {
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
+                        GlobalVariables.pipeCmdCount = commandSplit.Count() - 1;
                         var count = 0;
                         foreach (var cmd in commandSplit)
                         {
@@ -133,6 +134,7 @@ namespace Shell
 
                             c.Execute(cmdExecute);
                             count++;
+                            GlobalVariables.pipeCmdCount--;
                         }
                         GlobalVariables.isPipeCommand = false;
                         GlobalVariables.pipeCmdOutput = string.Empty;
