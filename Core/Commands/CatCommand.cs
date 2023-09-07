@@ -73,7 +73,7 @@ namespace Core.Commands
         /// <param name="currentDir"></param>
         /// <param name="savedFile"></param>
         /// <returns></returns>
-        public static string StringSearchOutput(string input,string currentDir, string searchString, string savedFile = null)
+        public static string StringSearchOutput(string input, string currentDir, string searchString, string savedFile = null)
         {
             var output = new StringBuilder();
             int lineCount = 0;
@@ -91,14 +91,14 @@ namespace Core.Commands
                 {
                     if (GlobalVariables.eventCancelKey)
                         break;
-                    
+
                     lineCount++;
                     if (string.IsNullOrWhiteSpace(searchString))
                     {
                         output.AppendLine(line);
                         continue;
                     }
-                    
+
                     if (line.ToLower().Contains(searchString.ToLower()))
                         output.AppendLine(line);
                 }
@@ -381,6 +381,7 @@ namespace Core.Commands
             }
             int first = Int32.Parse(firstLine);
             int second = Int32.Parse(secondLine);
+            GlobalVariables.pipeCmdOutput = string.Empty;
             if (GlobalVariables.isPipeCommand)
             {
                 using (var streamReader = new StringReader(fileName))
@@ -393,7 +394,10 @@ namespace Core.Commands
                             continue;
                         if (GlobalVariables.eventCancelKey)
                             break;
-                        Console.WriteLine(line);
+                        if (GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput += $"{line}\n";
+                        else
+                            Console.WriteLine(line);
                     }
                 }
             }
