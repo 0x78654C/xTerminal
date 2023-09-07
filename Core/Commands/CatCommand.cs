@@ -100,7 +100,7 @@ namespace Core.Commands
                     }
                     
                     if (line.ToLower().Contains(searchString.ToLower()))
-                        output.AppendLine($"Line {lineCount} : {line}");
+                        output.AppendLine(line);
                 }
             }
 
