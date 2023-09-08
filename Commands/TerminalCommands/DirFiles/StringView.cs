@@ -201,7 +201,8 @@ Commands can be canceled with CTRL+X key combination.
 
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
-                            Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
+                            if (!GlobalVariables.isPipeCommand)
+                                Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
                             GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true, fileSearchIn);
                         }
@@ -210,8 +211,14 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true);
                         }
+
                         s_output = string.IsNullOrWhiteSpace(s_output) ? "No file names contain that text!" : s_output;
-                        Console.WriteLine(s_output);
+                        
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput = s_output;
+                        else
+                            Console.WriteLine(s_output);
+                        
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         GlobalVariables.eventCancelKey = false;
