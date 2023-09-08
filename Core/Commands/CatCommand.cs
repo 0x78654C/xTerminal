@@ -354,10 +354,14 @@ namespace Core.Commands
             var reader = new StringReader(data);
             string line;
             int count = 0;
+            GlobalVariables.pipeCmdOutput = string.Empty;
             while ((line = reader.ReadLine()) != null)
             {
                 if (count == linesCount) break;
-                Console.WriteLine(line);
+                if (GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"{line}\n";
+                else
+                    Console.WriteLine(line);
                 count++;
             }
         }
