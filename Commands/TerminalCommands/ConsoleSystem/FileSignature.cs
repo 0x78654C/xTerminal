@@ -120,7 +120,12 @@ Description:   {description}
             }
             if (isExtFound)
                 if (GlobalVariables.isPipeCommand)
-                    GlobalVariables.pipeCmdOutput += $"{outMessage}\n";
+                {
+                    if(GlobalVariables.pipeCmdCount > 0)
+                        GlobalVariables.pipeCmdOutput += $"{outMessage}\n";
+                    else
+                        Console.WriteLine(outMessage);
+                }
                 else
                     Console.WriteLine(outMessage);
             else if (!_isIterated)
