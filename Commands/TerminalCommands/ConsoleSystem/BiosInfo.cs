@@ -44,7 +44,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         return;
                     }
                     if (GlobalVariables.isPipeCommand)
-                        GlobalVariables.pipeCmdOutput = wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2");
+                    {
+                        if (GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput = wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2");
+                        else
+                            Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2"));
+                    }
                     else
                         Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2"));
                     break;
@@ -53,7 +58,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     break;
                 default:
                     if (GlobalVariables.isPipeCommand)
-                        GlobalVariables.pipeCmdOutput = wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2");
+                    {
+                        if(GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput = wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2");
+                        else
+                            Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2"));
+                    }
                     else
                         Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2"));
                     break;
