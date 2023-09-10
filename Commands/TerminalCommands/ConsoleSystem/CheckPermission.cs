@@ -61,12 +61,24 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             if (GlobalVariables.isPipeCommand)
             {
-                GlobalVariables.pipeCmdOutput += string.Format("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}",
-                     tabs,
-                     ace.IdentityReference.Value,
-                     ace.AccessControlType,
-                     ace.FileSystemRights,
-                     ace.IsInherited);
+                if (GlobalVariables.pipeCmdCount > 0)
+                {
+                    GlobalVariables.pipeCmdOutput += string.Format("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}",
+                         tabs,
+                         ace.IdentityReference.Value,
+                         ace.AccessControlType,
+                         ace.FileSystemRights,
+                         ace.IsInherited);
+                }
+                else
+                {
+                    Console.WriteLine("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}\n",
+tabs,
+ace.IdentityReference.Value,
+ace.AccessControlType,
+ace.FileSystemRights,
+ace.IsInherited);
+                }
             }
             else
             {
