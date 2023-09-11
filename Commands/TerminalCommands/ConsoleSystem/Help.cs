@@ -100,7 +100,7 @@ This is the full list of commands that can be used in xTerminal:
     If you like this application and want to support the project just buy your self a coffee and have a nice day ;).
 
                         ";
-            if (GlobalVariables.isPipeCommand)
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput = helpMGS;
             else
                 Console.WriteLine(helpMGS);
