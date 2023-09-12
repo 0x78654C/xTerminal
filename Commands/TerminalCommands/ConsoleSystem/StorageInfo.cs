@@ -29,7 +29,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         return;
                     }
                     string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\" + pc + @"\root\cimv2");
-                    if (GlobalVariables.isPipeCommand)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                         GlobalVariables.pipeCmdOutput = Wmi.SizeConvert(wmiDetails, false);
                     else
                         Console.WriteLine(Wmi.SizeConvert(wmiDetails, false));
@@ -42,7 +42,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch
             {
                 string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\.\root\cimv2");
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput = Wmi.SizeConvert(wmiDetails, false);
                 else
                     Console.WriteLine(Wmi.SizeConvert(wmiDetails, false));
