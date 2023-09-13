@@ -14,7 +14,7 @@ namespace Commands.TerminalCommands.Network
 
         public void Execute(string args)
         {
-            if (GlobalVariables.isPipeCommand)
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput = NetWork.ShowNicConfiguragion();
             else
                 Console.WriteLine(NetWork.ShowNicConfiguragion());
