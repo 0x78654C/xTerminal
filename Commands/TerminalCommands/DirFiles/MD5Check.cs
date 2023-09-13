@@ -73,7 +73,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                     if(!GlobalVariables.isPipeCommand)
                          Console.WriteLine($"MD5 CheckSUM list for files located in {dirName}:\n");
                     GlobalVariables.eventKeyFlagX = true;
-                    if (GlobalVariables.isPipeCommand)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount >0)
                         GlobalVariables.pipeCmdOutput = MD5DirCheckFiles(dirName);
                     else
                         Console.WriteLine(MD5DirCheckFiles(dirName));
