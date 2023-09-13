@@ -167,7 +167,7 @@ namespace Core
                     s_failure++;
                 else
                     s_success++;
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}\n";
                 else
                  Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
@@ -175,7 +175,7 @@ namespace Core
             else
             {
                 s_failure++;
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"{address} is down!\n";
                 else
                     Console.WriteLine($"{address} is down!");
