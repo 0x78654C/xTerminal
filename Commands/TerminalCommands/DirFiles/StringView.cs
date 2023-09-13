@@ -2,6 +2,7 @@
 using System;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
+using System.Net;
 using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.DirFiles
@@ -90,7 +91,10 @@ Commands can be canceled with CTRL+X key combination.
                         Console.WriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
                         return;
                     }
-                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg, s_currentDirectory));
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                        GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
+                    else
+                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
                     return;
                 }
 
@@ -332,7 +336,10 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         break;
                     default:
-                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput =$"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
+                        else
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
                         break;
                 }
             }
