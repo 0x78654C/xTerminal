@@ -32,7 +32,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     Console.WriteLine(_helpMessage);
                     return;
                 }
-
+                GlobalVariables.pipeCmdOutput = string.Empty;
                 arg = arg.Replace($"{Name} ", "");
                 _currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 GlobalVariables.eventKeyFlagX = true;
@@ -89,7 +89,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
-                    if (GlobalVariables.isPipeCommand)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                         GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
                     else
                         Console.WriteLine(lineAscend);
@@ -135,7 +135,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
-                    if (GlobalVariables.isPipeCommand)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                         GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
                     else
                         Console.WriteLine(lineAscend);
