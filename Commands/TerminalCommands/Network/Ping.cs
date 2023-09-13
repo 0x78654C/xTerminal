@@ -26,10 +26,15 @@ Ping with -t can be canceled with CTRL+X key combination.
             try
             {
                 GlobalVariables.eventCancelKey = false;
-                if (args.Length == 4)
+                if (args.Length == 4 && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
+                }
+                else
+                {
+                    args = $"{args} {GlobalVariables.pipeCmdOutput.Trim()}";
+
                 }
                 if (args == $"{Name} -h")
                 {
