@@ -22,7 +22,10 @@ namespace Commands.TerminalCommands.Network
                 externalIP = (new WebClient()).DownloadString("http://checkip.dyndns.org");
                 externalIP = (new Regex(@"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"))
                              .Matches(externalIP)[0].ToString();
-                Console.WriteLine("Your external IP address is: " + externalIP);
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput = externalIP;
+                else
+                    Console.WriteLine("Your external IP address is: " + externalIP);
             }
             catch { FileSystem.ErrorWriteLine("Cannot verify external IP address. Check your internet connection!"); }
         }
