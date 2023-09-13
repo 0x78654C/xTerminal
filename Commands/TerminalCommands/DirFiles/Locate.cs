@@ -130,7 +130,7 @@ Command can be canceled with CTRL+X key combination.
                         }
                         else
                         {
-                            if (GlobalVariables.isPipeCommand)
+                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                 GlobalVariables.pipeCmdOutput += $"File: {file}\n";
                             else
                                 Console.WriteLine($"File: {file}");
@@ -150,7 +150,7 @@ Command can be canceled with CTRL+X key combination.
                         }
                         else
                         {
-                            if (GlobalVariables.isPipeCommand)
+                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                 GlobalVariables.pipeCmdOutput += $"DIR: {dir}\n";
                             else
                                 FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"DIR: {dir}");
