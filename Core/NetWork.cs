@@ -64,6 +64,7 @@ namespace Core
         {
             try
             {
+                GlobalVariables.pipeCmdOutput = string.Empty;
                 if (pingReplys == 0)
                 {
                     while (true)

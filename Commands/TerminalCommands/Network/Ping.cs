@@ -37,10 +37,9 @@ Ping with -t can be canceled with CTRL+X key combination.
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
-
-                if(GlobalVariables.isPipeCommand && !args.ContainsText("-t"))
+                
+                if(GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 && !args.ContainsText("-t"))
                     args = $"{args} {GlobalVariables.pipeCmdOutput.Trim()}";
-
 
                 string[] arg = args.Split(' ');
                 if (args.ContainsText("-t"))
@@ -52,7 +51,7 @@ Ping with -t can be canceled with CTRL+X key combination.
 
                     if (pingReplays > 0) {
                         GlobalVariables.eventKeyFlagX = true;
-                        if (GlobalVariables.isPipeCommand)
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                             NetWork.PingMain(GlobalVariables.pipeCmdOutput.Trim(), pingReplays);
                         else
                             NetWork.PingMain(arg.ParameterAfter("ping"), pingReplays);
@@ -65,7 +64,7 @@ Ping with -t can be canceled with CTRL+X key combination.
                     if (string.IsNullOrEmpty(pingRetry))
                     {
                         GlobalVariables.eventKeyFlagX = true;
-                        if (GlobalVariables.isPipeCommand)
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                             NetWork.PingMain(GlobalVariables.pipeCmdOutput.Trim(), pingReplays);
                         else
                             NetWork.PingMain(arg.ParameterAfter("ping"), 0);
