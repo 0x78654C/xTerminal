@@ -40,5 +40,6 @@ namespace Core
         public static bool isPipeCommand = false;
         public static string pipeCmdOutput { get; set; }
         public static int pipeCmdCount { get; set; } = 0;
+        public static int pipeCmdCountTemp { get; set; } = 0;
     }
 }
