@@ -124,6 +124,7 @@ namespace Shell
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
                         GlobalVariables.pipeCmdCount = commandSplit.Count() - 1;
+                        GlobalVariables.pipeCmdCountTemp = GlobalVariables.pipeCmdCount;
                         var count = 0;
                         foreach (var cmd in commandSplit)
                         {
@@ -131,7 +132,7 @@ namespace Shell
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
                             if (count == 0)
                                 GlobalVariables.pipeCmdOutput = cmdExecute;
-
+                             
                             c.Execute(cmdExecute);
                             count++;
                             GlobalVariables.pipeCmdCount--;
