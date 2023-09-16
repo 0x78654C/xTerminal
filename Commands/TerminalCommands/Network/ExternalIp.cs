@@ -13,11 +13,17 @@ namespace Commands.TerminalCommands.Network
          * Display machine's external IP.
          */
         public string Name => "extip";
-
+        private static string s_helpMessage = @" The command returns your public IP address provied by checkip.dyndns.org verification.";
         public void Execute(string arg)
         {
             try
             {
+                if (arg == $"{Name} -h")
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
+
                 string externalIP;
                 externalIP = (new WebClient()).DownloadString("http://checkip.dyndns.org");
                 externalIP = (new Regex(@"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"))
