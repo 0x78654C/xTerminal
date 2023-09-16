@@ -12,18 +12,30 @@ namespace Commands.TerminalCommands.Network
          Check if an IP dor domain is down.
          */
         public string Name => "icheck";
+        private static string s_helpMessage = @"Check if an IP/ domain is down or up:
 
+Example: icheck google.com 
+
+";
         public void Execute(string arg)
         {
             try
             {
+                if (arg == $"{Name} -h")
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
+
                 string domain = arg.Split(' ')[1];
                 if (ping.PingHost(domain))
                 {
-                    Console.WriteLine($"{domain} is online!");
+                    Console.Write($"{domain}:");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, " ONLINE");
                     return;
                 }
-                Console.WriteLine($"{domain} is down!");
+                Console.Write($"{domain}:");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, " OFFLINE");
             }
             catch
             {
