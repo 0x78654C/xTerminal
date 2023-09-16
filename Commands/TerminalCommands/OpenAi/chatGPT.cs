@@ -78,7 +78,7 @@ namespace Commands.TerminalCommands.OpenAi
             string line = "";
             while ((line = reader.ReadLine()) != null)
             {
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                     GlobalVariables.pipeCmdOutput += $"{Environment.NewLine}{line}";
                 else
                     Console.Write($"{Environment.NewLine}{line}");
