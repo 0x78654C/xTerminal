@@ -125,7 +125,7 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         int lines = Int32.Parse(lineCounter);
                         GlobalVariables.eventKeyFlagX = true;
-                        if (GlobalVariables.isPipeCommand)
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         {
                             var dataPipe = GlobalVariables.pipeCmdOutput;
                             Core.Commands.CatCommand.OutputFirstLinesFromString(dataPipe, lines);
@@ -149,7 +149,7 @@ Commands can be canceled with CTRL+X key combination.
                             FileSystem.ErrorWriteLine("Invalid parameter. You need to provide the range of lines for data display! Example: 10-20");
                             return;
                         }
-                        if (GlobalVariables.isPipeCommand)
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         {
                             GlobalVariables.eventKeyFlagX = true;
                             Core.Commands.CatCommand.OutputLinesRange(GlobalVariables.pipeCmdOutput, linesRange);
@@ -173,7 +173,7 @@ Commands can be canceled with CTRL+X key combination.
                         {
                             searchString = arg.SplitByText("-s ", 1);
                             GlobalVariables.eventKeyFlagX = true;
-                            if (GlobalVariables.pipeCmdCount > 0)
+                            if (GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                                 GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "");
                             else
                                 Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));

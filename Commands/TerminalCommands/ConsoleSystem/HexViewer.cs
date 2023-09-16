@@ -27,7 +27,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
 
-                if (args.Length == 3)
+                if (args.Length == 3 && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
@@ -36,13 +36,26 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
-                }
+                } 
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    args = $"{args} {GlobalVariables.pipeCmdOutput.Trim()}";
+
                 if (arg.ContainsParameter("-o"))
                 {
-                    string dumpFile1 = args.SplitByText("hex ", 1);
-                    string dumpFile = dumpFile1.SplitByText(" -o", 0);
-                    file = FileSystem.SanitizePath(dumpFile, s_currentDirectory);
-                    string fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
+                    string fileToSave = string.Empty;
+                    string dumpFile1=string.Empty;
+                    string dumpFile = string.Empty;
+                    if (!GlobalVariables.isPipeCommand)
+                    {
+                        dumpFile1 = args.SplitByText("hex ", 1);
+                        dumpFile = dumpFile1.SplitByText(" -o", 0);
+                        file = FileSystem.SanitizePath(dumpFile, s_currentDirectory);
+                        fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
+                    }
+                    else{
+                        file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput, s_currentDirectory);
+                        fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
+                    }
                     HexDumpFile(file, true, fileToSave);
                     return;
                 }
