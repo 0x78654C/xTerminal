@@ -32,10 +32,13 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     Console.WriteLine(_helpMessage);
                     return;
                 }
-                GlobalVariables.pipeCmdOutput = string.Empty;
+               // GlobalVariables.pipeCmdOutput = string.Empty;
                 arg = arg.Replace($"{Name} ", "");
                 _currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 GlobalVariables.eventKeyFlagX = true;
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 && !arg.ContainsText("-t"))
+                    arg = $"{arg} {GlobalVariables.pipeCmdOutput.Trim()}";
+
                 // Ascend sort.
                 AscendDataOutput(arg);
 
@@ -78,18 +81,22 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     return;
                 }
 
-                filePath = arg.SplitByText("-a ", 1);
-                filePath = FileSystem.SanitizePath(filePath, _currentDirectory);
+                if (GlobalVariables.isPipeCommand)
+                    filePath = GlobalVariables.pipeCmdOutput;
+                else
+                    filePath = arg.SplitByText("-a ", 1);
+                filePath = FileSystem.SanitizePath(filePath, _currentDirectory).Trim();
                 if (!File.Exists(filePath))
                 {
                     FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
                     return;
                 }
+                GlobalVariables.pipeCmdOutput = string.Empty;
                 foreach (var lineAscend in SortFileAscending(filePath))
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
                     else
                         Console.WriteLine(lineAscend);
@@ -124,18 +131,22 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     return;
                 }
 
-                filePath = arg.SplitByText("-d ", 1);
-                filePath = FileSystem.SanitizePath(filePath, _currentDirectory);
+                if (GlobalVariables.isPipeCommand)
+                    filePath = GlobalVariables.pipeCmdOutput;
+                else
+                    filePath = arg.SplitByText("-d ", 1);
+                filePath = FileSystem.SanitizePath(filePath, _currentDirectory).Trim();
                 if (!File.Exists(filePath))
                 {
                     FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
                     return;
                 }
+                GlobalVariables.pipeCmdOutput = string.Empty;
                 foreach (var lineAscend in SortFileDescending(filePath))
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
                     else
                         Console.WriteLine(lineAscend);
