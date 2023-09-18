@@ -65,10 +65,13 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 string filePath;
                 if (arg.Contains(" -o "))
                 {
-                    var saveFilePath = arg.SplitByText(" -o ", 1);
+                    var saveFilePath = arg.SplitByText(" -o ", 1).Split(' ')[0];
                     var startPath = arg.Substring(3, arg.Length - 3);
-                    filePath = startPath.SplitByText(" -o ", 0);
-                    filePath = FileSystem.SanitizePath(filePath, _currentDirectory);
+                    if (GlobalVariables.isPipeCommand)
+                        filePath = GlobalVariables.pipeCmdOutput;
+                    else
+                        filePath = startPath.SplitByText(" -o ", 0);
+                    filePath = FileSystem.SanitizePath(filePath, _currentDirectory).Trim();
                     if (!File.Exists(filePath))
                     {
                         FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
@@ -115,10 +118,13 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 string filePath;
                 if (arg.Contains(" -o "))
                 {
-                    var saveFilePath = arg.SplitByText(" -o ", 1);
+                    var saveFilePath = arg.SplitByText(" -o ", 1).Split(' ')[0];
                     var startPath = arg.Substring(3, arg.Length - 3);
-                    filePath = startPath.SplitByText(" -o ", 0);
-                    filePath = FileSystem.SanitizePath(filePath, _currentDirectory);
+                    if (GlobalVariables.isPipeCommand)
+                        filePath = GlobalVariables.pipeCmdOutput;
+                    else
+                        filePath = startPath.SplitByText(" -o ", 0);
+                    filePath = FileSystem.SanitizePath(filePath, _currentDirectory).Trim();
                     if (!File.Exists(filePath))
                     {
                         FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
