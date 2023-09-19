@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
@@ -172,10 +173,13 @@ Commands can be canceled with CTRL+X key combination.
                         if (arg.ContainsParameter("-e"))
                             extensions = true;
 
-                        dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -d -e ", "") : dirSearchIn.Replace("ls -d ", "");
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                            dirSearchIn = GlobalVariables.pipeCmdOutput.Trim();
+                        else
+                            dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -d -e ", "") : dirSearchIn.Replace("ls -d ", "");
                         string fileToSave = args.SplitByText("-o ", 1);
                         GlobalVariables.eventKeyFlagX = true;
-                        GetDuplicateFiles(dirSearchIn, extensions, fileToSave);
+                        GetDuplicateFiles(FileSystem.SanitizePath(dirSearchIn, s_currentDirectory), extensions, fileToSave);
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         return;
@@ -183,12 +187,20 @@ Commands can be canceled with CTRL+X key combination.
 
                     if (arg.ContainsParameter("-e"))
                         extensions = true;
-                    string nullDir = arg.ContainsParameter("-e") ? args.Replace("ls -d -e", "") : args.Replace("ls -d", "");
+                    string nullDir = string.Empty;
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        nullDir = GlobalVariables.pipeCmdOutput;
+                    else
+                        nullDir = arg.ContainsParameter("-e") ? args.Replace("ls -d -e", "") : args.Replace("ls -d", "");
                     if (!string.IsNullOrEmpty(nullDir))
                     {
                         if (arg.ContainsParameter("-e"))
                             extensions = true;
-                        string searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-d ", 1);
+                        string searchDir = string.Empty;
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                            searchDir = GlobalVariables.pipeCmdOutput.Trim();
+                        else
+                            searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-d ", 1);
                         GlobalVariables.eventKeyFlagX = true;
                         GetDuplicateFiles(FileSystem.SanitizePath(searchDir, s_currentDirectory), extensions);
                         if (GlobalVariables.eventCancelKey)
@@ -304,6 +316,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="saveToFile">File where to save the output.</param>
         private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile = null)
         {
+            GlobalVariables.pipeCmdOutput = string.Empty;
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
@@ -337,13 +350,20 @@ Commands can be canceled with CTRL+X key combination.
                 s_stopWatch.Stop();
                 s_timeSpan = s_stopWatch.Elapsed;
                 results += string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))));
-                Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
-                Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
-                return;
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                {
+                    GlobalVariables.pipeCmdOutput += $"{FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results)}\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds";
+                }
+                else
+                {
+                    Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
+                    Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
+                    return;
+                }
             }
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
             {
                 GlobalVariables.pipeCmdOutput += $"{results}\n{string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))))}" +
                     $"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds\n";
