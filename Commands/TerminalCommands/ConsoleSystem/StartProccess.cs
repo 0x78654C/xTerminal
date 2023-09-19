@@ -11,15 +11,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         [SupportedOSPlatform("Windows")]
         private static string s_currentDirectory = string.Empty;
-        public string Name => "start";
-        private string _helpMessage = @"Usage: start <file_name> OR start <file_name> -param <file_paramters>
+        public string Name => ".\\";
+        private string _helpMessage = @"Usage: .\ <file_name> OR .\ <file_name> -param <file_paramters>
 Can be used with the following parameters:
     -h    : Displays this message.
     -u    : Can run process with different user.
     -we   : Wait for process to exit.
     -param: Start process with specified parameters.
-         Example1: start -u <file_name>
-         Example2: start -u <file_name> -param <file_paramters>
+         Example1: .\ -u <file_name>
+         Example2: .\ -u <file_name> -param <file_paramters>
 Both examples can be used with -we parameter.
 ";
 
@@ -30,13 +30,13 @@ Both examples can be used with -we parameter.
                 // Set directory, to be used in other functions
                 s_currentDirectory =
                                 File.ReadAllText(GlobalVariables.currentDirectory);
-                if (args.Length == 5)
+                if (args.Length == 2)
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
-                int argsLength = args.Length - 6;
-                args = args.Substring(6, argsLength);
+                int argsLength = args.Length - 3;
+                args = args.Substring(3, argsLength);
                 string param = args.Split(' ').First();
                 string paramApp = string.Empty;
                 bool waitForExit = false;
