@@ -19,11 +19,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string input;
             try
             {
-                if (GlobalVariables.isPipeCommand)
-                    GlobalVariables.pipeCmdOutput = "";
+
                 string tabs = "\t";
-                int argLenght = arg.Length - 3;
-                input = arg.Substring(3, argLenght);
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    input = GlobalVariables.pipeCmdOutput.Trim() ;
+                else
+                {
+                    int argLenght = arg.Length - 3;
+                    input = arg.Substring(3, argLenght);
+                }
                 ListPermissions(input, currentLocation, tabs);
             }
             catch (Exception e)
@@ -35,6 +39,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         // List permissions of a file or directory.
         private void ListPermissions(string input, string currentDirectory, string tabs)
         {
+            if (GlobalVariables.isPipeCommand)
+                GlobalVariables.pipeCmdOutput = "";
             input = FileSystem.SanitizePath(input, currentDirectory);
             if (Directory.Exists(input))
             {
@@ -59,26 +65,14 @@ namespace Commands.TerminalCommands.ConsoleSystem
         // Ouput the permission of a file or directory.
         private void PermissionOut(FileSystemAccessRule ace, string tabs)
         {
-            if (GlobalVariables.isPipeCommand)
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
             {
-                if (GlobalVariables.pipeCmdCount > 0)
-                {
-                    GlobalVariables.pipeCmdOutput += string.Format("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}",
-                         tabs,
-                         ace.IdentityReference.Value,
-                         ace.AccessControlType,
-                         ace.FileSystemRights,
-                         ace.IsInherited);
-                }
-                else
-                {
-                    Console.WriteLine("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}\n",
-tabs,
-ace.IdentityReference.Value,
-ace.AccessControlType,
-ace.FileSystemRights,
-ace.IsInherited);
-                }
+                GlobalVariables.pipeCmdOutput += string.Format("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}",
+                     tabs,
+                     ace.IdentityReference.Value,
+                     ace.AccessControlType,
+                     ace.FileSystemRights,
+                     ace.IsInherited);
             }
             else
             {
