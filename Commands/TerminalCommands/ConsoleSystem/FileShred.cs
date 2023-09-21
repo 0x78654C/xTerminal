@@ -32,18 +32,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     return;
                 }
 
-                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                    args = GlobalVariables.pipeCmdOutput.Trim();
-                else
-                    args = args.Replace("shred ", String.Empty);
-
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
                 if (args.Contains(" -i "))
                 {
                     int passes = Int32.Parse(args.SplitByText("-i ", 1).Trim());
                     string filePath =  string.Empty;
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         filePath = GlobalVariables.pipeCmdOutput.Trim();
                     else
                         filePath = args.SplitByText(" -i", 0).Trim();
@@ -52,6 +47,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     _shred.ShredFile();
                     return;
                 }
+
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    args = GlobalVariables.pipeCmdOutput.Trim();
+                else
+                    args = args.Replace("shred ", String.Empty);
                 string fileSanitize = FileSystem.SanitizePath(args, currentDirectory);
                 _shred = new Shred(fileSanitize, 0);
                 _shred.ShredFile();
