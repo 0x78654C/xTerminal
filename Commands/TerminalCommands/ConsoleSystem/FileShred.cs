@@ -25,19 +25,28 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
+                 
                 if (args == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
 
-                args = args.Replace("shred ", String.Empty);
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    args = GlobalVariables.pipeCmdOutput;
+                else
+                    args = args.Replace("shred ", String.Empty);
+
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
                 if (args.Contains(" -i "))
                 {
                     int passes = Int32.Parse(args.SplitByText("-i ", 1).Trim());
-                    string filePath = args.SplitByText(" -i", 0).Trim();
+                    string filePath =  string.Empty;
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        filePath = GlobalVariables.pipeCmdOutput;
+                    else
+                        filePath = args.SplitByText(" -i", 0).Trim();
                     string fileSanitizeI = FileSystem.SanitizePath(filePath, currentDirectory);
                     _shred = new Shred(fileSanitizeI, passes);
                     _shred.ShredFile();
