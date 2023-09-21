@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
-                if (args.Length == 5)
+                if (args.Length == 5 && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
@@ -33,7 +33,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
 
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                    args = GlobalVariables.pipeCmdOutput;
+                    args = GlobalVariables.pipeCmdOutput.Trim();
                 else
                     args = args.Replace("shred ", String.Empty);
 
@@ -44,7 +44,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     int passes = Int32.Parse(args.SplitByText("-i ", 1).Trim());
                     string filePath =  string.Empty;
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                        filePath = GlobalVariables.pipeCmdOutput;
+                        filePath = GlobalVariables.pipeCmdOutput.Trim();
                     else
                         filePath = args.SplitByText(" -i", 0).Trim();
                     string fileSanitizeI = FileSystem.SanitizePath(filePath, currentDirectory);
