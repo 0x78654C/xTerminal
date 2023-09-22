@@ -130,10 +130,12 @@ namespace Shell
                         {
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            if (count == 0)
-                                GlobalVariables.pipeCmdOutput = cmdExecute;
+
+                          //  if (count == 0) deactivated temporary  
+                            //    GlobalVariables.pipeCmdOutput = cmdExecute;
                              
                             c.Execute(cmdExecute);
+                            
                             count++;
                             GlobalVariables.pipeCmdCount--;
                         }
