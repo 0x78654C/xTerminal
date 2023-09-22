@@ -174,7 +174,9 @@ Commands can be canceled with CTRL+X key combination.
                             searchString = arg.SplitByText("-s ", 1);
                             GlobalVariables.eventKeyFlagX = true;
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                            {
                                 GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "");
+                            }
                             else
                                 Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
                             if (GlobalVariables.eventCancelKey)
