@@ -1,4 +1,5 @@
 ﻿using Core;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Runtime.Versioning;
 using ping = Core.NetWork;
@@ -26,8 +27,11 @@ Example: icheck google.com
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
-
-                string domain = arg.Split(' ')[1];
+                string domain = string.Empty;
+                if (GlobalVariables.isPipeCommand)
+                    domain = GlobalVariables.pipeCmdOutput.Trim();
+                else
+                    domain = arg.Split(' ')[1];
                 if (ping.PingHost(domain))
                 {
                     Console.Write($"{domain}:");
