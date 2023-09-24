@@ -1,9 +1,6 @@
 ﻿using Core;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
-using System.DirectoryServices.ActiveDirectory;
 using System.IO;
-using System.Net;
 using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.DirFiles
