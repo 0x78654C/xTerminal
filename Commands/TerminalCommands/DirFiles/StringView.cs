@@ -1,4 +1,5 @@
 ﻿using Core;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
@@ -61,7 +62,7 @@ Commands can be canceled with CTRL+X key combination.
                 string fileSearchIn = string.Empty;
                 string saveToFile;
 
-                if (arg.Length == 3 && !arg.Contains("-lc"))
+                if (arg.Length == 3 && !arg.Contains("-lc") && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
@@ -91,10 +92,22 @@ Commands can be canceled with CTRL+X key combination.
                         Console.WriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
                         return;
                     }
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    {
+                        GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory)}";
+                    }
+                    else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
+                    {
                         GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
-                    else
+                    }
+
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory));
+                    
+                    if(!GlobalVariables.isPipeCommand)
                         Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
+
                     return;
                 }
 
@@ -174,11 +187,10 @@ Commands can be canceled with CTRL+X key combination.
                             searchString = arg.SplitByText("-s ", 1);
                             GlobalVariables.eventKeyFlagX = true;
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                            {
                                 GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "");
-                            }
                             else
                                 Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
+
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                             GlobalVariables.eventCancelKey = false;
@@ -219,12 +231,12 @@ Commands can be canceled with CTRL+X key combination.
                         }
 
                         s_output = string.IsNullOrWhiteSpace(s_output) ? "No file names contain that text!" : s_output;
-                        
+
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                             GlobalVariables.pipeCmdOutput = s_output;
                         else
                             Console.WriteLine(s_output);
-                        
+
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         GlobalVariables.eventCancelKey = false;
@@ -338,10 +350,21 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         break;
                     default:
-                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput =$"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
-                        else
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        {
+                            GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory)}";
+                        }
+                        else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
+                        {
+                            GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
+                        }
+
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory));
+
+                        if (!GlobalVariables.isPipeCommand)
                             Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
+
                         break;
                 }
             }
