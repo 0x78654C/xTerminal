@@ -78,65 +78,28 @@ namespace Commands.TerminalCommands.DirFiles
         }
         private void DeleteFile(string arg, string currentLocation)
         {
+            string input = FileSystem.SanitizePath(arg, currentLocation);
             try
             {
-                string input = arg; // Geting location input        
+                // Get the file attributes for file or directory
+                FileAttributes attr = File.GetAttributes(input);
 
-                // Checking the current locaiton in folder
-                if (input.Contains(":") && input.Contains(@"\"))
+                if (attr.HasFlag(FileAttributes.Directory))
                 {
-                    try
-                    {
-                        // Get the file attributes for file or directory
-                        FileAttributes attr = File.GetAttributes(input);
-
-                        if (attr.HasFlag(FileAttributes.Directory))
-                        {
-                            var dir = new DirectoryInfo(input);
-                            RecursiveDeleteDir(dir);
-                            Console.WriteLine($"Directory {input} deleted!");
-                        }
-                        else
-                        {
-                            File.SetAttributes(input, FileAttributes.Normal);
-                            File.Delete(input);
-                            Console.WriteLine($"File {input} deleted!");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        FileSystem.ErrorWriteLine(e.Message);
-                    }
+                    var dir = new DirectoryInfo(input);
+                    RecursiveDeleteDir(dir);
+                    Console.WriteLine($"Directory {input} deleted!");
                 }
                 else
                 {
-                    try
-                    {
-                        // Get the file attributes for file or directory
-                        FileAttributes attr = File.GetAttributes(currentLocation + input);
-
-                        if (attr.HasFlag(FileAttributes.Directory))
-                        {
-                            var dir = new DirectoryInfo(currentLocation + input);
-                            RecursiveDeleteDir(dir);
-                            Console.WriteLine("Directory " + currentLocation + input + " deleted!");
-                        }
-                        else
-                        {
-                            File.SetAttributes(currentLocation + input, FileAttributes.Normal);
-                            File.Delete(currentLocation + input);
-                            Console.WriteLine("File " + currentLocation + input + " deleted!");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        FileSystem.ErrorWriteLine(e.Message);
-                    }
+                    File.SetAttributes(input, FileAttributes.Normal);
+                    File.Delete(input);
+                    Console.WriteLine($"File {input} deleted!");
                 }
             }
-            catch
+            catch (Exception e)
             {
-                FileSystem.ErrorWriteLine("You must type the file/directory name!");
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
 
