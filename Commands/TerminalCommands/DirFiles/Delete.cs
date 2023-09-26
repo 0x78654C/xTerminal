@@ -20,14 +20,17 @@ namespace Commands.TerminalCommands.DirFiles
         public void Execute(string args)
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
-            if (args.Length == 3)
+            if (args.Length == 3 && !GlobalVariables.isPipeCommand)
             {
                 Console.WriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             string param = args.Split(' ').ParameterAfter("del");
-            int argsLenght = args.Length - 4;
-            args = args.Substring(4, argsLenght);
+            if (!GlobalVariables.isPipeCommand)
+            {
+                int argsLenght = args.Length - 4;
+                args = args.Substring(4, argsLenght);
+            }
             if (param == "-a")
             {
                 DeleteAllFilesDris(_currentLocation, true, true);
@@ -78,7 +81,11 @@ namespace Commands.TerminalCommands.DirFiles
         }
         private void DeleteFile(string arg, string currentLocation)
         {
-            string input = FileSystem.SanitizePath(arg, currentLocation);
+            string input = string.Empty;
+            if (GlobalVariables.isPipeCommand)
+                input = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), currentLocation);
+            else
+                input = FileSystem.SanitizePath(arg, currentLocation);
             try
             {
                 // Get the file attributes for file or directory
