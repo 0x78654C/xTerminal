@@ -346,6 +346,9 @@ For that we use following command:
  pwm -delv
  ```
 
+## Usage of pipe commands
+
+
 
 ## More Samples
 
