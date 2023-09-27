@@ -349,6 +349,8 @@ For that we use following command:
 ## Usage of pipe commands
 
 
+https://github.com/0x78654C/xTerminal/assets/13780514/00e0d55a-0ce3-446d-bd33-7ca90f715a7b
+
 
 ## More Samples
 
