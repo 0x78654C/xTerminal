@@ -94,6 +94,9 @@ namespace Commands.TerminalCommands.Network
             }
         }
 
+        /// <summary>
+        /// Activate TLS
+        /// </summary>
         private static void ActivateTls()
         {
             ServicePointManager.Expect100Continue = true;
@@ -103,6 +106,10 @@ namespace Commands.TerminalCommands.Network
                 | SecurityProtocolType.Ssl3;
         }
 
+        /// <summary>
+        /// Run wget funtions.
+        /// </summary>
+        /// <param name="param"></param>
         private static void RunWGet(string param)
         {
             int argLenght = param.Length - 5;
@@ -118,7 +125,10 @@ namespace Commands.TerminalCommands.Network
             s_urlFirst = input;
             Task.Run(() => Download()).Wait();
         }
-        //Download file directly in root path
+        /// <summary>
+        /// Download file directly in root path.
+        /// </summary>
+        /// <returns></returns>
         private static async Task Download()
         {
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
@@ -149,7 +159,10 @@ namespace Commands.TerminalCommands.Network
             s_resetEvent.Set();
         }
 
-        // Download file in diffrent path from root
+        /// <summary>
+        /// Download file in diffrent path from root
+        /// </summary>
+        /// <returns></returns>
         private static async Task DownloadDirectory()
         {
             if (!Directory.Exists(s_urlFirst))
