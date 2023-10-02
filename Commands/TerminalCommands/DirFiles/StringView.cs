@@ -97,7 +97,6 @@ Commands can be canceled with CTRL+X key combination.
                     else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
                     {
                         GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
-                        return;
                     }
 
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
