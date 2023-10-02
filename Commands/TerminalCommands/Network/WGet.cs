@@ -112,19 +112,26 @@ namespace Commands.TerminalCommands.Network
         /// <param name="param"></param>
         private static void RunWGet(string param)
         {
-            int argLenght = param.Length - 5;
-            string input = param.Substring(5, argLenght);  //url input
+            string input = param.Replace("wget ", string.Empty);  //url input
             Console.WriteLine(s_urlFirst);
-            if (input.Contains("-o"))
+            if (input.Contains("-o") )
             {
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                    s_urlSecond = GlobalVariables.pipeCmdOutput.Trim();
+                else
+                    s_urlSecond = input.SplitByText("-o", 0).Trim();
                 s_urlFirst = input.SplitByText("-o", 1).Trim();
-                s_urlSecond = input.SplitByText("-o", 0).Trim();
                 Task.Run(() => DownloadDirectory()).Wait();
                 return;
             }
-            s_urlFirst = input;
+             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                s_urlFirst = GlobalVariables.pipeCmdOutput.Trim();
+            else
+                s_urlFirst = input;
             Task.Run(() => Download()).Wait();
         }
+
+
         /// <summary>
         /// Download file directly in root path.
         /// </summary>
