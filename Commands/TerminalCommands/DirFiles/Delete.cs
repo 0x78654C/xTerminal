@@ -95,13 +95,13 @@ namespace Commands.TerminalCommands.DirFiles
                 {
                     var dir = new DirectoryInfo(input);
                     RecursiveDeleteDir(dir);
-                    Console.WriteLine($"Directory {input} deleted!");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Directory {input} deleted!");
                 }
                 else
                 {
                     File.SetAttributes(input, FileAttributes.Normal);
                     File.Delete(input);
-                    Console.WriteLine($"File {input} deleted!");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"File {input} deleted!");
                 }
             }
             catch (Exception e)
