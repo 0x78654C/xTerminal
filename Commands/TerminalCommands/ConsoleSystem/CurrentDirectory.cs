@@ -21,7 +21,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
             try
             {
                 int newPathLength = arg.Length - 3;
-                s_newLocation = arg.Substring(3, newPathLength);
+                if (GlobalVariables.isPipeCommand)
+                    s_newLocation = GlobalVariables.pipeCmdOutput.Trim();
+                else
+                    s_newLocation = arg.Substring(3, newPathLength);
                 s_currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
                 string pathCombine = null;
                 string pathSeparator;
@@ -99,7 +102,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
-        // Getting parrent directory name from child one.
+        /// <summary>
+        /// Getting parrent directory name from child one.
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
         private string GetParentDir(string dir)
         {
             string output;
