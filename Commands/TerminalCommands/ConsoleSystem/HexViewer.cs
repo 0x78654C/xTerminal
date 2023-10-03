@@ -38,7 +38,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     return;
                 } 
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                    args = $"{args} {GlobalVariables.pipeCmdOutput.Trim()}";
+                    args = args.Replace("hex", GlobalVariables.pipeCmdOutput.Trim());
 
                 if (arg.ContainsParameter("-o"))
                 {
@@ -47,20 +47,21 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     string dumpFile = string.Empty;
                     if (!GlobalVariables.isPipeCommand)
                     {
-                        dumpFile1 = args.SplitByText("hex ", 1);
+                        dumpFile1 = args.Replace("hex ", string.Empty);
                         dumpFile = dumpFile1.SplitByText(" -o", 0);
                         file = FileSystem.SanitizePath(dumpFile, s_currentDirectory);
                         fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
                     }
                     else{
-                        file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput, s_currentDirectory);
-                        fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
+                        file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
+                        var argParseFileToSave = args.SplitByText(" -o ", 1);
+                        fileToSave = FileSystem.SanitizePath(argParseFileToSave, s_currentDirectory);
                     }
                     HexDumpFile(file, true, fileToSave);
                     return;
                 }
-                int argLength = args.Length - 4;
-                file = FileSystem.SanitizePath(args.Substring(4, argLength), s_currentDirectory);
+                args = args.Replace("hex", string.Empty).Trim();
+                file = FileSystem.SanitizePath(args, s_currentDirectory);
                 HexDumpFile(file, false, "");
             }
             catch (UnauthorizedAccessException)
@@ -90,7 +91,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 byte[] getBytes = File.ReadAllBytes(file);
                 if (saveToFile)
                 {
-                    if (GlobalVariables.isPipeCommand)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount != GlobalVariables.pipeCmdCountTemp)
                     {
                         FileSystem.ErrorWriteLine("You cannot save to file when using with pipe command!");
                         return;
@@ -98,7 +99,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
                     return;
                 }
-                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                if (GlobalVariables.isPipeCommand)
                 {
                     GlobalVariables.pipeCmdOutput = HexDump.Hex(getBytes, 16);
                     return;
