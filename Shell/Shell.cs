@@ -150,6 +150,7 @@ namespace Shell
             }catch(Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
+                GlobalVariables.pipeCmdOutput = string.Empty;
             }
         }
 
