@@ -67,7 +67,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
             {
-                GlobalVariables.pipeCmdOutput += string.Format("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}",
+                GlobalVariables.pipeCmdOutput += string.Format("{0}Account: {1}\n {0}Type: {2}\n {0}Rights: {3}\n {0}Inherited: {4}\n",
                      tabs,
                      ace.IdentityReference.Value,
                      ace.AccessControlType,
