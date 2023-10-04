@@ -36,8 +36,15 @@ namespace Commands
         internal static string SplitByText(this string input, string parameter, int index)
         {
             // return Regex.Split(input, parameter)[index];
-            string[] output = input.Split(new string[] { parameter }, StringSplitOptions.None);
-            return output[index];
+            try
+            {
+                string[] output = input.Split(new string[] { parameter }, StringSplitOptions.None);
+                return output[index];
+            }
+            catch
+            {
+                return "";
+            }
         }
 
         internal static bool IsNotNullEmptyOrWhitespace(this string text)
