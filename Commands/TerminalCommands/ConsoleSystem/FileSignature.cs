@@ -3,7 +3,6 @@ using System.Linq;
 using System.IO;
 using Commands;
 using System.Runtime.Versioning;
-using Commands.TerminalCommands.ConsoleSystem;
 
 namespace Core.SystemTools
 {
