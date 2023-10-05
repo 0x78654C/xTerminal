@@ -120,9 +120,11 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 {
                     var saveFilePath = arg.SplitByText(" -o ", 1).Split(' ')[0];
                     var startPath = arg.Substring(3, arg.Length - 3);
-                    if (GlobalVariables.isPipeCommand)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         filePath = GlobalVariables.pipeCmdOutput;
-                    else
+                    else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > GlobalVariables.pipeCmdCountTemp)
+                        filePath = GlobalVariables.pipeCmdOutput;
+                     else
                         filePath = startPath.SplitByText(" -o ", 0);
                     filePath = FileSystem.SanitizePath(filePath, _currentDirectory).Trim();
                     if (!File.Exists(filePath))
@@ -137,7 +139,9 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     return;
                 }
 
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    filePath = GlobalVariables.pipeCmdOutput;
+                else if(GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > GlobalVariables.pipeCmdCountTemp)
                     filePath = GlobalVariables.pipeCmdOutput;
                 else
                     filePath = arg.SplitByText("-d ", 1);
@@ -153,6 +157,8 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     if (GlobalVariables.eventCancelKey)
                         return;
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
+                    else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
                         GlobalVariables.pipeCmdOutput += $"{lineAscend}\n";
                     else
                         Console.WriteLine(lineAscend);
