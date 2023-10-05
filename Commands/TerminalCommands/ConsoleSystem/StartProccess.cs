@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("Windows")]
     public class StartProccess : ITerminalCommand
     {
         [SupportedOSPlatform("Windows")]
