@@ -14,10 +14,8 @@ namespace Commands.TerminalCommands.DirFiles
         private string _helpMessage = @"Usage of echo command:
     >   : Write data to a file.
           Example: echo hello world > path_to_file
-          (Works as pipe command)
     >>  : Append data to a file. 
           Example: echo hello world >> path_to_file
-          (Works as pipe command)
 ";
 
         public void Execute(string arg)
