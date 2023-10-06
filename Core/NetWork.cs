@@ -121,7 +121,7 @@ namespace Core
         /// </summary>
         private static void FinalReplayOutput()
         {
-            if (GlobalVariables.isPipeCommand)
+            if (GlobalVariables.isPipeCommand&& GlobalVariables.pipeCmdCount > 0)
             {
                 GlobalVariables.pipeCmdOutput += $"\n---------------------------------------------------\n  Total status count: Success {s_success.ToString()} Failure {s_failure.ToString()}\n";
                 GlobalVariables.eventKeyFlagX = false;
