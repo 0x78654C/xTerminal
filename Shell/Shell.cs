@@ -425,16 +425,16 @@ namespace Shell
                 {
                     if (s_indicatorColor != "white")
                     {
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $"{s_indicator} ");
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
                     }
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.White, $"{s_indicator} ");
+                        FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
                     }
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+                    FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
                 }
                 return;
             }
@@ -461,16 +461,16 @@ namespace Shell
             {
                 if (s_indicatorColor != "white")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $"{s_indicator} ");
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, $"{s_indicator} ");
+                    FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
                 }
             }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+                FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
             }
         }
         private static void UISettingsParse(string settings)
