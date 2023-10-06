@@ -18,13 +18,13 @@ namespace Commands.TerminalCommands.DirFiles
         private static string s_output = string.Empty;
         private static string s_helpMessage = @"Usage of cat command:
   -h   : Displays this message.
-  -n   : Displays first N lines from a file. Works as pipe command.
+  -n   : Displays first N lines from a file.
            Example: cat -n 10 <path_of_file_name>
-  -l   : Displays data between two lines range. WWorks as pipe command.
+  -l   : Displays data between two lines range.
            Example: cat -l 10-20 <path_of_file_name>
-  -s   : Outputs lines containing a provided text from a file. Works as pipe command.
+  -s   : Outputs lines containing a provided text from a file. 
            Example: cat -s <search_text> -f <file_search_in>
-  -so  : Saves the lines containing a provided text from a file. Works as pipe command.
+  -so  : Saves the lines containing a provided text from a file.
            Example: cat -so <search_text> -f <file_search_in> -o <file_to_save>
   -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
            Example1: cat -sa <search_text>
