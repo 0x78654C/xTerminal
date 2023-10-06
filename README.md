@@ -357,6 +357,8 @@ https://github.com/0x78654C/xTerminal/assets/13780514/00e0d55a-0ce3-446d-bd33-7c
 
 Here a simple example how to use pipe commands.
 
+https://github.com/0x78654C/xTerminal/assets/13780514/98959450-4899-4e4c-ab6b-02a276edd2d6
+
 
 ## More Samples
 
