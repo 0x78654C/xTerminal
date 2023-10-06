@@ -1,4 +1,5 @@
 ﻿using Core;
+using Microsoft.CodeAnalysis;
 using System;
 using System.IO;
 using System.Runtime.Versioning;
@@ -26,27 +27,41 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
 
-                if (args.Length == 3)
+                if (args.Length == 3 && !GlobalVariables.isPipeCommand)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!"); 
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 if (args == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
-                }
+                } 
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    args = args.Replace("hex", GlobalVariables.pipeCmdOutput.Trim());
+
                 if (arg.ContainsParameter("-o"))
                 {
-                    string dumpFile1 = args.SplitByText("hex ", 1);
-                    string dumpFile = dumpFile1.SplitByText(" -o", 0);
-                    file = FileSystem.SanitizePath(dumpFile, s_currentDirectory);
-                    string fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
+                    string fileToSave = string.Empty;
+                    string dumpFile1=string.Empty;
+                    string dumpFile = string.Empty;
+                    if (!GlobalVariables.isPipeCommand)
+                    {
+                        dumpFile1 = args.Replace("hex ", string.Empty);
+                        dumpFile = dumpFile1.SplitByText(" -o", 0);
+                        file = FileSystem.SanitizePath(dumpFile, s_currentDirectory);
+                        fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
+                    }
+                    else{
+                        file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
+                        var argParseFileToSave = args.SplitByText(" -o ", 1);
+                        fileToSave = FileSystem.SanitizePath(argParseFileToSave, s_currentDirectory);
+                    }
                     HexDumpFile(file, true, fileToSave);
                     return;
                 }
-                int argLength = args.Length - 4;
-                file = FileSystem.SanitizePath(args.Substring(4, argLength), s_currentDirectory);
+                args = args.Replace("hex", string.Empty).Trim();
+                file = FileSystem.SanitizePath(args, s_currentDirectory);
                 HexDumpFile(file, false, "");
             }
             catch (UnauthorizedAccessException)
@@ -76,13 +91,23 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 byte[] getBytes = File.ReadAllBytes(file);
                 if (saveToFile)
                 {
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount != GlobalVariables.pipeCmdCountTemp)
+                    {
+                        FileSystem.ErrorWriteLine("You cannot save to file when using with pipe command!");
+                        return;
+                    }
                     Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
                     return;
                 }
-                Console.WriteLine(HexDump.Hex(getBytes, 16));
+                if (GlobalVariables.isPipeCommand)
+                {
+                    GlobalVariables.pipeCmdOutput = HexDump.Hex(getBytes, 16);
+                    return;
+                }
+                else
+                    Console.WriteLine(HexDump.Hex(getBytes, 16));
                 return;
             }
-
             FileSystem.ErrorWriteLine($"File {file} does not exist");
         }
     }

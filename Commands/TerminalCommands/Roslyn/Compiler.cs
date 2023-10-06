@@ -37,7 +37,7 @@ namespace Commands.TerminalCommands.Roslyn
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
             string param = string.Empty;
-            if (args.Length == 1)
+            if (args.Length == 3 && !GlobalVariables.isPipeCommand)
             {
                 Console.WriteLine($"Use -h param for {Name} command usage!");
                 return;
@@ -49,22 +49,22 @@ namespace Commands.TerminalCommands.Roslyn
                 return;
             }
 
-            if (args.Length == 3)
-            {
-                FileSystem.ErrorWriteLine($"You must provide a C# file for compilation.");
-                return;
-            }
-
             args = args.Replace("ccs ", "");
             if (args.ContainsText("-p"))
             {
-                fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
-                param = args.SplitByText(" -p ", 1);
-                CompileAndRun(fileName, param);
+                if(GlobalVariables.isPipeCommand)
+                    fileName = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
+                else
+                    fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
+                param = args.SplitByText("-p", 1);
+                CompileAndRun(fileName, param.Trim());
                 GC.Collect();
                 return;
             }
-            args = FileSystem.SanitizePath(args, _currentLocation);
+            if (GlobalVariables.isPipeCommand)
+                args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
+            else
+                args = FileSystem.SanitizePath(args, _currentLocation);
             CompileAndRun(args, param);
             GC.Collect();
         }
@@ -100,7 +100,7 @@ namespace Commands.TerminalCommands.Roslyn
                         foreach (Diagnostic diagnostic in failures)
                         {
                             var lineError = diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1;
-                            Console.Error.WriteLine("{0}: {1} -> line {2}", diagnostic.Id, diagnostic.GetMessage(),lineError);
+                            FileSystem.ErrorWriteLine($"{diagnostic.Id}: {diagnostic.GetMessage()} -> line {lineError}");
                         }
                     }
                     else

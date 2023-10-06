@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Core.Commands
 {
@@ -14,6 +13,7 @@ namespace Core.Commands
 
         private static int s_linesCount = 0;
         private static int s_linesCountName = 0;
+
         /// <summary>
         /// Output to console specific lines from a file containing a specific string.
         /// </summary>
@@ -58,11 +58,62 @@ namespace Core.Commands
 
             if (!string.IsNullOrEmpty(savedFile))
             {
+                savedFile = FileSystem.SanitizePath(savedFile, currentDir);
                 return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
             }
 
-            return  output.ToString();
+            return output.ToString();
         }
+
+        /// <summary>
+        /// Output to console specific lines from a text data containing a specific string.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="searchString"></param>
+        /// <param name="currentDir"></param>
+        /// <param name="savedFile"></param>
+        /// <returns></returns>
+        public static string StringSearchOutput(string input, string currentDir, string searchString, string savedFile = null)
+        {
+            var output = new StringBuilder();
+            int lineCount = 0;
+
+            if (string.IsNullOrEmpty(input))
+            {
+                FileSystem.ErrorWriteLine("There is no data provided to search in it!");
+                return output.ToString();
+            }
+
+            using (var streamReader = new StringReader(input))
+            {
+                string line;
+                while ((line = streamReader.ReadLine()) != null)
+                {
+                    if (GlobalVariables.eventCancelKey)
+                        break;
+
+                    lineCount++;
+                    if (string.IsNullOrWhiteSpace(searchString))
+                    {
+                        output.AppendLine(line);
+                        continue;
+                    }
+
+                    if (line.ToLower().Contains(searchString.ToLower()))
+                        output.AppendLine(line);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(savedFile))
+            {
+                savedFile = FileSystem.SanitizePath(savedFile, currentDir);
+                return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
+            }
+
+            return output.ToString();
+        }
+
+
 
 
         /// <summary>
@@ -267,7 +318,7 @@ namespace Core.Commands
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="linesCount"></param>
-        public static void OuputFirtsLines(string fileName, int linesCount)
+        public static void OutputFirtsLines(string fileName, int linesCount)
         {
             if (CheckFileContent(fileName))
             {
@@ -292,24 +343,70 @@ namespace Core.Commands
         }
 
         /// <summary>
+        /// Output first N lines from string.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="linesCount"></param>
+        public static void OutputFirstLinesFromString(string data, int linesCount)
+        {
+            if (string.IsNullOrEmpty(data))
+                return;
+            var reader = new StringReader(data);
+            string line;
+            int count = 0;
+            GlobalVariables.pipeCmdOutput = string.Empty;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (count == linesCount) break;
+                if (GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"{line}\n";
+                else
+                    Console.WriteLine(line);
+                count++;
+            }
+        }
+
+        /// <summary>
         /// Display content between two lines range.
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="range"></param>
         public static void OutputLinesRange(string fileName, string range)
         {
-            if (CheckFileContent(fileName))
-            {
-                string firstLine = range.Split('-')[0];
-                string secondLine = range.Split('-')[1];
-                if (!FileSystem.IsNumberAllowed(firstLine) && !FileSystem.IsNumberAllowed(secondLine))
-                {
-                    FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
-                    return;
-                }
-                int first = Int32.Parse(firstLine);
-                int second = Int32.Parse(secondLine);
+            //if (!CheckFileContent(fileName))
+            //    return;
 
+            string firstLine = range.Split('-')[0];
+            string secondLine = range.Split('-')[1];
+            if (!FileSystem.IsNumberAllowed(firstLine) && !FileSystem.IsNumberAllowed(secondLine))
+            {
+                FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
+                return;
+            }
+            int first = Int32.Parse(firstLine);
+            int second = Int32.Parse(secondLine);
+            GlobalVariables.pipeCmdOutput = string.Empty;
+            if (GlobalVariables.isPipeCommand)
+            {
+                using (var streamReader = new StringReader(fileName))
+                {
+                    for (int i = 0; i < second; ++i)
+                    {
+                        var line = streamReader.ReadLine();
+
+                        if (i < first - 1)
+                            continue;
+                        if (GlobalVariables.eventCancelKey)
+                            break;
+                        if (GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput += $"{line}\n";
+                        else
+                            Console.WriteLine(line);
+                    }
+                }
+            }
+            else
+            {
                 using (var streamReader = new StreamReader(fileName))
                 {
                     for (int i = 0; i < second && !streamReader.EndOfStream; ++i)

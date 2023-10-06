@@ -1,6 +1,7 @@
 ﻿using Core.SystemTools;
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -63,6 +64,7 @@ namespace Core
         {
             try
             {
+                GlobalVariables.pipeCmdOutput = string.Empty;
                 if (pingReplys == 0)
                 {
                     while (true)
@@ -119,14 +121,24 @@ namespace Core
         /// </summary>
         private static void FinalReplayOutput()
         {
-            Console.WriteLine("\n---------------------------------------------------\n");
-            Console.Write($" Total status count: Success ");
-            FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
-            Console.Write(" Failure ");
-            FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString() + "\n");
-            GlobalVariables.eventKeyFlagX = false;
-            s_failure = 0;
-            s_success = 0;
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+            {
+                GlobalVariables.pipeCmdOutput += $"\n---------------------------------------------------\n  Total status count: Success {s_success.ToString()} Failure {s_failure.ToString()}\n";
+                GlobalVariables.eventKeyFlagX = false;
+                s_failure = 0;
+                s_success = 0;
+            }
+            else
+            {
+                Console.WriteLine("\n---------------------------------------------------\n");
+                Console.Write($" Total status count: Success ");
+                FileSystem.ColorConsoleText(ConsoleColor.Green, s_success.ToString());
+                Console.Write(" Failure ");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, s_failure.ToString() + "\n");
+                GlobalVariables.eventKeyFlagX = false;
+                s_failure = 0;
+                s_success = 0;
+            }
         }
 
         /// <summary>
@@ -156,12 +168,18 @@ namespace Core
                     s_failure++;
                 else
                     s_success++;
-                Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}\n";
+                else
+                 Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
             }
             else
             {
                 s_failure++;
-                Console.WriteLine($"{address} is down!");
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"{address} is down!\n";
+                else
+                    Console.WriteLine($"{address} is down!");
             }
         }
 
@@ -185,29 +203,36 @@ namespace Core
                     {
                         if (gatewayIPAddress.Address.ToString().Trim().Length > 2)
                         {
-                            gateway += "".PadRight(15, ' ') + gatewayIPAddress.Address.ToString() + "\n";
+                            if (!gatewayIPAddress.Address.ToString().Contains("::"))
+                                gateway += "".PadRight(15, ' ') + gatewayIPAddress.Address.ToString() + "\n";
                         }
                     }
                     foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
                     {
-                        ipAddress += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
-                        mask += "".PadRight(15, ' ') + unicastIPAddress.IPv4Mask + "\n";
+                        if(unicastIPAddress.Address.ToString().Contains("."))
+                             ipAddress += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
+                        if(unicastIPAddress.IPv4Mask.ToString() != "0.0.0.0")
+                            mask += "".PadRight(15, ' ') + unicastIPAddress.IPv4Mask + "\n";
                     }
                     IPInterfaceProperties iPInterface = networkInterface.GetIPProperties();
                     IPAddressCollection dnsAddresses = iPInterface.DnsAddresses;
                     foreach (var dnsAddress in dnsAddresses)
                     {
-                        dnsAddr += "".PadRight(15, ' ') + dnsAddress + "\n";
+                        if(!dnsAddress.ToString().Contains("::"))
+                            dnsAddr += "".PadRight(15, ' ') + dnsAddress + "\n";
                     }
 
                     var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
                     nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
                     nicOuptut += $"Description:".PadRight(15, ' ') + $"{networkInterface.Description}\n";
-                    nicOuptut += $"IP Address: \n{ipAddress} \n";
-                    nicOuptut += $"MASK: \n{mask}\n";
-                    nicOuptut += $"Gateway: \n{gateway}\n";
-                    nicOuptut += $"MAC Address: ".PadRight(15, ' ') + $"{mac}\n";
-                    nicOuptut += $"DNS: \n{dnsAddr}\n";
+                    nicOuptut += $"\n-------------------------------------\n\n";
+                    nicOuptut += $"IP Address:".PadRight(15, ' ') + $"{ipAddress.Trim()} \n";
+                    nicOuptut += $"MASK:".PadRight(15, ' ') + $"{mask.Trim()}\n";
+                    nicOuptut += $"Gateway:".PadRight(15, ' ') + $"{gateway.Trim()}\n";
+                    nicOuptut += $"\n-------------------------------------\n\n";
+                    nicOuptut += $"MAC Address:".PadRight(15, ' ')+$"{mac}\n";
+                    nicOuptut += $"\n-------------------------------------\n\n";
+                    nicOuptut += $"DNS:".PadRight(15, ' ') + $"{dnsAddr.Trim()}\n";
                 }
             }
             return nicOuptut;

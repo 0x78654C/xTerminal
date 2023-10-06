@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Runtime.Versioning;
 using ping = Core.NetWork;
 using Wmi = Core.Hardware.WMIDetails;
@@ -28,7 +29,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         return;
                     }
                     string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\" + pc + @"\root\cimv2");
-                    Console.WriteLine(Wmi.SizeConvert(wmiDetails, false));
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                        GlobalVariables.pipeCmdOutput = Wmi.SizeConvert(wmiDetails, false);
+                    else
+                        Console.WriteLine(Wmi.SizeConvert(wmiDetails, false));
                 }
                 else if (arg == $"{Name} -h")
                 {
@@ -38,7 +42,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch
             {
                 string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\.\root\cimv2");
-                Console.WriteLine(Wmi.SizeConvert(wmiDetails, false));
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput = Wmi.SizeConvert(wmiDetails, false);
+                else
+                    Console.WriteLine(Wmi.SizeConvert(wmiDetails, false));
             }
         }
         private static string HelpCommand()

@@ -101,24 +101,56 @@ namespace Shell
 
         /// <summary>
         /// Execute predifined xTerminal commands.
-        /// </summary>
-        /// <param name="command"></param>
+        /// </summary> 
         private void ExecuteCommands(string command)
         {
-            // Display running command on title.
-            Console.Title = command;
-
-            // Run xTerminal predifined commands.
-            var c = Commands.CommandRepository.GetCommand(command);
-            CheckAliasCommandRun(GlobalVariables.aliasParameters);
-            if (c != null || !string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
+            try
             {
-                if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
-                    command = GlobalVariables.aliasParameters;
+                // Display running command on title.
+                Console.Title = command;
 
-                c.Execute(command);
-                GlobalVariables.aliasParameters = string.Empty;
-                GlobalVariables.aliasRunFlag = false;
+                // Run xTerminal predifined commands.
+                var c = Commands.CommandRepository.GetCommand(command);
+                CheckAliasCommandRun(GlobalVariables.aliasParameters);
+
+                if (c != null || !string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
+                {
+                    if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
+                        command = GlobalVariables.aliasParameters;
+
+                    // Pipe line command execution.
+                    if (command.Contains("|") && !command.Contains("alias"))
+                    {
+                        GlobalVariables.isPipeCommand = true;
+                        var commandSplit = command.Split('|');
+                        GlobalVariables.pipeCmdCount = commandSplit.Count() - 1;
+                        GlobalVariables.pipeCmdCountTemp = GlobalVariables.pipeCmdCount;
+                        var count = 0;
+                        foreach (var cmd in commandSplit)
+                        {
+                            var cmdExecute = cmd.Trim();
+                            c = Commands.CommandRepository.GetCommand(cmdExecute);
+
+                          //  if (count == 0) deactivated temporary  
+                            //    GlobalVariables.pipeCmdOutput = cmdExecute;
+                             
+                            c.Execute(cmdExecute);
+                            
+                            count++;
+                            GlobalVariables.pipeCmdCount--;
+                        }
+                        GlobalVariables.isPipeCommand = false;
+                        GlobalVariables.pipeCmdOutput = string.Empty;
+                    }
+                    else
+                        c.Execute(command);
+                    GlobalVariables.aliasParameters = string.Empty;
+                    GlobalVariables.aliasRunFlag = false;
+                }
+            }catch(Exception e)
+            {
+                FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
+                GlobalVariables.pipeCmdOutput = string.Empty;
             }
         }
 
@@ -277,7 +309,7 @@ namespace Shell
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
             // Setting up the title.
-            //s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2); //TODO: enable when no Revision version
+            s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2);
             Console.Title = s_terminalTitle;
 
             if (ExecuteParamCommands(args)) { return; };
@@ -393,16 +425,16 @@ namespace Shell
                 {
                     if (s_indicatorColor != "white")
                     {
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $"{s_indicator} ");
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
                     }
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.White, $"{s_indicator} ");
+                        FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
                     }
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+                    FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
                 }
                 return;
             }
@@ -429,16 +461,16 @@ namespace Shell
             {
                 if (s_indicatorColor != "white")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $"{s_indicator} ");
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, $"{s_indicator} ");
+                    FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
                 }
             }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.White, "$ ");
+                FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
             }
         }
         private static void UISettingsParse(string settings)

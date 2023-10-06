@@ -26,27 +26,35 @@ Ping with -t can be canceled with CTRL+X key combination.
             try
             {
                 GlobalVariables.eventCancelKey = false;
-                if (args.Length == 4)
-                {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
-                    return;
-                }
+
                 if (args == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
+                if (args.Length == 4 && !GlobalVariables.isPipeCommand)
+                {
+                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
+                
+                if(GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 && !args.ContainsText("-t"))
+                    args = $"{args} {GlobalVariables.pipeCmdOutput.Trim()}";
+
                 string[] arg = args.Split(' ');
                 if (args.ContainsText("-t"))
                 {
                     string pingRetry = args.SplitByText("-t", 1);
                     int pingReplays = 0;
-                    if (!string.IsNullOrEmpty(pingRetry))
+                    if (!string.IsNullOrEmpty(pingRetry.Trim()))
                         pingReplays = Int32.Parse(pingRetry);
 
                     if (pingReplays > 0) {
                         GlobalVariables.eventKeyFlagX = true;
-                        NetWork.PingMain(arg.ParameterAfter("ping"), pingReplays);
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                            NetWork.PingMain(GlobalVariables.pipeCmdOutput.Trim(), pingReplays);
+                        else
+                            NetWork.PingMain(arg.ParameterAfter("ping"), pingReplays);
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         GlobalVariables.eventCancelKey = false;
@@ -56,7 +64,10 @@ Ping with -t can be canceled with CTRL+X key combination.
                     if (string.IsNullOrEmpty(pingRetry))
                     {
                         GlobalVariables.eventKeyFlagX = true;
-                        NetWork.PingMain(arg.ParameterAfter("ping"), 0);
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                            NetWork.PingMain(GlobalVariables.pipeCmdOutput.Trim(), pingReplays);
+                        else
+                            NetWork.PingMain(arg.ParameterAfter("ping"), 0);
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         GlobalVariables.eventCancelKey = false;

@@ -36,6 +36,10 @@ namespace Core
         public static bool autoSuggestion = false;
         public static bool aliasRunFlag = false;
         public static bool eventKeyFlagX = false;
-        public static readonly string magicNunmbers= Application.StartupPath + @"\ext_list.txt";
+        public static readonly string magicNunmbers= Application.StartupPath + "ext_list.txt";
+        public static bool isPipeCommand = false;
+        public static string pipeCmdOutput { get; set; }
+        public static int pipeCmdCount { get; set; } = 0;
+        public static int pipeCmdCountTemp { get; set; } = 0;
     }
 }

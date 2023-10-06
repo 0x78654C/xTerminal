@@ -96,8 +96,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 .Take(linesNumber);
             foreach (string line in filteredLines)
             {
-                FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"{line}\n";
+                else
+                {
+                    FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
+                }
             }
         }
     }

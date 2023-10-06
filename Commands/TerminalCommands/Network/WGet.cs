@@ -47,7 +47,7 @@ namespace Commands.TerminalCommands.Network
                 return;
             }
 
-            if (arg.Length == 4)
+            if (arg.Length == 4 && !GlobalVariables.isPipeCommand)
             {
                 Console.WriteLine($"Use -h param for {Name} command usage!");
                 return;
@@ -94,6 +94,9 @@ namespace Commands.TerminalCommands.Network
             }
         }
 
+        /// <summary>
+        /// Activate TLS
+        /// </summary>
         private static void ActivateTls()
         {
             ServicePointManager.Expect100Continue = true;
@@ -103,22 +106,36 @@ namespace Commands.TerminalCommands.Network
                 | SecurityProtocolType.Ssl3;
         }
 
+        /// <summary>
+        /// Run wget funtions.
+        /// </summary>
+        /// <param name="param"></param>
         private static void RunWGet(string param)
         {
-            int argLenght = param.Length - 5;
-            string input = param.Substring(5, argLenght);  //url input
+            string input = param.Replace("wget ", string.Empty);  //url input
             Console.WriteLine(s_urlFirst);
-            if (input.Contains("-o"))
+            if (input.Contains("-o") )
             {
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                    s_urlSecond = GlobalVariables.pipeCmdOutput.Trim();
+                else
+                    s_urlSecond = input.SplitByText("-o", 0).Trim();
                 s_urlFirst = input.SplitByText("-o", 1).Trim();
-                s_urlSecond = input.SplitByText("-o", 0).Trim();
                 Task.Run(() => DownloadDirectory()).Wait();
                 return;
             }
-            s_urlFirst = input;
+             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                s_urlFirst = GlobalVariables.pipeCmdOutput.Trim();
+            else
+                s_urlFirst = input;
             Task.Run(() => Download()).Wait();
         }
-        //Download file directly in root path
+
+
+        /// <summary>
+        /// Download file directly in root path.
+        /// </summary>
+        /// <returns></returns>
         private static async Task Download()
         {
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
@@ -149,7 +166,10 @@ namespace Commands.TerminalCommands.Network
             s_resetEvent.Set();
         }
 
-        // Download file in diffrent path from root
+        /// <summary>
+        /// Download file in diffrent path from root
+        /// </summary>
+        /// <returns></returns>
         private static async Task DownloadDirectory()
         {
             if (!Directory.Exists(s_urlFirst))

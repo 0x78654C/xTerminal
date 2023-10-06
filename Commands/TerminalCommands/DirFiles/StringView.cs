@@ -22,7 +22,7 @@ namespace Commands.TerminalCommands.DirFiles
            Example: cat -n 10 <path_of_file_name>
   -l   : Displays data between two lines range.
            Example: cat -l 10-20 <path_of_file_name>
-  -s   : Outputs lines containing a provided text from a file.
+  -s   : Outputs lines containing a provided text from a file. 
            Example: cat -s <search_text> -f <file_search_in>
   -so  : Saves the lines containing a provided text from a file.
            Example: cat -so <search_text> -f <file_search_in> -o <file_to_save>
@@ -59,7 +59,7 @@ Commands can be canceled with CTRL+X key combination.
                 string fileSearchIn = string.Empty;
                 string saveToFile;
 
-                if (arg.Length == 3 && !arg.Contains("-lc"))
+                if (arg.Length == 3 && !arg.Contains("-lc") && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
@@ -89,10 +89,25 @@ Commands can be canceled with CTRL+X key combination.
                         Console.WriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
                         return;
                     }
-                    Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg, s_currentDirectory));
+
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    {
+                        GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory)}";
+                    }
+                    else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
+                    {
+                        GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
+                    }
+
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory));
+                    
+                    if(!GlobalVariables.isPipeCommand)
+                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
+
                     return;
                 }
-;
+
                 switch (input[0])
                 {
                     case "-con":
@@ -119,12 +134,23 @@ Commands can be canceled with CTRL+X key combination.
                             return;
                         }
                         int lines = Int32.Parse(lineCounter);
-                        string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
                         GlobalVariables.eventKeyFlagX = true;
-                        Core.Commands.CatCommand.OuputFirtsLines(filePath, lines);
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                        GlobalVariables.eventCancelKey = false;
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        {
+                            var dataPipe = GlobalVariables.pipeCmdOutput;
+                            Core.Commands.CatCommand.OutputFirstLinesFromString(dataPipe, lines);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        else
+                        {
+                            string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
+                            Core.Commands.CatCommand.OutputFirtsLines(filePath, lines);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
                         break;
                     case "-l":
                         string linesRange = arg.Split(' ')[1];
@@ -133,21 +159,49 @@ Commands can be canceled with CTRL+X key combination.
                             FileSystem.ErrorWriteLine("Invalid parameter. You need to provide the range of lines for data display! Example: 10-20");
                             return;
                         }
-                        string pathFile = FileSystem.SanitizePath(arg.SplitByText(linesRange + " ", 1), s_currentDirectory);
-                        GlobalVariables.eventKeyFlagX = true;
-                        Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                        GlobalVariables.eventCancelKey = false;
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        {
+                            GlobalVariables.eventKeyFlagX = true;
+                            Core.Commands.CatCommand.OutputLinesRange(GlobalVariables.pipeCmdOutput, linesRange);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        else
+                        {
+                            string pathFile = FileSystem.SanitizePath(arg.SplitByText(linesRange + " ", 1), s_currentDirectory);
+                            GlobalVariables.eventKeyFlagX = true;
+                            Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
                         break;
                     case "-s":
-                        fileName = arg.SplitByText("-f ", 1);
-                        searchString = arg.MiddleString("-s", "-f");
-                        GlobalVariables.eventKeyFlagX = true;
-                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                        GlobalVariables.eventCancelKey = false;
+
+                        if (GlobalVariables.isPipeCommand)
+                        {
+                            searchString = arg.SplitByText("-s ", 1);
+                            GlobalVariables.eventKeyFlagX = true;
+                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                                GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "");
+                            else
+                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
+
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        else
+                        {
+                            fileName = arg.SplitByText("-f ", 1);
+                            searchString = arg.MiddleString("-s", "-f");
+                            GlobalVariables.eventKeyFlagX = true;
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
                         break;
                     case "-sa":
                         if (arg.Contains(" -f "))
@@ -162,7 +216,8 @@ Commands can be canceled with CTRL+X key combination.
 
                         if (!string.IsNullOrEmpty(fileSearchIn))
                         {
-                            Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
+                            if (!GlobalVariables.isPipeCommand)
+                                Console.WriteLine($"---Searching in files containing '{fileSearchIn}' in name---\n");
                             GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true, fileSearchIn);
                         }
@@ -171,8 +226,14 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), "", true);
                         }
+
                         s_output = string.IsNullOrWhiteSpace(s_output) ? "No file names contain that text!" : s_output;
-                        Console.WriteLine(s_output);
+
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput = s_output;
+                        else
+                            Console.WriteLine(s_output);
+
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         GlobalVariables.eventCancelKey = false;
@@ -218,14 +279,27 @@ Commands can be canceled with CTRL+X key combination.
                         break;
                     case "-so":
                         {
-                            fileName = arg.MiddleString("-f", "-o");
-                            searchString = arg.MiddleString("-so", "-f");
-                            saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
-                            GlobalVariables.eventKeyFlagX = true;
-                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
-                            if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                            GlobalVariables.eventCancelKey = false;
+                            if (GlobalVariables.isPipeCommand)
+                            {
+                                searchString = arg.MiddleString("-so", "-o");
+                                saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
+                                GlobalVariables.eventKeyFlagX = true;
+                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, saveToFile));
+                                if (GlobalVariables.eventCancelKey)
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                GlobalVariables.eventCancelKey = false;
+                            }
+                            else
+                            {
+                                fileName = arg.MiddleString("-f", "-o");
+                                searchString = arg.MiddleString("-so", "-f");
+                                saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
+                                GlobalVariables.eventKeyFlagX = true;
+                                Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
+                                if (GlobalVariables.eventCancelKey)
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                GlobalVariables.eventCancelKey = false;
+                            }
                             break;
                         }
                     case "-sm":
@@ -233,7 +307,10 @@ Commands can be canceled with CTRL+X key combination.
                         fileName = arg.SplitByText("-f ", 1);
                         searchString = arg.MiddleString("-sm", "-f");
                         GlobalVariables.eventKeyFlagX = true;
-                        Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false));
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput += $"{Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false)}\n";
+                        else
+                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false));
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         GlobalVariables.eventCancelKey = false;
@@ -270,13 +347,27 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         break;
                     default:
-                        Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg, s_currentDirectory));
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        {
+                            GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory)}";
+                        }
+                        else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
+                        {
+                            GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
+                        }
+
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory));
+
+                        if (!GlobalVariables.isPipeCommand)
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory));
+
                         break;
                 }
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine($"{e.Message}. Check command!");
             }
         }
     }

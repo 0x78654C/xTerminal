@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
@@ -113,7 +114,7 @@ Commands can be canceled with CTRL+X key combination.
                 {
                     GlobalVariables.eventKeyFlagX = true;
                     // Display directory and file information
-                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false,true);
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, true);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                     return;
@@ -142,19 +143,33 @@ Commands can be canceled with CTRL+X key combination.
                     searchedText = args.SplitByText("-se ", 1);
                     GlobalVariables.eventKeyFlagX = true;
                     DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
-                    Console.WriteLine($"Searching for: {searchedText}\n");
-                    Console.WriteLine(string.Join("\n", s_listSearched));
-                    Console.WriteLine($"\n    Search results: {s_listSearched.Count()} matches\n");
-                    if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
-                    s_listSearched.Clear();
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    {
+                        GlobalVariables.pipeCmdOutput += $"Searching for: {searchedText}\n{string.Join("\n", s_listSearched)}\n    Search results: {s_listSearched.Count()} matches\n";
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        s_listSearched.Clear();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Searching for: {searchedText}\n");
+                        Console.WriteLine(string.Join("\n", s_listSearched));
+                        Console.WriteLine($"\n    Search results: {s_listSearched.Count()} matches\n");
+                        if (GlobalVariables.eventCancelKey)
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        s_listSearched.Clear();
+                    }
                     return;
                 }
 
                 // Grab the duplicate files.
                 if (arg.ContainsParameter("-d"))
                 {
-                    string dirSearchIn = args.SplitByText(" -o", 0);
+                    string dirSearchIn = string.Empty;
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                        dirSearchIn = GlobalVariables.pipeCmdOutput.Trim();
+                    else
+                        dirSearchIn = args.SplitByText(" -o", 0);
                     bool extensions = false;
 
                     if (arg.ContainsParameter("-o"))
@@ -162,10 +177,13 @@ Commands can be canceled with CTRL+X key combination.
                         if (arg.ContainsParameter("-e"))
                             extensions = true;
 
-                        dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -d -e ", "") : dirSearchIn.Replace("ls -d ", "");
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                            dirSearchIn = GlobalVariables.pipeCmdOutput.Trim();
+                        else
+                            dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -d -e", "") : dirSearchIn.Replace("ls -d", "");
                         string fileToSave = args.SplitByText("-o ", 1);
                         GlobalVariables.eventKeyFlagX = true;
-                        GetDuplicateFiles(dirSearchIn, extensions, fileToSave);
+                        GetDuplicateFiles(FileSystem.SanitizePath(dirSearchIn.Trim(), s_currentDirectory), extensions, fileToSave);
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                         return;
@@ -173,12 +191,22 @@ Commands can be canceled with CTRL+X key combination.
 
                     if (arg.ContainsParameter("-e"))
                         extensions = true;
-                    string nullDir = arg.ContainsParameter("-e") ? args.Replace("ls -d -e", "") : args.Replace("ls -d", "");
+                    string nullDir = string.Empty;
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        nullDir = GlobalVariables.pipeCmdOutput;
+                    else
+                        nullDir = arg.ContainsParameter("-e") ? args.Replace("ls -d -e", "") : args.Replace("ls -d", "");
                     if (!string.IsNullOrEmpty(nullDir))
                     {
                         if (arg.ContainsParameter("-e"))
                             extensions = true;
-                        string searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-d ", 1);
+                        string searchDir = string.Empty;
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                            searchDir = GlobalVariables.pipeCmdOutput.Trim();
+                        else
+                            searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-d ", 1);
+                        if (string.IsNullOrEmpty(searchDir))
+                            searchDir = s_currentDirectory;
                         GlobalVariables.eventKeyFlagX = true;
                         GetDuplicateFiles(FileSystem.SanitizePath(searchDir, s_currentDirectory), extensions);
                         if (GlobalVariables.eventCancelKey)
@@ -239,7 +267,7 @@ Commands can be canceled with CTRL+X key combination.
                     if (!string.IsNullOrEmpty(arg.ParameterAfter("-cd")))
                     {
                         GlobalVariables.eventKeyFlagX = true;
-                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd"), false);
+                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd").Trim(), false);
                         Console.WriteLine($"Total directories/subdirectories count that name contains '{arg.ParameterAfter("-cd")}': {s_countDirectoriesText}\n");
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
@@ -256,9 +284,11 @@ Commands can be canceled with CTRL+X key combination.
                 }
                 else
                 {
+                    if (GlobalVariables.isPipeCommand && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
+                        s_currentDirectory = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     GlobalVariables.eventKeyFlagX = true;
                     // Display directory and file information
-                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false,false);
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
                 }
@@ -294,6 +324,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="saveToFile">File where to save the output.</param>
         private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile = null)
         {
+            GlobalVariables.pipeCmdOutput = string.Empty;
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
@@ -327,15 +358,36 @@ Commands can be canceled with CTRL+X key combination.
                 s_stopWatch.Stop();
                 s_timeSpan = s_stopWatch.Elapsed;
                 results += string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))));
-                Console.WriteLine(FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow,FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
                 Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
                 return;
             }
             s_stopWatch.Stop();
             s_timeSpan = s_stopWatch.Elapsed;
-            Console.WriteLine(results);
-            Console.WriteLine(string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName)))));
-            Console.WriteLine($"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+            {
+                GlobalVariables.pipeCmdOutput = string.Empty;
+                GlobalVariables.pipeCmdOutput += $"{results}\n{string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))))}" +
+                    $"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds\n";
+            }
+            else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
+            {
+                GlobalVariables.pipeCmdOutput = string.Empty;
+                GlobalVariables.pipeCmdOutput += $"{results}\n{string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))))}" +
+                     $"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds\n";
+            }
+            else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+            {
+                GlobalVariables.pipeCmdOutput = string.Empty;
+                GlobalVariables.pipeCmdOutput += $"{results}\n{string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))))}" +
+     $"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds\n";
+            }
+            else
+            {
+                Console.WriteLine(results);
+                Console.WriteLine(string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName)))));
+                Console.WriteLine($"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
+            }
         }
 
         /// <summary>
@@ -372,7 +424,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="path">Path to file</param>
         private static void SaveLSOutput(string path)
         {
-            DisplayCurrentDirectoryFiles(false, "", true,false);
+            DisplayCurrentDirectoryFiles(false, "", true, false);
             string dirList = "-----Directories-----" + Environment.NewLine;
             dirList += string.Join(Environment.NewLine, s_listDirs);
             string fileList = Environment.NewLine + "-------Files-------" + Environment.NewLine;
@@ -438,6 +490,9 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="saveToFile">Save output to a file.</param>
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile, bool creationTime)
         {
+            if(GlobalVariables.isPipeCommand)
+                 GlobalVariables.pipeCmdOutput = string.Empty;
+
             if (!Directory.Exists(s_currentDirectory))
             {
                 FileSystem.ErrorWriteLine($"Directory '{s_currentDirectory}' does not exist!");
@@ -459,14 +514,22 @@ Commands can be canceled with CTRL+X key combination.
             {
                 string currentDirectorySize =
                     FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
-
-                Console.WriteLine("----------------------------------------------\n");
-                Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"----------------------------------------------\nCurrent directory size: {currentDirectorySize}\n";
+                else
+                {
+                    Console.WriteLine("----------------------------------------------\n");
+                    Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
+                }
             }
-
-            Console.WriteLine("-----------Current Directory Count------------\n");
-            Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
-            Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                GlobalVariables.pipeCmdOutput += $"-----------Current Directory Count------------\nTotal directories: {Directory.GetDirectories(s_currentDirectory).Length}\nTotal files: {Directory.GetFiles(s_currentDirectory).Length}\n";
+            else
+            {
+                Console.WriteLine("-----------Current Directory Count------------\n");
+                Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
+                Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
+            }
         }
 
 
@@ -490,7 +553,10 @@ Commands can be canceled with CTRL+X key combination.
                         if (highlightSearchText.IsNotNullEmptyOrWhitespace() &&
                         directoryInfo.Name.ContainsText(highlightSearchText))
                         {
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
+                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
+                            else
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
                         }
                         else
                         {
@@ -501,9 +567,19 @@ Commands can be canceled with CTRL+X key combination.
                             else
                             {
                                 if (creationTime)
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, FileSystem.GetCreationDateDirInfo(directoryInfo));
+                                {
+                                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                        GlobalVariables.pipeCmdOutput += $"{FileSystem.GetCreationDateDirInfo(directoryInfo)}\n";
+                                    else
+                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, FileSystem.GetCreationDateDirInfo(directoryInfo));
+                                }
                                 else
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                                {
+                                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                        GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
+                                    else
+                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                                }
                             }
                         }
                     }
@@ -535,7 +611,12 @@ Commands can be canceled with CTRL+X key combination.
                             else
                             {
                                 if (creationTime)
-                                    Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                {
+                                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                        GlobalVariables.pipeCmdOutput += $"{FileSystem.GetCreationDateFileInfo(file)}\n";
+                                    else
+                                        Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                }
                                 else
                                     DisplayFileInfoText(formattedText, highlightSearchText);
                             }
@@ -553,7 +634,12 @@ Commands can be canceled with CTRL+X key combination.
                             else
                             {
                                 if (creationTime)
-                                    Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                {
+                                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                        GlobalVariables.pipeCmdOutput += $"{FileSystem.GetCreationDateFileInfo(file)}\n";
+                                    else
+                                        Console.WriteLine(FileSystem.GetCreationDateFileInfo(file));
+                                }
                                 else
                                     DisplayFileInfoText(formattedText, highlightSearchText);
                             }
@@ -588,17 +674,26 @@ Commands can be canceled with CTRL+X key combination.
             if (highlightSearchText.IsNotNullEmptyOrWhitespace() &&
                 text.ContainsText(highlightSearchText))
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, text);
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"{text}\n";
+                else
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, text);
             }
             else
             {
                 if (text.EndsWith(".exe") || text.EndsWith(".msi"))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, text);
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                        GlobalVariables.pipeCmdOutput += $"{text}\n";
+                    else
+                        FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, text);
                 }
                 else
                 {
-                    Console.WriteLine(text);
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                        GlobalVariables.pipeCmdOutput += $"{text}\n";
+                    else
+                        Console.WriteLine(text);
                 }
             }
         }

@@ -14,7 +14,7 @@ namespace Commands.TerminalCommands.DirFiles
         public void Execute(string arg)
         {
             string file = string.Empty;
-            string set;
+            string set= string.Empty;
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string cEditor = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor);
 
@@ -28,7 +28,10 @@ namespace Commands.TerminalCommands.DirFiles
                 if (!arg.Contains("set"))
                 {
                     int argLenght = arg.Length - 5;
-                    file = arg.Substring(5, argLenght);
+                    if (GlobalVariables.isPipeCommand)
+                        file = GlobalVariables.pipeCmdOutput.Trim();
+                    else
+                        file = arg.Substring(5, argLenght);
                     file = FileSystem.SanitizePath(file, dlocation);
                     ProcessCall(file, File.Exists(cEditor) ? cEditor : "notepad");
                     return;

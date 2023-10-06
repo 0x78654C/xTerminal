@@ -56,7 +56,6 @@ namespace Commands.TerminalCommands.OpenAi
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "You need to provide a question!");
                     return;
                 }
-
                 GetOpenAIData(question, apiKey).Wait();
             }
             catch (Exception e)
@@ -72,13 +71,17 @@ namespace Commands.TerminalCommands.OpenAi
         /// <param name="apiKey"></param>
         public async Task GetOpenAIData(string question, string apiKey)
         {
-            Console.WriteLine("Loading data from OpenAI:");
+            if(!GlobalVariables.isPipeCommand)
+                Console.WriteLine("Loading data from OpenAI:");
             openAI = new OpenAIManage(apiKey, question.Trim());
             StringReader reader = new StringReader(await openAI.AskOpenAI());
             string line = "";
             while ((line = reader.ReadLine()) != null)
             {
-                Console.Write($"{Environment.NewLine}{line}");
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    GlobalVariables.pipeCmdOutput += $"{Environment.NewLine}{line}";
+                else
+                    Console.Write($"{Environment.NewLine}{line}");
                 await Task.Delay(200);
             }
             Console.WriteLine();

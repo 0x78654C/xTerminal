@@ -21,20 +21,27 @@ namespace Commands.TerminalCommands.DirFiles
 
                 // Reading current location(for test no, after i make dynamic)
                 string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
-                string cLocation = Directory.GetCurrentDirectory();
 
                 // We grab the file names for source and destination
-                string FileName = FileSystem.SanitizePath(arg.SplitByText(" -o ", 0), dlocation);
-                string NewName = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), dlocation);
+                string fileName = string.Empty;
+                string newName = string.Empty;
+                if (GlobalVariables.isPipeCommand)
+                    fileName = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), dlocation);
+                else
+                    fileName = FileSystem.SanitizePath(arg.SplitByText(" -o ", 0), dlocation);
+                if (GlobalVariables.isPipeCommand)
+                    newName = FileSystem.SanitizePath(arg.SplitByText("-o ", 1), dlocation);
+                else
+                    newName = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), dlocation);
 
                 // We check if file exists
-                if (File.Exists(FileName))
+                if (File.Exists(fileName))
                 {
-                    File.Move(FileName, NewName);
-                    Console.WriteLine($"File renamed from {FileName} to {NewName}");
+                    File.Move(fileName, newName);
+                    Console.WriteLine($"File renamed from {fileName} to {newName}");
                     return;
                 }
-                FileSystem.ErrorWriteLine("File " + FileName + " does not exist!");
+                FileSystem.ErrorWriteLine("File " + fileName + " does not exist!");
             }
             catch
             {

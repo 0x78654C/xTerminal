@@ -20,14 +20,17 @@ namespace Commands.TerminalCommands.DirFiles
         public void Execute(string args)
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
-            if (args.Length == 3)
+            if (args.Length == 3 && !GlobalVariables.isPipeCommand)
             {
                 Console.WriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             string param = args.Split(' ').ParameterAfter("del");
-            int argsLenght = args.Length - 4;
-            args = args.Substring(4, argsLenght);
+            if (!GlobalVariables.isPipeCommand)
+            {
+                int argsLenght = args.Length - 4;
+                args = args.Substring(4, argsLenght);
+            }
             if (param == "-a")
             {
                 DeleteAllFilesDris(_currentLocation, true, true);
@@ -78,65 +81,32 @@ namespace Commands.TerminalCommands.DirFiles
         }
         private void DeleteFile(string arg, string currentLocation)
         {
+            string input = string.Empty;
+            if (GlobalVariables.isPipeCommand)
+                input = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), currentLocation);
+            else
+                input = FileSystem.SanitizePath(arg, currentLocation);
             try
             {
-                string input = arg; // Geting location input        
+                // Get the file attributes for file or directory
+                FileAttributes attr = File.GetAttributes(input);
 
-                // Checking the current locaiton in folder
-                if (input.Contains(":") && input.Contains(@"\"))
+                if (attr.HasFlag(FileAttributes.Directory))
                 {
-                    try
-                    {
-                        // Get the file attributes for file or directory
-                        FileAttributes attr = File.GetAttributes(input);
-
-                        if (attr.HasFlag(FileAttributes.Directory))
-                        {
-                            var dir = new DirectoryInfo(input);
-                            RecursiveDeleteDir(dir);
-                            Console.WriteLine($"Directory {input} deleted!");
-                        }
-                        else
-                        {
-                            File.SetAttributes(input, FileAttributes.Normal);
-                            File.Delete(input);
-                            Console.WriteLine($"File {input} deleted!");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        FileSystem.ErrorWriteLine(e.Message);
-                    }
+                    var dir = new DirectoryInfo(input);
+                    RecursiveDeleteDir(dir);
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Directory {input} deleted!");
                 }
                 else
                 {
-                    try
-                    {
-                        // Get the file attributes for file or directory
-                        FileAttributes attr = File.GetAttributes(currentLocation + input);
-
-                        if (attr.HasFlag(FileAttributes.Directory))
-                        {
-                            var dir = new DirectoryInfo(currentLocation + input);
-                            RecursiveDeleteDir(dir);
-                            Console.WriteLine("Directory " + currentLocation + input + " deleted!");
-                        }
-                        else
-                        {
-                            File.SetAttributes(currentLocation + input, FileAttributes.Normal);
-                            File.Delete(currentLocation + input);
-                            Console.WriteLine("File " + currentLocation + input + " deleted!");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        FileSystem.ErrorWriteLine(e.Message);
-                    }
+                    File.SetAttributes(input, FileAttributes.Normal);
+                    File.Delete(input);
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"File {input} deleted!");
                 }
             }
-            catch
+            catch (Exception e)
             {
-                FileSystem.ErrorWriteLine("You must type the file/directory name!");
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
 

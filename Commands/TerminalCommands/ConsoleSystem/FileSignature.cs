@@ -33,7 +33,7 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
             {
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
-                if (args.Length == 4)
+                if (args.Length == 4 && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine($"Use -h param for {Name} command usage!");
                     return;
@@ -51,9 +51,13 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
                     return;
                 }
 
-                var file = args.Substring(5);
+                var file = string.Empty;
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    file = $"{GlobalVariables.pipeCmdOutput.Trim()} {args.Replace("fsig", string.Empty).Trim()}";
+                else
+                    file = args.Replace("fsig",string.Empty).Trim();
 
-                if (file.EndsWith(" -ext"))
+                if (file.Trim().EndsWith(" -ext"))
                 {
                     var filePath = file.Substring(0, file.Length - 4);
                     var sanitizedFileExt = FileSystem.SanitizePath(filePath, currentDirectory);
@@ -119,7 +123,25 @@ Description:   {description}
                 break;
             }
             if (isExtFound)
-                Console.WriteLine(outMessage);
+            {
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    GlobalVariables.pipeCmdOutput = $"{outMessage}\n";
+
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                {
+                    GlobalVariables.pipeCmdOutput = $"{outMessage}\n";
+                }
+                else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
+                {
+                    GlobalVariables.pipeCmdOutput = $"{outMessage}\n";
+                }
+
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                    Console.WriteLine(outMessage);
+
+                if (!GlobalVariables.isPipeCommand)
+                    Console.WriteLine(outMessage);
+            }
             else if (!_isIterated)
             {
                 _isIterated = true;

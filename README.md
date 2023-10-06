@@ -3,7 +3,7 @@
 </p>
 
 # xTerminal
-A Linux like terminal for windows in C# with some extras ;).
+A Linux like terminal for windows in C# with some extras.
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 
@@ -66,14 +66,14 @@ This is the full list of commands that can be used in xTerminal:
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
     ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    start     -- Starts an application. Ex.: start <file_name> OR start <file_name> -p <file_paramters>.
+    .\        -- Starts an application. Ex.: .\ <file_name> OR .\ <file_name> -param <file_paramters>.
                  Can be used with the following parameters:
                    -h    : Displays this message.
                    -u    : Can run process with different user.
                    -we   : Wait for process to exit.
-                   -param: Start process with specified parameters.
-                         Example1: start -u <file_name>
-                         Example2: start -u <file_name> -param <file_paramters>
+                   -param: .\ process with specified parameters.
+                         Example1: .\ -u <file_name>
+                         Example2: .\ -u <file_name> -param <file_paramters>
                  Both examples can be used with -we parameter.
     pkill     -- Kills a running process by name or id.
                  Example1: pkill <process_name>
@@ -345,6 +345,12 @@ For that we use following command:
  ```
  pwm -delv
  ```
+
+## Usage of pipe commands
+
+Here a simple example how to use pipe commands.
+
+https://github.com/0x78654C/xTerminal/assets/13780514/00e0d55a-0ce3-446d-bd33-7ca90f715a7b
 
 
 ## More Samples

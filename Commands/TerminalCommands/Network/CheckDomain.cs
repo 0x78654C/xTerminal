@@ -1,4 +1,5 @@
 ﻿using Core;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Runtime.Versioning;
 using ping = Core.NetWork;
@@ -12,18 +13,33 @@ namespace Commands.TerminalCommands.Network
          Check if an IP dor domain is down.
          */
         public string Name => "icheck";
+        private static string s_helpMessage = @"Check if an IP/ domain is down or up:
 
+Example: icheck google.com 
+
+";
         public void Execute(string arg)
         {
             try
             {
-                string domain = arg.Split(' ')[1];
-                if (ping.PingHost(domain))
+                if (arg == $"{Name} -h")
                 {
-                    Console.WriteLine($"{domain} is online!");
+                    Console.WriteLine(s_helpMessage);
                     return;
                 }
-                Console.WriteLine($"{domain} is down!");
+                string domain = string.Empty;
+                if (GlobalVariables.isPipeCommand)
+                    domain = GlobalVariables.pipeCmdOutput.Trim();
+                else
+                    domain = arg.Split(' ')[1];
+                if (ping.PingHost(domain))
+                {
+                    Console.Write($"{domain}:");
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, " ONLINE");
+                    return;
+                }
+                Console.Write($"{domain}:");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, " OFFLINE");
             }
             catch
             {
