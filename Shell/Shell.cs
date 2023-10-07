@@ -140,7 +140,6 @@ namespace Shell
                             GlobalVariables.pipeCmdCount--;
                         }
                         GlobalVariables.isPipeCommand = false;
-                        GlobalVariables.pipeCmdOutput = string.Empty;
                     }
                     else
                         c.Execute(command);
@@ -151,6 +150,8 @@ namespace Shell
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
                 GlobalVariables.pipeCmdOutput = string.Empty;
+                GlobalVariables.pipeCmdCount = 0;
+                GlobalVariables.pipeCmdCountTemp = 0;
             }
         }
 
@@ -196,6 +197,8 @@ namespace Shell
                 {
                     SettingsLoad();
                     ExecuteCommands(param);
+                    GlobalVariables.pipeCmdOutput = string.Empty;
+                    GlobalVariables.pipeCmdCount = 0;
                     return true;
                 }
                 return false;
@@ -372,6 +375,9 @@ namespace Shell
                 else
                 {
                     ExecuteCommands(s_input);
+                    GlobalVariables.pipeCmdOutput = string.Empty;
+                    GlobalVariables.pipeCmdCount = 0;
+                    GlobalVariables.pipeCmdCountTemp = 0;
                 }
                 GC.Collect();
 
