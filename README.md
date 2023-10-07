@@ -348,7 +348,18 @@ For that we use following command:
 
 ## Usage of pipe commands
 
-Here a simple example how to use pipe commands.
+### Here a simple examplenation how to use pipe commands:
+- Begin commands: are used at the beggining of the pipe commands that stores the output for the next commnad.
+- Middle commands: are used to manipulate data from first pipe command and output or transmit to next command.
+- End commands: are used to display the output data from other commands and is used in the end of the pipe commands.
+
+Here is the list of commands that work as with pipe too and wich position:
+
+
+Pipe commands cand be added even to alias commands.
+You can use multiple pipe middle commands as well.
+
+* Video presentation :
 
 https://github.com/0x78654C/xTerminal/assets/13780514/00e0d55a-0ce3-446d-bd33-7ca90f715a7b
 
