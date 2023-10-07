@@ -82,7 +82,7 @@ namespace Commands.TerminalCommands.DirFiles
         private void DeleteFile(string arg, string currentLocation)
         {
             string input = string.Empty;
-            if (GlobalVariables.isPipeCommand)
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount >0)
                 input = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), currentLocation);
             else
                 input = FileSystem.SanitizePath(arg, currentLocation);
