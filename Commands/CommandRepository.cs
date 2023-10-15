@@ -84,7 +84,7 @@ namespace Commands
                 command = command.Replace("%", GlobalVariables.aliasInParameter);
             GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
 
-            if (command.Trim() == ("cmd") || command.Trim() == ("ps"))
+            if (command.StartsWith("cmd") || command.StartsWith("ps"))
             {
                 ProcessStart.Execute(command, command);
                 return string.Empty;
