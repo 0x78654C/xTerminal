@@ -43,6 +43,10 @@ namespace Commands
 
             // Get the first word from the parameters. This should be the command name
             string commandName = commandLine.Split().First();
+
+            // Get the paramtere for allias command
+            GlobalVariables.aliasInParameter = commandLine.Replace(commandName, "").Trim(); 
+
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
                 && !s_shellCommands.Contains(commandLine))
             {
@@ -68,9 +72,8 @@ namespace Commands
         private static string GetAliasCommand(string commandName, string aliasJsonFile)
         {
             if (!File.Exists(aliasJsonFile))
-            {
                 return string.Empty;
-            }
+
             string command = string.Empty;
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
             
@@ -80,6 +83,8 @@ namespace Commands
                 {
                     command = alias.Command.Trim();
                     GlobalVariables.aliasRunFlag = true;
+                    if (command.Contains("%"))
+                        command = command.Replace("%", GlobalVariables.aliasInParameter);
                     GlobalVariables.aliasParameters = command;
                 }
             }
@@ -89,7 +94,7 @@ namespace Commands
                 ProcessStart.Execute(command, command);
                 return string.Empty;
             }
-            return command;
+            return command.Trim();
         }
     }
 }
