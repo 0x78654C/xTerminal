@@ -7,9 +7,11 @@ using Core;
 using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 using Core.SystemTools;
+using System.Runtime.Versioning;
 
 namespace Commands
 {
+    [SupportedOSPlatform("Windows")]
     public static class CommandRepository
     {
         private static string s_aliasFile = GlobalVariables.aliasFile;
@@ -74,22 +76,15 @@ namespace Commands
             if (!File.Exists(aliasJsonFile))
                 return string.Empty;
 
-            string command = string.Empty;
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
-            
-            foreach (var alias in aliasCommands)
-            {
-                if (alias.CommandName == commandName)
-                {
-                    command = alias.Command.Trim();
-                    GlobalVariables.aliasRunFlag = true;
-                    if (command.Contains("%"))
-                        command = command.Replace("%", GlobalVariables.aliasInParameter);
-                    GlobalVariables.aliasParameters = command;
-                }
-            }
 
-            if (command.StartsWith("cmd") || command.StartsWith("ps"))
+            string command = aliasCommands.Where(f => f.CommandName == commandName).FirstOrDefault()?.Command?.Trim() ?? string.Empty;
+            GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
+            if (command.Contains("%"))
+                command = command.Replace("%", GlobalVariables.aliasInParameter);
+            GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
+
+            if (command.Trim() == ("cmd") || command.Trim() == ("ps"))
             {
                 ProcessStart.Execute(command, command);
                 return string.Empty;
