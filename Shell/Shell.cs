@@ -8,6 +8,7 @@ using SetConsoleColor = Core.SystemTools.UI;
 using ProccessManage = Core.SystemTools.ProcessStart;
 using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
+using Core.SystemTools;
 
 namespace Shell
 {
@@ -35,6 +36,7 @@ namespace Shell
         private static int s_ctrlKey = 1;
         private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
+        private static string s_aliasFile = GlobalVariables.aliasFile;
 
         //-------------------------------
 
@@ -334,6 +336,8 @@ namespace Shell
                 if (File.Exists(s_historyFile))
                 {
                     WriteHistoryCommandFile(s_historyFile, s_input);
+                    var aliasCommands = JsonManage.ReadJsonFromFile<AliasC[]>(s_aliasFile);
+                    string command = aliasCommands.Where(f => f.CommandName == s_input).FirstOrDefault()?.CommandName?.Trim() ?? string.Empty;
 
                     //rebooting the machine command
                     if (s_input == "reboot")
@@ -355,11 +359,11 @@ namespace Shell
                     {
                         SystemCmd.LockCmd();
                     }
-                    else if (s_input.StartsWith("cmd"))
+                    else if (s_input.StartsWith("cmd") && !command.StartsWith("cmd"))
                     {
                         ProccessManage.Execute(s_input, s_input);
                     }
-                    else if (s_input.StartsWith("ps"))
+                    else if (s_input.StartsWith("ps") && !command.StartsWith("ps"))
                     {
                         ProccessManage.Execute(s_input, s_input);
                     }
