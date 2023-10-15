@@ -130,9 +130,9 @@ namespace Shell
                         {
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
-                             
+
                             c.Execute(cmdExecute);
-                            
+
                             count++;
                             GlobalVariables.pipeCmdCount--;
                         }
@@ -142,6 +142,7 @@ namespace Shell
                         c.Execute(command);
                     GlobalVariables.aliasParameters = string.Empty;
                     GlobalVariables.aliasRunFlag = false;
+                    GlobalVariables.aliasInParameter = string.Empty;
                 }
             }catch(Exception e)
             {
