@@ -84,6 +84,7 @@ namespace Commands
                 command = command.Replace("%", GlobalVariables.aliasInParameter);
             GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
 
+            // Usage of cmd and ps with parameters in alias commands.
             if (command.StartsWith("cmd") || command.StartsWith("ps"))
             {
                 ProcessStart.Execute(command, command);
