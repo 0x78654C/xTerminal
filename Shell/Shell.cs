@@ -336,8 +336,12 @@ namespace Shell
                 if (File.Exists(s_historyFile))
                 {
                     WriteHistoryCommandFile(s_historyFile, s_input);
-                    var aliasCommands = JsonManage.ReadJsonFromFile<AliasC[]>(s_aliasFile);
-                    string command = aliasCommands.Where(f => f.CommandName == s_input).FirstOrDefault()?.CommandName?.Trim() ?? string.Empty;
+                    string command = string.Empty;
+                    if (File.Exists(s_aliasFile))
+                    {
+                        var aliasCommands = JsonManage.ReadJsonFromFile<AliasC[]>(s_aliasFile);
+                        command = aliasCommands.Where(f => f.CommandName == s_input).FirstOrDefault()?.CommandName?.Trim() ?? string.Empty;
+                    }
 
                     //rebooting the machine command
                     if (s_input == "reboot")
