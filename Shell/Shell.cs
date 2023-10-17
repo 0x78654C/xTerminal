@@ -8,6 +8,7 @@ using SetConsoleColor = Core.SystemTools.UI;
 using ProccessManage = Core.SystemTools.ProcessStart;
 using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
+using Core.SystemTools;
 
 namespace Shell
 {
@@ -35,6 +36,7 @@ namespace Shell
         private static int s_ctrlKey = 1;
         private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
+        private static string s_aliasFile = GlobalVariables.aliasFile;
 
         //-------------------------------
 
@@ -131,11 +133,8 @@ namespace Shell
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
 
-                          //  if (count == 0) deactivated temporary  
-                            //    GlobalVariables.pipeCmdOutput = cmdExecute;
-                             
                             c.Execute(cmdExecute);
-                            
+
                             count++;
                             GlobalVariables.pipeCmdCount--;
                         }
@@ -145,6 +144,7 @@ namespace Shell
                         c.Execute(command);
                     GlobalVariables.aliasParameters = string.Empty;
                     GlobalVariables.aliasRunFlag = false;
+                    GlobalVariables.aliasInParameter = string.Empty;
                 }
             }catch(Exception e)
             {
@@ -336,6 +336,12 @@ namespace Shell
                 if (File.Exists(s_historyFile))
                 {
                     WriteHistoryCommandFile(s_historyFile, s_input);
+                    string command = string.Empty;
+                    if (File.Exists(s_aliasFile))
+                    {
+                        var aliasCommands = JsonManage.ReadJsonFromFile<AliasC[]>(s_aliasFile);
+                        command = aliasCommands.Where(f => f.CommandName == s_input).FirstOrDefault()?.CommandName?.Trim() ?? string.Empty;
+                    }
 
                     //rebooting the machine command
                     if (s_input == "reboot")
@@ -357,11 +363,11 @@ namespace Shell
                     {
                         SystemCmd.LockCmd();
                     }
-                    else if (s_input.StartsWith("cmd"))
+                    else if (s_input.StartsWith("cmd") && !command.StartsWith("cmd"))
                     {
                         ProccessManage.Execute(s_input, s_input);
                     }
-                    else if (s_input.StartsWith("ps"))
+                    else if (s_input.StartsWith("ps") && !command.StartsWith("ps"))
                     {
                         ProccessManage.Execute(s_input, s_input);
                     }

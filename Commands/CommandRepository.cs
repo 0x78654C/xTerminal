@@ -7,9 +7,11 @@ using Core;
 using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 using Core.SystemTools;
+using System.Runtime.Versioning;
 
 namespace Commands
 {
+    [SupportedOSPlatform("Windows")]
     public static class CommandRepository
     {
         private static string s_aliasFile = GlobalVariables.aliasFile;
@@ -43,6 +45,10 @@ namespace Commands
 
             // Get the first word from the parameters. This should be the command name
             string commandName = commandLine.Split().First();
+
+            // Get the paramtere for allias command
+            GlobalVariables.aliasInParameter = commandLine.Replace(commandName, "").Trim(); 
+
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
                 && !s_shellCommands.Contains(commandLine))
             {
@@ -68,28 +74,23 @@ namespace Commands
         private static string GetAliasCommand(string commandName, string aliasJsonFile)
         {
             if (!File.Exists(aliasJsonFile))
-            {
                 return string.Empty;
-            }
-            string command = string.Empty;
-            var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
-            
-            foreach (var alias in aliasCommands)
-            {
-                if (alias.CommandName == commandName)
-                {
-                    command = alias.Command.Trim();
-                    GlobalVariables.aliasRunFlag = true;
-                    GlobalVariables.aliasParameters = command;
-                }
-            }
 
+            var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
+
+            string command = aliasCommands.Where(f => f.CommandName == commandName).FirstOrDefault()?.Command?.Trim() ?? string.Empty;
+            GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
+            if (command.Contains("%"))
+                command = command.Replace("%", GlobalVariables.aliasInParameter);
+            GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
+
+            // Usage of cmd and ps with parameters in alias commands.
             if (command.StartsWith("cmd") || command.StartsWith("ps"))
             {
                 ProcessStart.Execute(command, command);
                 return string.Empty;
             }
-            return command;
+            return command.Trim();
         }
     }
 }

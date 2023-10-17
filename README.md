@@ -109,6 +109,10 @@ This is the full list of commands that can be used in xTerminal:
                              Example: alias -update lz|ls -ct (Updates command lz with new parameters. Works if command already exist!)
                    -list  :  List all alias commands.
                    -clear :  Clears all alias commands.
+                    Alias commands can use internal parameters with % character. % will take the input and pass to internal command. 
+                    Example:
+                    ~ $ alias -add np | cmd start %
+                    ~ $ np notepad 
                  Attention: Alias commands cannot overwrite terminal commands!
     shred     -- Overwrites and deletes a file that will be difficult to recover after. Use -h for additional help.
                    Example: shred <file_path> :   Will shred the file with the default of 3 passes.

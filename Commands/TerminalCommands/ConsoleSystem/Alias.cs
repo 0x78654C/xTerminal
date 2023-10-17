@@ -29,6 +29,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
  -clear :  Clears all alias commands.
 
+ Alias commands can use internal parameters with % character. % will take the input and pass to internal command. 
+ Example:
+ ~ $ alias -add np | cmd start %
+ ~ $ np notepad 
  Attention: Alias commands cannot overwrite terminal commands!
 ";
 
