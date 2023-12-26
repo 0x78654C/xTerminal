@@ -92,10 +92,12 @@ Commands can be canceled with CTRL+X key combination.
 
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                     {
+                        GlobalVariables.isPipeVar = true;
                         GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory)}";
                     }
                     else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
                     {
+                        GlobalVariables.isPipeVar = true;
                         GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
                     }
 
@@ -349,10 +351,12 @@ Commands can be canceled with CTRL+X key combination.
                     default:
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         {
+                            GlobalVariables.isPipeVar = true;
                             GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory)}";
                         }
                         else if (GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
                         {
+                            GlobalVariables.isPipeVar = true;
                             GlobalVariables.pipeCmdOutput = $"{Core.Commands.CatCommand.FileOutput(arg.Trim(), s_currentDirectory)}";
                         }
 
