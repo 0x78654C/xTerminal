@@ -267,7 +267,7 @@ namespace Shell
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "start", s_currentDirectory, true);
+                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, @".\", s_currentDirectory, true);
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "frename", s_currentDirectory, true);
