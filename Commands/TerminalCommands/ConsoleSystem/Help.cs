@@ -23,7 +23,7 @@ This is the full list of commands that can be used in xTerminal:
     ls        -- List directories and files on a directory. Use -h for additional parameters.
     ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    start     -- Starts an application. Use -h for additional help.
+    ./        -- Starts an application. Use -h for additional help.
     pkill     -- Kills a running process by name or id. Use -h for additional help.
     clear     -- Clears the console.
     cd        -- Sets the current directory. (cd .. for parent directory, cd ../.. and so on for multi backward directory navigation).
