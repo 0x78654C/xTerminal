@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using System.Windows.Forms;
 
 namespace Core.Commands
 {
+    [SupportedOSPlatform("Windows")]
     public class AutoSuggestionCommands
     {
 
@@ -17,8 +19,10 @@ namespace Core.Commands
         {
             try
             {
-                int commandLenght = command.Length + 1;
+                if (consoleInput.StartsWith(".-"))
+                    consoleInput = consoleInput.Replace(".-", "./");
 
+                int commandLenght = command.Length + 1;
                 if (consoleInput == command)
                 {
                     GlobalVariables.autoSuggestion = true;
@@ -27,13 +31,14 @@ namespace Core.Commands
                     SendKeys.Send("{ENTER}");
                     SendKeys.Send(consoleInput);
                 }
-                if (consoleInput.StartsWith(command) && consoleInput.Length > command.Length)
+                if ((consoleInput.StartsWith(command) && consoleInput.Length > command.Length))
                 {
                     if (isFile)
                     {
                         GlobalVariables.autoSuggestion = true;
                         consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                         SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory);
+                        consoleInput = consoleInput.Replace(".-", "./");
                         GlobalVariables.commandOut = command + " " + consoleInput;
                         SendKeys.Send(command + " " + consoleInput);
                         return;

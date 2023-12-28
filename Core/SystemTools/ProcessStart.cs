@@ -36,12 +36,7 @@ namespace Core.SystemTools
                     process.StartInfo = new ProcessStartInfo(input);
                     process.StartInfo.Arguments = arguments;
                     process.StartInfo.WorkingDirectory = GetExecutablePath(input);
-                    process.StartInfo.UseShellExecute = false;
-                    if (!waitForExit)
-                    {
-                        process.StartInfo.RedirectStandardInput = true;
-                        process.StartInfo.RedirectStandardError = true;
-                    }
+                    process.StartInfo.UseShellExecute = true;
                     process.StartInfo.Verb = "runas";
                 }
                 else

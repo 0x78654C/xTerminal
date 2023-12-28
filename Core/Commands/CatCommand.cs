@@ -30,7 +30,9 @@ namespace Core.Commands
 
             if (!File.Exists(input))
             {
-                Console.WriteLine("File " + input + " dose not exist!");
+                if(!GlobalVariables.isPipeVar)
+                    Console.WriteLine("File " + input + " dose not exist!");
+                GlobalVariables.isPipeVar = false;
                 return output.ToString();
             }
 

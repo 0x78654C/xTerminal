@@ -66,14 +66,14 @@ This is the full list of commands that can be used in xTerminal:
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
     ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
     chistory  -- Clears the current history of commands!
-    .\        -- Starts an application. Ex.: .\ <file_name> OR .\ <file_name> -param <file_paramters>.
+    ./        -- Starts an application. Ex.: ./ <file_name> OR ./ <file_name> -param <file_paramters>.
                  Can be used with the following parameters:
                    -h    : Displays this message.
                    -u    : Can run process with different user.
                    -we   : Wait for process to exit.
-                   -param: .\ process with specified parameters.
-                         Example1: .\ -u <file_name>
-                         Example2: .\ -u <file_name> -param <file_paramters>
+                   -param: ./ process with specified parameters.
+                         Example1: ./ -u <file_name>
+                         Example2: ./ -u <file_name> -param <file_paramters>
                  Both examples can be used with -we parameter.
     pkill     -- Kills a running process by name or id.
                  Example1: pkill <process_name>
