@@ -25,23 +25,45 @@ namespace Core.SystemTools
         /// <returns></returns>
         private static string GetExecutablePath(string executableFilePath) => Path.GetDirectoryName(executableFilePath);
 
+        /// <summary>
+        /// Execute process command.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="arguments"></param>
+        /// <param name="fileCheck"></param>
+        /// <param name="asAdmin"></param>
+        /// <param name="waitForExit"></param>
         public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
         {
             try
             {
                 var process = new Process();
 
+                bool exe = !input.Trim().EndsWith(".exe") && !input.Trim().EndsWith(".msi");
+
+
+                // Check is execautable or not.
+                if (exe)
+                {
+                    arguments = $@"/c start {input} {arguments}";
+                    input = null;
+                }
+
                 if (asAdmin)
                 {
                     process.StartInfo = new ProcessStartInfo(input);
-                    process.StartInfo.Arguments = arguments;
+                    if (exe)
+                        process.StartInfo.FileName = "cmd";
                     process.StartInfo.WorkingDirectory = GetExecutablePath(input);
                     process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.Arguments = arguments.Trim();
                     process.StartInfo.Verb = "runas";
                 }
                 else
                 {
                     process.StartInfo = new ProcessStartInfo(input);
+                    if (exe)
+                        process.StartInfo.FileName = "cmd";
                     process.StartInfo.WorkingDirectory = GetExecutablePath(input);
                     process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
@@ -49,7 +71,16 @@ namespace Core.SystemTools
                         process.StartInfo.RedirectStandardInput = true;
                         process.StartInfo.RedirectStandardError = true;
                     }
-                    process.StartInfo.Arguments = arguments;
+                    process.StartInfo.Arguments = arguments.Trim();
+                }
+
+                // Runing non executable files.
+                if (exe)
+                {
+                    process.Start();
+                    if (waitForExit)
+                        process.WaitForExit();
+                    return;
                 }
 
                 if (fileCheck)
