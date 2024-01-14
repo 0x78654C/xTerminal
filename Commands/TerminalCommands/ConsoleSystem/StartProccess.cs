@@ -10,7 +10,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
     [SupportedOSPlatform("Windows")]
     public class StartProccess : ITerminalCommand
     {
-        [SupportedOSPlatform("Windows")]
         private static string s_currentDirectory = string.Empty;
         public string Name => "./";
         private string _helpMessage = @"Usage: ./ <file_name> OR ./ <file_name> -param <file_paramters>
