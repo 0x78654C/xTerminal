@@ -14,7 +14,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         private static string s_currentDirectory = string.Empty;
         public string Name => "plist";
-        private string _helpMessage = @"TODO: work in progress.
+        private string _helpMessage = @"List current running processes and their child process.
 ";
 
 
@@ -22,6 +22,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                if (args == "-h")
+                {
+                    Console.WriteLine(_helpMessage);
+                    return;
+                }
                 if (args.Length == 5)
                 //{
                 //    Console.WriteLine($"Use -h param for {Name} command usage!");
@@ -29,6 +34,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 //}
 
                 // Main run
+
                 ListProcesses.GetProcessList();
 
             }catch(Exception e)
