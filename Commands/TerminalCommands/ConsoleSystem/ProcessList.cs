@@ -39,7 +39,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             }catch(Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message); // We live like this till finish command.
+                FileSystem.ErrorWriteLine(e.ToString()); // We live like this till finish command.
             }
         }
 
