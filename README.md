@@ -78,6 +78,13 @@ This is the full list of commands that can be used in xTerminal:
     pkill     -- Kills a running process by name or id.
                  Example1: pkill <process_name>
                  Example2: pkill -i <process_id>
+    plist     -- List current running processes and their child processes.
+                 Example: 
+                 Parent : [Idle] [0]   ---> parent process
+                     [Idle] [0]        ---> child process
+                     [System] [4]      ---> child process
+                 Parent (1) : [System] ---> parent process(was child process for parent process '[Idle] [0]')
+                     [Registry] [132]  ---> child process
     clear     -- Clears the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory).
     odir      -- Open current directory or other directory path provided with Windows Explorer.
@@ -156,8 +163,8 @@ This is the full list of commands that can be used in xTerminal:
                    -h  : displays this message
                    -ca <destination_directory> : copy all files from current directory in a specific directory
                    -ca : copy source files in same directory
-    frename   -- Renames a file in a specific directory(s).
-                 Example: frename <old_file_name> -o <new_file_name>
+    mv        -- Renames a file or direcotry in a specific directory(s).
+                 Example: mv <old_file/dir_name> -o <new_file/dir_name>
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
                    -ma <destination_directory> : moves all files from current directory in a specific directory
     edit      -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
