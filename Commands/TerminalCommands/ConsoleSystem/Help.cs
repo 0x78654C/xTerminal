@@ -25,6 +25,7 @@ This is the full list of commands that can be used in xTerminal:
     chistory  -- Clears the current history of commands!
     ./        -- Starts an application. Use -h for additional help.
     pkill     -- Kills a running process by name or id. Use -h for additional help.
+    plist     -- List current running processes and their child processes. Use -h for additional help.
     clear     -- Clears the console.
     cd        -- Sets the current directory. (cd .. for parent directory, cd ../.. and so on for multi backward directory navigation).
     odir      -- Open current directory or other directory path provided with Windows Explorer.
