@@ -9,15 +9,15 @@ namespace Commands.TerminalCommands.DirFiles
     public class FRename : ITerminalCommand
     {
         /*
-         File rename.
+         File/directory rename.
          */
-        public string Name => "frename";
+        public string Name => "mv";
 
         public void Execute(string arg)
         {
             try
             {
-                arg = arg.Replace("frename ", "");
+                arg = arg.Replace("mv ", "");
 
                 // Reading current location(for test no, after i make dynamic)
                 string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
@@ -34,18 +34,26 @@ namespace Commands.TerminalCommands.DirFiles
                 else
                     newName = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), dlocation);
 
-                // We check if file exists
+                // We check if file exist.
                 if (File.Exists(fileName))
                 {
                     File.Move(fileName, newName);
                     Console.WriteLine($"File renamed from {fileName} to {newName}");
                     return;
                 }
-                FileSystem.ErrorWriteLine("File " + fileName + " does not exist!");
+
+                // We check if directory exist.
+                if(Directory.Exists(fileName))
+                {
+                    Directory.Move(fileName, newName);
+                    Console.WriteLine($"Directory renamed from {fileName} to {newName}");
+                    return;
+                }
+                FileSystem.ErrorWriteLine("File/directory " + fileName + " does not exist!");
             }
-            catch
+            catch(Exception e)
             {
-                FileSystem.ErrorWriteLine("You must type the file name!");
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
     }
