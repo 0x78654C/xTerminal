@@ -48,8 +48,8 @@ This is the full list of commands that can be used in xTerminal:
     mkdir     -- Creates a directory in the current place.
     mkfile    -- Creates a file in the current place.
     fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
-    frename   -- Renames a file in a specific directory(s).
-                 Example: frename <old_file_name> -o <new_file_name>
+    mv        -- Renames a file or directory in a specific directory(s).
+                 Example: mv <old_file/dir_name> -o <new_file/dir_name>
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
     edit      -- Opens a file in Notepad(default). 
                  To set a new text editor you must use following command: edit set ""Path to editor""

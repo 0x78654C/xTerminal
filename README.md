@@ -156,8 +156,8 @@ This is the full list of commands that can be used in xTerminal:
                    -h  : displays this message
                    -ca <destination_directory> : copy all files from current directory in a specific directory
                    -ca : copy source files in same directory
-    frename   -- Renames a file in a specific directory(s).
-                 Example: frename <old_file_name> -o <new_file_name>
+    mv        -- Renames a file or direcotry in a specific directory(s).
+                 Example: mv <old_file/dir_name> -o <new_file/dir_name>
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
                    -ma <destination_directory> : moves all files from current directory in a specific directory
     edit      -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
