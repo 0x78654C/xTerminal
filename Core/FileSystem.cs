@@ -264,13 +264,41 @@ namespace Core
         /// <param name="fileInfo"></param>
         /// <returns></returns>
         public static string GetCreationDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}";
-  
+
+        /// <summary>
+        /// Get file last access time.
+        /// </summary>
+        /// <param name="fileInfo"></param>
+        /// <returns></returns>
+        public static string GetLastAccessDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastAccessTime.ToLocalTime()}";
+
+        /// <summary>
+        /// Get file last write time.
+        /// </summary>
+        /// <param name="fileInfo"></param>
+        /// <returns></returns>
+        public static string GetLastWriteDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}";
+
         /// <summary>
         /// Get directory creation date time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
         public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
+
+        /// <summary>
+        /// Get directory last access time.
+        /// </summary>
+        /// <param name="directoryInfo"></param>
+        /// <returns></returns>
+        public static string GetLastAccessDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastAccessTime.ToLocalTime()}";
+
+        /// <summary>
+        /// Get directorly last write time.
+        /// </summary>
+        /// <param name="directoryInfo"></param>
+        /// <returns></returns>
+        public static string GetLastWriteDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}";
 
         /// <summary>
         /// Get MD5 and size of a specific file.
