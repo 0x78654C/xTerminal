@@ -9,6 +9,8 @@ using ProccessManage = Core.SystemTools.ProcessStart;
 using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
+using Commands.TerminalCommands.ConsoleSystem;
+using Core.Commands;
 
 namespace Shell
 {
@@ -57,7 +59,7 @@ namespace Shell
             if (!Directory.Exists(s_historyFilePath))
                 Directory.CreateDirectory(s_historyFilePath);
 
-            //creating history file if not exist
+            // Creating history file if not exist
             if (!File.Exists(s_historyFile))
                 File.WriteAllText(s_historyFile, Environment.NewLine);
 
@@ -65,7 +67,7 @@ namespace Shell
             if (!Directory.Exists(s_passwordManagerDirectory))
                 Directory.CreateDirectory(s_passwordManagerDirectory);
 
-            //Store current directory with current process id.
+            // Store current directory with current process id.
             StoreCurrentDirectory();
 
             // Creating the addon directory for C# code script scomands if not exist.
@@ -146,7 +148,8 @@ namespace Shell
                     GlobalVariables.aliasRunFlag = false;
                     GlobalVariables.aliasInParameter = string.Empty;
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
                 GlobalVariables.pipeCmdOutput = string.Empty;
@@ -335,7 +338,8 @@ namespace Shell
 
                 if (File.Exists(s_historyFile))
                 {
-                    WriteHistoryCommandFile(s_historyFile, s_input);
+                    if(!s_input.StartsWith("+"))
+                        WriteHistoryCommandFile(s_historyFile, s_input);
                     string command = string.Empty;
                     if (File.Exists(s_aliasFile))
                     {
@@ -370,6 +374,28 @@ namespace Shell
                     else if (s_input.StartsWith("ps") && !command.StartsWith("ps"))
                     {
                         ProccessManage.Execute(s_input, s_input);
+                    }
+                    // Run commands from history
+                    else if (s_input.StartsWith("+"))
+                    {
+                        var cleanCommandNumebr = s_input.Replace("+", "").Trim();
+                        try
+                        {
+                            bool isDigit = Char.IsDigit(cleanCommandNumebr.ToCharArray()[0]);
+                            if (isDigit)
+                            {
+                                int position = Int32.Parse(cleanCommandNumebr);
+                                var historyCommand = HistoryCommands.GetHistoryCommand(s_historyFile, position).Trim();
+                                s_input = historyCommand;
+                            }
+                            else
+                            {
+                                FileSystem.ErrorWriteLine("Command position must be a positive number!");
+                            }
+                        }catch(Exception e)
+                        {
+                            FileSystem.ErrorWriteLine(e.Message);
+                        }
                     }
                 }
 
@@ -501,7 +527,6 @@ namespace Shell
             // Setting the indicator settings.
             s_indicator = indicatorSetting.Split(';')[1];
             s_indicatorColor = indicatorSetting.Split(';')[0];
-
         }
 
         /// <summary>
