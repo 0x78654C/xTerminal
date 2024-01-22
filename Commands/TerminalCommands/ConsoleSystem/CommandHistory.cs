@@ -1,4 +1,5 @@
 ﻿using Core;
+using Core.Commands;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "ch";
         private static string s_historyFile = GlobalVariables.historyFile;
+        private static int countCommands = 100;
 
         public void Execute(string args)
         {
@@ -35,26 +37,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
-        // We check if history file has any data in it.
-        private static bool FileHasContent(string historyFileName)
-        {
-            FileInfo fileInfo = new FileInfo(historyFileName);
-
-            if (!fileInfo.Exists)
-            {
-                Console.WriteLine("History file does not exist!");
-                return false;
-            }
-
-            if (fileInfo.Length < 0)
-            {
-                Console.WriteLine("No commands in list!");
-                return false;
-            }
-
-            return true;
-        }
-
         /// <summary>
         /// Output the commands from history.
         /// </summary>
@@ -62,7 +44,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         /// <param name="linesNumber">Number of commands to be displayed.</param>
         private static void OutputHistoryCommands(string historyFileName, int linesNumber)
         {
-            if (!FileHasContent(historyFileName))
+            if (!HistoryCommands.FileHasContent(historyFileName))
             {
                 return;
             }
@@ -94,13 +76,18 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 .Skip(lines.Length - linesNumber)
                 .Where(line => !string.IsNullOrEmpty(line))
                 .Take(linesNumber);
+
+            // Eclude line numbers that are not needed to be displayed.
+            countCommands = countCommands - linesNumber;
+
             foreach (string line in filteredLines)
             {
+                countCommands++;
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"{line}\n";
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, "--> ");
+                    FileSystem.ColorConsoleText(ConsoleColor.White, $" {countCommands} -> ");
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
                 }
             }
