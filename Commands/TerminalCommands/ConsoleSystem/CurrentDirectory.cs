@@ -1,6 +1,7 @@
 ﻿using Core;
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 
 
@@ -9,6 +10,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     /*
      Setting te current directory
      */
+    [SupportedOSPlatform("Windows")]
     public class CurrentDirectory : ITerminalCommand
     {
         private static string s_newLocation = string.Empty;
@@ -72,7 +74,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     {
                         if(s_newLocation.Contains("/"))
                         {
-                            Console.WriteLine($"Wrong path separator format!");
+                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Wrong path separator format!");
                             return;
                         }
 
