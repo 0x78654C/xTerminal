@@ -23,7 +23,7 @@ namespace Commands
                         .Cast<ITerminalCommand>()
                         .ToDictionary(command => command.Name, StringComparer.InvariantCulture);
         
-        private static readonly List<string> s_shellCommands = new List<string>() { "reboot", "logoff", "lock", "shutdown" };
+        private static readonly List<string> s_shellCommands = new List<string>() { "reboot", "logoff", "lock", "shutdown", "+" };
 
         public static ITerminalCommand GetCommand(string[] args)
         {
