@@ -394,7 +394,7 @@ namespace Shell
                             }
                         }catch(Exception e)
                         {
-                            FileSystem.ErrorWriteLine(e.Message);
+                            FileSystem.ErrorWriteLine($"Command position must be a positive number if run the + command. {e.Message}");
                         }
                     }
                 }
