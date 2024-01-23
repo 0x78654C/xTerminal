@@ -542,7 +542,8 @@ namespace Shell
 
             for (int i = 0; i < lines.Count(); i++)
             {
-                tempList.Add(lines.ElementAt(i));
+                if(!string.IsNullOrEmpty(lines.ElementAt(i)))
+                    tempList.Add(lines.ElementAt(i));
             }
 
             if (!commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory"))
