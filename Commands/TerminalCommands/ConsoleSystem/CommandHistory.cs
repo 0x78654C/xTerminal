@@ -16,7 +16,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "ch";
         private static string s_historyFile = GlobalVariables.historyFile;
-        private static int countCommands = 100;
+        private static int s_countCommands = 100;
 
         public void Execute(string args)
         {
@@ -77,17 +77,24 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 .Where(line => !string.IsNullOrEmpty(line))
                 .Take(linesNumber);
 
+
             // Eclude line numbers that are not needed to be displayed.
-            countCommands = countCommands - linesNumber;
+            bool isLineEmpty = lines.Any(l => string.IsNullOrEmpty(l));
+            var linesCount = lines.Count();
+           
+            if (linesNumber >= linesCount)
+                s_countCommands = 0;
+            else
+                s_countCommands = linesCount - linesNumber;
 
             foreach (string line in filteredLines)
             {
-                countCommands++;
+                s_countCommands++;
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"{line}\n";
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, $" {countCommands} -> ");
+                    FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_countCommands} -> ");
                     FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
                 }
             }
