@@ -61,7 +61,7 @@ namespace Shell
 
             // Creating history file if not exist
             if (!File.Exists(s_historyFile))
-                File.WriteAllText(s_historyFile, Environment.NewLine);
+                File.WriteAllText(s_historyFile, string.Empty);
 
             // Creating the Password Manager directory for storing the encrypted files.
             if (!Directory.Exists(s_passwordManagerDirectory))
@@ -338,8 +338,10 @@ namespace Shell
 
                 if (File.Exists(s_historyFile))
                 {
-                    if(!s_input.StartsWith("+"))
+                    // Don't store in history with + commands.
+                    if (!s_input.StartsWith("+"))
                         WriteHistoryCommandFile(s_historyFile, s_input);
+
                     string command = string.Empty;
                     if (File.Exists(s_aliasFile))
                     {
@@ -387,6 +389,7 @@ namespace Shell
                                 int position = Int32.Parse(cleanCommandNumebr);
                                 var historyCommand = HistoryCommands.GetHistoryCommand(s_historyFile, position).Trim();
                                 s_input = historyCommand;
+                                WriteHistoryCommandFile(s_historyFile, s_input);
                             }
                             else
                             {
@@ -537,7 +540,7 @@ namespace Shell
         private void WriteHistoryCommandFile(string historyFile, string commandInput)
         {
             int countLines = File.ReadAllLines(historyFile).Count();
-            var lines = File.ReadAllLines(historyFile).Skip(countLines - 99);
+            var lines = File.ReadAllLines(historyFile).Skip(countLines - 2000); // limited commands for 2000 for now.
             List<string> tempList = new List<string>();
 
             for (int i = 0; i < lines.Count(); i++)
