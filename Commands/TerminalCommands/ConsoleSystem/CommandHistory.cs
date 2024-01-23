@@ -16,7 +16,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "ch";
         private static string s_historyFile = GlobalVariables.historyFile;
-        private static int s_countCommands = 100;
+        private static int s_countCommands = 0;
 
         public void Execute(string args)
         {
@@ -49,11 +49,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
 
-            if (linesNumber > 100)
-            {
-                FileSystem.ErrorWriteLine("Only up to 100 commands can be displayed!");
-                return;
-            }
+            //Disable limitation on for future tests.
+            
+            //if (linesNumber > 100)
+            //{
+            //    FileSystem.ErrorWriteLine("Only up to 100 commands can be displayed!");
+            //    return;
+            //}
 
             if (linesNumber < 0)
             {
