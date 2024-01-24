@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 try
                 {
-                    File.WriteAllText(s_historyFile, Environment.NewLine);
+                    File.WriteAllText(s_historyFile, string.Empty);
                     Console.WriteLine("Command history log cleared!");
                 }
                 catch
