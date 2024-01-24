@@ -224,7 +224,7 @@ namespace Core
         public static void WarningWriteLine(object data)
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Error.WriteLine(data);
             Console.ForegroundColor = currentForeground;
         }
