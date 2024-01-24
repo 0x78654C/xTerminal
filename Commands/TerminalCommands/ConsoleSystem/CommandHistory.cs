@@ -32,7 +32,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (args.Contains(" "))
                     cmd = args.Split(' ').Skip(1).FirstOrDefault();
 
-                //Display help message.
+                // Display help message.
                 if (cmd.StartsWith("-h"))
                 {
                     Console.WriteLine(s_helpMessage);
@@ -43,7 +43,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (cmd.StartsWith("-rz"))
                 {
                     var regReadHistory = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
-                    FileSystem.WarningWriteLine($"Current history command limit size: {regReadHistory}");
+                    FileSystem.SuccessWriteLine($"Current history command limit size: {regReadHistory}");
                     return;
                 }
 
@@ -54,7 +54,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (size > 0)
                     {
                         RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize, size.ToString());
-                        FileSystem.WarningWriteLine($"History command limit size set to: {size}");
+                        FileSystem.SuccessWriteLine($"History command limit size set to: {size}");
                     }
                     else
                         FileSystem.ErrorWriteLine("You need to se size for history command limit store!");
@@ -86,14 +86,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 return;
             }
-
-            //Disable limitation on for future tests.
-
-            //if (linesNumber > 100)
-            //{
-            //    FileSystem.ErrorWriteLine("Only up to 100 commands can be displayed!");
-            //    return;
-            //}
 
             if (linesNumber < 0)
             {
