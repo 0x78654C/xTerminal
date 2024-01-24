@@ -9,7 +9,6 @@ using ProccessManage = Core.SystemTools.ProcessStart;
 using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
-using Commands.TerminalCommands.ConsoleSystem;
 using Core.Commands;
 
 namespace Shell
