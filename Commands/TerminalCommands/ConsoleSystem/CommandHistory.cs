@@ -9,7 +9,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
 {
     /*
      Outputs the stored commands in history.db file under the user profile.
-     Max numbers of output is 100. 
      */
     [SupportedOSPlatform("Windows")]
     public class CommandHistory : ITerminalCommand
@@ -23,6 +22,20 @@ namespace Commands.TerminalCommands.ConsoleSystem
             try
             {
                 string cmd = args.Split(' ').Skip(1).FirstOrDefault();
+
+                if (cmd.StartsWith("-sz"))
+                {
+                    int size = Int32.Parse(args.Split(' ').Skip(2).FirstOrDefault().Trim());
+                    if (size > 0)
+                    {
+                        RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize, size.ToString());
+                        FileSystem.WarningWriteLine($"History command limit size set to: {size}");
+                    }
+                    else
+                        FileSystem.ErrorWriteLine("You need to se size for history command limit store!");
+                    return;
+                }
+
 
                 if (Int32.TryParse(cmd, out var position))
                 {
@@ -50,7 +63,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
 
             //Disable limitation on for future tests.
-            
+
             //if (linesNumber > 100)
             //{
             //    FileSystem.ErrorWriteLine("Only up to 100 commands can be displayed!");
@@ -83,7 +96,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             // Eclude line numbers that are not needed to be displayed.
             bool isLineEmpty = lines.Any(l => string.IsNullOrEmpty(l));
             var linesCount = lines.Count();
-           
+
             if (linesNumber >= linesCount)
                 s_countCommands = 0;
             else
