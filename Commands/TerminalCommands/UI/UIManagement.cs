@@ -32,7 +32,7 @@ namespace Commands.TerminalCommands.UI
         {
             if (arg.Length == 2)
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             

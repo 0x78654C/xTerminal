@@ -31,7 +31,7 @@ namespace Commands.TerminalCommands.Network
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput = externalIP;
                 else
-                    Console.WriteLine("Your external IP address is: " + externalIP);
+                    FileSystem.SuccessWriteLine("Your external IP address is: " + externalIP);
             }
             catch { FileSystem.ErrorWriteLine("Cannot verify external IP address. Check your internet connection!"); }
         }

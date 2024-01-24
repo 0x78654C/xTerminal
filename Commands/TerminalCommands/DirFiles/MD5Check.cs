@@ -40,7 +40,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                 // Empty command info display.
                 if (arg.Length == 3)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
 
@@ -61,7 +61,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                         GlobalVariables.eventKeyFlagX = true;
                         Console.WriteLine(FileSystem.SaveFileOutput(fileSaved, s_currentDirectory, MD5DirCheckFiles(dirPath)));
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         return;
                     }
                     string dirName = FileSystem.SanitizePath(arg.SplitByText(" -d ", 1), s_currentDirectory);
@@ -78,7 +78,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                     else
                         Console.WriteLine(MD5DirCheckFiles(dirName));
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     return;
                 }
                 int argLenght = arg.Length - 4;

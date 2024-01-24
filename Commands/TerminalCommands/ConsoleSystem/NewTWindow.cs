@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.Versioning;
 using System.Windows.Forms;
+using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -20,7 +21,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             if (args.Length > 2 && !args.Contains("-u"))
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             if (args == $"{Name} -h")

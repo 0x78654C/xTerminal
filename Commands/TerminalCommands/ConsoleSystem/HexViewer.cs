@@ -29,7 +29,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 if (args.Length == 3 && !GlobalVariables.isPipeCommand)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 if (args == $"{Name} -h")

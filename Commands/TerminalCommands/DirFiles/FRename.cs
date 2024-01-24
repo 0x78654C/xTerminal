@@ -38,7 +38,7 @@ namespace Commands.TerminalCommands.DirFiles
                 if (File.Exists(fileName))
                 {
                     File.Move(fileName, newName);
-                    Console.WriteLine($"File renamed from {fileName} to {newName}");
+                    FileSystem.SuccessWriteLine($"File renamed from {fileName} to {newName}");
                     return;
                 }
 
@@ -46,7 +46,7 @@ namespace Commands.TerminalCommands.DirFiles
                 if(Directory.Exists(fileName))
                 {
                     Directory.Move(fileName, newName);
-                    Console.WriteLine($"Directory renamed from {fileName} to {newName}");
+                    FileSystem.SuccessWriteLine($"Directory renamed from {fileName} to {newName}");
                     return;
                 }
                 FileSystem.ErrorWriteLine("File/directory " + fileName + " does not exist!");

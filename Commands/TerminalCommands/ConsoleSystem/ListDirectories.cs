@@ -117,7 +117,7 @@ Commands can be canceled with CTRL+X key combination.
                     // Display directory and file information
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, true);
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     return;
                 }
 
@@ -128,7 +128,7 @@ Commands can be canceled with CTRL+X key combination.
                     // Display directory and file information
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false,true);
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     return;
                 }
 
@@ -139,7 +139,7 @@ Commands can be canceled with CTRL+X key combination.
                     // Display directory and file information
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false, false, true);
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     return;
                 }
 
@@ -159,7 +159,7 @@ Commands can be canceled with CTRL+X key combination.
                         content += $"\n\n    Search results: {s_listSearched.Count()} matches\n";
                         Console.WriteLine(FileSystem.SaveFileOutput(FileSystem.SanitizePath(saveData, s_currentDirectory), s_currentDirectory, content));
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         s_listSearched.Clear();
                         return;
                     }
@@ -170,7 +170,7 @@ Commands can be canceled with CTRL+X key combination.
                     {
                         GlobalVariables.pipeCmdOutput += $"Searching for: {searchedText}\n{string.Join("\n", s_listSearched)}\n    Search results: {s_listSearched.Count()} matches\n";
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         s_listSearched.Clear();
                     }
                     else
@@ -179,7 +179,7 @@ Commands can be canceled with CTRL+X key combination.
                         Console.WriteLine(string.Join("\n", s_listSearched));
                         Console.WriteLine($"\n    Search results: {s_listSearched.Count()} matches\n");
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         s_listSearched.Clear();
                     }
                     return;
@@ -208,7 +208,7 @@ Commands can be canceled with CTRL+X key combination.
                         GlobalVariables.eventKeyFlagX = true;
                         GetDuplicateFiles(FileSystem.SanitizePath(dirSearchIn.Trim(), s_currentDirectory), extensions, fileToSave);
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         return;
                     }
 
@@ -233,13 +233,13 @@ Commands can be canceled with CTRL+X key combination.
                         GlobalVariables.eventKeyFlagX = true;
                         GetDuplicateFiles(FileSystem.SanitizePath(searchDir, s_currentDirectory), extensions);
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         return;
                     }
                     GlobalVariables.eventKeyFlagX = true;
                     GetDuplicateFiles(s_currentDirectory, extensions);
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     return;
                 }
 
@@ -266,7 +266,7 @@ Commands can be canceled with CTRL+X key combination.
                     Console.WriteLine($"Total directories/subdirectories: {s_countDirectories}");
                     Console.WriteLine($"Total files (include subdirectories): {s_countFiles}");
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     ClearCounters();
                     return;
                 }
@@ -279,7 +279,7 @@ Commands can be canceled with CTRL+X key combination.
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, arg.ParameterAfter("-cf"), "", false);
                         Console.WriteLine($"Total files count that contains '{arg.ParameterAfter("-cf")}' (including subdirectories): {s_countFilesText}\n");
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         ClearCounters();
                         return;
                     }
@@ -293,7 +293,7 @@ Commands can be canceled with CTRL+X key combination.
                         DisplaySubDirectoryAndFileCounts(s_currentDirectory, "", arg.ParameterAfter("-cd").Trim(), false);
                         Console.WriteLine($"Total directories/subdirectories count that name contains '{arg.ParameterAfter("-cd")}': {s_countDirectoriesText}\n");
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         ClearCounters();
                     }
                     return;
@@ -313,7 +313,7 @@ Commands can be canceled with CTRL+X key combination.
                     // Display directory and file information
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false);
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                 }
 
             }
@@ -757,7 +757,7 @@ Commands can be canceled with CTRL+X key combination.
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"{text}\n";
                 else
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, text);
+                    FileSystem.SuccessWriteLine(text);
             }
             else
             {

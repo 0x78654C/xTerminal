@@ -34,7 +34,7 @@ Ping with -t can be canceled with CTRL+X key combination.
                 }
                 if (args.Length == 4 && !GlobalVariables.isPipeCommand)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 
@@ -56,7 +56,7 @@ Ping with -t can be canceled with CTRL+X key combination.
                         else
                             NetWork.PingMain(arg.ParameterAfter("ping"), pingReplays);
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
                         return;
                     }
@@ -69,7 +69,7 @@ Ping with -t can be canceled with CTRL+X key combination.
                         else
                             NetWork.PingMain(arg.ParameterAfter("ping"), 0);
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
                         return;
                     }
@@ -77,7 +77,7 @@ Ping with -t can be canceled with CTRL+X key combination.
                 GlobalVariables.eventKeyFlagX = true;
                 NetWork.PingMain(arg.ParameterAfter("ping"), 4);
                 if (GlobalVariables.eventCancelKey)
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    FileSystem.SuccessWriteLine("Command stopped!");
                 GlobalVariables.eventCancelKey = false;
             }
             catch (Exception e)

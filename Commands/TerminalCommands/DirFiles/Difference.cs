@@ -26,7 +26,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             if (args.Length == 4)
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
 
@@ -74,7 +74,7 @@ namespace Commands.TerminalCommands.DirFiles
                         {
                             if (!diff.HasDifferences)
                             {
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "There is no difference between files!");
+                                FileSystem.SuccessWriteLine("There is no difference between files!");
                                 return;
                             }
                             foreach (var line in diff.Lines)
@@ -137,7 +137,7 @@ namespace Commands.TerminalCommands.DirFiles
                         if (outData.Length > 0)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Green, FileSystem.SaveFileOutput(outFile, currentDirectory, outData));
                         else
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "There is no difference between files!");
+                            FileSystem.SuccessWriteLine("There is no difference between files!");
                     }
                     else
                     {
@@ -161,11 +161,11 @@ namespace Commands.TerminalCommands.DirFiles
                         if (outData.Length > 0)
                             FileSystem.ColorConsoleTextLine(ConsoleColor.Green, FileSystem.SaveFileOutput(outFile, currentDirectory, outData));
                         else
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "There is no difference between files!");
+                            FileSystem.SuccessWriteLine("There is no difference between files!");
                     }
                     return;
                 }
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Only two files can be compared!");
+                FileSystem.ErrorWriteLine("Only two files can be compared!");
             }
             catch (Exception e)
             {

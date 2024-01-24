@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.DirFiles
                 _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
                 if (arg.Length == 4)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
 
@@ -54,7 +54,7 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     File.WriteAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Data saved in {fileOutput}");
+                        FileSystem.SuccessWriteLine($"Data saved in {fileOutput}");
                 }
 
                 // Append data to file.
@@ -75,7 +75,7 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     File.AppendAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Data added to {fileOutput}");
+                        FileSystem.SuccessWriteLine($"Data added to {fileOutput}");
                 }
             }
             catch (Exception e)

@@ -28,7 +28,7 @@ namespace Commands.TerminalCommands.OpenAi
 
                 if (arg.Length == 4)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 if (arg == $"{Name} -h")
@@ -41,7 +41,7 @@ namespace Commands.TerminalCommands.OpenAi
                 {
                     var getConsoleKey = arg.SplitByText("-setkey ", 1).Trim();
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, getConsoleKey);
-                    Console.WriteLine("OpenAI API key is stored!");
+                    FileSystem.SuccessWriteLine("OpenAI API key is stored!");
                     return;
                 }
                 if (string.IsNullOrEmpty(apiKey))
@@ -53,7 +53,7 @@ namespace Commands.TerminalCommands.OpenAi
 
                 if (string.IsNullOrWhiteSpace(question))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "You need to provide a question!");
+                    FileSystem.ErrorWriteLine("You need to provide a question!");
                     return;
                 }
                 GetOpenAIData(question, apiKey).Wait();
@@ -72,7 +72,7 @@ namespace Commands.TerminalCommands.OpenAi
         public async Task GetOpenAIData(string question, string apiKey)
         {
             if(!GlobalVariables.isPipeCommand)
-                Console.WriteLine("Loading data from OpenAI:");
+                FileSystem.SuccessWriteLine("Loading data from OpenAI:");
             openAI = new OpenAIManage(apiKey, question.Trim());
             StringReader reader = new StringReader(await openAI.AskOpenAI());
             string line = "";

@@ -37,7 +37,7 @@ Usage of Password Manager commands:
             {
                 if (arg.Length == 3)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 if (arg == $"{Name} -h")
@@ -101,11 +101,11 @@ Usage of Password Manager commands:
                 var vaultFiles = Directory.GetFiles(GlobalVariables.passwordManagerDirectory);
                 if (vaultName.Length < 3)
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault name must be at least 3 characters long!");
+                    FileSystem.ErrorWriteLine("Vault name must be at least 3 characters long!");
                 }
                 else if (string.Join("\n", vaultFiles).Contains($"{vaultName}.x"))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} already exists!");
+                    FileSystem.ErrorWriteLine($"Vault {vaultName} already exists!");
                 }
                 else
                 {
@@ -117,22 +117,22 @@ Usage of Password Manager commands:
             s_tries = 0;
             do
             {
-                Console.WriteLine("Master Password: ");
+                FileSystem.SuccessWriteLine("Master Password: ");
                 masterPassword1 = PasswordValidator.ConvertSecureStringToString(PasswordValidator.GetHiddenConsoleInput());
                 Console.WriteLine();
-                Console.WriteLine("Confirm Master Password: ");
+                FileSystem.SuccessWriteLine("Confirm Master Password: ");
                 masterPassword2 = PasswordValidator.ConvertSecureStringToString(PasswordValidator.GetHiddenConsoleInput());
                 Console.WriteLine();
                 if (masterPassword1 != masterPassword2)
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Passwords are not the same!");
+                    FileSystem.ErrorWriteLine("Passwords are not the same!");
                 }
                 else
                 {
                     passValidation = true;
                 }
                 if (!PasswordValidator.ValidatePassword(masterPassword2))
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Password must be at least 12 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!");
+                    FileSystem.ErrorWriteLine("Password must be at least 12 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!");
                 if (CheckMaxTries())
                     return;
             } while ((masterPassword1 != masterPassword2) || !PasswordValidator.ValidatePassword(masterPassword2));
@@ -159,7 +159,7 @@ Usage of Password Manager commands:
             string vaultName = Console.ReadLine();
             if (string.IsNullOrEmpty(vaultName))
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"You must type the vault name!");
+                FileSystem.ErrorWriteLine($"You must type the vault name!");
                 return;
             }
             vaultName = vaultName.ToLower();
@@ -168,7 +168,7 @@ Usage of Password Manager commands:
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} does not exist!");
+                FileSystem.ErrorWriteLine($"Vault {vaultName} does not exist!");
                 Console.WriteLine("Enter vault name: ");
                 vaultName = Console.ReadLine();
             }
@@ -183,7 +183,7 @@ Usage of Password Manager commands:
                 }
                 return;
             }
-            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vaultName} does not exist anymore!");
+            FileSystem.ErrorWriteLine($"Vault {vaultName} does not exist anymore!");
         }
 
         /// <summary>
@@ -219,10 +219,10 @@ Usage of Password Manager commands:
             }
             if (filesCount == 0)
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "There are no vaults created!");
+                FileSystem.ErrorWriteLine("There are no vaults created!");
                 return;
             }
-            Console.WriteLine("List of current vaults:");
+            FileSystem.SuccessWriteLine("List of current vaults:");
             Console.WriteLine(outFiles + "----------------");
         }
 
@@ -249,15 +249,15 @@ Usage of Password Manager commands:
         /// </summary>
         private static void AddPasswords()
         {
-            Console.WriteLine("Enter vault name:");
+            FileSystem.SuccessWriteLine("Enter vault name:");
             string vault = Console.ReadLine();
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
-                Console.WriteLine("Enter vault name:");
+                FileSystem.ErrorWriteLine("Vault does not exist!");
+                FileSystem.SuccessWriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
             s_tries = 0;
@@ -271,14 +271,14 @@ Usage of Password Manager commands:
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
                 return;
             }
-            Console.WriteLine("Enter application name:");
+            FileSystem.SuccessWriteLine("Enter application name:");
             string application = Console.ReadLine();
             while (application.Length < 3)
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "The length of application name should be at least 3 characters!");
-                Console.WriteLine("Enter application name:");
+                FileSystem.ErrorWriteLine("The length of application name should be at least 3 characters!");
+                FileSystem.SuccessWriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
             s_tries = 0;
@@ -288,7 +288,7 @@ Usage of Password Manager commands:
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "The length of account name should be at least 3 characters!");
+                FileSystem.ErrorWriteLine("The length of account name should be at least 3 characters!");
                 WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
                 account = Console.ReadLine();
             }
@@ -303,7 +303,7 @@ Usage of Password Manager commands:
                     {
                         if (outJson["site/application"] == application && outJson["account"] == account)
                         {
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault already contains {account} account in {application} application!");
+                            FileSystem.ErrorWriteLine($"Vault already contains {account} account in {application} application!");
                             return;
                         }
                     }
@@ -328,7 +328,7 @@ Usage of Password Manager commands:
             }
             else
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vault} does not exist!");
+                FileSystem.ErrorWriteLine($"Vault {vault} does not exist!");
             }
         }
 
@@ -345,10 +345,10 @@ Usage of Password Manager commands:
             }
             if (string.IsNullOrEmpty(decryptVault))
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "There is no data saved in this vault!");
+                FileSystem.ErrorWriteLine("There is no data saved in this vault!");
                 return;
             }
-            Console.WriteLine("Enter application name (leave blank for all applications):");
+            FileSystem.SuccessWriteLine("Enter application name (leave blank for all applications):");
             string application = Console.ReadLine();
             if (application.Length > 0)
             {
@@ -356,7 +356,7 @@ Usage of Password Manager commands:
             }
             else
             {
-                Console.WriteLine("This is your decrypted data for the entire vault:");
+                FileSystem.SuccessWriteLine("This is your decrypted data for the entire vault:");
             }
             using (var reader = new StringReader(decryptVault))
             {
@@ -392,8 +392,8 @@ Usage of Password Manager commands:
             {
                 if (CheckMaxTries())
                     return string.Empty;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
-                Console.WriteLine("Enter vault name:");
+                FileSystem.ErrorWriteLine("Vault does not exist!");
+                FileSystem.SuccessWriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
             s_tries = 0;
@@ -412,15 +412,15 @@ Usage of Password Manager commands:
         {
             List<string> listApps = new List<string>();
             bool accountCheck = false;
-            Console.WriteLine("Enter vault name:");
+            FileSystem.SuccessWriteLine("Enter vault name:");
             string vault = Console.ReadLine();
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
-                Console.WriteLine("Enter vault name:");
+                FileSystem.ErrorWriteLine("Vault does not exist!");
+                FileSystem.SuccessWriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
             s_tries = 0;
@@ -434,14 +434,14 @@ Usage of Password Manager commands:
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
                 return;
             }
-            Console.WriteLine("Enter application name:");
+            FileSystem.SuccessWriteLine("Enter application name:");
             string application = Console.ReadLine();
             while (string.IsNullOrEmpty(application))
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Application name should not be empty!");
-                Console.WriteLine("Enter application name:");
+                FileSystem.ErrorWriteLine("Application name should not be empty!");
+                FileSystem.SuccessWriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
             s_tries = 0;
@@ -449,8 +449,8 @@ Usage of Password Manager commands:
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Application {application} does not exist!");
-                Console.WriteLine("Enter application name:");
+                FileSystem.ErrorWriteLine($"Application {application} does not exist!");
+                FileSystem.SuccessWriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
             s_tries = 0;
@@ -460,7 +460,7 @@ Usage of Password Manager commands:
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Account name should not be empty!");
+                FileSystem.ErrorWriteLine("Account name should not be empty!");
                 WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
                 accountName = Console.ReadLine();
             }
@@ -495,10 +495,10 @@ Usage of Password Manager commands:
                         Console.Write(" was deleted!" + Environment.NewLine);
                         return;
                     }
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Account {accountName} does not exist!");
+                    FileSystem.SuccessWriteLine($"Account {accountName} does not exist!");
                     return;
                 }
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vault} does not exist!");
+                FileSystem.SuccessWriteLine($"Vault {vault} does not exist!");
             }
         }
 
@@ -510,15 +510,15 @@ Usage of Password Manager commands:
         {
             List<string> listApps = new List<string>();
             bool accountCheck = false;
-            Console.WriteLine("Enter vault name:");
+            FileSystem.SuccessWriteLine("Enter vault name:");
             string vault = Console.ReadLine();
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Vault does not exist!");
-                Console.WriteLine("Enter vault name:");
+                FileSystem.ErrorWriteLine("Vault does not exist!");
+                FileSystem.SuccessWriteLine("Enter vault name:");
                 vault = Console.ReadLine();
             }
             s_tries = 0;
@@ -532,14 +532,14 @@ Usage of Password Manager commands:
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
                 return;
             }
-            Console.WriteLine("Enter application name:");
+            FileSystem.SuccessWriteLine("Enter application name:");
             string application = Console.ReadLine();
             while (string.IsNullOrEmpty(application))
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Application name should not be empty!");
-                Console.WriteLine("Enter application name:");
+                FileSystem.ErrorWriteLine("Application name should not be empty!");
+                FileSystem.SuccessWriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
             s_tries = 0;
@@ -547,8 +547,8 @@ Usage of Password Manager commands:
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Application {application} does not exist!");
-                Console.WriteLine("Enter application name:");
+                FileSystem.ErrorWriteLine($"Application {application} does not exist!");
+                FileSystem.SuccessWriteLine("Enter application name:");
                 application = Console.ReadLine();
             }
             s_tries = 0;
@@ -558,7 +558,7 @@ Usage of Password Manager commands:
             {
                 if (CheckMaxTries())
                     return;
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Account name should not be empty!");
+                FileSystem.ErrorWriteLine("Account name should not be empty!");
                 WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
                 accountName = Console.ReadLine();
             }
@@ -601,10 +601,10 @@ Usage of Password Manager commands:
                         WordColorInLine("\n[*]Password for ", accountName, " was updated!\n", ConsoleColor.Green);
                         return;
                     }
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Account {accountName} does not exist!");
+                    FileSystem.ErrorWriteLine($"Account {accountName} does not exist!");
                     return;
                 }
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Vault {vault} does not exist!");
+                FileSystem.ErrorWriteLine($"Vault {vault} does not exist!");
             }
         }
 

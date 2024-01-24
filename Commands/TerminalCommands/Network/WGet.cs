@@ -49,7 +49,7 @@ namespace Commands.TerminalCommands.Network
 
             if (arg.Length == 4 && !GlobalVariables.isPipeCommand)
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
 

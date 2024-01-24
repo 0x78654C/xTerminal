@@ -42,7 +42,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 if (args.Length == 5)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 if (args == $"{Name} -h")
@@ -55,7 +55,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 if (!s_paramList.Contains(args.Split().First()))
                 {
-                    Console.WriteLine("This parameter does not exist! Use -h for help.");
+                    FileSystem.SuccessWriteLine("This parameter does not exist! Use -h for help.");
                     return;
                 }
                 if (args.StartsWith("-add"))
@@ -92,23 +92,23 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 string commandName = commandAlias.Split('|')[0].Trim();
                 if (commandName.Length < 2)
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command name should be at least 2 characters long!");
+                    FileSystem.ErrorWriteLine("Command name should be at least 2 characters long!");
                     return;
                 }
 
                 if (commandName.Length > 14)
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command name should be maxim 14 characters!");
+                    FileSystem.ErrorWriteLine("Command name should be maxim 14 characters!");
                     return;
                 }
                 string command = ParseAlias(commandAlias);
                 if (File.Exists(aliasJsonFile) && CheckCommandName(s_aliasFile, commandName))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{commandName} alias command already exist!");
+                    FileSystem.ErrorWriteLine($"{commandName} alias command already exist!");
                     return;
                 }
                 Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command });
-                Console.WriteLine($"Alias command '{commandName}' was added!");
+                FileSystem.SuccessWriteLine($"Alias command '{commandName}' was added!");
             }
             else
                 FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
@@ -136,12 +136,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             if (!CheckCommandName(aliasJsonFile, delAliasCommand) && updateFlag)
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{delAliasCommand} does not exist!");
+                FileSystem.ErrorWriteLine($"{delAliasCommand} does not exist!");
                 return;
             }
             Json.DeleteJsonData<AliasC>(s_aliasFile, f => f.Where(t => t.CommandName == delAliasCommand));
             if (updateFlag)
-                Console.WriteLine($"Alias command '{delAliasCommand}' was deleted!");
+                FileSystem.SuccessWriteLine($"Alias command '{delAliasCommand}' was deleted!");
         }
 
         /// <summary>
@@ -163,12 +163,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 string command = updateAliasCommand.Split('|')[1].Trim();
                 if (!CheckCommandName(aliasJsonFile, commandName))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{commandName} does not exist!");
+                    FileSystem.SuccessWriteLine($"{commandName} does not exist!");
                     return;
                 }
                 DeleteCommand(commandName,aliasJsonFile, false);
                 Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command });
-                Console.WriteLine($"Alias command '{commandName}' was updated!");
+                FileSystem.SuccessWriteLine($"Alias command '{commandName}' was updated!");
             }
             else
                 FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
@@ -211,7 +211,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             if (File.Exists(aliasJsonFile))
             {
                 File.Delete(aliasJsonFile);
-                Console.WriteLine("Alias commands ware cleared!");
+                FileSystem.SuccessWriteLine("Alias commands ware cleared!");
             }
         }
 

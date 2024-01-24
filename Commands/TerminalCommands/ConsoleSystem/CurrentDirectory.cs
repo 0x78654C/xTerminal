@@ -41,7 +41,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
-                        Console.WriteLine($"Directory '{s_newLocation}'\\ does not exist!");
+                        FileSystem.ErrorWriteLine($"Directory '{s_newLocation}'\\ does not exist!");
                     }
                     else if (s_newLocation == "..")
                     {
@@ -74,7 +74,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     {
                         if(s_newLocation.Contains("/"))
                         {
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Wrong path separator format!");
+                            FileSystem.ErrorWriteLine($"Wrong path separator format!");
                             return;
                         }
 
@@ -92,7 +92,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
-                        Console.WriteLine($"Directory '{pathCombine}' does not exist!");
+                        FileSystem.ErrorWriteLine($"Directory '{pathCombine}' does not exist!");
                     }
                     return;
                 }

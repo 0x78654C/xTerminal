@@ -19,7 +19,7 @@ namespace Commands.TerminalCommands.Network
 
             if (args.Trim().Length == 3)
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             if (args == $"{Name} -h")
