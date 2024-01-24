@@ -12,11 +12,13 @@ namespace Core
     public class GlobalVariables
     {
         private static string process = Process.GetCurrentProcess().Id.ToString();
-        public static string regKeyName = "xTerminal";
+        public static string regKeyName { get; set; } = "xTerminal";
         public static string regCurrentEitor = "CurrentEditor";
         public static string regUI = "UI";
         public static string regCportTimeOut = "cportTimeOut";
         public static string regOpenAI_APIKey = "OpenAI_APIKey";
+        public static string regHistoryLimitSize = "historyLimitSize";
+        public static int historyLimitSize { get; set; } = 2000;
         public static string commandOut { get; set; }
         public static string version { get; set; }
         public static string aliasParameters = string.Empty;
