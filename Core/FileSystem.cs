@@ -205,23 +205,12 @@ namespace Core
             Console.ForegroundColor = currentForeground;
         }
 
-        /// <summary>
-        /// Wirte succes message in green.
-        /// </summary>
-        /// <param name="data"></param>
-        public static void SuccessWriteLine(object data)
-        {
-            ConsoleColor currentForeground = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.Error.WriteLine(data);
-            Console.ForegroundColor = currentForeground;
-        }
 
         /// <summary>
         /// Write warning message in yellow.
         /// </summary>
         /// <param name="data"></param>
-        public static void WarningWriteLine(object data)
+        public static void SuccessWriteLine(object data)
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Yellow;
