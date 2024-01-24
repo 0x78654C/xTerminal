@@ -35,6 +35,7 @@ namespace Shell
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
+        private static string s_historyLimitSize = "2000";
         private static int s_ctrlKey = 1;
         private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
@@ -95,6 +96,14 @@ namespace Shell
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
             }
+
+            // Reading history limit size.
+            s_historyLimitSize = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
+            if (s_historyLimitSize == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize, GlobalVariables.historyLimitSize.ToString());
+            }
+
 
             // Title display application name, version + current directory.
             Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
@@ -539,8 +548,12 @@ namespace Shell
         /// <param name="commandInput"></param
         private void WriteHistoryCommandFile(string historyFile, string commandInput)
         {
+            s_historyLimitSize  = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
+            int historyLimitSize = GlobalVariables.historyLimitSize;
+            if (s_historyLimitSize != "")
+                 historyLimitSize = Int32.Parse(s_historyLimitSize);
             int countLines = File.ReadAllLines(historyFile).Count();
-            var lines = File.ReadAllLines(historyFile).Skip(countLines - 2000); // limited commands for 2000 for now.
+            var lines = File.ReadAllLines(historyFile).Skip(countLines - historyLimitSize);
             List<string> tempList = new List<string>();
 
             for (int i = 0; i < lines.Count(); i++)
