@@ -35,7 +35,7 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
 
                 if (args.Length == 4 && !GlobalVariables.isPipeCommand)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
 

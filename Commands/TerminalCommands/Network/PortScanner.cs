@@ -68,7 +68,7 @@ namespace Commands.TerminalCommands.Network
 
                 if (args.Length == 5)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 if (args == $"{Name} -h")
@@ -84,7 +84,7 @@ namespace Commands.TerminalCommands.Network
                 {
                     if (!NetWork.PingHost(ipAddress))
                     {
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"{ipAddress} is offline");
+                        FileSystem.SuccessWriteLine($"{ipAddress} is offline");
                         return;
                     }
                 }
@@ -97,14 +97,14 @@ namespace Commands.TerminalCommands.Network
                     int maxPort = Int32.Parse(portsRange[1].Trim());
                     PortScan.RunPortScan(ipAddress, minPort, maxPort, s_timeOut);
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     GlobalVariables.eventCancelKey = false;
                     return;
                 }
                 int port = Int32.Parse(portData.Trim());
                 PortScan.RunPortScan(ipAddress, port, port, s_timeOut);
                 if (GlobalVariables.eventCancelKey)
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    FileSystem.SuccessWriteLine("Command stopped!");
                 GlobalVariables.eventCancelKey = false;
             }
             catch (Exception e)

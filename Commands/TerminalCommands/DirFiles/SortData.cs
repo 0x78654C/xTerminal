@@ -46,7 +46,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 DescendDataOutput(arg);
 
                 if (GlobalVariables.eventCancelKey)
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    FileSystem.SuccessWriteLine("Command stopped!");
             }
             catch (Exception e)
             {

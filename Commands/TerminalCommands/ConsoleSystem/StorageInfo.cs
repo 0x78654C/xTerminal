@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     string pc = Console.ReadLine();
                     if (!ping.PingHost(pc))
                     {
-                        Console.WriteLine($"{pc} is offline!");
+                        FileSystem.ErrorWriteLine($"{pc} is offline!");
                         return;
                     }
                     string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\" + pc + @"\root\cimv2");

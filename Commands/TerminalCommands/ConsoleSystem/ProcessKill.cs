@@ -25,7 +25,7 @@ Kills a running process by name or id. Usage:
             {
                 if (arg.Length == 3)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
 
@@ -96,9 +96,9 @@ Kills a running process by name or id. Usage:
         private void MessageProcessKill(string processName, bool entireProcessTree)
         {
             if (entireProcessTree)
-                Console.WriteLine($"Process tree killed for: {processName}");
+                FileSystem.SuccessWriteLine($"Process tree killed for: {processName}");
             else
-                Console.WriteLine($"Process killed: {processName}");
+                FileSystem.SuccessWriteLine($"Process killed: {processName}");
         }
     }
 }

@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace Shell
 {
-
+    [SupportedOSPlatform("windows")]
     class Program
     {
         private static string s_terminalWorkDirectory = GlobalVariables.terminalWorkDirectory;

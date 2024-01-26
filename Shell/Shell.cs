@@ -9,6 +9,7 @@ using ProccessManage = Core.SystemTools.ProcessStart;
 using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
+using Core.Commands;
 
 namespace Shell
 {
@@ -33,6 +34,7 @@ namespace Shell
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
+        private static string s_historyLimitSize = "2000";
         private static int s_ctrlKey = 1;
         private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
@@ -57,15 +59,15 @@ namespace Shell
             if (!Directory.Exists(s_historyFilePath))
                 Directory.CreateDirectory(s_historyFilePath);
 
-            //creating history file if not exist
+            // Creating history file if not exist
             if (!File.Exists(s_historyFile))
-                File.WriteAllText(s_historyFile, Environment.NewLine);
+                File.WriteAllText(s_historyFile, string.Empty);
 
             // Creating the Password Manager directory for storing the encrypted files.
             if (!Directory.Exists(s_passwordManagerDirectory))
                 Directory.CreateDirectory(s_passwordManagerDirectory);
 
-            //Store current directory with current process id.
+            // Store current directory with current process id.
             StoreCurrentDirectory();
 
             // Creating the addon directory for C# code script scomands if not exist.
@@ -93,6 +95,14 @@ namespace Shell
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
             }
+
+            // Reading history limit size.
+            s_historyLimitSize = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
+            if (s_historyLimitSize == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize, GlobalVariables.historyLimitSize.ToString());
+            }
+
 
             // Title display application name, version + current directory.
             Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
@@ -146,7 +156,8 @@ namespace Shell
                     GlobalVariables.aliasRunFlag = false;
                     GlobalVariables.aliasInParameter = string.Empty;
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
                 GlobalVariables.pipeCmdOutput = string.Empty;
@@ -335,7 +346,10 @@ namespace Shell
 
                 if (File.Exists(s_historyFile))
                 {
-                    WriteHistoryCommandFile(s_historyFile, s_input);
+                    // Don't store in history with + commands.
+                    if (!s_input.StartsWith("+"))
+                        WriteHistoryCommandFile(s_historyFile, s_input);
+
                     string command = string.Empty;
                     if (File.Exists(s_aliasFile))
                     {
@@ -370,6 +384,29 @@ namespace Shell
                     else if (s_input.StartsWith("ps") && !command.StartsWith("ps"))
                     {
                         ProccessManage.Execute(s_input, s_input);
+                    }
+                    // Run commands from history
+                    else if (s_input.StartsWith("+"))
+                    {
+                        var cleanCommandNumebr = s_input.Replace("+", "").Trim();
+                        try
+                        {
+                            bool isDigit = Char.IsDigit(cleanCommandNumebr.ToCharArray()[0]);
+                            if (isDigit)
+                            {
+                                int position = Int32.Parse(cleanCommandNumebr);
+                                var historyCommand = HistoryCommands.GetHistoryCommand(s_historyFile, position).Trim();
+                                s_input = historyCommand;
+                                WriteHistoryCommandFile(s_historyFile, s_input);
+                            }
+                            else
+                            {
+                                FileSystem.ErrorWriteLine("Command position must be a positive number!");
+                            }
+                        }catch(Exception e)
+                        {
+                            FileSystem.ErrorWriteLine($"Command position must be a positive number if run the + command. {e.Message}");
+                        }
                     }
                 }
 
@@ -501,7 +538,6 @@ namespace Shell
             // Setting the indicator settings.
             s_indicator = indicatorSetting.Split(';')[1];
             s_indicatorColor = indicatorSetting.Split(';')[0];
-
         }
 
         /// <summary>
@@ -511,13 +547,18 @@ namespace Shell
         /// <param name="commandInput"></param
         private void WriteHistoryCommandFile(string historyFile, string commandInput)
         {
+            s_historyLimitSize  = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
+            int historyLimitSize = GlobalVariables.historyLimitSize;
+            if (s_historyLimitSize != "")
+                 historyLimitSize = Int32.Parse(s_historyLimitSize);
             int countLines = File.ReadAllLines(historyFile).Count();
-            var lines = File.ReadAllLines(historyFile).Skip(countLines - 99);
+            var lines = File.ReadAllLines(historyFile).Skip(countLines - historyLimitSize);
             List<string> tempList = new List<string>();
 
             for (int i = 0; i < lines.Count(); i++)
             {
-                tempList.Add(lines.ElementAt(i));
+                if(!string.IsNullOrEmpty(lines.ElementAt(i)))
+                    tempList.Add(lines.ElementAt(i));
             }
 
             if (!commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory"))

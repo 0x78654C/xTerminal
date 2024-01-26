@@ -32,7 +32,7 @@ Both examples can be used with -we parameter.
                                 File.ReadAllText(GlobalVariables.currentDirectory);
                 if (args.Length == 2)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                 int argsLength = args.Length - 3;

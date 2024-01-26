@@ -52,7 +52,7 @@ namespace Commands.TerminalCommands.Roslyn
             _addonDir = GlobalVariables.addonDirectory;
             if (args.Length == 1)
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             string param = string.Empty;
@@ -130,7 +130,7 @@ namespace Commands.TerminalCommands.Roslyn
                     if (Path.GetFileName(file) == fileName + ".x")
                     {
                         File.Delete(file);
-                        Console.WriteLine($"Deleted Add-on: {fileName}");
+                        FileSystem.SuccessWriteLine($"Deleted Add-on: {fileName}");
                     }
                 }
 
@@ -179,7 +179,7 @@ namespace Commands.TerminalCommands.Roslyn
                     string fileContent = $"//D:{description}" + Environment.NewLine;
                     fileContent += stringReader.ReadToEnd();
                     File.WriteAllText(addonDir + $"\\{command}.x", fileContent);
-                    Console.WriteLine($"Add-on '{command}' added!");
+                    FileSystem.SuccessWriteLine($"Add-on '{command}' added!");
                 }
             }
             catch (Exception e)
@@ -196,7 +196,7 @@ namespace Commands.TerminalCommands.Roslyn
                 ParseCode(addonDir, command);
                 if (_commandCheck)
                 {
-                    Console.WriteLine($"The following Add-on does not exist: {command}");
+                    FileSystem.ErrorWriteLine($"The following Add-on does not exist: {command}");
                     _commandCheck = false;
                     return;
                 }

@@ -62,9 +62,16 @@ This is the full list of commands that can be used in xTerminal:
                    -cd : Counts directories from current directory and subdirectories with name containing a specific text.
                          Example: ls -cd <search_text>
                    -ct : Display creation date time of files and folders from current directory.
+                   -la : Displays last access date time of files and folders from current directory.
+                   -lw : Displays last write date time of files and folders from current directory.
                    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-    ch        -- Displays a list of previous commands typed in terminal. Ex.: ch 10 -> displays last 10 commands used. 
+    ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
+                    For display the last X commands that was used: ch x(numbers of commands to be displayed) 
+                   -h   : Displays this message.
+                   -sz  : Set the limit of commands that can be stored in history. Default set is 2000.
+                          Example: ch -sz 1000
+                   -rz  : Read the limit of commands that can be stored in history. 
     chistory  -- Clears the current history of commands!
     ./        -- Starts an application. Ex.: ./ <file_name> OR ./ <file_name> -param <file_paramters>.
                  Can be used with the following parameters:
@@ -313,6 +320,7 @@ namespace Test_Code
    }
 }
 ```
+Now you can use Top Level Statement too.
 
 ## Usage of the Password Manager:
 

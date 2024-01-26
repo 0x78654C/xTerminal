@@ -33,7 +33,7 @@ namespace Core.SystemTools
             {
                 if (!File.Exists(_filePath))
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"File does not exist: {_filePath}");
+                    FileSystem.SuccessWriteLine($"File does not exist: {_filePath}");
                     return;
                 }
 
@@ -50,7 +50,7 @@ namespace Core.SystemTools
                 for (int currentWrite = 0; currentWrite < _writePasses; currentWrite++)
                 {
                     input.Position = 0;
-                    Console.WriteLine($"Shred pass: {currentWrite + 1}");
+                    FileSystem.SuccessWriteLine($"Shred pass: {currentWrite + 1}");
 
                     for (int writtenSector = 0; writtenSector < sectors; writtenSector++)
                     {
@@ -67,7 +67,7 @@ namespace Core.SystemTools
                 File.SetLastWriteTime(_filePath, dateTime);
                 File.SetLastAccessTime(_filePath, dateTime);
                 File.Delete(_filePath);
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Green, "File shred completed!");
+                FileSystem.SuccessWriteLine("File shred completed!");
             }
             catch (UnauthorizedAccessException)
             {

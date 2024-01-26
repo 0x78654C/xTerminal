@@ -22,7 +22,7 @@ namespace Commands.TerminalCommands.DirFiles
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             if (args.Length == 3 && !GlobalVariables.isPipeCommand)
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             string param = args.Split(' ').ParameterAfter("del");
@@ -95,13 +95,13 @@ namespace Commands.TerminalCommands.DirFiles
                 {
                     var dir = new DirectoryInfo(input);
                     RecursiveDeleteDir(dir);
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Directory {input} deleted!");
+                    FileSystem.SuccessWriteLine($"Directory {input} deleted!");
                 }
                 else
                 {
                     File.SetAttributes(input, FileAttributes.Normal);
                     File.Delete(input);
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"File {input} deleted!");
+                    FileSystem.SuccessWriteLine($"File {input} deleted!");
                 }
             }
             catch (Exception e)

@@ -61,7 +61,7 @@ Commands can be canceled with CTRL+X key combination.
 
                 if (arg.Length == 3 && !arg.Contains("-lc") && !GlobalVariables.isPipeCommand)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
 
@@ -84,9 +84,9 @@ Commands can be canceled with CTRL+X key combination.
                         int totalLinesCount = Core.Commands.CatCommand.LineCounts(s_currentDirectory);
                         Core.Commands.CatCommand.ClearCounter();
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
-                        Console.WriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
+                        FileSystem.SuccessWriteLine($"Total lines in all files(without empty lines): {totalLinesCount}");
                         return;
                     }
 
@@ -120,13 +120,13 @@ Commands can be canceled with CTRL+X key combination.
                         GlobalVariables.eventKeyFlagX = true;
                         Core.Commands.CatCommand.ConcatenateFiles(files, outputFile, s_currentDirectory);
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
                         string outFileData = File.ReadAllText(outputFile);
                         if (outFileData.Length > 0)
-                            Console.WriteLine($"Data was saved to: {outputFile}");
+                            FileSystem.SuccessWriteLine($"Data was saved to: {outputFile}");
                         else
-                            Console.WriteLine("No files were concatenated!");
+                            FileSystem.SuccessWriteLine("No files were concatenated!");
                         break;
                     case "-n":
                         string lineCounter = arg.Split(' ')[1];
@@ -142,7 +142,7 @@ Commands can be canceled with CTRL+X key combination.
                             var dataPipe = GlobalVariables.pipeCmdOutput;
                             Core.Commands.CatCommand.OutputFirstLinesFromString(dataPipe, lines);
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
                         else
@@ -150,7 +150,7 @@ Commands can be canceled with CTRL+X key combination.
                             string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
                             Core.Commands.CatCommand.OutputFirtsLines(filePath, lines);
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
                         break;
@@ -166,7 +166,7 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             Core.Commands.CatCommand.OutputLinesRange(GlobalVariables.pipeCmdOutput, linesRange);
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
                         else
@@ -175,7 +175,7 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             Core.Commands.CatCommand.OutputLinesRange(pathFile, linesRange);
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
                         break;
@@ -191,7 +191,7 @@ Commands can be canceled with CTRL+X key combination.
                                 Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
 
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
                         else
@@ -201,7 +201,7 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
                         break;
@@ -237,7 +237,7 @@ Commands can be canceled with CTRL+X key combination.
                             Console.WriteLine(s_output);
 
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
                         break;
                     case "-sao":
@@ -258,7 +258,7 @@ Commands can be canceled with CTRL+X key combination.
                             startMessage = $"---Searching in files containing '{fileSearchIn}' in name---\n\n";
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true, fileSearchIn);
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
                         else
@@ -266,13 +266,13 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             s_output = Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(' '), saveToFile, true);
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                         }
 
                         if (string.IsNullOrWhiteSpace(s_output))
                         {
-                            Console.WriteLine("No file names contain that text!");
+                            FileSystem.SuccessWriteLine("No file names contain that text!");
                         }
                         else
                         {
@@ -288,7 +288,7 @@ Commands can be canceled with CTRL+X key combination.
                                 GlobalVariables.eventKeyFlagX = true;
                                 Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, saveToFile));
                                 if (GlobalVariables.eventCancelKey)
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                    FileSystem.SuccessWriteLine("Command stopped!");
                                 GlobalVariables.eventCancelKey = false;
                             }
                             else
@@ -299,7 +299,7 @@ Commands can be canceled with CTRL+X key combination.
                                 GlobalVariables.eventKeyFlagX = true;
                                 Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
                                 if (GlobalVariables.eventCancelKey)
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                    FileSystem.SuccessWriteLine("Command stopped!");
                                 GlobalVariables.eventCancelKey = false;
                             }
                             break;
@@ -314,7 +314,7 @@ Commands can be canceled with CTRL+X key combination.
                         else
                             Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false));
                         if (GlobalVariables.eventCancelKey)
-                            FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                            FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
                         break;
                     case "-smo":
@@ -325,7 +325,7 @@ Commands can be canceled with CTRL+X key combination.
                             GlobalVariables.eventKeyFlagX = true;
                             Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), saveToFile, false));
                             if (GlobalVariables.eventCancelKey)
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
                             break;
                         }
@@ -338,9 +338,9 @@ Commands can be canceled with CTRL+X key combination.
                                 int totalLinesCount = Core.Commands.CatCommand.LineCountsName(s_currentDirectory, fileName);
                                 Core.Commands.CatCommand.ClearCounter();
                                 if (GlobalVariables.eventCancelKey)
-                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                                    FileSystem.SuccessWriteLine("Command stopped!");
                                 GlobalVariables.eventCancelKey = false;
-                                Console.WriteLine($"Total lines in files that name contains '{fileName}' (without empty lines): {totalLinesCount}");
+                                FileSystem.SuccessWriteLine($"Total lines in files that name contains '{fileName}' (without empty lines): {totalLinesCount}");
                             }
                             catch (Exception e)
                             {

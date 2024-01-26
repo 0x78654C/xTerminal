@@ -23,7 +23,7 @@ namespace Commands.TerminalCommands.DirFiles
                     try
                     {
                         Directory.CreateDirectory(input);
-                        Console.WriteLine($"Directory {input} is created!");
+                        FileSystem.SuccessWriteLine($"Directory {input} is created!");
                     }
                     catch (Exception)
                     {
@@ -35,7 +35,7 @@ namespace Commands.TerminalCommands.DirFiles
                     try
                     {
                         Directory.CreateDirectory(locinput);
-                        Console.WriteLine($"Directory {locinput} is created!");
+                        FileSystem.SuccessWriteLine($"Directory {locinput} is created!");
                     }
                     catch (Exception)
                     {

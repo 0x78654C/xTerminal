@@ -40,7 +40,7 @@ namespace Commands.TerminalCommands.DirFiles
                 if (File.Exists(set))
                 {
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regCurrentEitor, set);
-                    Console.WriteLine("Your New editor is: " + set);
+                    FileSystem.SuccessWriteLine("Your New editor is: " + set);
                     return;
                 }
                 FileSystem.ErrorWriteLine($"File {set} does not exist!");
@@ -51,7 +51,7 @@ namespace Commands.TerminalCommands.DirFiles
                 file = FileSystem.SanitizePath(file, dlocation);
                 if (string.IsNullOrEmpty(file))
                 {
-                    Console.WriteLine("You must type name of the file to be edited!");
+                    FileSystem.ErrorWriteLine("You must type name of the file to be edited!");
                     return;
                 }
                 ProcessCall(file, File.Exists(cEditor) ? cEditor : "notepad");

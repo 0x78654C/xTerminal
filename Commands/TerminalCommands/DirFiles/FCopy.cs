@@ -65,8 +65,7 @@ namespace Commands.TerminalCommands.DirFiles
                 }
                 else
                 {
-                    FileSystem.ErrorWriteLine(x.Message);
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"\nUse -h param for {Name} command usage!");
+                    FileSystem.ErrorWriteLine($"{x.Message}\nUse -h param for {Name} command usage!");
                 }
             }
         }
@@ -87,7 +86,7 @@ namespace Commands.TerminalCommands.DirFiles
 
             if (param.Length == 5)
             {
-                Console.WriteLine($"Use -h param for {Name} command usage!");
+                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
             var currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
@@ -151,7 +150,7 @@ namespace Commands.TerminalCommands.DirFiles
             }
             else
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, $"Destination file '{destinationFile}' already exist!\nDo you want to copy with new file name? Yes[Y], No[N], Cancel[C]");
+                FileSystem.SuccessWriteLine($"Destination file '{destinationFile}' already exist!\nDo you want to copy with new file name? Yes[Y], No[N], Cancel[C]");
                 var consoleInput = Console.ReadLine();
                 if (consoleInput.Trim().ToLower() == "y")
                 {
@@ -188,7 +187,7 @@ namespace Commands.TerminalCommands.DirFiles
             {
                 if (GlobalVariables.eventCancelKey)
                 {
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    FileSystem.SuccessWriteLine("Command stopped!");
                     break;
                 }
 

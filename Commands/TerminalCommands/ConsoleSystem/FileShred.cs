@@ -22,7 +22,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 if (args.Length == 5 && !GlobalVariables.isPipeCommand)
                 {
-                    Console.WriteLine($"Use -h param for {Name} command usage!");
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
                  

@@ -41,7 +41,7 @@ Command can be canceled with CTRL+X key combination.
                 _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
                 if (arg == Name)
                 {
-                    Console.WriteLine("You need to provide a text for search!");
+                    FileSystem.ErrorWriteLine("You need to provide a text for search!");
                     return;
                 }
 
@@ -77,21 +77,21 @@ Command can be canceled with CTRL+X key combination.
                     outputFile = FileSystem.SanitizePath(outputFile, _currentLocation);
                     File.WriteAllText(outputFile, "");
                     string param = arg.SplitByText(" -o ", 0);
-                    Console.WriteLine($"Searching for: {param}" + Environment.NewLine);
+                    FileSystem.SuccessWriteLine($"Searching for: {param}" + Environment.NewLine);
                     GlobalVariables.eventKeyFlagX = true;
                     SearchFile(_currentLocation, param, outputFile, true, action);
                     if (GlobalVariables.eventCancelKey)
-                        FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                        FileSystem.SuccessWriteLine("Command stopped!");
                     GlobalVariables.eventCancelKey = false;
-                    Console.WriteLine($"Data saved in {outputFile}");
+                    FileSystem.SuccessWriteLine($"Data saved in {outputFile}");
                     return;
                 }
                 if(!GlobalVariables.isPipeCommand)
-                    Console.WriteLine($"Searching for: {arg}" + Environment.NewLine);
+                    FileSystem.SuccessWriteLine($"Searching for: {arg}" + Environment.NewLine);
                 GlobalVariables.eventKeyFlagX = true;
                 SearchFile(_currentLocation, arg, "", false, action);
                 if (GlobalVariables.eventCancelKey)
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, "Command stopped!");
+                    FileSystem.SuccessWriteLine("Command stopped!");
                 GlobalVariables.eventCancelKey = false;
             }
             catch (Exception e)

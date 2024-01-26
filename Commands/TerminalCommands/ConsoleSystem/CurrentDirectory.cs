@@ -1,6 +1,7 @@
 ﻿using Core;
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 
 
@@ -9,6 +10,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     /*
      Setting te current directory
      */
+    [SupportedOSPlatform("Windows")]
     public class CurrentDirectory : ITerminalCommand
     {
         private static string s_newLocation = string.Empty;
@@ -39,7 +41,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
-                        Console.WriteLine($"Directory '{s_newLocation}'\\ does not exist!");
+                        FileSystem.ErrorWriteLine($"Directory '{s_newLocation}'\\ does not exist!");
                     }
                     else if (s_newLocation == "..")
                     {
@@ -72,7 +74,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     {
                         if(s_newLocation.Contains("/"))
                         {
-                            Console.WriteLine($"Wrong path separator format!");
+                            FileSystem.ErrorWriteLine($"Wrong path separator format!");
                             return;
                         }
 
@@ -90,7 +92,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
                             return;
                         }
-                        Console.WriteLine($"Directory '{pathCombine}' does not exist!");
+                        FileSystem.ErrorWriteLine($"Directory '{pathCombine}' does not exist!");
                     }
                     return;
                 }
