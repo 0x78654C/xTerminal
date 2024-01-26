@@ -95,7 +95,7 @@ Usage of Password Manager commands:
             bool passValidation = false;
             do
             {
-                Console.WriteLine("Vault Name: ");
+                FileSystem.SuccessWriteLine("Vault Name: ");
                 vaultName = Console.ReadLine();
                 vaultName = vaultName.ToLower();
                 var vaultFiles = Directory.GetFiles(GlobalVariables.passwordManagerDirectory);
@@ -155,7 +155,7 @@ Usage of Password Manager commands:
         /// </summary>
         private static void DeleteVault()
         {
-            Console.WriteLine("Enter vault name: ");
+            FileSystem.SuccessWriteLine("Enter vault name: ");
             string vaultName = Console.ReadLine();
             if (string.IsNullOrEmpty(vaultName))
             {
@@ -385,7 +385,7 @@ Usage of Password Manager commands:
         /// <returns></returns>
         private static string DecryptData()
         {
-            Console.WriteLine("Enter vault name:");
+            FileSystem.SuccessWriteLine("Enter vault name:");
             string vault = Console.ReadLine();
             vault = vault.ToLower();
             while (!CheckVaultExist(vault))
