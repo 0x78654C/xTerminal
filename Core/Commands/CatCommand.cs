@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Core.Commands
 {
@@ -194,14 +195,14 @@ namespace Core.Commands
                         output.AppendLine(LineOutput(nFile, currentDir, searchString));
                     }
                 }
-
+                var outData = Regex.Replace(output.ToString(), @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
 
                 if (!string.IsNullOrEmpty(savedFile) && searchAll == false)
                 {
-                    return FileSystem.SaveFileOutput(savedFile, currentDir, output.ToString());
+                    return FileSystem.SaveFileOutput(savedFile, currentDir, outData.ToString());
                 }
 
-                return output.ToString();
+                return outData.ToString();
             }
             catch (UnauthorizedAccessException) { return ""; }
         }
