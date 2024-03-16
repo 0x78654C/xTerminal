@@ -46,8 +46,10 @@ namespace Commands
             // Get the first word from the parameters. This should be the command name
             string commandName = commandLine.Split().First();
 
+            var commandLeng = commandName.Length;
+
             // Get the paramtere for allias command
-            GlobalVariables.aliasInParameter = commandLine.Replace(commandName, "").Trim(); 
+            GlobalVariables.aliasInParameter = commandLine.Substring(commandLeng).Trim();
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
                 && !s_shellCommands.Contains(commandLine))
