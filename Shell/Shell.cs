@@ -154,7 +154,7 @@ namespace Shell
                         c.Execute(command);
                     GlobalVariables.aliasParameters = string.Empty;
                     GlobalVariables.aliasRunFlag = false;
-                    GlobalVariables.aliasInParameter = string.Empty;
+                    GlobalVariables.aliasInParameter.Clear();
                 }
             }
             catch (Exception e)

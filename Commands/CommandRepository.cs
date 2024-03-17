@@ -49,7 +49,7 @@ namespace Commands
             var commandLeng = commandName.Length;
 
             // Get the paramtere for allias command
-            GlobalVariables.aliasInParameter = commandLine.Substring(commandLeng).Trim();
+            GlobalVariables.aliasInParameter.Add(commandLine.Substring(commandLeng).Trim());
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
                 && !s_shellCommands.Contains(commandLine))
@@ -82,8 +82,14 @@ namespace Commands
 
             string command = aliasCommands.Where(f => f.CommandName == commandName).FirstOrDefault()?.Command?.Trim() ?? string.Empty;
             GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
+
+            var countItems = GlobalVariables.aliasInParameter.Count;
             if (command.Contains("%"))
-                command = command.Replace("%", GlobalVariables.aliasInParameter);
+                for (int i = 0; i < countItems; i++)
+                    command = command.Replace($"%{i+1}", GlobalVariables.aliasInParameter[i]);
+
+           // if (command.Contains("%"))
+             //   command = command.Replace("%", GlobalVariables.aliasInParameter.First());
             GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
 
             // Usage of cmd and ps with parameters in alias commands.
