@@ -49,7 +49,9 @@ namespace Commands
             var commandLeng = commandName.Length;
 
             // Get the paramtere for allias command
-            GlobalVariables.aliasInParameter.Add(commandLine.Substring(commandLeng).Trim());
+            var subCommand = commandLine.Substring(commandLeng).Trim();
+            if (!string.IsNullOrEmpty(subCommand))
+                GlobalVariables.aliasInParameter.Add(subCommand);
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
                 && !s_shellCommands.Contains(commandLine))
