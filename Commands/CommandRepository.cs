@@ -22,14 +22,14 @@ namespace Commands
                         .Select(t => Activator.CreateInstance(t))
                         .Cast<ITerminalCommand>()
                         .ToDictionary(command => command.Name, StringComparer.InvariantCulture);
-        
+
         private static readonly List<string> s_shellCommands = new List<string>() { "reboot", "logoff", "lock", "shutdown", "+" };
 
         public static ITerminalCommand GetCommand(string[] args)
         {
             if (args == null || args.Length == 0)
                 return null;
-            
+
             return GetCommand(string.Join(" ", args));
         }
 
@@ -51,12 +51,18 @@ namespace Commands
             // Get the paramtere for allias command
             var subCommand = commandLine.Substring(commandLeng).Trim();
             if (!string.IsNullOrEmpty(subCommand))
-                GlobalVariables.aliasInParameter.Add(subCommand);
+            {
+                var splitSubcommand = subCommand.Split(' ');
+
+                foreach (var command in splitSubcommand)
+                    if(!command.Contains(commandName))
+                        GlobalVariables.aliasInParameter.Add(command.Trim());
+            }
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
                 && !s_shellCommands.Contains(commandLine))
             {
-                string alias= GetAliasCommand(commandName, s_aliasFile);
+                string alias = GetAliasCommand(commandName, s_aliasFile);
                 if (string.IsNullOrEmpty(alias) || !s_terminalCommands.TryGetValue(alias.Split().First(), out terminalCommandOut))
                 {
                     if (!commandLine.StartsWith("cmd") && !commandLine.StartsWith("ps") && !GlobalVariables.aliasRunFlag)
@@ -88,10 +94,8 @@ namespace Commands
             var countItems = GlobalVariables.aliasInParameter.Count;
             if (command.Contains("%"))
                 for (int i = 0; i < countItems; i++)
-                    command = command.Replace($"%{i+1}", GlobalVariables.aliasInParameter[i]);
+                    command = command.Replace($"%{i + 1}", GlobalVariables.aliasInParameter[i]);
 
-           // if (command.Contains("%"))
-             //   command = command.Replace("%", GlobalVariables.aliasInParameter.First());
             GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
 
             // Usage of cmd and ps with parameters in alias commands.
