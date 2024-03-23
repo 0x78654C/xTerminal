@@ -52,11 +52,15 @@ namespace Commands
             var subCommand = commandLine.Substring(commandLeng).Trim();
             if (!string.IsNullOrEmpty(subCommand))
             {
-                var splitSubcommand = subCommand.Split(' ');
-
+                var splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
                 foreach (var command in splitSubcommand)
-                    if(!command.Contains(commandName))
-                        GlobalVariables.aliasInParameter.Add(command.Trim());
+                    if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
+                    {
+                        if(subCommand.Contains('"'))
+                            GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
+                        else
+                            GlobalVariables.aliasInParameter.Add(command.Trim());
+                    }
             }
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
@@ -102,8 +106,10 @@ namespace Commands
             if (command.StartsWith("cmd") || command.StartsWith("ps"))
             {
                 ProcessStart.Execute(command, command);
+                GlobalVariables.aliasInParameter.Clear();
                 return string.Empty;
             }
+            GlobalVariables.aliasInParameter.Clear();
             return command.Trim();
         }
     }
