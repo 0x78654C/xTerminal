@@ -8,6 +8,7 @@ using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 using Core.SystemTools;
 using System.Runtime.Versioning;
+using System.Reflection.Metadata;
 
 namespace Commands
 {
@@ -48,19 +49,61 @@ namespace Commands
 
             var commandLeng = commandName.Length;
 
-            // Get the paramtere for allias command
+            // Get the parameter for allias command.
             var subCommand = commandLine.Substring(commandLeng).Trim();
             if (!string.IsNullOrEmpty(subCommand))
             {
-                var splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
-                foreach (var command in splitSubcommand)
-                    if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
+                var splitSubcommand = new string[] { };
+                if (subCommand.Contains("!\""))
+                {
+                    splitSubcommand = subCommand.Split("\"");
+                    foreach (var command in splitSubcommand)
                     {
-                        if(subCommand.Contains('"'))
-                            GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
-                        else
-                            GlobalVariables.aliasInParameter.Add(command.Trim());
+                        if (!command.Contains(commandName) || string.IsNullOrEmpty(command))
+                        {
+                            var addCommand = "";
+                            if (command.Contains('!'))
+                            {
+                                if (command.StartsWith('!'))
+                                {
+                                    addCommand = command.Substring(1);
+                                    if (!string.IsNullOrEmpty(addCommand))
+                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                }
+                                else if (command.EndsWith('!'))
+                                {
+                                    addCommand = command.Substring(0, command.Length - 1);
+                                    if (!string.IsNullOrEmpty(addCommand))
+                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                }
+                                else
+                                {
+                                    addCommand = command;
+                                    if (!string.IsNullOrEmpty(addCommand))
+                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                }
+                            }
+                            else
+                            {
+                                addCommand = command;
+                                if (!string.IsNullOrEmpty(addCommand))
+                                    GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                            }
+                        }
                     }
+                }
+                else
+                {
+                    splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
+                    foreach (var command in splitSubcommand)
+                        if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
+                        {
+                            if (subCommand.Contains('"'))
+                                GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
+                            else 
+                                GlobalVariables.aliasInParameter.Add(command.Trim());
+                        }
+                }
             }
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
