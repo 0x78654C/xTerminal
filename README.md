@@ -3,7 +3,7 @@
 </p>
 
 # xTerminal
-A Linux like terminal for windows in C# with some extras.
+A Linux like terminal for windows with some extras.
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 

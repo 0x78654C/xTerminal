@@ -159,15 +159,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.ErrorWriteLine("Alias file does not exist! You need to first add a command.");
                     return;
                 }
-                string commandName = updateAliasCommand.Split('|')[0].Trim();
-                string command = updateAliasCommand.Split('|')[1].Trim();
+                string commandName = updateAliasCommand.Split().First();
+                var commandLeng = commandName.Length;
+                string command = updateAliasCommand.Substring(commandLeng+1).Trim();
                 if (!CheckCommandName(aliasJsonFile, commandName))
                 {
                     FileSystem.SuccessWriteLine($"{commandName} does not exist!");
                     return;
                 }
                 DeleteCommand(commandName,aliasJsonFile, false);
-                Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command });
+                Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command.Substring(1).Trim() });
                 FileSystem.SuccessWriteLine($"Alias command '{commandName}' was updated!");
             }
             else

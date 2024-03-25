@@ -37,7 +37,7 @@ namespace Core
         public static bool eventCancelKey = false;
         public static bool autoSuggestion = false;
         public static bool aliasRunFlag = false;
-        public static string aliasInParameter { get; set; } = string.Empty;
+        public static List<string> aliasInParameter= new List<string>();
         public static bool eventKeyFlagX = false;
         public static readonly string magicNunmbers= Application.StartupPath + "ext_list.txt";
         public static bool isPipeCommand = false;

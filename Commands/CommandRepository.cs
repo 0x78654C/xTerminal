@@ -8,6 +8,7 @@ using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 using Core.SystemTools;
 using System.Runtime.Versioning;
+using System.Reflection.Metadata;
 
 namespace Commands
 {
@@ -22,14 +23,14 @@ namespace Commands
                         .Select(t => Activator.CreateInstance(t))
                         .Cast<ITerminalCommand>()
                         .ToDictionary(command => command.Name, StringComparer.InvariantCulture);
-        
+
         private static readonly List<string> s_shellCommands = new List<string>() { "reboot", "logoff", "lock", "shutdown", "+" };
 
         public static ITerminalCommand GetCommand(string[] args)
         {
             if (args == null || args.Length == 0)
                 return null;
-            
+
             return GetCommand(string.Join(" ", args));
         }
 
@@ -46,13 +47,69 @@ namespace Commands
             // Get the first word from the parameters. This should be the command name
             string commandName = commandLine.Split().First();
 
-            // Get the paramtere for allias command
-            GlobalVariables.aliasInParameter = commandLine.Replace(commandName, "").Trim(); 
+            var commandLeng = commandName.Length;
+
+            // Get the parameter for allias command.
+            var subCommand = commandLine.Substring(commandLeng).Trim();
+            if (!string.IsNullOrEmpty(subCommand))
+            {
+                var splitSubcommand = new string[] { };
+                if (subCommand.Contains("!\""))
+                {
+                    splitSubcommand = subCommand.Split("\"");
+                    foreach (var command in splitSubcommand)
+                    {
+                        if (!command.Contains(commandName) || string.IsNullOrEmpty(command))
+                        {
+                            var addCommand = "";
+                            if (command.Contains('!'))
+                            {
+                                if (command.StartsWith('!'))
+                                {
+                                    addCommand = command.Substring(1);
+                                    if (!string.IsNullOrEmpty(addCommand))
+                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                }
+                                else if (command.EndsWith('!'))
+                                {
+                                    addCommand = command.Substring(0, command.Length - 1);
+                                    if (!string.IsNullOrEmpty(addCommand))
+                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                }
+                                else
+                                {
+                                    addCommand = command;
+                                    if (!string.IsNullOrEmpty(addCommand))
+                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                }
+                            }
+                            else
+                            {
+                                addCommand = command;
+                                if (!string.IsNullOrEmpty(addCommand))
+                                    GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
+                    foreach (var command in splitSubcommand)
+                        if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
+                        {
+                            if (subCommand.Contains('"'))
+                                GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
+                            else 
+                                GlobalVariables.aliasInParameter.Add(command.Trim());
+                        }
+                }
+            }
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
                 && !s_shellCommands.Contains(commandLine))
             {
-                string alias= GetAliasCommand(commandName, s_aliasFile);
+                string alias = GetAliasCommand(commandName, s_aliasFile);
                 if (string.IsNullOrEmpty(alias) || !s_terminalCommands.TryGetValue(alias.Split().First(), out terminalCommandOut))
                 {
                     if (!commandLine.StartsWith("cmd") && !commandLine.StartsWith("ps") && !GlobalVariables.aliasRunFlag)
@@ -80,16 +137,22 @@ namespace Commands
 
             string command = aliasCommands.Where(f => f.CommandName == commandName).FirstOrDefault()?.Command?.Trim() ?? string.Empty;
             GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
+
+            var countItems = GlobalVariables.aliasInParameter.Count;
             if (command.Contains("%"))
-                command = command.Replace("%", GlobalVariables.aliasInParameter);
+                for (int i = 0; i < countItems; i++)
+                    command = command.Replace($"%{i + 1}", GlobalVariables.aliasInParameter[i]);
+
             GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
 
             // Usage of cmd and ps with parameters in alias commands.
             if (command.StartsWith("cmd") || command.StartsWith("ps"))
             {
                 ProcessStart.Execute(command, command);
+                GlobalVariables.aliasInParameter.Clear();
                 return string.Empty;
             }
+            GlobalVariables.aliasInParameter.Clear();
             return command.Trim();
         }
     }
