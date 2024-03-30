@@ -67,27 +67,23 @@ namespace Commands
                                 if (command.StartsWith('!'))
                                 {
                                     addCommand = command.Substring(1);
-                                    if (!string.IsNullOrEmpty(addCommand))
-                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                    StoreListParameters(addCommand);
                                 }
                                 else if (command.EndsWith('!'))
                                 {
                                     addCommand = command.Substring(0, command.Length - 1);
-                                    if (!string.IsNullOrEmpty(addCommand))
-                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                    StoreListParameters(addCommand);
                                 }
                                 else
                                 {
                                     addCommand = command;
-                                    if (!string.IsNullOrEmpty(addCommand))
-                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                    StoreListParameters(addCommand);
                                 }
                             }
                             else
                             {
                                 addCommand = command;
-                                if (!string.IsNullOrEmpty(addCommand))
-                                    GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
+                                StoreListParameters(addCommand);
                             }
                         }
                     }
@@ -120,6 +116,16 @@ namespace Commands
                 }
             }
             return terminalCommandOut;
+        }
+
+        /// <summary>
+        /// Store command in list.
+        /// </summary>
+        /// <param name="command"></param>
+        private static void StoreListParameters(string command)
+        {
+            if (!string.IsNullOrEmpty(command))
+                GlobalVariables.aliasInParameter.Add($"{command.Trim()}");
         }
 
         /// <summary>
