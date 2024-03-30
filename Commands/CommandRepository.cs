@@ -51,7 +51,14 @@ namespace Commands
 
             // Get the parameter for allias command.
             var subCommand = commandLine.Substring(commandLeng).Trim();
-            if (!string.IsNullOrEmpty(subCommand))
+            if(GlobalVariables.isSingleAlias)
+            {
+                if (subCommand.Contains('"'))
+                    GlobalVariables.aliasInParameter.Add($"\"{subCommand.Trim()}\"");
+                else
+                    GlobalVariables.aliasInParameter.Add(subCommand.Trim());
+               
+            }else  if (!string.IsNullOrEmpty(subCommand))
             {
                 var splitSubcommand = new string[] { };
                 if (subCommand.Contains("!\""))
@@ -145,7 +152,15 @@ namespace Commands
             GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
 
             var countItems = GlobalVariables.aliasInParameter.Count;
-            if (command.Contains("%"))
+            if (command.Contains("%1") && !command.Contains("%2"))
+            {
+                GlobalVariables.isSingleAlias = true;
+                var concatanate = "";
+                for (int i = 0; i < countItems; i++)
+                    concatanate+=$"{GlobalVariables.aliasInParameter[i]}";
+                command = concatanate.Trim();
+            }
+            else 
                 for (int i = 0; i < countItems; i++)
                     command = command.Replace($"%{i + 1}", GlobalVariables.aliasInParameter[i]);
 
