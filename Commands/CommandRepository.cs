@@ -51,62 +51,62 @@ namespace Commands
 
             // Get the parameter for allias command.
             var subCommand = commandLine.Substring(commandLeng).Trim();
-            if(GlobalVariables.isSingleAlias)
+            if (GlobalVariables.isSingleAlias)
             {
                 if (subCommand.Contains('"'))
                     GlobalVariables.aliasInParameter.Add($"\"{subCommand.Trim()}\"");
                 else
                     GlobalVariables.aliasInParameter.Add(subCommand.Trim());
-               
-            }else  if (!string.IsNullOrEmpty(subCommand))
+            }
+            else
+            //}else  if (!string.IsNullOrEmpty(subCommand))
+            //{
+            //var splitSubcommand = new string[] { };
+            //if (subCommand.Contains("!\""))
+            //{
+            //    splitSubcommand = subCommand.Split("\"");
+            //    foreach (var command in splitSubcommand)
+            //    {
+            //        if (!command.Contains(commandName) || string.IsNullOrEmpty(command))
+            //        {
+            //            var addCommand = "";
+            //            if (command.Contains('!'))
+            //            {
+            //                if (command.StartsWith('!'))
+            //                {
+            //                    addCommand = command.Substring(1);
+            //                    StoreListParameters(addCommand);
+            //                }
+            //                else if (command.EndsWith('!'))
+            //                {
+            //                    addCommand = command.Substring(0, command.Length - 1);
+            //                    StoreListParameters(addCommand);
+            //                }
+            //                else
+            //                {
+            //                    addCommand = command;
+            //                    StoreListParameters(addCommand);
+            //                }
+            //            }
+            //            else
+            //            {
+            //                addCommand = command;
+            //                StoreListParameters(addCommand);
+            //            }
+            //        }
+            //    }
+            //}
+            //else
             {
-                var splitSubcommand = new string[] { };
-                if (subCommand.Contains("!\""))
-                {
-                    splitSubcommand = subCommand.Split("\"");
-                    foreach (var command in splitSubcommand)
+                var splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
+                foreach (var command in splitSubcommand)
+                    if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
                     {
-                        if (!command.Contains(commandName) || string.IsNullOrEmpty(command))
-                        {
-                            var addCommand = "";
-                            if (command.Contains('!'))
-                            {
-                                if (command.StartsWith('!'))
-                                {
-                                    addCommand = command.Substring(1);
-                                    StoreListParameters(addCommand);
-                                }
-                                else if (command.EndsWith('!'))
-                                {
-                                    addCommand = command.Substring(0, command.Length - 1);
-                                    StoreListParameters(addCommand);
-                                }
-                                else
-                                {
-                                    addCommand = command;
-                                    StoreListParameters(addCommand);
-                                }
-                            }
-                            else
-                            {
-                                addCommand = command;
-                                StoreListParameters(addCommand);
-                            }
-                        }
+                        if (subCommand.Contains('"'))
+                            GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
+                        else
+                            GlobalVariables.aliasInParameter.Add(command.Trim());
                     }
-                }
-                else
-                {
-                    splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
-                    foreach (var command in splitSubcommand)
-                        if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
-                        {
-                            if (subCommand.Contains('"'))
-                                GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
-                            else 
-                                GlobalVariables.aliasInParameter.Add(command.Trim());
-                        }
-                }
             }
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
@@ -119,7 +119,7 @@ namespace Commands
                     {
                         Console.WriteLine($"Unknown command: {commandLine}");
                     }
-                    GlobalVariables.aliasParameters = " ";
+                    /GlobalVariables.aliasParameters = " ";
                 }
             }
             return terminalCommandOut;
@@ -157,10 +157,10 @@ namespace Commands
                 GlobalVariables.isSingleAlias = true;
                 var concatanate = "";
                 for (int i = 0; i < countItems; i++)
-                    concatanate+=$"{GlobalVariables.aliasInParameter[i]}";
+                    concatanate += $"{GlobalVariables.aliasInParameter[i]}";
                 command = concatanate.Trim();
             }
-            else 
+            else
                 for (int i = 0; i < countItems; i++)
                     command = command.Replace($"%{i + 1}", GlobalVariables.aliasInParameter[i]);
 
