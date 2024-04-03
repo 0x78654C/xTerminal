@@ -44,59 +44,18 @@ namespace Commands
 
             ITerminalCommand terminalCommandOut;
 
-            // Get the first word from the parameters. This should be the command name
+            // Get the first word from the parameters. This should be the command name.
             string commandName = commandLine.Split().First();
+
+            bool isSingleAlias = IsSingleParam(commandName, s_aliasFile);
 
             var commandLeng = commandName.Length;
 
             // Get the parameter for allias command.
             var subCommand = commandLine.Substring(commandLeng).Trim();
-            if (GlobalVariables.isSingleAlias)
-            {
-                if (subCommand.Contains('"'))
-                    GlobalVariables.aliasInParameter.Add($"\"{subCommand.Trim()}\"");
-                else
-                    GlobalVariables.aliasInParameter.Add(subCommand.Trim());
-            }
+            if (isSingleAlias)
+                GlobalVariables.aliasInParameter.Add(subCommand.Trim());
             else
-            //}else  if (!string.IsNullOrEmpty(subCommand))
-            //{
-            //var splitSubcommand = new string[] { };
-            //if (subCommand.Contains("!\""))
-            //{
-            //    splitSubcommand = subCommand.Split("\"");
-            //    foreach (var command in splitSubcommand)
-            //    {
-            //        if (!command.Contains(commandName) || string.IsNullOrEmpty(command))
-            //        {
-            //            var addCommand = "";
-            //            if (command.Contains('!'))
-            //            {
-            //                if (command.StartsWith('!'))
-            //                {
-            //                    addCommand = command.Substring(1);
-            //                    StoreListParameters(addCommand);
-            //                }
-            //                else if (command.EndsWith('!'))
-            //                {
-            //                    addCommand = command.Substring(0, command.Length - 1);
-            //                    StoreListParameters(addCommand);
-            //                }
-            //                else
-            //                {
-            //                    addCommand = command;
-            //                    StoreListParameters(addCommand);
-            //                }
-            //            }
-            //            else
-            //            {
-            //                addCommand = command;
-            //                StoreListParameters(addCommand);
-            //            }
-            //        }
-            //    }
-            //}
-            //else
             {
                 var splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
                 foreach (var command in splitSubcommand)
@@ -119,20 +78,28 @@ namespace Commands
                     {
                         Console.WriteLine($"Unknown command: {commandLine}");
                     }
-                    /GlobalVariables.aliasParameters = " ";
+                    GlobalVariables.aliasParameters = " ";
                 }
             }
             return terminalCommandOut;
         }
 
         /// <summary>
-        /// Store command in list.
+        /// Check if command has only 1 parameter option.
         /// </summary>
-        /// <param name="command"></param>
-        private static void StoreListParameters(string command)
+        /// <param name="commandName"></param>
+        /// <param name="aliasJsonFile"></param>
+        /// <returns></returns>
+        private static bool IsSingleParam(string commandName, string aliasJsonFile)
         {
-            if (!string.IsNullOrEmpty(command))
-                GlobalVariables.aliasInParameter.Add($"{command.Trim()}");
+            if (!File.Exists(aliasJsonFile))
+                return false;
+
+            var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
+            string command = aliasCommands.Where(f => f.CommandName == commandName).FirstOrDefault()?.Command?.Trim() ?? string.Empty;
+            GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
+            var countItems = GlobalVariables.aliasInParameter.Count;
+            return command.Contains("%1") && !command.Contains("%2");
         }
 
         /// <summary>
@@ -153,13 +120,7 @@ namespace Commands
 
             var countItems = GlobalVariables.aliasInParameter.Count;
             if (command.Contains("%1") && !command.Contains("%2"))
-            {
-                GlobalVariables.isSingleAlias = true;
-                var concatanate = "";
-                for (int i = 0; i < countItems; i++)
-                    concatanate += $"{GlobalVariables.aliasInParameter[i]}";
-                command = concatanate.Trim();
-            }
+                command = command.Replace($"%1", GlobalVariables.aliasInParameter[0]);
             else
                 for (int i = 0; i < countItems; i++)
                     command = command.Replace($"%{i + 1}", GlobalVariables.aliasInParameter[i]);
