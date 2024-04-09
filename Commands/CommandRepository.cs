@@ -57,11 +57,19 @@ namespace Commands
                 GlobalVariables.aliasInParameter.Add(subCommand.Trim());
             else
             {
+                var isWithExclamation = false;
+                // Confirm is without quotes using exclamation mark.
+                if (subCommand.StartsWith("!\""))
+                {
+                    subCommand = subCommand.Replace("!\"", "\"");
+                    isWithExclamation = true;
+                }
+
                 var splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
                 foreach (var command in splitSubcommand)
                     if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
                     {
-                        if (subCommand.Contains('"'))
+                        if (subCommand.StartsWith('"') && !isWithExclamation)
                             GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
                         else
                             GlobalVariables.aliasInParameter.Add(command.Trim());
