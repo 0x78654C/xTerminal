@@ -8,7 +8,6 @@ using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 using Core.SystemTools;
 using System.Runtime.Versioning;
-using System.Reflection.Metadata;
 
 namespace Commands
 {
