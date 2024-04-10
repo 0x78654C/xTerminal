@@ -174,7 +174,11 @@ This is the full list of commands that can be used in xTerminal:
                  Example: mv <old_file/dir_name> -o <new_file/dir_name>
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
                    -ma <destination_directory> : moves all files from current directory in a specific directory
-    edit      -- Opens a file in Notepad(default). To set a new text editor you must use following command: edit set ""Path to editor""
+    edit      -- Sets a text editor for open files(default is notpead). Usage: edit <file_path>
+                   -set     : Sets the text editor you want to use. (Default is notepad)
+                              Example: edit -set <path_to_editor_binary>
+                   -current : Displays the current used editor.
+                   -h       : Displays this message.
     del       -- Deletes a file or folder without recover. Use -h for additional parameters.
                    -h  : Displayes this message. 
                    -a  : Deletes all files and directories in current directory. 

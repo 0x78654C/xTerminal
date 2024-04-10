@@ -11,6 +11,8 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "edit";
         private static string s_helpMessage = @"Usage of edit command:
+Usage: edit <file_path>
+Parameters:
     -set     : Sets the text editor you want to use. (Default is notepad)
                Example: edit -set <path_to_editor_binary>
     -current : Displays the current used editor.
