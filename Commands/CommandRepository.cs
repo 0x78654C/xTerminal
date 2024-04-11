@@ -8,7 +8,6 @@ using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 using Core.SystemTools;
 using System.Runtime.Versioning;
-using System.Reflection.Metadata;
 
 namespace Commands
 {
@@ -44,66 +43,36 @@ namespace Commands
 
             ITerminalCommand terminalCommandOut;
 
-            // Get the first word from the parameters. This should be the command name
+            // Get the first word from the parameters. This should be the command name.
             string commandName = commandLine.Split().First();
+
+            bool isSingleAlias = IsSingleParam(commandName, s_aliasFile);
 
             var commandLeng = commandName.Length;
 
             // Get the parameter for allias command.
             var subCommand = commandLine.Substring(commandLeng).Trim();
-            if (!string.IsNullOrEmpty(subCommand))
+            if (isSingleAlias)
+                GlobalVariables.aliasInParameter.Add(subCommand.Trim());
+            else
             {
-                var splitSubcommand = new string[] { };
-                if (subCommand.Contains("!\""))
+                var isWithExclamation = false;
+                // Confirm is without quotes using exclamation mark.
+                if (subCommand.StartsWith("!\""))
                 {
-                    splitSubcommand = subCommand.Split("\"");
-                    foreach (var command in splitSubcommand)
+                    subCommand = subCommand.Replace("!\"", "\"");
+                    isWithExclamation = true;
+                }
+
+                var splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
+                foreach (var command in splitSubcommand)
+                    if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
                     {
-                        if (!command.Contains(commandName) || string.IsNullOrEmpty(command))
-                        {
-                            var addCommand = "";
-                            if (command.Contains('!'))
-                            {
-                                if (command.StartsWith('!'))
-                                {
-                                    addCommand = command.Substring(1);
-                                    if (!string.IsNullOrEmpty(addCommand))
-                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
-                                }
-                                else if (command.EndsWith('!'))
-                                {
-                                    addCommand = command.Substring(0, command.Length - 1);
-                                    if (!string.IsNullOrEmpty(addCommand))
-                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
-                                }
-                                else
-                                {
-                                    addCommand = command;
-                                    if (!string.IsNullOrEmpty(addCommand))
-                                        GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
-                                }
-                            }
-                            else
-                            {
-                                addCommand = command;
-                                if (!string.IsNullOrEmpty(addCommand))
-                                    GlobalVariables.aliasInParameter.Add($"{addCommand.Trim()}");
-                            }
-                        }
+                        if (subCommand.StartsWith('"') && !isWithExclamation)
+                            GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
+                        else
+                            GlobalVariables.aliasInParameter.Add(command.Trim());
                     }
-                }
-                else
-                {
-                    splitSubcommand = subCommand.Contains('"') ? subCommand.Split('"') : subCommand.Split(' ');
-                    foreach (var command in splitSubcommand)
-                        if (!command.Contains(commandName) && !string.IsNullOrEmpty(command))
-                        {
-                            if (subCommand.Contains('"'))
-                                GlobalVariables.aliasInParameter.Add($"\"{command.Trim()}\"");
-                            else 
-                                GlobalVariables.aliasInParameter.Add(command.Trim());
-                        }
-                }
             }
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
@@ -123,6 +92,24 @@ namespace Commands
         }
 
         /// <summary>
+        /// Check if command has only 1 parameter option.
+        /// </summary>
+        /// <param name="commandName"></param>
+        /// <param name="aliasJsonFile"></param>
+        /// <returns></returns>
+        private static bool IsSingleParam(string commandName, string aliasJsonFile)
+        {
+            if (!File.Exists(aliasJsonFile))
+                return false;
+
+            var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
+            string command = aliasCommands.Where(f => f.CommandName == commandName).FirstOrDefault()?.Command?.Trim() ?? string.Empty;
+            GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
+            var countItems = GlobalVariables.aliasInParameter.Count;
+            return command.Contains("%1") && !command.Contains("%2");
+        }
+
+        /// <summary>
         /// Get alias command name and param.
         /// </summary>
         /// <param name="commandName"></param>
@@ -139,7 +126,9 @@ namespace Commands
             GlobalVariables.aliasRunFlag = !string.IsNullOrWhiteSpace(command);
 
             var countItems = GlobalVariables.aliasInParameter.Count;
-            if (command.Contains("%"))
+            if (command.Contains("%1") && !command.Contains("%2"))
+                command = command.Replace($"%1", GlobalVariables.aliasInParameter[0]);
+            else
                 for (int i = 0; i < countItems; i++)
                     command = command.Replace($"%{i + 1}", GlobalVariables.aliasInParameter[i]);
 
