@@ -36,6 +36,9 @@ namespace Core.SystemTools
             }
 
             string outList = string.Join("\n", s_processList);
+            if (GlobalVariables.isPipeCommand)
+                GlobalVariables.pipeCmdOutput = outList;
+            else
             Console.WriteLine(outList);
         }
 
