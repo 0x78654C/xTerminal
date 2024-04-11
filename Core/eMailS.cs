@@ -29,7 +29,7 @@ namespace Core
                     string _smtp = SmtpCheck(senderEmail);
                     if (_smtp == "No valid SMTP Server")
                     {
-                        Console.WriteLine($"[{_date}] No valid SMTP Server. Accepted email clients are: Microsoft(live, hotmail, outlook), Yahoo and Gmail!");
+                        FileSystem.ErrorWriteLine($"[{_date}] No valid SMTP Server. Accepted email clients are: Microsoft(live, hotmail, outlook), Yahoo and Gmail!");
                         return;
                     }
 
@@ -51,7 +51,7 @@ namespace Core
                     try
                     {
                         client.Send(msg);
-                        Console.WriteLine($"[{_date}] Email sent to " + receiverEmail);
+                        FileSystem.SuccessWriteLine($"[{_date}] Email sent to " + receiverEmail);
                     }
                     catch (Exception e)
                     {
@@ -60,7 +60,7 @@ namespace Core
                 }
                 else
                 {
-                    Console.WriteLine($"[{_date}] No internet connection!");
+                    FileSystem.ErrorWriteLine($"[{_date}] No internet connection!");
                 }
             }
             catch (Exception e)
