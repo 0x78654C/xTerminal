@@ -16,7 +16,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 Can be used with the following parameters:
     -h    : Displays this message.
     -u    : Can run process with different user.
-    -we   : Wait for process to exit.
+    -we   : Disable wait for process to exit.
     -param: Start process with specified parameters.
          Example1: ./ -u <file_name>
          Example2: ./ -u <file_name> -param <file_paramters>
@@ -64,10 +64,10 @@ Both examples can be used with -we parameter.
                         args = args.Replace("-u ", "");
                         args = FileSystem.SanitizePath(args, s_currentDirectory);
 
-                        StartApplication(args, paramApp, true, waitForExit);
+                        StartApplication(args, paramApp, true, !waitForExit);
                         return;
                     }
-                    StartApplication(args, paramApp, false, waitForExit);
+                    StartApplication(args, paramApp, false, !waitForExit);
                     return;
                 }
                 args = FileSystem.SanitizePath(args, s_currentDirectory);
@@ -75,10 +75,10 @@ Both examples can be used with -we parameter.
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    StartApplication(args, paramApp, true, waitForExit);
+                    StartApplication(args, paramApp, true, !waitForExit);
                     return;
                 }
-                StartApplication(args, paramApp, false, waitForExit);
+                StartApplication(args, paramApp, false, !waitForExit);
             }
             catch (Exception e)
             { 

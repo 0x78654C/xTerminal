@@ -77,7 +77,7 @@ This is the full list of commands that can be used in xTerminal:
                  Can be used with the following parameters:
                    -h    : Displays this message.
                    -u    : Can run process with different user.
-                   -we   : Wait for process to exit.
+                   -we   : Disable wait for process to exit.
                    -param: ./ process with specified parameters.
                          Example1: ./ -u <file_name>
                          Example2: ./ -u <file_name> -param <file_paramters>
