@@ -362,5 +362,25 @@ namespace Core
                 }
             }
         }
+        
+        /// <summary>
+        /// Convert byte[] to uLong.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static ulong BytesToUInt64(byte[] bytes)
+        {
+            if (bytes == null)
+                return 0;
+            if (bytes.Length > 8)
+                return 0;
+
+            ulong result = 0;
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                result |= (ulong)bytes[i] << (i * 8);
+            }
+            return result;
+        }
     }
 }
