@@ -56,7 +56,6 @@ Attention: Works only with the following extensions: {string.Join(", ",s_imgExt)
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }
-            
         }
     }
 }
