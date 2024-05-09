@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             ".tff"
         };
         private static string s_helpMessage = $@"Usage of exif command:
-    exif <path_to_JPEG/JPG_file>. 
+    exif <path_to_image_file>. 
     
     Can be used with the following parameters:
     exif -h : Displays this message.
