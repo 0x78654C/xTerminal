@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
 
-namespace Commands.TerminalCommands.ConsoleSystem
+namespace Commands.TerminalCommands.DirFiles
 {
     [SupportedOSPlatform("windows")]
-    public class Exif: ITerminalCommand
+    public class Exif : ITerminalCommand
     {
         public string Name => "exif";
         private static List<string> s_imgExt = new List<string>() {
@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     Can be used with the following parameters:
     exif -h : Displays this message.
 
-Attention: Works only with the following extensions: {string.Join(", ",s_imgExt)}.
+Attention: Works only with the following extensions: {string.Join(", ", s_imgExt)}.
 ";
         public void Execute(string args)
         {
@@ -36,8 +36,8 @@ Attention: Works only with the following extensions: {string.Join(", ",s_imgExt)
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
-
-                var pathFile = args.Replace($"{Name}","").Trim();
+                var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
+                var pathFile = FileSystem.SanitizePath(args.Replace($"{Name}", "").Trim(),currentDirectory);
                 if (File.Exists(pathFile))
                 {
 
@@ -52,7 +52,7 @@ Attention: Works only with the following extensions: {string.Join(", ",s_imgExt)
                     FileSystem.ErrorWriteLine($"File does not exist: '{pathFile}'");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }
