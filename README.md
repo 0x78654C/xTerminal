@@ -215,6 +215,8 @@ This is the full list of commands that can be used in xTerminal:
                  Example 2: diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
                  Example 3: diff first_file_name;second_file_name -f save_to_file_name          : Saves to file the difference from second file in comparison to first file.
                  Example 4: diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
+    exif      -- Extracts image metadata.
+                 Example  : exif <path_to_iamge_file>. 
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
