@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.Versioning;
 
-    /*
-     Library for exif information getter.
-     */
+/*
+ Library for exif information getter.
+ */
 
 namespace Core.SystemTools
 {
@@ -15,6 +15,7 @@ namespace Core.SystemTools
 
     public class ExifLib
     {
+        private static string s_outData = string.Empty;
         private static Dictionary<string, string> s_offset = new Dictionary<string, string>
 {
     {"0x0000","GpsVer"},
@@ -243,14 +244,15 @@ namespace Core.SystemTools
         /// <param name="enc"></param>
         private static void PrintInfo(string hexID, string enc)
         {
+
             if (s_offset.ContainsKey(hexID))
             {
                 string value = s_offset[hexID];
-                Console.WriteLine("{0}{1}", $"{value}:".PadRight(30, ' '), $"{enc}");
+                s_outData += String.Format("{0}{1}", $"{value}:".PadRight(30, ' '), $"{enc}\n");
             }
             else
             {
-                Console.WriteLine("{0}{1}", "Undefined:".PadRight(30, ' '), $"{enc}");
+                s_outData += String.Format("{0}{1}", "Undefined:".PadRight(30, ' '), $"{enc}\n");
             }
         }
 
@@ -303,11 +305,16 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 12: // Double (just for some types of format)
-                            enc = BitConverter.ToDouble(propItem.Value,0).ToString();
+                            enc = BitConverter.ToDouble(propItem.Value, 0).ToString();
                             PrintInfo(hexID, enc);
                             break;
                     }
                 }
+                if (GlobalVariables.isPipeCommand)
+                    GlobalVariables.pipeCmdOutput = s_outData;
+                else
+                    Console.WriteLine(s_outData);
+                s_outData = string.Empty;
             }
             catch (Exception e)
             {
