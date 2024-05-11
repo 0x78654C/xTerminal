@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers.Binary;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -386,11 +385,11 @@ namespace Core
         }
 
         /// <summary>
-        /// Create UIint32 araray by slice 4.
+        /// Create UIint32 array Big-Endian by chunks.
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static string UInt32BigEndian(byte[] bytes, int slice)
+        public static string UInt32BigEndianConvertionSlice(byte[] bytes, int slice)
         {
             string outData = string.Empty;
             int count = 0;
@@ -400,7 +399,7 @@ namespace Core
             foreach (var b in bytes)
             {
                 count++;
-                if (count == 4)
+                if (count == slice)
                 {
                     var arr = ArrayFromRange(bytes, c, slice);
                     Array.Reverse(arr);
@@ -415,6 +414,33 @@ namespace Core
                         outData += BinaryPrimitives.ReadUInt32BigEndian(arr).ToString()+"/";
                     Array.Clear(val, 0, val.Length);
                     c = c+count;
+                    count = 0;
+                }
+            }
+            return outData;
+        }
+
+        /// <summary>
+        /// Byte[] to usort conversion by chunks.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="slice"></param>
+        /// <returns></returns>
+        public static string UShortConversionSlice(byte[] bytes, int slice)
+        {
+            string outData = string.Empty;
+            int count = 0;
+            byte[] val = new byte[4];
+            int c = 0;
+            foreach (var b in bytes)
+            {
+                count++;
+                if (count == slice)
+                {
+                    var arr = ArrayFromRange(bytes, c, slice);
+                    outData += BitConverter.ToUInt16(arr).ToString() + ", ";
+                    Array.Clear(val, 0, val.Length);
+                    c = c + count;
                     count = 0;
                 }
             }
