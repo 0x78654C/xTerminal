@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Text;
 using System.Runtime.Versioning;
-using System.Buffers.Binary;
+using System.Linq;
 
 /*
  Library for exif information getter.
@@ -46,6 +46,8 @@ namespace Core.SystemTools
     {"0x0018","GpsDestBear"},
     {"0x0019","GpsDestDistRef"},
     {"0x001A","GpsDestDist"},
+    {"0x001D","GpsDateStamp"},
+    {"0x001F","GpsHPositioningError"},
     {"0x00FE","NewSubfileType"},
     {"0x00FF","SubfileType"},
     {"0x0100","ImageWidth"},
@@ -201,8 +203,11 @@ namespace Core.SystemTools
     {"0x8827","ISOSpeed"},
     {"0x8828","OECF"},
     {"0x9000","Ver"},
-    {"0x9003","DTOrig"},
-    {"0x9004","DTDigitized"},
+    {"0x9003","DateTimeOrig"},
+    {"0x9004","DateTimeDigitized"},
+    {"0x9010","OffsetTime"},
+    {"0x9011","OffsetTimeOriginal"},
+    {"0x9012","OffsetTimeDigitized"},
     {"0x9101","CompConfig"},
     {"0x9102","CompBPP"},
     {"0x9201","ShutterSpeed"},
@@ -215,6 +220,7 @@ namespace Core.SystemTools
     {"0x9208","LightSource"},
     {"0x9209","Flash"},
     {"0x920A","FocalLength"},
+    {"0x9214","SubjectArea"},
     {"0x927C","MakerNote"},
     {"0x9286","UserComment"},
     {"0x9290","DTSubsec"},
@@ -290,7 +296,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 3: // uShrot
-                            enc = BitConverter.ToUInt16(propItem.Value).ToString();
+                            enc = FileSystem.UShortConversionSlice(propItem.Value,2);
                             PrintInfo(hexID, enc);
                             break;
                         case 4: // uLong
@@ -298,7 +304,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 5: // uRationl
-                            enc = FileSystem.UInt32BigEndian(propItem.Value,4);
+                            enc = FileSystem.UInt32BigEndianConvertionSlice(propItem.Value,4);
                             PrintInfo(hexID, enc);
                             break;
                         case 9: // sLong
@@ -306,7 +312,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 10: // sRationl
-                            enc = FileSystem.UInt32BigEndian(propItem.Value,4);
+                            enc = FileSystem.UInt32BigEndianConvertionSlice(propItem.Value,4);
                             PrintInfo(hexID, enc);
                             break;
                         case 11: // Float (just for some types of format)
