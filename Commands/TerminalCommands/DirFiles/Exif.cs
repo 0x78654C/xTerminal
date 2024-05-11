@@ -31,7 +31,7 @@ Attention: Works only with the following extensions: {string.Join(", ", s_imgExt
         {
             try
             {
-                if (args == $"{Name} -h")
+                if (args == $"{Name} -h" && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
@@ -40,7 +40,7 @@ Attention: Works only with the following extensions: {string.Join(", ", s_imgExt
                 var pathFile = string.Empty;
                 var param = FileSystem.SanitizePath(args.Replace($"{Name}", "").Trim(), currentDirectory);
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                    pathFile = args.Replace(param, GlobalVariables.pipeCmdOutput.Trim());
+                    pathFile = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(),currentDirectory);
                 else
                     pathFile= param;
 
