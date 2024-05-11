@@ -393,7 +393,7 @@ namespace Core
         {
             string outData = string.Empty;
             int count = 0;
-            byte[] val = new byte[4];
+            byte[] val = new byte[slice];
             int c=0;
             int ite = 0;
             foreach (var b in bytes)
@@ -430,7 +430,7 @@ namespace Core
         {
             string outData = string.Empty;
             int count = 0;
-            byte[] val = new byte[4];
+            byte[] val = new byte[slice];
             int c = 0;
             foreach (var b in bytes)
             {
