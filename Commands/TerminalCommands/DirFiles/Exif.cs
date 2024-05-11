@@ -37,7 +37,13 @@ Attention: Works only with the following extensions: {string.Join(", ", s_imgExt
                     return;
                 }
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-                var pathFile = FileSystem.SanitizePath(args.Replace($"{Name}", "").Trim(),currentDirectory);
+                var pathFile = string.Empty;
+                var param = FileSystem.SanitizePath(args.Replace($"{Name}", "").Trim(), currentDirectory);
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    pathFile = args.Replace(param, GlobalVariables.pipeCmdOutput.Trim());
+                else
+                    pathFile= param;
+
                 if (File.Exists(pathFile))
                 {
 
