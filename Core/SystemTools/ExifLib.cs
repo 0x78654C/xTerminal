@@ -4,6 +4,7 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Text;
 using System.Runtime.Versioning;
+using System.Linq;
 
 /*
  Library for exif information getter.
@@ -45,6 +46,8 @@ namespace Core.SystemTools
     {"0x0018","GpsDestBear"},
     {"0x0019","GpsDestDistRef"},
     {"0x001A","GpsDestDist"},
+    {"0x001D","GpsDateStamp"},
+    {"0x001F","GpsHPositioningError"},
     {"0x00FE","NewSubfileType"},
     {"0x00FF","SubfileType"},
     {"0x0100","ImageWidth"},
@@ -190,53 +193,65 @@ namespace Core.SystemTools
     {"0x5112","PixelPerUnitY"},
     {"0x5113","PaletteHistogram"},
     {"0x8298","Copyright"},
-    {"0x829A","ExifExposureTime"},
-    {"0x829D","ExifFNumber"},
-    {"0x8769","ExifIFD"},
+    {"0x829A","ExposureTime"},
+    {"0x829D","FNumber"},
+    {"0x8769","IFD"},
     {"0x8773","ICCProfile"},
-    {"0x8822","ExifExposureProg"},
-    {"0x8824","ExifSpectralSense"},
+    {"0x8822","ExposureProg"},
+    {"0x8824","SpectralSense"},
     {"0x8825","GpsIFD"},
-    {"0x8827","ExifISOSpeed"},
-    {"0x8828","ExifOECF"},
-    {"0x9000","ExifVer"},
-    {"0x9003","ExifDTOrig"},
-    {"0x9004","ExifDTDigitized"},
-    {"0x9101","ExifCompConfig"},
-    {"0x9102","ExifCompBPP"},
-    {"0x9201","ExifShutterSpeed"},
-    {"0x9202","ExifAperture"},
-    {"0x9203","ExifBrightness"},
-    {"0x9204","ExifExposureBias"},
-    {"0x9205","ExifMaxAperture"},
-    {"0x9206","ExifSubjectDist"},
-    {"0x9207","ExifMeteringMode"},
-    {"0x9208","ExifLightSource"},
-    {"0x9209","ExifFlash"},
-    {"0x920A","ExifFocalLength"},
-    {"0x927C","ExifMakerNote"},
-    {"0x9286","ExifUserComment"},
-    {"0x9290","ExifDTSubsec"},
-    {"0x9291","ExifDTOrigSS"},
-    {"0x9292","ExifDTDigSS"},
-    {"0xA000","ExifFPXVer"},
-    {"0xA001","ExifColorSpace"},
-    {"0xA002","ExifPixXDim"},
-    {"0xA003","ExifPixYDim"},
-    {"0xA004","ExifRelatedWav"},
-    {"0xA005","ExifInterop"},
-    {"0xA20B","ExifFlashEnergy"},
-    {"0xA20C","ExifSpatialFR"},
-    {"0xA20E","ExifFocalXRes"},
-    {"0xA20F","ExifFocalYRes"},
-    {"0xA210","ExifFocalResUnit"},
-    {"0xA214","ExifSubjectLoc"},
-    {"0xA215","ExifExposureIndex"},
-    {"0xA217","ExifSensingMethod"},
-    {"0xA300","ExifFileSource"},
-    {"0xA301","ExifSceneType"},
-    {"0xA302","ExifCfaPattern"}
+    {"0x8827","ISOSpeed"},
+    {"0x8828","OECF"},
+    {"0x9000","Ver"},
+    {"0x9003","DateTimeOrig"},
+    {"0x9004","DateTimeDigitized"},
+    {"0x9010","OffsetTime"},
+    {"0x9011","OffsetTimeOriginal"},
+    {"0x9012","OffsetTimeDigitized"},
+    {"0x9101","CompConfig"},
+    {"0x9102","CompBPP"},
+    {"0x9201","ShutterSpeed"},
+    {"0x9202","Aperture"},
+    {"0x9203","Brightness"},
+    {"0x9204","ExposureBias"},
+    {"0x9205","MaxAperture"},
+    {"0x9206","SubjectDist"},
+    {"0x9207","MeteringMode"},
+    {"0x9208","LightSource"},
+    {"0x9209","Flash"},
+    {"0x920A","FocalLength"},
+    {"0x9214","SubjectArea"},
+    {"0x927C","MakerNote"},
+    {"0x9286","UserComment"},
+    {"0x9290","DTSubsec"},
+    {"0x9291","DTOrigSS"},
+    {"0x9292","DTDigSS"},
+    {"0xA000","FPXVer"},
+    {"0xA001","ColorSpace"},
+    {"0xA002","PixXDim"},
+    {"0xA003","PixYDim"},
+    {"0xA004","RelatedWav"},
+    {"0xA005","Interop"},
+    {"0xA20B","FlashEnergy"},
+    {"0xA20C","SpatialFR"},
+    {"0xA20E","FocalXRes"},
+    {"0xA20F","FocalYRes"},
+    {"0xA210","FocalResUnit"},
+    {"0xA214","SubjectLoc"},
+    {"0xA215","ExposureIndex"},
+    {"0xA217","SensingMethod"},
+    {"0xA300","FileSource"},
+    {"0xA301","SceneType"},
+    {"0xA302","CfaPattern"},
+    {"0xA402","ExposureMode"},
+    {"0xA403","WhiteBalance"},
+    {"0xA405","FocalLengthIn35mmFilm"},
+    {"0xA406","SceneCaptureType"},
+    {"0xA432","LensSpecification"},
+    {"0xA433","LensMake"},
+    {"0xA434","LensModel"}
 };
+
         /// <summary>
         /// Print final info.
         /// </summary>
@@ -281,7 +296,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 3: // uShrot
-                            enc = BitConverter.ToUInt16(propItem.Value).ToString();
+                            enc = FileSystem.UShortConversionSlice(propItem.Value,2);
                             PrintInfo(hexID, enc);
                             break;
                         case 4: // uLong
@@ -289,7 +304,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 5: // uRationl
-                            enc = BitConverter.ToUInt64(propItem.Value).ToString();
+                            enc = FileSystem.UInt32BigEndianConversionSlice(propItem.Value,4);
                             PrintInfo(hexID, enc);
                             break;
                         case 9: // sLong
@@ -297,7 +312,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 10: // sRationl
-                            enc = BitConverter.ToUInt64(propItem.Value).ToString();
+                            enc = FileSystem.UInt32BigEndianConversionSlice(propItem.Value,4);
                             PrintInfo(hexID, enc);
                             break;
                         case 11: // Float (just for some types of format)
@@ -310,10 +325,14 @@ namespace Core.SystemTools
                             break;
                     }
                 }
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    GlobalVariables.pipeCmdOutput = s_outData;
+                else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == GlobalVariables.pipeCmdCountTemp)
+                    GlobalVariables.pipeCmdOutput = s_outData;
+                else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput = s_outData;
                 else
-                    Console.WriteLine(s_outData);
+                Console.WriteLine(s_outData);
                 s_outData = string.Empty;
             }
             catch (Exception e)

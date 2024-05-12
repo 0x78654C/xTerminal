@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -381,6 +382,85 @@ namespace Core
                 result |= (ulong)bytes[i] << (i * 8);
             }
             return result;
+        }
+
+        /// <summary>
+        /// Create UIint32 array Big-Endian by chunks.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static string UInt32BigEndianConversionSlice(byte[] bytes, int slice)
+        {
+            string outData = string.Empty;
+            int count = 0;
+            byte[] val = new byte[slice];
+            int c=0;
+            int ite = 0;
+            foreach (var b in bytes)
+            {
+                count++;
+                if (count == slice)
+                {
+                    var arr = ArrayFromRange(bytes, c, slice);
+                    Array.Reverse(arr);
+                    ite++;
+                    if (ite == 2)
+                    {
+                        outData += BinaryPrimitives.ReadUInt32BigEndian(arr).ToString();
+                        outData += ", ";
+                        ite = 0;
+                    }
+                    else
+                        outData += BinaryPrimitives.ReadUInt32BigEndian(arr).ToString()+"/";
+                    Array.Clear(val, 0, val.Length);
+                    c = c+count;
+                    count = 0;
+                }
+            }
+            return outData;
+        }
+
+        /// <summary>
+        /// Byte[] to usort conversion by chunks.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="slice"></param>
+        /// <returns></returns>
+        public static string UShortConversionSlice(byte[] bytes, int slice)
+        {
+            string outData = string.Empty;
+            int count = 0;
+            byte[] val = new byte[slice];
+            int c = 0;
+            foreach (var b in bytes)
+            {
+                count++;
+                if (count == slice)
+                {
+                    var arr = ArrayFromRange(bytes, c, slice);
+                    outData += BitConverter.ToUInt16(arr).ToString() + ", ";
+                    Array.Clear(val, 0, val.Length);
+                    c = c + count;
+                    count = 0;
+                }
+            }
+            return outData;
+        }
+
+        /// <summary>
+        /// Create new array from original array by len and start index.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="originalArray"></param>
+        /// <param name="startIndex"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        private static T[] ArrayFromRange<T>(T[] originalArray, int startIndex, int length)
+        {
+            int actualLength = Math.Min(length, originalArray.Length - startIndex);
+            T[] copy = new T[actualLength];
+            Array.Copy(originalArray, startIndex, copy, 0, actualLength);
+            return copy;
         }
     }
 }
