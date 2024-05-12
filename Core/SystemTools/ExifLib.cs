@@ -304,7 +304,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 5: // uRationl
-                            enc = FileSystem.UInt32BigEndianConvertionSlice(propItem.Value,4);
+                            enc = FileSystem.UInt32BigEndianConversionSlice(propItem.Value,4);
                             PrintInfo(hexID, enc);
                             break;
                         case 9: // sLong
@@ -312,7 +312,7 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                         case 10: // sRationl
-                            enc = FileSystem.UInt32BigEndianConvertionSlice(propItem.Value,4);
+                            enc = FileSystem.UInt32BigEndianConversionSlice(propItem.Value,4);
                             PrintInfo(hexID, enc);
                             break;
                         case 11: // Float (just for some types of format)

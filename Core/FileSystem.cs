@@ -389,7 +389,7 @@ namespace Core
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static string UInt32BigEndianConvertionSlice(byte[] bytes, int slice)
+        public static string UInt32BigEndianConversionSlice(byte[] bytes, int slice)
         {
             string outData = string.Empty;
             int count = 0;
