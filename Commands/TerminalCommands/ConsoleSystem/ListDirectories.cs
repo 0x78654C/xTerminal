@@ -126,7 +126,7 @@ Commands can be canceled with CTRL+X key combination.
                 {
                     GlobalVariables.eventKeyFlagX = true;
                     // Display directory and file information
-                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false,true);
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false, true);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                     return;
@@ -338,6 +338,24 @@ Commands can be canceled with CTRL+X key combination.
         }
 
 
+        private void  AllDupesBySize(string path, IGrouping<string,FileInfo>[] list)
+        {
+            try
+            {
+               var items= Directory.GetFiles(path, "*")
+                  .Select(f => new FileInfo(f))
+                  .GroupBy(t => t.Length.ToString())
+                  .Where(t => t.Count() > 1)
+                  .ToArray();
+
+                foreach(var item in items)
+                {
+                    AllDupesBySize(item, list);
+                }
+            }catch(UnauthorizedAccessException)
+            { }
+        }
+
         /// <summary>
         /// Get duplicates files based on MD5 checksuma and file size.
         /// A big thanks for @mkbmain for help.
@@ -347,17 +365,15 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="saveToFile">File where to save the output.</param>
         private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile = null)
         {
+
             GlobalVariables.pipeCmdOutput = string.Empty;
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
             string results = checkExtension ? $"List of duplicated files(extension check) in {dirToScan}: " + Environment.NewLine + Environment.NewLine : $"List of duplicated files in {dirToScan}:" + Environment.NewLine + Environment.NewLine;
 
-            var allDupesBySize = Directory.GetFiles(dirToScan, "*", SearchOption.AllDirectories)
-              .Select(f => new FileInfo(f))
-              .GroupBy(t => t.Length.ToString())
-              .Where(t => t.Count() > 1)
-              .ToArray();
+            IGrouping<string, FileInfo>[] allDupesBySize=null;
+            AllDupesBySize(dirToScan, allDupesBySize);
 
             var dupesList = new List<Dupe[]>();
             foreach (var item in allDupesBySize)
@@ -381,7 +397,7 @@ Commands can be canceled with CTRL+X key combination.
                 s_stopWatch.Stop();
                 s_timeSpan = s_stopWatch.Elapsed;
                 results += string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))));
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow,FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
                 Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
                 return;
             }
@@ -411,6 +427,7 @@ Commands can be canceled with CTRL+X key combination.
                 Console.WriteLine(string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName)))));
                 Console.WriteLine($"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
             }
+
         }
 
         /// <summary>
@@ -514,8 +531,8 @@ Commands can be canceled with CTRL+X key combination.
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile,
             bool isCreationTime = false, bool isLastAccessTime = false, bool isLastWriteTime = false)
         {
-            if(GlobalVariables.isPipeCommand)
-                 GlobalVariables.pipeCmdOutput = string.Empty;
+            if (GlobalVariables.isPipeCommand)
+                GlobalVariables.pipeCmdOutput = string.Empty;
 
             if (!Directory.Exists(s_currentDirectory))
             {
@@ -565,8 +582,8 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="isCreationTime"></param>
         /// <param name="isLastAccessTime"></param>
         /// <param name="isLastWriteTime"></param>
-        private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile, 
-            bool isCreationTime = false, bool isLastAccessTime=false, bool isLastWriteTime=false)
+        private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile,
+            bool isCreationTime = false, bool isLastAccessTime = false, bool isLastWriteTime = false)
         {
             try
             {
