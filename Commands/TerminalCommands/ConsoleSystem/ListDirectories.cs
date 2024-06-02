@@ -337,7 +337,6 @@ Commands can be canceled with CTRL+X key combination.
             }
         }
 
-
         /// <summary>
         /// Get duplicates files based on MD5 checksuma and file size.
         /// A big thanks for @mkbmain for help.
@@ -347,17 +346,18 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="saveToFile">File where to save the output.</param>
         private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile = null)
         {
+
             GlobalVariables.pipeCmdOutput = string.Empty;
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
             s_stopWatch.Start();
             string results = checkExtension ? $"List of duplicated files(extension check) in {dirToScan}: " + Environment.NewLine + Environment.NewLine : $"List of duplicated files in {dirToScan}:" + Environment.NewLine + Environment.NewLine;
 
-            var allDupesBySize= Directory.GetFiles(dirToScan, "*")
-                  .Select(f => new FileInfo(f))
-                  .GroupBy(t => t.Length.ToString())
-                  .Where(t => t.Count() > 1)
-                  .ToArray();
+            var allDupesBySize = Directory.GetFiles(dirToScan, "*", SearchOption.AllDirectories)
+              .Select(f => new FileInfo(f))
+              .GroupBy(t => t.Length.ToString())
+              .Where(t => t.Count() > 1)
+              .ToArray();
 
             var dupesList = new List<Dupe[]>();
             foreach (var item in allDupesBySize)
