@@ -2,7 +2,7 @@
 using System.Text;
 using System.IO;
 
-namespace Core
+namespace Core.SystemTools
 {
     /*
      Credits to: 
@@ -46,20 +46,20 @@ namespace Core
                 + bytesPerLine           // - characters to show the ascii value
                 + Environment.NewLine.Length; // Carriage return and line feed (should normally be 2)
 
-            char[] line = (new String(' ', lineLength - Environment.NewLine.Length) + Environment.NewLine).ToCharArray();
+            char[] line = (new string(' ', lineLength - Environment.NewLine.Length) + Environment.NewLine).ToCharArray();
             int expectedLines = (bytesLength + bytesPerLine - 1) / bytesPerLine;
             StringBuilder result = new StringBuilder(expectedLines * lineLength);
 
             for (int i = 0; i < bytesLength; i += bytesPerLine)
             {
-                line[0] = s_hexChars[(i >> 28) & 0xF];
-                line[1] = s_hexChars[(i >> 24) & 0xF];
-                line[2] = s_hexChars[(i >> 20) & 0xF];
-                line[3] = s_hexChars[(i >> 16) & 0xF];
-                line[4] = s_hexChars[(i >> 12) & 0xF];
-                line[5] = s_hexChars[(i >> 8) & 0xF];
-                line[6] = s_hexChars[(i >> 4) & 0xF];
-                line[7] = s_hexChars[(i >> 0) & 0xF];
+                line[0] = s_hexChars[i >> 28 & 0xF];
+                line[1] = s_hexChars[i >> 24 & 0xF];
+                line[2] = s_hexChars[i >> 20 & 0xF];
+                line[3] = s_hexChars[i >> 16 & 0xF];
+                line[4] = s_hexChars[i >> 12 & 0xF];
+                line[5] = s_hexChars[i >> 8 & 0xF];
+                line[6] = s_hexChars[i >> 4 & 0xF];
+                line[7] = s_hexChars[i >> 0 & 0xF];
 
                 int hexColumn = firstHexColumn;
                 int charColumn = firstCharColumn;
@@ -76,9 +76,9 @@ namespace Core
                     else
                     {
                         byte b = bytes[i + j];
-                        line[hexColumn] = s_hexChars[(b >> 4) & 0xF];
+                        line[hexColumn] = s_hexChars[b >> 4 & 0xF];
                         line[hexColumn + 1] = s_hexChars[b & 0xF];
-                        line[charColumn] = (b < 32 ? '·' : (char)b);
+                        line[charColumn] = b < 32 ? '·' : (char)b;
                     }
                     hexColumn += 3;
                     charColumn++;
@@ -106,7 +106,7 @@ namespace Core
                         var size = stream.Length < 50 ? (int)stream.Length : 50;
                         var buffe = new byte[size];
                         var read = stream.Read(buffe, 0, size);
-                        outHex=Hex(buffe, size);
+                        outHex = Hex(buffe, size);
                     }
                 }
             }
@@ -156,7 +156,7 @@ namespace Core
                     else
                     {
                         var b = bytes[i + j];
-                        line[hexColumn] = s_hexChars[(b >> 4) & 0xF];
+                        line[hexColumn] = s_hexChars[b >> 4 & 0xF];
                         line[hexColumn + 1] = s_hexChars[b & 0xF];
                     }
 
