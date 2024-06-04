@@ -45,5 +45,6 @@ namespace Core
         public static bool isPipeVar = false;
         public static int pipeCmdCount { get; set; } = 0;
         public static int pipeCmdCountTemp { get; set; } = 0;
+        public static int fileHexLength { get; set; } = 0;
     }
 }
