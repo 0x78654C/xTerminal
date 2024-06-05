@@ -78,7 +78,7 @@ namespace Commands.TerminalCommands.Roslyn
                 _commandLineArgs = splitArguments.CommandLineToArgs() ?? Array.Empty<string>();
                 ParseCode(fileName);
                 Assembly assembly = null;
-                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun);
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun, CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
                 string assemblyName = Path.GetRandomFileName();
                 var references = GetRef.References();
                 CSharpCompilation compilation = CSharpCompilation.Create(

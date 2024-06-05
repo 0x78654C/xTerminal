@@ -187,6 +187,13 @@ namespace Commands.TerminalCommands.Roslyn
                 FileSystem.ErrorWriteLine(e.Message + " Check Command!");
             }
         }
+
+        /// <summary>
+        /// Run addon code.
+        /// </summary>
+        /// <param name="addonDir"></param>
+        /// <param name="command"></param>
+        /// <param name="param"></param>
         private void CompileAndRun(string addonDir, string command, string param)
         {
             try
@@ -201,7 +208,7 @@ namespace Commands.TerminalCommands.Roslyn
                     return;
                 }
                 Assembly assembly = null;
-                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun);
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun, CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
                 string assemblyName = Path.GetRandomFileName();
                 var references = GetRef.References();
 

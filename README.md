@@ -9,7 +9,7 @@ A Linux like terminal for windows with some extras.
 
 ## Requirements:
 
-.NET 6 Runtime
+.NET 8 Runtime
 
  For Roslyn C# code runner use NuGet command in Commands project:
  ```
@@ -51,7 +51,8 @@ This is the full list of commands that can be used in xTerminal:
                          Example1: ls -d <directory_path>
                          Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
                          Example3: ls -d <directory_path> -o <file_to_save>
-                         Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
+                         Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension).
+                         Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)  
                    -s  : Displays size of files in current directory and subdirectories.
                    -se : List recursively files and directories containing a specific text.
                          Example1: ls -se <search_text>

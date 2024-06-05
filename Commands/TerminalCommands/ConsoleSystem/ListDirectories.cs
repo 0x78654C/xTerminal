@@ -1,4 +1,5 @@
 ﻿using Core;
+using Core.SystemTools;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -47,6 +49,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
           Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
           Example3: ls -d <directory_path> -o <file_to_save>
           Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
+          Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
     -s  : Displays size of files in current directory and subdirectories.
     -se : Recursively lists files and directories containing a specific text.
           Example1: ls -se <search_text>
@@ -126,7 +129,7 @@ Commands can be canceled with CTRL+X key combination.
                 {
                     GlobalVariables.eventKeyFlagX = true;
                     // Display directory and file information
-                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false,true);
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false, true);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                     return;
@@ -188,6 +191,15 @@ Commands can be canceled with CTRL+X key combination.
                 // Grab the duplicate files.
                 if (arg.ContainsParameter("-d"))
                 {
+
+                    if (arg.ContainsParameter("-length"))
+                    {
+                        var length = args.SplitByText("-length",1).Trim();
+                        GlobalVariables.fileHexLength = Int32.Parse(length);
+                        FileSystem.SuccessWriteLine($"Duplicate file scan bytes length is set to: {length}");
+                        return;
+                    }
+
                     string dirSearchIn = string.Empty;
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
                         dirSearchIn = GlobalVariables.pipeCmdOutput.Trim();
@@ -195,6 +207,7 @@ Commands can be canceled with CTRL+X key combination.
                         dirSearchIn = args.SplitByText(" -o", 0);
                     bool extensions = false;
 
+                    
                     if (arg.ContainsParameter("-o"))
                     {
                         if (arg.ContainsParameter("-e"))
@@ -310,6 +323,7 @@ Commands can be canceled with CTRL+X key combination.
                     if (GlobalVariables.isPipeCommand && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
                         s_currentDirectory = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     GlobalVariables.eventKeyFlagX = true;
+
                     // Display directory and file information
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false);
                     if (GlobalVariables.eventCancelKey)
@@ -337,7 +351,6 @@ Commands can be canceled with CTRL+X key combination.
             }
         }
 
-
         /// <summary>
         /// Get duplicates files based on MD5 checksuma and file size.
         /// A big thanks for @mkbmain for help.
@@ -347,6 +360,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="saveToFile">File where to save the output.</param>
         private void GetDuplicateFiles(string dirToScan, bool checkExtension, string saveToFile = null)
         {
+
             GlobalVariables.pipeCmdOutput = string.Empty;
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
@@ -381,7 +395,7 @@ Commands can be canceled with CTRL+X key combination.
                 s_stopWatch.Stop();
                 s_timeSpan = s_stopWatch.Elapsed;
                 results += string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName))));
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow,FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Yellow, FileSystem.SaveFileOutput(saveToFile, s_currentDirectory, results));
                 Console.WriteLine($"Search time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
                 return;
             }
@@ -411,6 +425,7 @@ Commands can be canceled with CTRL+X key combination.
                 Console.WriteLine(string.Join($"{Environment.NewLine}{"".PadRight(20, '-')}{Environment.NewLine}", dupesList.Select(t => string.Join(Environment.NewLine, t.Select(e => e.FileName)))));
                 Console.WriteLine($"\nSearch time: {s_timeSpan.Hours} hours {s_timeSpan.Minutes} mininutes {s_timeSpan.Seconds} seconds {s_timeSpan.Milliseconds} milliseconds");
             }
+
         }
 
         /// <summary>
@@ -420,17 +435,45 @@ Commands can be canceled with CTRL+X key combination.
         /// <returns></returns>
         private static string GetMD5CheckSum(string file)
         {
-            using (var md5 = MD5.Create())
+            s_virus = file; // The file where Windows Defender detects a potential malware.
+            if (GlobalVariables.fileHexLength > 0)
             {
-                using (var stream = File.OpenRead(file))
-                {
-                    s_virus = file; // The file where Windows Defender detects a potential malware.
-                    var hash = md5.ComputeHash(stream);
-                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                }
+                var hexDump = new HexDmpLine(file, GlobalVariables.fileHexLength);
+                var hex = hexDump.GetHex();
+                var computeHexHash = ComputeHash(hex);
+                return computeHexHash;
             }
+            var computeHash = ComputeHash(file,true);
+            return computeHash;
         }
 
+        /// <summary>
+        /// Get MD5 from a file or string.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="isFile"></param>
+        /// <returns></returns>
+        private static string ComputeHash(string data, bool isFile = false)
+        {
+            var result = "";
+            using (var md5 = MD5.Create())
+            {
+                s_virus = data; // The file where Windows Defender detects a potential malware.
+                if (isFile)
+                {
+                    using (var stream = File.OpenRead(data))
+                    {
+                        var hashFile = md5.ComputeHash(stream);
+                        result = BitConverter.ToString(hashFile).Replace("-", "").ToLowerInvariant();
+                    }
+                    return result;
+                }
+                var bytes = Encoding.ASCII.GetBytes(data);
+                var hash = md5.ComputeHash(bytes);
+                result = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+            return result;
+        }
 
         // Clear the counters.
         private void ClearCounters()
@@ -514,8 +557,8 @@ Commands can be canceled with CTRL+X key combination.
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile,
             bool isCreationTime = false, bool isLastAccessTime = false, bool isLastWriteTime = false)
         {
-            if(GlobalVariables.isPipeCommand)
-                 GlobalVariables.pipeCmdOutput = string.Empty;
+            if (GlobalVariables.isPipeCommand)
+                GlobalVariables.pipeCmdOutput = string.Empty;
 
             if (!Directory.Exists(s_currentDirectory))
             {
@@ -565,8 +608,8 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="isCreationTime"></param>
         /// <param name="isLastAccessTime"></param>
         /// <param name="isLastWriteTime"></param>
-        private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile, 
-            bool isCreationTime = false, bool isLastAccessTime=false, bool isLastWriteTime=false)
+        private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile,
+            bool isCreationTime = false, bool isLastAccessTime = false, bool isLastWriteTime = false)
         {
             try
             {
