@@ -4,24 +4,35 @@ using System.IO;
 
 namespace Core.SystemTools
 {
+    /*
+        Get hex dump with bytes limitation.
+     */
     public class HexDmpLine
     {
+        private string FileName;
+        private int Length;
+
+        public HexDmpLine(string fileName, int length)
+        {
+            FileName = fileName;
+            Length = length;
+        }
 
         /// <summary>
         /// Hex dump
         /// </summary>
         /// <param name="fileName">File name for dump hex</param>
         /// <returns>string</returns>
-        public static string GetHex(string fileName, int length)
+        public string GetHex()
         {
             var outHex = "";
             try
             {
-                if (File.Exists(fileName))
+                if (File.Exists(FileName))
                 {
-                    using (var stream = File.OpenRead(fileName))
+                    using (var stream = File.OpenRead(FileName))
                     {
-                        var size = stream.Length < length ? (int)stream.Length : length;
+                        var size = stream.Length < Length ? (int)stream.Length : Length;
                         var buffer = new byte[size];
                         var read = stream.Read(buffer, 0, size);
                         outHex = Hex(buffer, size);
@@ -35,7 +46,7 @@ namespace Core.SystemTools
             return outHex;
         }
 
-        private static char[] s_hexChars { get; } = "0123456789ABCDEF".ToCharArray();
+        private char[] s_hexChars { get; } = "0123456789ABCDEF".ToCharArray();
 
         /// <summary>
         /// Hex dump
@@ -43,7 +54,7 @@ namespace Core.SystemTools
         /// <param name="bytes">Bytes input from file</param>
         /// <param name="bytesPerLine">Bytes per line. Default 16</param>
         /// <returns>string</returns>
-        private static string Hex(byte[] bytes, int bytesPerLine = 50)
+        private string Hex(byte[] bytes, int bytesPerLine = 50)
         {
             if (bytes is null) return "<null>";
             var bytesLength = bytes.Length;
