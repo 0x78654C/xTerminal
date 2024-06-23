@@ -36,6 +36,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             arg = arg.Replace($"{Name}", "").Trim();
             var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
+            // Store to file param
             if (arg.Contains(" -o "))
             {
                 var jFile = arg.SplitByText(" -o ")[0].Trim();
@@ -81,6 +82,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
                 return;
             }
+
             var jsonFile = FileSystem.SanitizePath(arg, currentDirectory).Trim();
 
             if (!File.Exists(jsonFile))
