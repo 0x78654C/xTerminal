@@ -60,5 +60,20 @@ namespace Core.SystemTools
             json = json.Except(toRemove(json)).ToList();
             CreateJsonFile(filePath, json.ToArray());
         }
+
+        /// <summary>
+        /// Json prettifier.
+        /// </summary>
+        /// <param name="jsonData"></param>
+        /// <returns></returns>
+        public static string JsonPrettifier(string jsonData)
+        {
+            var options = new JsonSerializerOptions()
+            {
+                WriteIndented = true
+            };
+            var jsonElem = JsonSerializer.Deserialize<JsonElement>(jsonData);
+            return JsonSerializer.Serialize(jsonElem, options);
+        }
     }
 }
