@@ -17,17 +17,19 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "pjson";
         private static string s_helpMessage = @"Usage of pjson command:
-  pjson <file_path> :   Will prettify the JSON data and stores back in file.
+  pjson -h                             : Display this message. 
+  pjson <file_path>                    : Will prettify the JSON data and stores back in file.
+  pjson <file_path> -o <new_file_path> : Stores the prettified JSON in new file.   
 ";
         public void Execute(string arg)
         {
-            if (arg == $"{Name} -h")
+            if (arg == $"{Name} -h" && !GlobalVariables.isPipeCommand)
             {
                 Console.WriteLine(s_helpMessage);
                 return;
             }
 
-            if (arg.Length == 5)
+            if (arg == Name && !GlobalVariables.isPipeCommand)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
@@ -35,13 +37,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             arg = arg.Replace($"{Name}", "").Trim();
             var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-
+            var param = arg.Split(' '); 
             // Store to file param
-            if (arg.Contains(" -o "))
+            if (param.ContainsParameter("-o"))
             {
-                var jFile = arg.SplitByText(" -o ")[0].Trim();
+                var jFile = arg.SplitByText("-o")[0].Trim();
                 jFile = FileSystem.SanitizePath(jFile, currentDirectory);
-                var newFile = arg.SplitByText(" -o ")[1].Trim();
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    jFile = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), currentDirectory);
+                var newFile = arg.SplitByText("-o")[1].Trim();
                 newFile = FileSystem.SanitizePath(newFile, currentDirectory);
 
                 if (!File.Exists(jFile))
@@ -55,8 +59,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     Console.WriteLine($"File already exist: {newFile}.");
                     Console.Write($"Do you want to overwrite it? YES (Y), NO (N): ");
                     var userImputKey = Console.ReadKey();
-
-                    
                     
                     switch (userImputKey.KeyChar.ToString().ToLower())
                     {
@@ -84,6 +86,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
 
             var jsonFile = FileSystem.SanitizePath(arg, currentDirectory).Trim();
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                jsonFile = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), currentDirectory);
 
             if (!File.Exists(jsonFile))
             {
