@@ -102,8 +102,8 @@ namespace Commands.TerminalCommands.Network
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
                 | SecurityProtocolType.Tls11
-                | SecurityProtocolType.Tls
-                | SecurityProtocolType.Ssl3;
+                | SecurityProtocolType.Tls 
+                | SecurityProtocolType.Tls13;
         }
 
         /// <summary>
