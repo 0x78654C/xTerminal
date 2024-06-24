@@ -381,7 +381,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![pipe_commands](https://github.com/0x78654C/xTerminal/assets/13780514/16bd948e-ae7f-4455-b6d6-1f99e7a67500)
+![pipe3](https://github.com/0x78654C/xTerminal/assets/13780514/39e749a7-c772-4879-9e71-aa6479c18d0a)
 
 Pipe commands cand be added even to alias commands.
 You can use multiple pipe middle commands as well.
