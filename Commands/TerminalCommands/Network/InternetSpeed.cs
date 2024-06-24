@@ -1,6 +1,6 @@
 ﻿using Core;
 using System;
-using System.Net;
+using System.Net.Http;
 using System.Runtime.Versioning;
 
 namespace Commands.TerminalCommands.Network
@@ -20,13 +20,13 @@ namespace Commands.TerminalCommands.Network
             if (Core.NetWork.IntertCheck()) // Check internet connection.
             {
                 // Create Object Of WebClient.
-                WebClient wc = new WebClient();
+                var hc = new HttpClient();
 
                 // Download Start Time.
                 DateTime dt1 = DateTime.Now;
 
                 // Number Of Bytes Downloaded.
-                byte[] data = wc.DownloadData("http://www.google.com");
+                byte[] data = hc.GetByteArrayAsync("http://www.google.com").Result;
 
                 // Download End Time.
                 DateTime dt2 = DateTime.Now;
