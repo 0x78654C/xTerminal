@@ -218,6 +218,9 @@ This is the full list of commands that can be used in xTerminal:
                  Example 4: diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
     exif      -- Extracts image metadata.
                  Example  : exif <path_to_iamge_file>. 
+    pjson     -- Prettify the JSON data.
+                 Example 1: pjson <file_path>                    : Will prettify the JSON data and stores back in file.
+                 Example 2: pjson <file_path> -o <new_file_path> : Stores the prettified JSON in new file.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
