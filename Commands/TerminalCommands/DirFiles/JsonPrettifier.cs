@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using Core.SystemTools;
 
-namespace Commands.TerminalCommands.ConsoleSystem
+namespace Commands.TerminalCommands.DirFiles
 {
     [SupportedOSPlatform("Windows")]
     public class JsonPrettifier : ITerminalCommand
@@ -31,7 +31,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             arg = arg.Replace($"{Name}", "").Trim();
             var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-            var param = arg.Split(' '); 
+            var param = arg.Split(' ');
             // Store to file param
             if (param.ContainsParameter("-o"))
             {
@@ -47,13 +47,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.ErrorWriteLine($"Original file not found: {jFile}");
                     return;
                 }
-                
+
                 if (File.Exists(newFile))
                 {
                     Console.WriteLine($"File already exist: {newFile}.");
                     Console.Write($"Do you want to overwrite it? YES (Y), NO (N): ");
                     var userImputKey = Console.ReadKey();
-                    
+
                     switch (userImputKey.KeyChar.ToString().ToLower())
                     {
                         case "y":
