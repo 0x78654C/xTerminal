@@ -50,6 +50,10 @@ namespace Commands.TerminalCommands.DirFiles
             else
             {
                 args = args.Replace("del ", "");
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
+                else
+                    args = FileSystem.SanitizePath(args, _currentLocation);
                 DeleteFile(args, _currentLocation);
             }
         }
