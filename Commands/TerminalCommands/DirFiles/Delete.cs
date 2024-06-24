@@ -54,7 +54,7 @@ namespace Commands.TerminalCommands.DirFiles
                     args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
                 else
                     args = FileSystem.SanitizePath(args, _currentLocation);
-                DeleteFile(args, _currentLocation);
+                DeleteFile(args);
             }
         }
 
@@ -83,29 +83,29 @@ namespace Commands.TerminalCommands.DirFiles
                 }
             }
         }
-        private void DeleteFile(string arg, string currentLocation)
+
+        /// <summary>
+        /// Delete File/Directory method.
+        /// </summary>
+        /// <param name="arg"></param>
+        private void DeleteFile(string arg)
         {
-            string input = string.Empty;
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount >0)
-                input = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), currentLocation);
-            else
-                input = FileSystem.SanitizePath(arg, currentLocation);
             try
             {
                 // Get the file attributes for file or directory
-                FileAttributes attr = File.GetAttributes(input);
+                FileAttributes attr = File.GetAttributes(arg);
 
                 if (attr.HasFlag(FileAttributes.Directory))
                 {
-                    var dir = new DirectoryInfo(input);
+                    var dir = new DirectoryInfo(arg);
                     RecursiveDeleteDir(dir);
-                    FileSystem.SuccessWriteLine($"Directory {input} deleted!");
+                    FileSystem.SuccessWriteLine($"Directory {arg} deleted!");
                 }
                 else
                 {
-                    File.SetAttributes(input, FileAttributes.Normal);
-                    File.Delete(input);
-                    FileSystem.SuccessWriteLine($"File {input} deleted!");
+                    File.SetAttributes(arg, FileAttributes.Normal);
+                    File.Delete(arg);
+                    FileSystem.SuccessWriteLine($"File {arg} deleted!");
                 }
             }
             catch (Exception e)
