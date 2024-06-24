@@ -50,7 +50,7 @@ namespace Commands.TerminalCommands.Roslyn
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             _addonDir = GlobalVariables.addonDirectory;
-            if (args.Length == 1)
+            if (args == Name)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;

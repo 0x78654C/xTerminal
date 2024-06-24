@@ -47,7 +47,7 @@ namespace Commands.TerminalCommands.Network
                 return;
             }
 
-            if (arg.Length == 4 && !GlobalVariables.isPipeCommand)
+            if (arg  == Name && !GlobalVariables.isPipeCommand)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;

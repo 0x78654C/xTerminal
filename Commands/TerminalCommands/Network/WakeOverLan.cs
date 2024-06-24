@@ -17,7 +17,7 @@ namespace Commands.TerminalCommands.Network
         public void Execute(string args)
         {
 
-            if (args.Trim().Length == 3)
+            if (args.Trim()  == Name)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;

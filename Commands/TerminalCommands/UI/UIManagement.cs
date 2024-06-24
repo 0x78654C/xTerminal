@@ -30,7 +30,7 @@ namespace Commands.TerminalCommands.UI
         public string Name => "ui";
         public void Execute(string arg)
         {
-            if (arg.Length == 2)
+            if (arg == Name)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;

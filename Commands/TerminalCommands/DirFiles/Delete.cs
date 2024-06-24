@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.DirFiles
         public void Execute(string args)
         {
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
-            if (args.Length == 3 && !GlobalVariables.isPipeCommand)
+            if (args == Name && !GlobalVariables.isPipeCommand)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;

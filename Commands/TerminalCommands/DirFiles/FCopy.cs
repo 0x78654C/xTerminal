@@ -84,7 +84,7 @@ namespace Commands.TerminalCommands.DirFiles
                 return;
             }
 
-            if (param.Length == 5)
+            if (param == Name)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;

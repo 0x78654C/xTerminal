@@ -27,7 +27,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
 
-                if (args.Length == 3 && !GlobalVariables.isPipeCommand)
+                if (args == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
