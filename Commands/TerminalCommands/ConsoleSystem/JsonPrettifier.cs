@@ -1,14 +1,8 @@
 ﻿using Core;
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.Versioning;
 using Core.SystemTools;
-using Core.Encryption;
-using System.Drawing;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -67,7 +61,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             var jsonPrettyOriginal = JsonManage.JsonPrettifier(readJsonFileOriginal);
                             Console.Write("\n");
                             File.WriteAllText(newFile, jsonPrettyOriginal);
-                            FileSystem.SuccessWriteLine($"Current JSON file prettified: {newFile}");
+                            if (newFile != jFile)
+                                FileSystem.SuccessWriteLine($"Current JSON file prettified: {newFile}");
+                            else
+                                FileSystem.SuccessWriteLine($"Original JSON file prettified: {newFile}");
                             break;
                         default:
                             Console.Write("\n");
