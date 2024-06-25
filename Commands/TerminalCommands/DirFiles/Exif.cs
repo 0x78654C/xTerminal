@@ -36,6 +36,11 @@ Attention: Works only with the following extensions: {string.Join(", ", s_imgExt
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
+                if (args == Name && !GlobalVariables.isPipeCommand)
+                {
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var pathFile = string.Empty;
                 var param = FileSystem.SanitizePath(args.Replace($"{Name}", "").Trim(), currentDirectory);

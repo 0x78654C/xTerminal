@@ -32,7 +32,7 @@ namespace Commands.TerminalCommands.Network
         private static string s_helpMessage = @"Usage: wget <url> . Or with parameters:
 
    -h : Display this message.
- --tls: Activate tls1,tls2,tls3 and ssl3
+ --tls: Activate tls1,tls1.2,tls1.3 (used in end of command)
    -o : Save to a specific directory.
         Example: wget <url> -o <directory_path>
 
@@ -47,7 +47,7 @@ namespace Commands.TerminalCommands.Network
                 return;
             }
 
-            if (arg.Length == 4 && !GlobalVariables.isPipeCommand)
+            if (arg  == Name && !GlobalVariables.isPipeCommand)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
@@ -102,8 +102,8 @@ namespace Commands.TerminalCommands.Network
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
                 | SecurityProtocolType.Tls11
-                | SecurityProtocolType.Tls
-                | SecurityProtocolType.Ssl3;
+                | SecurityProtocolType.Tls 
+                | SecurityProtocolType.Tls13;
         }
 
         /// <summary>

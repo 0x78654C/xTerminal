@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
-                if (args.Length == 5 && !GlobalVariables.isPipeCommand)
+                if (args == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;

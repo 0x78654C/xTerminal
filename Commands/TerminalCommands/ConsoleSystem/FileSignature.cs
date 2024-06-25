@@ -33,7 +33,7 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
             {
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 
-                if (args.Length == 4 && !GlobalVariables.isPipeCommand)
+                if (args == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;

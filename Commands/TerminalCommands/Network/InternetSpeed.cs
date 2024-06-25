@@ -1,7 +1,9 @@
 ﻿using Core;
 using System;
-using System.Net;
+using System.Net.Http;
 using System.Runtime.Versioning;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Commands.TerminalCommands.Network
 {
@@ -17,27 +19,57 @@ namespace Commands.TerminalCommands.Network
             Console.WriteLine("*******************************************");
             Console.WriteLine(" ");
 
-            if (Core.NetWork.IntertCheck()) // Check internet connection.
+            if (NetWork.IntertCheck()) // Check internet connection.
             {
-                // Create Object Of WebClient.
-                WebClient wc = new WebClient();
-
-                // Download Start Time.
-                DateTime dt1 = DateTime.Now;
-
-                // Number Of Bytes Downloaded.
-                byte[] data = wc.DownloadData("http://www.google.com");
-
-                // Download End Time.
-                DateTime dt2 = DateTime.Now;
-
-                // Calculate Speed in Kb Divide Value Of data by 1024 And Then by End Time Subtract Start Time To Know Download Per Second.
-                Console.WriteLine(Math.Round((data.Length / 1024) / (dt2 - dt1).TotalSeconds, 2) + " Kb/s with Google");
+                var inetSpeed = GetInternetSpeedAsync();
+                Console.WriteLine($"{inetSpeed} Kb/s with Google");
             }
             else
             {
                 FileSystem.ErrorWriteLine("No internet connection!");
             }
+        }
+
+        /// <summary>
+        /// Get internet speed with httpClient.
+        /// </summary>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public int GetInternetSpeedAsync(CancellationToken ct = default)
+        {
+            const double kb = 1024;
+
+            // do not use compression
+            using var client = new HttpClient();
+
+            int numberOfBytesRead = 0;
+
+            var buffer = new byte[10240].AsMemory();
+
+            // create request
+            var stream = client.GetStreamAsync("https://www.google.com", ct).Result;
+
+            // start timer
+            DateTime dt1 = DateTime.UtcNow;
+
+            // download stuff
+            while (true)
+            {
+                var i = stream.ReadAsync(buffer, ct).Result;
+                if (i < 1)
+                    break;
+
+                numberOfBytesRead += i;
+            }
+
+            // end timer
+            DateTime dt2 = DateTime.UtcNow;
+
+            double kilobytes = numberOfBytesRead / kb;
+            double time = (dt2 - dt1).TotalSeconds;
+
+            // speed in Kb per Second.
+            return (int)(kilobytes / time);
         }
     }
 }

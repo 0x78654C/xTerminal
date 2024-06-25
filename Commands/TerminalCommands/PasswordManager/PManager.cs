@@ -35,7 +35,7 @@ Usage of Password Manager commands:
 
             try
             {
-                if (arg.Length == 3)
+                if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;

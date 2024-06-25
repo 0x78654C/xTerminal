@@ -38,7 +38,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                 }
 
                 // Empty command info display.
-                if (arg.Length == 3)
+                if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;

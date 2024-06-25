@@ -1,6 +1,7 @@
 ﻿using Core;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 
@@ -25,7 +26,7 @@ namespace Commands.TerminalCommands.Network
                 }
 
                 string externalIP;
-                externalIP = (new WebClient()).DownloadString("http://checkip.dyndns.org");
+                externalIP = (new HttpClient()).GetStringAsync("http://checkip.dyndns.org").Result;
                 externalIP = (new Regex(@"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"))
                              .Matches(externalIP)[0].ToString();
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)

@@ -66,7 +66,7 @@ namespace Commands.TerminalCommands.Network
                     return;
                 }
 
-                if (args.Length == 5)
+                if (args == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;

@@ -59,7 +59,7 @@ Commands can be canceled with CTRL+X key combination.
                 string fileSearchIn = string.Empty;
                 string saveToFile;
 
-                if (arg.Length == 3 && !arg.Contains("-lc") && !GlobalVariables.isPipeCommand)
+                if (arg == Name && !arg.Contains("-lc") && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;

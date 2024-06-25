@@ -28,7 +28,7 @@ A Linux like terminal for windows with some extras.
 
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
-cd, cat, ls, odir, hex, frename, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
+cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
 
 Example:
  ```
@@ -218,6 +218,9 @@ This is the full list of commands that can be used in xTerminal:
                  Example 4: diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
     exif      -- Extracts image metadata.
                  Example  : exif <path_to_iamge_file>. 
+    pjson     -- Prettify the JSON data.
+                 Example 1: pjson <file_path>                    : Will prettify the JSON data and stores back in file.
+                 Example 2: pjson <file_path> -o <new_file_path> : Stores the prettified JSON in new file.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
@@ -381,7 +384,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![pipe_commands](https://github.com/0x78654C/xTerminal/assets/13780514/16bd948e-ae7f-4455-b6d6-1f99e7a67500)
+![pipe3](https://github.com/0x78654C/xTerminal/assets/13780514/39e749a7-c772-4879-9e71-aa6479c18d0a)
 
 Pipe commands cand be added even to alias commands.
 You can use multiple pipe middle commands as well.

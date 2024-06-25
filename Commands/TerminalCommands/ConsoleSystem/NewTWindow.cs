@@ -19,7 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public void Execute(string args)
         {
 
-            if (args.Length > 2 && !args.Contains("-u"))
+            if (args ==Name && !args.Contains("-u"))
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;

@@ -23,7 +23,7 @@ namespace Commands.TerminalCommands.DirFiles
             try
             {
                 _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
-                if (arg.Length == 4)
+                if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;

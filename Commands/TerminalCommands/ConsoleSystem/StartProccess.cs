@@ -30,7 +30,7 @@ Both examples can be used with -we parameter.
                 // Set directory, to be used in other functions
                 s_currentDirectory =
                                 File.ReadAllText(GlobalVariables.currentDirectory);
-                if (args.Length == 2)
+                if (args == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
