@@ -566,6 +566,14 @@ Commands can be canceled with CTRL+X key combination.
                 return;
             }
 
+            if (displaySizes)
+            {
+                string currentDirectorySize =
+                    FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
+                    Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
+                return;
+            }
+
             if (saveToFile)
             {
                 DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
@@ -577,18 +585,7 @@ Commands can be canceled with CTRL+X key combination.
                 DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
             }
 
-            if (displaySizes)
-            {
-                string currentDirectorySize =
-                    FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
-                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                    GlobalVariables.pipeCmdOutput += $"----------------------------------------------\nCurrent directory size: {currentDirectorySize}\n";
-                else
-                {
-                    Console.WriteLine("----------------------------------------------\n");
-                    Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
-                }
-            }
+   
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput += $"-----------Current Directory Count------------\nTotal directories: {Directory.GetDirectories(s_currentDirectory).Length}\nTotal files: {Directory.GetFiles(s_currentDirectory).Length}\n";
             else
