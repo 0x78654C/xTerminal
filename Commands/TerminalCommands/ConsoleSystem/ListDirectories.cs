@@ -617,6 +617,7 @@ Commands can be canceled with CTRL+X key combination.
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
+                    var attributes = FileSystem.GetAttributes(dir);
 
                     var directoryInfo = new DirectoryInfo(dir);
                     if (!GlobalVariables.excludeDirectories.Contains(directoryInfo.Name))
@@ -627,7 +628,7 @@ Commands can be canceled with CTRL+X key combination.
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                 GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
                             else
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"{attributes}         {directoryInfo.Name}");
                         }
                         else
                         {
@@ -663,7 +664,7 @@ Commands can be canceled with CTRL+X key combination.
                                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                         GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
                                     else
-                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, $"{attributes}         {directoryInfo.Name}");
                                 }
                             }
                         }
@@ -727,7 +728,12 @@ Commands can be canceled with CTRL+X key combination.
                                         Console.WriteLine(FileSystem.GetLastWriteDateFileInfo(file));
                                 }
                                 else
-                                    DisplayFileInfoText(formattedText, highlightSearchText);
+                                {
+                                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                        GlobalVariables.pipeCmdOutput += $"{file.Name}\n";
+                                    else
+                                        DisplayFileInfoText(formattedText, highlightSearchText);
+                                }
                             }
                         }
                     }
@@ -764,7 +770,12 @@ Commands can be canceled with CTRL+X key combination.
                                         Console.WriteLine(FileSystem.GetLastWriteDateFileInfo(file));
                                 }
                                 else
-                                    DisplayFileInfoText(formattedText, highlightSearchText);
+                                {
+                                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                        GlobalVariables.pipeCmdOutput += $"{file.Name}\n";
+                                    else
+                                        DisplayFileInfoText(formattedText, highlightSearchText);
+                                }
                             }
                         }
                     }
@@ -781,9 +792,11 @@ Commands can be canceled with CTRL+X key combination.
         /// <returns></returns>
         private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
         {
-            return displaySizes
-                ? fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}"
-                : fileInfo.Name;
+            var fileAttribute = FileSystem.GetAttributes(fileInfo.FullName);
+            //return displaySizes
+            //    ? $"{fileAttribute}         " + fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}"
+            //    : $"{fileAttribute}         " + fileInfo.Name;
+            return $"{fileAttribute}         " + fileInfo.Name.PadRight(50, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}".PadRight(30, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
         }
 
 
