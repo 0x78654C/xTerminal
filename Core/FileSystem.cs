@@ -473,16 +473,26 @@ namespace Core
         /// <returns></returns>
         public static string GetAttributes(string path)
         {
+            // Predifined list of displayed attributes.
+            var listAttr = new List<string> { "Directory", "Archive", "ReadOnly", "Hidden", "System", "ReparsePoint", "Compressed", "Encrypted" };
             var attributes = File.GetAttributes(path);
             var splitAttr = attributes.ToString().Split(',');
             var listParsed = new List<string>();
             foreach(var attr in splitAttr)
             {
-                var parse = attr.Trim().Substring(0,1).ToLower();
-                listParsed.Add(parse);
+                var parse = attr.Trim();
+                if (listAttr.Contains(parse))
+                {
+                    if (parse == "ReparsePoint")
+                        parse = "l";
+                    else
+                        parse = parse[..1].ToLower();
+                    
+                    listParsed.Add(parse);
+                }
             }
-            var calc = 9 - splitAttr.Length;
-            for(int i =0; i <= calc; i++)
+            var calc = listAttr.Count - listParsed.Count;
+            for(int i =0; i < calc; i++)
                 listParsed.Add("-");
             var finalOutput = string.Join("",listParsed);
             return finalOutput;
