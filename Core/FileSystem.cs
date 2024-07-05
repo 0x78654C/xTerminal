@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
@@ -277,42 +280,42 @@ namespace Core
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}";
+        public static string GetCreationDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}         " + fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}" + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
 
         /// <summary>
         /// Get file last access time.
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetLastAccessDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastAccessTime.ToLocalTime()}";
+        public static string GetLastAccessDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}         " + fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastAccessTime.ToLocalTime()}" + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
 
         /// <summary>
         /// Get file last write time.
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetLastWriteDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}";
+        public static string GetLastWriteDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}         " + fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}" + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
 
         /// <summary>
         /// Get directory creation date time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
+        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}         " + directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
 
         /// <summary>
         /// Get directory last access time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetLastAccessDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastAccessTime.ToLocalTime()}";
+        public static string GetLastAccessDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}         " + directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastAccessTime.ToLocalTime()}";
 
         /// <summary>
         /// Get directorly last write time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetLastWriteDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}";
+        public static string GetLastWriteDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}         " + directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}";
 
         /// <summary>
         /// Get MD5 and size of a specific file.
@@ -461,6 +464,28 @@ namespace Core
             T[] copy = new T[actualLength];
             Array.Copy(originalArray, startIndex, copy, 0, actualLength);
             return copy;
+        }
+
+        /// <summary>
+        /// Parse the attributes and create output pattern.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string GetAttributes(string path)
+        {
+            var attributes = File.GetAttributes(path);
+            var splitAttr = attributes.ToString().Split(',');
+            var listParsed = new List<string>();
+            foreach(var attr in splitAttr)
+            {
+                var parse = attr.Trim().Substring(0,1).ToLower();
+                listParsed.Add(parse);
+            }
+            var calc = 9 - splitAttr.Length;
+            for(int i =0; i <= calc; i++)
+                listParsed.Add("-");
+            var finalOutput = string.Join("",listParsed);
+            return finalOutput;
         }
     }
 }
