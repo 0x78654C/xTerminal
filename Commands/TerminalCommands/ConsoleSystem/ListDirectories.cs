@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
@@ -41,6 +42,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
    .Select(t => t.Select(r => r))
    .Select(t => t)
    .ToArray();
+
+
 
         private static string s_helpMessage = @"Usage of ls command:
     -h  : Displays this message.
@@ -194,7 +197,7 @@ Commands can be canceled with CTRL+X key combination.
 
                     if (arg.ContainsParameter("-length"))
                     {
-                        var length = args.SplitByText("-length",1).Trim();
+                        var length = args.SplitByText("-length", 1).Trim();
                         GlobalVariables.fileHexLength = Int32.Parse(length);
                         FileSystem.SuccessWriteLine($"Duplicate file scan bytes length is set to: {length}");
                         return;
@@ -207,7 +210,7 @@ Commands can be canceled with CTRL+X key combination.
                         dirSearchIn = args.SplitByText(" -o", 0);
                     bool extensions = false;
 
-                    
+
                     if (arg.ContainsParameter("-o"))
                     {
                         if (arg.ContainsParameter("-e"))
@@ -443,7 +446,7 @@ Commands can be canceled with CTRL+X key combination.
                 var computeHexHash = ComputeHash(hex);
                 return computeHexHash;
             }
-            var computeHash = ComputeHash(file,true);
+            var computeHash = ComputeHash(file, true);
             return computeHash;
         }
 
@@ -570,7 +573,7 @@ Commands can be canceled with CTRL+X key combination.
             {
                 string currentDirectorySize =
                     FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
-                    Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
+                Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
                 return;
             }
 
@@ -581,16 +584,24 @@ Commands can be canceled with CTRL+X key combination.
             }
             else
             {
+
+                if (isCreationTime)
+                    SetHeader(TypeHeader.CreationTime);
+                else if (isLastAccessTime)
+                    SetHeader(TypeHeader.LastAccess);
+                else
+                    SetHeader(TypeHeader.LastWrite);
+
                 DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
                 DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
             }
 
-   
+
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                GlobalVariables.pipeCmdOutput += $"-----------Current Directory Count------------\nTotal directories: {Directory.GetDirectories(s_currentDirectory).Length}\nTotal files: {Directory.GetFiles(s_currentDirectory).Length}\n";
+                GlobalVariables.pipeCmdOutput += $"\n-----------Current Directory Count------------\nTotal directories: {Directory.GetDirectories(s_currentDirectory).Length}\nTotal files: {Directory.GetFiles(s_currentDirectory).Length}\n";
             else
             {
-                Console.WriteLine("-----------Current Directory Count------------\n");
+                Console.WriteLine("\n-----------Current Directory Count------------\n");
                 Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
                 Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
             }
@@ -625,7 +636,7 @@ Commands can be canceled with CTRL+X key combination.
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                 GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
                             else
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"{attributes}         {directoryInfo.Name}");
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"{attributes}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + $"{directoryInfo.Name}");
                         }
                         else
                         {
@@ -661,7 +672,7 @@ Commands can be canceled with CTRL+X key combination.
                                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                         GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
                                     else
-                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, $"{attributes}         {directoryInfo.Name}");
+                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, $"{attributes}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + $"{directoryInfo.Name}");
                                 }
                             }
                         }
@@ -784,16 +795,13 @@ Commands can be canceled with CTRL+X key combination.
         /// <summary>
         /// Format the the space limit for files sizes.
         /// </summary>
-        /// <param name="fileInfo">File info.</param>
+        /// <param name="fileInfo">File info.</param>.PadRight(30, ' ')
         /// <param name="displaySizes">Display size</param>
         /// <returns></returns>
         private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
         {
             var fileAttribute = FileSystem.GetAttributes(fileInfo.FullName);
-            //return displaySizes
-            //    ? $"{fileAttribute}         " + fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}"
-            //    : $"{fileAttribute}         " + fileInfo.Name;
-            return $"{fileAttribute}         " + fileInfo.Name.PadRight(50, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}".PadRight(30, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
+            return $"{fileAttribute}".PadRight(20, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
         }
 
 
@@ -829,6 +837,52 @@ Commands can be canceled with CTRL+X key combination.
                         Console.WriteLine(text);
                 }
             }
+        }
+
+        /// <summary>
+        /// Create display header at the beggining of ls command.
+        /// </summary>
+        /// <param name="typeHeader"></param>
+        private static void SetHeader(TypeHeader typeHeader)
+        {
+            var typeHead = "";
+            var sperataor = "";
+            var spacesSize = "";
+            var spacesFile = "";
+            switch (typeHeader)
+            {
+                case TypeHeader.LastWrite:
+                    typeHead = "Last Write";
+                    sperataor = "----------";
+                    spacesSize = "                    ";
+                    spacesFile = "                ";
+                    break;
+                case TypeHeader.LastAccess:
+                    typeHead = "Last Access";
+                    sperataor = "-----------";
+                    spacesSize = "                   ";
+                    spacesFile = "                ";
+                    break;
+                case TypeHeader.CreationTime:
+                    typeHead = "Creation Time";
+                    sperataor = "-------------";
+                    spacesSize = "                 ";
+                    spacesFile = "                ";
+                    break;
+
+            }
+            var header = $@"
+Attributes          {typeHead}{spacesSize}Size{spacesFile}Directory/File Name
+----------          {sperataor}{spacesSize}----{spacesFile}-------------------               
+";
+            Console.WriteLine(header);
+        }
+
+        enum TypeHeader
+        {
+            LastWrite,
+            LastAccess,
+            CreationTime
         }
     }
 }
