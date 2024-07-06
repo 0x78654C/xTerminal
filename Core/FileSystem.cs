@@ -280,42 +280,42 @@ namespace Core
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}         " + fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}" + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
+        public static string GetCreationDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
 
         /// <summary>
         /// Get file last access time.
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetLastAccessDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}         " + fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastAccessTime.ToLocalTime()}" + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
+        public static string GetLastAccessDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.LastAccessTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
 
         /// <summary>
         /// Get file last write time.
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetLastWriteDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}         " + fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}" + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}";
+        public static string GetLastWriteDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
 
         /// <summary>
         /// Get directory creation date time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}         " + directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
+        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}".PadRight(50, ' ') + directoryInfo.Name;
 
         /// <summary>
         /// Get directory last access time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetLastAccessDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}         " + directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastAccessTime.ToLocalTime()}";
+        public static string GetLastAccessDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastAccessTime.ToLocalTime()}".PadRight(50, ' ') + directoryInfo.Name;
 
         /// <summary>
         /// Get directorly last write time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetLastWriteDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}         " + directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}";
+        public static string GetLastWriteDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + directoryInfo.Name;
 
         /// <summary>
         /// Get MD5 and size of a specific file.
