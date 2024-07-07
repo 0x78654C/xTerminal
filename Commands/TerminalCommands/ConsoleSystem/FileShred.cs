@@ -43,6 +43,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     else
                         filePath = args.SplitByText(" -i", 0).Trim();
                     string fileSanitizeI = FileSystem.SanitizePath(filePath, currentDirectory);
+                    if (!IsShreding()) return;
                     _shred = new Shred(fileSanitizeI, passes);
                     _shred.ShredFile();
                     return;
@@ -53,6 +54,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 else
                     args = args.Replace("shred ", String.Empty);
                 string fileSanitize = FileSystem.SanitizePath(args, currentDirectory);
+                if (!IsShreding()) return;
                 _shred = new Shred(fileSanitize, 0);
                 _shred.ShredFile();
             }
@@ -60,6 +62,33 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}\nUse -h param for {{Name}} command usage!");
             }
+        }
+
+        /// <summary>
+        /// Confirmation for file shred.
+        /// </summary>
+        /// <returns></returns>
+        private static bool IsShreding()
+        {
+            Console.Write("Do you really want to shred the file? Yes(Y) No(N):");
+            var key = Console.ReadKey().Key.ToString().ToLower();
+            var isShreding = false;
+            switch (key)
+            {
+                case "y":
+                    isShreding = true;
+                    Console.Write("\n");
+                    break;
+                case "n":
+                    isShreding = false;
+                    Console.WriteLine("\nFile shred procees stoped!");
+                    break;
+                default:
+                    isShreding = false;
+                    Console.WriteLine("\nFile shred procees stoped!");
+                    break;
+            }
+            return isShreding;
         }
     }
 }
