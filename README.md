@@ -272,15 +272,16 @@ This is the full list of commands that can be used in xTerminal:
                                          red, green, yellow, white, magenta, cyan, gray, blue 
                     ::Predefined indicators: > , ->, =>, $, >>
 
-                    -h : Displays this help message.
-                    -u : Enables or disables current user@machine information with a predefined color from list:
-                         Example1: ui -u -c <color> :e  -- enables information with a predefined color from list.
-                         Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
-                    -i : Changes command indicator and sets a predefined color from list:
-                         Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
-                         Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
+                    -h  : Displays this help message.
+                    -u  : Enables or disables current user@machine information with a predefined color from list:
+                           Example1: ui -u -c <color> :e  -- enables information with a predefined color from list.
+                           Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
+                    -i  : Changes command indicator and sets a predefined color from list:
+                           Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
+                           Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
                     -cd : Changes current directory with a predefined color from list:
-                         Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+                           Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+                    -r  : Reset console foreground and background color to default.
  
     -------------------- Password Manager -------------------
     pwm       -- A simple password manager to store locally the authentication data encrypted for 
