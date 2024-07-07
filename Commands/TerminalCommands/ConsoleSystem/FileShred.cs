@@ -81,11 +81,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     break;
                 case "n":
                     isShreding = false;
-                    Console.WriteLine("\nFile shred procees stoped!");
+                    FileSystem.SuccessWriteLine("\nFile shred procees stoped!");
                     break;
                 default:
                     isShreding = false;
-                    Console.WriteLine("\nFile shred procees stoped!");
+                    FileSystem.SuccessWriteLine("\nFile shred procees stoped!");
                     break;
             }
             return isShreding;
