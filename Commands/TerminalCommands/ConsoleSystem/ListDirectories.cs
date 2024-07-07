@@ -574,12 +574,12 @@ Commands can be canceled with CTRL+X key combination.
             }
             else
             {
-
-                if (isCreationTime)
+                var isPipe = GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0;
+                    if (isCreationTime)
                     SetHeader(TypeHeader.CreationTime);
                 else if (isLastAccessTime)
                     SetHeader(TypeHeader.LastAccess);
-                else
+                else if (!isPipe)
                     SetHeader(TypeHeader.LastWrite);
 
                 DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
