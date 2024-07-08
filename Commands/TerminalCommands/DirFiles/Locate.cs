@@ -4,6 +4,8 @@ using System.Linq;
 using System.IO;
 using Core;
 using System.Runtime.Versioning;
+using System.Windows.Forms;
+using System.Reflection.Metadata;
 
 namespace Commands.TerminalCommands.DirFiles
 {
@@ -13,6 +15,8 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "locate";
         private string _currentLocation;
+        private static int s_countFiles = 0;
+        private static int s_countDirs = 0;
         private static string s_helpMessage = @"Usage of locate command:
 
     Example 1: locate <text> (Displays searched files/directories from the current directory and subdirectories that includes a specific text.)
@@ -90,6 +94,9 @@ Command can be canceled with CTRL+X key combination.
                     FileSystem.SuccessWriteLine($"Searching for: {arg}" + Environment.NewLine);
                 GlobalVariables.eventKeyFlagX = true;
                 SearchFile(_currentLocation, arg, "", false, action);
+                var totalCount = s_countDirs + s_countFiles;
+                var content = $"\n\n    Search results: Directories({s_countDirs})  Files({s_countFiles})  Total({totalCount})\n";
+                FileSystem.SuccessWriteLine(content);
                 if (GlobalVariables.eventCancelKey)
                     FileSystem.SuccessWriteLine("Command stopped!");
                 GlobalVariables.eventCancelKey = false;
@@ -133,7 +140,10 @@ Command can be canceled with CTRL+X key combination.
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                 GlobalVariables.pipeCmdOutput += $"File: {file}\n";
                             else
+                            {
                                 Console.WriteLine($"File: {file}");
+                                s_countFiles++;
+                            }
                         }
                     }
                 }
@@ -153,7 +163,10 @@ Command can be canceled with CTRL+X key combination.
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                 GlobalVariables.pipeCmdOutput += $"DIR: {dir}\n";
                             else
+                            {
                                 FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"DIR: {dir}");
+                                s_countDirs++;
+                            }
                         }
                     }
                     if (!GlobalVariables.eventCancelKey)
