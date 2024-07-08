@@ -35,7 +35,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
-        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-se", "-ct", "-la" };
+        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la" };
         private static string s_Header = "";
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
    .GroupBy(t => t.Md5)
@@ -55,9 +55,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
           Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
           Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
     -s  : Displays size of files in current directory and subdirectories.
-    -se : Recursively lists files and directories containing a specific text.
-          Example1: ls -se <search_text>
-          Example2: ls -se <search_text> -o <file_to_save>
     -c  : Counts files and directories and subdirectories from current directory.
     -cf : Counts files from current directory and subdirectories with name containing a specific text.
           Example: ls -cf <search_text>
@@ -135,48 +132,6 @@ Commands can be canceled with CTRL+X key combination.
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false, true);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
-                    return;
-                }
-
-                // List files/folders containing a specific text in name.
-                if (arg.ContainsParameter("-se"))
-                {
-                    string searchedText = "";
-                    if (arg.ContainsParameter("-o"))
-                    {
-                        searchedText = args.SplitByText("-se ", 1);
-                        searchedText = searchedText.SplitByText(" -o", 0);
-                        GlobalVariables.eventKeyFlagX = true;
-                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
-                        string saveData = args.SplitByText("-o ", 1);
-                        string content = $"Searching for: {searchedText}\n";
-                        content += string.Join("\n", s_listSearched);
-                        content += $"\n\n    Search results: {s_listSearched.Count()} matches\n";
-                        Console.WriteLine(FileSystem.SaveFileOutput(FileSystem.SanitizePath(saveData, s_currentDirectory), s_currentDirectory, content));
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.SuccessWriteLine("Command stopped!");
-                        s_listSearched.Clear();
-                        return;
-                    }
-                    searchedText = args.SplitByText("-se ", 1);
-                    GlobalVariables.eventKeyFlagX = true;
-                    DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                    {
-                        GlobalVariables.pipeCmdOutput += $"Searching for: {searchedText}\n{string.Join("\n", s_listSearched)}\n    Search results: {s_listSearched.Count()} matches\n";
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.SuccessWriteLine("Command stopped!");
-                        s_listSearched.Clear();
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Searching for: {searchedText}\n");
-                        Console.WriteLine(string.Join("\n", s_listSearched));
-                        Console.WriteLine($"\n    Search results: {s_listSearched.Count()} matches\n");
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.SuccessWriteLine("Command stopped!");
-                        s_listSearched.Clear();
-                    }
                     return;
                 }
 
