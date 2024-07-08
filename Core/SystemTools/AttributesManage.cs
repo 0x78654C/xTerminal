@@ -4,6 +4,8 @@ using System.Runtime.Versioning;
 
 namespace Core.SystemTools
 {
+    /* Set/remove file attributes lib */
+
     [SupportedOSPlatform("windows")]
     public class AttributesManage
     {
@@ -51,15 +53,26 @@ namespace Core.SystemTools
             }
         }
 
+        /// <summary>
+        /// Check if file or folder exist.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         private bool IsFileOrDirectoryPresent(string path) => (Directory.Exists(path) || File.Exists(path));
 
         /// <summary>
-        /// Set attribute to file or directory.
+        /// Set single attribute to file or directory.
         /// </summary>
         /// <param name="attribute"></param>
         /// <param name="path"></param>
         public void AttributeSetSingle(string attribute="", string path="")
         {
+            if (!IsFileOrDirectoryPresent(path))
+            {
+                FileSystem.ErrorWriteLine($"Directory/File does not exist: {path}");
+                return;
+            }
+
             switch (attribute.ToLower())
             {
                 case "archive":
@@ -132,8 +145,19 @@ namespace Core.SystemTools
             }
         }
 
+        /// <summary>
+        /// Remove single attribute from file.
+        /// </summary>
+        /// <param name="attribute"></param>
+        /// <param name="path"></param>
         public void AttributeRemoveSingle(string attribute="", string path="")
         {
+            if (!IsFileOrDirectoryPresent(path))
+            {
+                FileSystem.ErrorWriteLine($"Directory/File does not exist: {path}");
+                return;
+            }
+
             FileAttributes attributes = File.GetAttributes(path);
             switch (attribute.ToLower())
             {
