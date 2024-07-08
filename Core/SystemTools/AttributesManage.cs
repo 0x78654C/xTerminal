@@ -157,11 +157,6 @@ namespace Core.SystemTools
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "encrypted":
-                    attributes = RemoveAttributes(attributes, FileAttributes.Encrypted);
-                    File.SetAttributes(path, attributes);
-                    FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
-                    break;
                 case "hidden":
                     attributes = RemoveAttributes(attributes, FileAttributes.Hidden);
                     File.SetAttributes(path, attributes);
