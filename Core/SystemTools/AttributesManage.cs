@@ -27,7 +27,7 @@ namespace Core.SystemTools
         /// </summary>
         public void SetRmoveAttributes(bool remove)
         {
-            if (IsFileOrDirectoryPresent(Path))
+            if (!IsFileOrDirectoryPresent(Path))
             {
                 FileSystem.ErrorWriteLine($"Directory/File does not exist: {Path}");
                 return;
@@ -39,15 +39,15 @@ namespace Core.SystemTools
                 return;
             }
 
-            if (remove)
+            if (!remove)
             {
                 foreach (var attribute in ListAttributes)
-                    AttributeSet(attribute, Path);
+                    AttributeSetSingle(attribute.Trim(), Path);
             }
             else
             {
                 foreach (var attribute in ListAttributes)
-                    AttributeRemove(attribute, Path);
+                    AttributeRemoveSingle(attribute.Trim(), Path);
             }
         }
 
@@ -58,7 +58,7 @@ namespace Core.SystemTools
         /// </summary>
         /// <param name="attribute"></param>
         /// <param name="path"></param>
-        private void AttributeSet(string attribute, string path)
+        public void AttributeSetSingle(string attribute="", string path="")
         {
             switch (attribute.ToLower())
             {
@@ -66,74 +66,73 @@ namespace Core.SystemTools
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Archive);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "Compressed":
+                case "compressed":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Compressed);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "Device":
+                case "device":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Device);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "Directory":
+                case "directory":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Directory);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "Encrypted":
-                    File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Encrypted);
-                    FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
-                    break;
-                case "Hidden":
+                case "hidden":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Hidden);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "IntegrityStream":
+                case "integritystream":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.IntegrityStream);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "None":
+                case "none":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.None);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "Normal":
+                case "normal":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Normal);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "NoScrubData":
+                case "noscrubdata":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.NoScrubData);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "NotContentIndexed":
+                case "notcontentindexed":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.NotContentIndexed);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "Offline":
+                case "offline":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Offline);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "ReadOnly":
+                case "readonly":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.ReadOnly);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "ReparsePoint":
+                case "reparsepoint":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.ReparsePoint);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "SparseFile":
+                case "sparsefile":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.SparseFile);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "System":
+                case "system":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.System);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
                     break;
-                case "Temporary":
+                case "temporary":
                     File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Temporary);
                     FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
+                    break;
+                default:
+                    FileSystem.ErrorWriteLine($"This attribute cannot be set: {attribute}");
                     break;
             }
         }
 
-        private void AttributeRemove(string attribute, string path)
+        public void AttributeRemoveSingle(string attribute="", string path="")
         {
             FileAttributes attributes = File.GetAttributes(path);
             switch (attribute.ToLower())
@@ -143,85 +142,88 @@ namespace Core.SystemTools
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "Compressed":
+                case "compressed":
                     attributes = RemoveAttributes(attributes, FileAttributes.Compressed);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "Device":
+                case "device":
                     attributes = RemoveAttributes(attributes, FileAttributes.Device);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}"); ;
                     break;
-                case "Directory":
+                case "directory":
                     attributes = RemoveAttributes(attributes, FileAttributes.Directory);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "Encrypted":
+                case "encrypted":
                     attributes = RemoveAttributes(attributes, FileAttributes.Encrypted);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "Hidden":
+                case "hidden":
                     attributes = RemoveAttributes(attributes, FileAttributes.Hidden);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "IntegrityStream":
+                case "integritystream":
                     attributes = RemoveAttributes(attributes, FileAttributes.IntegrityStream);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "None":
+                case "none":
                     attributes = RemoveAttributes(attributes, FileAttributes.None);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "Normal":
+                case "normal":
                     attributes = RemoveAttributes(attributes, FileAttributes.Normal);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "NoScrubData":
+                case "noscrubdata":
                     attributes = RemoveAttributes(attributes, FileAttributes.NoScrubData);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}"); ;
                     break;
-                case "NotContentIndexed":
+                case "notcontentindexed":
                     attributes = RemoveAttributes(attributes, FileAttributes.NotContentIndexed);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}"); ;
                     break;
-                case "Offline":
+                case "offline":
                     attributes = RemoveAttributes(attributes, FileAttributes.Offline);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "ReadOnly":
+                case "readonly":
                     attributes = RemoveAttributes(attributes, FileAttributes.ReadOnly);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "ReparsePoint":
+                case "reparsepoint":
                     attributes = RemoveAttributes(attributes, FileAttributes.ReparsePoint);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "SparseFile":
+                case "sparsefile":
                     attributes = RemoveAttributes(attributes, FileAttributes.SparseFile);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "System":
+                case "system":
                     attributes = RemoveAttributes(attributes, FileAttributes.System);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
                     break;
-                case "Temporary":
+                case "temporary":
                     attributes = RemoveAttributes(attributes, FileAttributes.Temporary);
                     File.SetAttributes(path, attributes);
                     FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    break;
+                default:
+                    FileSystem.ErrorWriteLine($"This attribute cannot be removed: {attribute}");
                     break;
             }
         }
