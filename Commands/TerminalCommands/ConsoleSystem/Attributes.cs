@@ -7,8 +7,9 @@ using System.Runtime.Versioning;
 using System.IO;
 
 namespace Commands.TerminalCommands.ConsoleSystem
-
-{    /* Set/remove file attributes*/
+{  
+    /* Set/remove file attributes*/
+    
     [SupportedOSPlatform("windows")]
     public class Attributes : ITerminalCommand
     {
