@@ -13,7 +13,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
     [SupportedOSPlatform("windows")]
     public class Attributes : ITerminalCommand
     {
-        //TODO: fix message and remove unused attributes 
         public string Name => "attr";
         private static string s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
         private static string s_helpMessage = @"Usage of attr command:
@@ -94,7 +93,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             catch(Exception e)
             {
-                FileSystem.ErrorWriteLine(e.ToString()); // set to message when release
+                FileSystem.ErrorWriteLine(e.Message);
             }
         }
 
