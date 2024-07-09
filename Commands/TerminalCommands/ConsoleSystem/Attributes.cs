@@ -17,7 +17,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
         private static string s_helpMessage = @"Usage of attr command:
     
-    attr <file/dir_path>  : Displays displays the current attributes of a file or directory.
+    attr <file/dir_path>  : Displays the current attributes of a file or directory.
     
     Parameters:
       -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.   
