@@ -497,5 +497,12 @@ namespace Core
             var finalOutput = string.Join("",listParsed);
             return finalOutput;
         }
+
+        /// <summary>
+        /// Check if file or folder exist.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static bool IsFileOrDirectoryPresent(string path) => (Directory.Exists(path) || File.Exists(path));
     }
 }
