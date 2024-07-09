@@ -40,70 +40,16 @@ namespace Core.SystemTools
                 FileSystem.ErrorWriteLine($"You need to specify at least one attribute!");
                 return;
             }
-
-            if (!remove)
-            {
-                foreach (var attribute in ListAttributes)
-                    AttributeSetSingle(attribute.Trim(), Path);
-            }
-            else
-            {
-                foreach (var attribute in ListAttributes)
-                    AttributeRemoveSingle(attribute.Trim(), Path);
-            }
+            foreach (var attribute in ListAttributes)
+                SetRemoveSingle(attribute.Trim(), Path, remove);
         }
 
         /// <summary>
-        /// Set single attribute to file or directory.
+        /// Set/Remove single attribute from file.
         /// </summary>
         /// <param name="attribute"></param>
         /// <param name="path"></param>
-        public void AttributeSetSingle(string attribute="", string path="")
-        {
-            if (!FileSystem.IsFileOrDirectoryPresent(path))
-            {
-                FileSystem.ErrorWriteLine($"Directory/File does not exist: {path}");
-                return;
-            }
-
-            switch (attribute.ToLower())
-            {
-                case "archive":
-                    File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Archive);
-                    FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
-                    break;   
-                case "directory":
-                    File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Directory);
-                    FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
-                    break;
-                case "hidden":
-                    File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Hidden);
-                    FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
-                    break;
-                case "normal":
-                    File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Normal);
-                    FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
-                    break;
-                case "readonly":
-                    File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.ReadOnly);
-                    FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
-                    break;
-                case "system":
-                    File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.System);
-                    FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
-                    break;
-                default:
-                    FileSystem.ErrorWriteLine($"This attribute cannot be set: {attribute}");
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Remove single attribute from file.
-        /// </summary>
-        /// <param name="attribute"></param>
-        /// <param name="path"></param>
-        public void AttributeRemoveSingle(string attribute="", string path="")
+        public void SetRemoveSingle(string attribute = "", string path = "", bool remove = false)
         {
             if (!FileSystem.IsFileOrDirectoryPresent(path))
             {
@@ -115,37 +61,88 @@ namespace Core.SystemTools
             switch (attribute.ToLower())
             {
                 case "archive":
-                    attributes = RemoveAttributes(attributes, FileAttributes.Archive);
-                    File.SetAttributes(path, attributes);
-                    FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    if (remove)
+                    {
+                        attributes = RemoveAttributes(attributes, FileAttributes.Archive);
+                        File.SetAttributes(path, attributes);
+                        FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    }
+                    else
+                    {
+                        File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Archive);
+                        FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
+                    }
                     break;
                 case "directory":
-                    attributes = RemoveAttributes(attributes, FileAttributes.Directory);
-                    File.SetAttributes(path, attributes);
-                    FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    if (remove)
+                    {
+                        attributes = RemoveAttributes(attributes, FileAttributes.Directory);
+                        File.SetAttributes(path, attributes);
+                        FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    }
+                    else
+                    {
+                        File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Directory);
+                        FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
+                    }
                     break;
                 case "hidden":
-                    attributes = RemoveAttributes(attributes, FileAttributes.Hidden);
-                    File.SetAttributes(path, attributes);
-                    FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    if (remove)
+                    {
+                        attributes = RemoveAttributes(attributes, FileAttributes.Hidden);
+                        File.SetAttributes(path, attributes);
+                        FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    }
+                    else
+                    {
+                        File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Hidden);
+                        FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
+                    }
                     break;
                 case "normal":
-                    attributes = RemoveAttributes(attributes, FileAttributes.Normal);
-                    File.SetAttributes(path, attributes);
-                    FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    if (remove)
+                    {
+                        attributes = RemoveAttributes(attributes, FileAttributes.Normal);
+                        File.SetAttributes(path, attributes);
+                        FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    }
+                    else
+                    {
+                        File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Normal);
+                        FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
+                    }
                     break;
                 case "readonly":
-                    attributes = RemoveAttributes(attributes, FileAttributes.ReadOnly);
-                    File.SetAttributes(path, attributes);
-                    FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    if (remove)
+                    {
+                        attributes = RemoveAttributes(attributes, FileAttributes.ReadOnly);
+                        File.SetAttributes(path, attributes);
+                        FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    }
+                    else
+                    {
+                        File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.ReadOnly);
+                        FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
+                    }
                     break;
                 case "system":
-                    attributes = RemoveAttributes(attributes, FileAttributes.System);
-                    File.SetAttributes(path, attributes);
-                    FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    if (remove)
+                    {
+                        attributes = RemoveAttributes(attributes, FileAttributes.System);
+                        File.SetAttributes(path, attributes);
+                        FileSystem.SuccessWriteLine($"Attribute removed: {attribute}");
+                    }
+                    else
+                    {
+                        File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.System);
+                        FileSystem.SuccessWriteLine($"Attribute set: {attribute}");
+                    }
                     break;
                 default:
-                    FileSystem.ErrorWriteLine($"This attribute cannot be removed: {attribute}");
+                    if (remove)
+                        FileSystem.ErrorWriteLine($"This attribute cannot be removed: {attribute}");
+                    else
+                        FileSystem.ErrorWriteLine($"This attribute cannot be set: {attribute}");
                     break;
             }
         }
