@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.IO;
+using System.Windows.Forms;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {  
@@ -16,20 +17,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
         //TODO: fix message and remove unused attributes 
         public string Name => "attr";
         private static string s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-        private static string s_helpMessage = @"Usage of locate command:
-   
+        private static string s_helpMessage = @"Usage of attr command:
+    
+    attr <file/dir_path>  : Displays displays the current attributes of a file or directory.
+    
     Parameters:
-     -s  : Displays searched files/directories from the current directory and subdirectories that starts with a specific text.
-            Example 1: locate -s <text>
-            Example 2: locate -s <text> -o <save_to_file>
-     -e  : Displays searched files/directories from the current directory and subdirectories that ends with a specific text.
-            Example 1: locate -e <text>
-            Example 2: locate -e <text> -o <save_to_file>
-     -eq : Displays searched files/directories from the current directory and subdirectories that equals a specific text.
-            Example 1: locate -eq <text>
-            Example 2: locate -eq <text> -o <save_to_file>
-  
-Command can be canceled with CTRL+X key combination.
+      -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.   
+      -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.   
 ";
         public void Execute(string arg)
         {
@@ -86,6 +80,16 @@ Command can be canceled with CTRL+X key combination.
                     }
                     return;
                 }
+
+                // List attributes
+                var fileDir = FileSystem.SanitizePath(arg.Trim(), s_currentDirectory);
+                if (!FileSystem.IsFileOrDirectoryPresent(fileDir))
+                {
+                    FileSystem.ErrorWriteLine($"Directory/File does not exist: {fileDir}");
+                    return;
+                }
+                var getAttribute = new AttributesManage(new List<string>(), fileDir);
+                getAttribute.GetFileAttributes();
             }
             catch(Exception e)
             {
