@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.IO;
-using System.Windows.Forms;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {  
@@ -24,6 +23,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
     Parameters:
       -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.   
       -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.   
+    
+    List of attributes that can be added/removed: Archive, Directory, Hidden, Normal, ReadOnly, System 
 ";
         public void Execute(string arg)
         {
