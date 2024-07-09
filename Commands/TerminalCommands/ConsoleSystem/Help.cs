@@ -62,6 +62,7 @@ This is the full list of commands that can be used in xTerminal:
     diff      -- Outputs the difference between two files. Use -h for additional help.
     exif      -- Extracts image metadata. Use -h for additional help.
     pjson     -- Prettify the JSON data. Use -h for additional help.
+    attr      -- Displays/Sets/Removes the current attributes of a file or directory.Use -h for additional help.
                 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
