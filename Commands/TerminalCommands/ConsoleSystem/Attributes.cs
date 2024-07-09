@@ -54,7 +54,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     else
                     {
                         var setAttribute = new AttributesManage(new List<string>(), fileDirName);
-                        setAttribute.AttributeSetSingle(attributes, FileSystem.SanitizePath(fileDirName, s_currentDirectory));
+                        setAttribute.SetRemoveSingle(attributes, FileSystem.SanitizePath(fileDirName, s_currentDirectory),false);
                     }
                     return;
                 }
@@ -76,7 +76,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     else
                     {
                         var setAttribute = new AttributesManage(new List<string>(), fileDirName);
-                        setAttribute.AttributeRemoveSingle(attributes, FileSystem.SanitizePath(fileDirName, s_currentDirectory));
+                        setAttribute.SetRemoveSingle(attributes, FileSystem.SanitizePath(fileDirName, s_currentDirectory),true);
                     }
                     return;
                 }
