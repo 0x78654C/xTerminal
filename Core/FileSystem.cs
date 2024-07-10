@@ -1,8 +1,13 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -277,42 +282,42 @@ namespace Core
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}";
+        public static string GetCreationDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.CreationTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
 
         /// <summary>
         /// Get file last access time.
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetLastAccessDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastAccessTime.ToLocalTime()}";
+        public static string GetLastAccessDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.LastAccessTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
 
         /// <summary>
         /// Get file last write time.
         /// </summary>
         /// <param name="fileInfo"></param>
         /// <returns></returns>
-        public static string GetLastWriteDateFileInfo(FileInfo fileInfo) => fileInfo.Name.PadRight(40, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}";
+        public static string GetLastWriteDateFileInfo(FileInfo fileInfo) => $"{GetAttributes(fileInfo.FullName)}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
 
         /// <summary>
         /// Get directory creation date time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}";
+        public static string GetCreationDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.CreationTime.ToLocalTime()}".PadRight(50, ' ') + directoryInfo.Name;
 
         /// <summary>
         /// Get directory last access time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetLastAccessDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastAccessTime.ToLocalTime()}";
+        public static string GetLastAccessDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastAccessTime.ToLocalTime()}".PadRight(50, ' ') + directoryInfo.Name;
 
         /// <summary>
         /// Get directorly last write time.
         /// </summary>
         /// <param name="directoryInfo"></param>
         /// <returns></returns>
-        public static string GetLastWriteDateDirInfo(DirectoryInfo directoryInfo) => directoryInfo.Name.PadRight(40, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}";
+        public static string GetLastWriteDateDirInfo(DirectoryInfo directoryInfo) => $"{GetAttributes(directoryInfo.FullName)}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + directoryInfo.Name;
 
         /// <summary>
         /// Get MD5 and size of a specific file.
@@ -461,6 +466,59 @@ namespace Core
             T[] copy = new T[actualLength];
             Array.Copy(originalArray, startIndex, copy, 0, actualLength);
             return copy;
+        }
+
+        /// <summary>
+        /// Parse the attributes and create output pattern.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string GetAttributes(string path)
+        {
+            // Predifined list of displayed attributes.
+            var listAttr = new List<string> { "Directory", "Archive", "ReadOnly", "Hidden", "System", "ReparsePoint", "Compressed", "Encrypted" };
+            var attributes = File.GetAttributes(path);
+            var splitAttr = attributes.ToString().Split(',');
+            var listParsed = new List<string>();
+            foreach(var attr in splitAttr)
+            {
+                var parse = attr.Trim();
+                if (listAttr.Contains(parse))
+                {
+                    if (parse == "ReparsePoint")
+                        parse = "l";
+                    else
+                        parse = parse[..1].ToLower();
+                    
+                    listParsed.Add(parse);
+                }
+            }
+            var calc = listAttr.Count - listParsed.Count;
+            for(int i =0; i < calc; i++)
+                listParsed.Add("-");
+            var finalOutput = string.Join("",listParsed);
+            return finalOutput;
+        }
+
+        /// <summary>
+        /// Check if file or folder exist.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static bool IsFileOrDirectoryPresent(string path) => (Directory.Exists(path) || File.Exists(path));
+
+        /// <summary>
+        /// Get file or directory owner.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string GetFileDirOwner(string path)
+        {
+            var fileInfo = new FileInfo(path);
+            FileSecurity fileSecurity = fileInfo.GetAccessControl();
+            IdentityReference sid = fileSecurity.GetOwner(typeof(SecurityIdentifier));
+            NTAccount ntAccount = sid.Translate(typeof(NTAccount)) as NTAccount;
+            return ntAccount.Value.Split('\\')[1];
         }
     }
 }

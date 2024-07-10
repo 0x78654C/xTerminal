@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,13 +35,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
-        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-se", "-ct", "-la", "-lw" };
+        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la" };
+        private static string s_Header = "";
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
    .GroupBy(t => t.Md5)
    .Where(t => t.Count() > 1)
    .Select(t => t.Select(r => r))
    .Select(t => t)
    .ToArray();
+
+
 
         private static string s_helpMessage = @"Usage of ls command:
     -h  : Displays this message.
@@ -51,9 +55,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
           Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
           Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
     -s  : Displays size of files in current directory and subdirectories.
-    -se : Recursively lists files and directories containing a specific text.
-          Example1: ls -se <search_text>
-          Example2: ls -se <search_text> -o <file_to_save>
     -c  : Counts files and directories and subdirectories from current directory.
     -cf : Counts files from current directory and subdirectories with name containing a specific text.
           Example: ls -cf <search_text>
@@ -61,7 +62,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
           Example: ls -cd <search_text>
     -ct : Displays creation date time of files and folders from current directory.
     -la : Displays last access date time of files and folders from current directory.
-    -lw : Displays last write date time of files and folders from current directory.
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
 
@@ -135,66 +135,13 @@ Commands can be canceled with CTRL+X key combination.
                     return;
                 }
 
-                // List file/folder last write time.
-                if (arg.ContainsParameter("-lw"))
-                {
-                    GlobalVariables.eventKeyFlagX = true;
-                    // Display directory and file information
-                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false, false, true);
-                    if (GlobalVariables.eventCancelKey)
-                        FileSystem.SuccessWriteLine("Command stopped!");
-                    return;
-                }
-
-                // List files/folders containing a specific text in name.
-                if (arg.ContainsParameter("-se"))
-                {
-                    string searchedText = "";
-                    if (arg.ContainsParameter("-o"))
-                    {
-                        searchedText = args.SplitByText("-se ", 1);
-                        searchedText = searchedText.SplitByText(" -o", 0);
-                        GlobalVariables.eventKeyFlagX = true;
-                        DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
-                        string saveData = args.SplitByText("-o ", 1);
-                        string content = $"Searching for: {searchedText}\n";
-                        content += string.Join("\n", s_listSearched);
-                        content += $"\n\n    Search results: {s_listSearched.Count()} matches\n";
-                        Console.WriteLine(FileSystem.SaveFileOutput(FileSystem.SanitizePath(saveData, s_currentDirectory), s_currentDirectory, content));
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.SuccessWriteLine("Command stopped!");
-                        s_listSearched.Clear();
-                        return;
-                    }
-                    searchedText = args.SplitByText("-se ", 1);
-                    GlobalVariables.eventKeyFlagX = true;
-                    DisplaySubDirectoryAndFileCounts(s_currentDirectory, searchedText, searchedText, true);
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                    {
-                        GlobalVariables.pipeCmdOutput += $"Searching for: {searchedText}\n{string.Join("\n", s_listSearched)}\n    Search results: {s_listSearched.Count()} matches\n";
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.SuccessWriteLine("Command stopped!");
-                        s_listSearched.Clear();
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Searching for: {searchedText}\n");
-                        Console.WriteLine(string.Join("\n", s_listSearched));
-                        Console.WriteLine($"\n    Search results: {s_listSearched.Count()} matches\n");
-                        if (GlobalVariables.eventCancelKey)
-                            FileSystem.SuccessWriteLine("Command stopped!");
-                        s_listSearched.Clear();
-                    }
-                    return;
-                }
-
                 // Grab the duplicate files.
                 if (arg.ContainsParameter("-d"))
                 {
 
                     if (arg.ContainsParameter("-length"))
                     {
-                        var length = args.SplitByText("-length",1).Trim();
+                        var length = args.SplitByText("-length", 1).Trim();
                         GlobalVariables.fileHexLength = Int32.Parse(length);
                         FileSystem.SuccessWriteLine($"Duplicate file scan bytes length is set to: {length}");
                         return;
@@ -207,7 +154,7 @@ Commands can be canceled with CTRL+X key combination.
                         dirSearchIn = args.SplitByText(" -o", 0);
                     bool extensions = false;
 
-                    
+
                     if (arg.ContainsParameter("-o"))
                     {
                         if (arg.ContainsParameter("-e"))
@@ -443,7 +390,7 @@ Commands can be canceled with CTRL+X key combination.
                 var computeHexHash = ComputeHash(hex);
                 return computeHexHash;
             }
-            var computeHash = ComputeHash(file,true);
+            var computeHash = ComputeHash(file, true);
             return computeHash;
         }
 
@@ -491,11 +438,12 @@ Commands can be canceled with CTRL+X key combination.
         private static void SaveLSOutput(string path)
         {
             DisplayCurrentDirectoryFiles(false, "", true, false);
+            SetHeader(TypeHeader.LastWrite, true);
             string dirList = "-----Directories-----" + Environment.NewLine;
             dirList += string.Join(Environment.NewLine, s_listDirs);
             string fileList = Environment.NewLine + "-------Files-------" + Environment.NewLine;
             fileList += string.Join(Environment.NewLine, s_listFiles);
-            string finalList = dirList + fileList;
+            string finalList =s_Header + dirList + fileList;
             Console.WriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
             s_listDirs.Clear();
             s_listFiles.Clear();
@@ -555,7 +503,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="highlightSearchText">Thext to be highlighted in files or directories names.</param>
         /// <param name="saveToFile">Save output to a file.</param>
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile,
-            bool isCreationTime = false, bool isLastAccessTime = false, bool isLastWriteTime = false)
+            bool isCreationTime = false, bool isLastAccessTime = false)
         {
             if (GlobalVariables.isPipeCommand)
                 GlobalVariables.pipeCmdOutput = string.Empty;
@@ -566,34 +514,39 @@ Commands can be canceled with CTRL+X key combination.
                 return;
             }
 
-            if (saveToFile)
-            {
-                DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
-                DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
-            }
-            else
-            {
-                DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
-                DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime, isLastWriteTime);
-            }
-
             if (displaySizes)
             {
                 string currentDirectorySize =
                     FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
-                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                    GlobalVariables.pipeCmdOutput += $"----------------------------------------------\nCurrent directory size: {currentDirectorySize}\n";
-                else
-                {
-                    Console.WriteLine("----------------------------------------------\n");
-                    Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
-                }
+                FileSystem.SuccessWriteLine($"Current directory size: {currentDirectorySize}\n");
+                return;
             }
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                GlobalVariables.pipeCmdOutput += $"-----------Current Directory Count------------\nTotal directories: {Directory.GetDirectories(s_currentDirectory).Length}\nTotal files: {Directory.GetFiles(s_currentDirectory).Length}\n";
+
+            if (saveToFile)
+            {
+                DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
+                DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime);
+            }
             else
             {
-                Console.WriteLine("-----------Current Directory Count------------\n");
+                var isPipe = GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0;
+                    if (isCreationTime)
+                    SetHeader(TypeHeader.CreationTime);
+                else if (isLastAccessTime)
+                    SetHeader(TypeHeader.LastAccess);
+                else if (!isPipe)
+                    SetHeader(TypeHeader.LastWrite);
+
+                DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
+                DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime);
+            }
+
+
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                GlobalVariables.pipeCmdOutput += $"\n-----------Current Directory Count------------\nTotal directories: {Directory.GetDirectories(s_currentDirectory).Length}\nTotal files: {Directory.GetFiles(s_currentDirectory).Length}\n";
+            else
+            {
+                Console.WriteLine("\n-----------Current Directory Count------------\n");
                 Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
                 Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
             }
@@ -609,7 +562,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="isLastAccessTime"></param>
         /// <param name="isLastWriteTime"></param>
         private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile,
-            bool isCreationTime = false, bool isLastAccessTime = false, bool isLastWriteTime = false)
+            bool isCreationTime = false, bool isLastAccessTime = false)
         {
             try
             {
@@ -617,6 +570,7 @@ Commands can be canceled with CTRL+X key combination.
                 {
                     if (GlobalVariables.eventCancelKey)
                         return;
+                    var attributes = FileSystem.GetAttributes(dir);
 
                     var directoryInfo = new DirectoryInfo(dir);
                     if (!GlobalVariables.excludeDirectories.Contains(directoryInfo.Name))
@@ -627,13 +581,13 @@ Commands can be canceled with CTRL+X key combination.
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                 GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
                             else
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, directoryInfo.Name);
+                                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"{attributes}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + $"{directoryInfo.Name}");
                         }
                         else
                         {
                             if (saveToFile)
                             {
-                                s_listDirs.Add(directoryInfo.Name);
+                                s_listDirs.Add($"{attributes}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + $"{directoryInfo.Name}");
                             }
                             else
                             {
@@ -651,19 +605,12 @@ Commands can be canceled with CTRL+X key combination.
                                     else
                                         FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, FileSystem.GetLastAccessDateDirInfo(directoryInfo));
                                 }
-                                else if (isLastWriteTime)
-                                {
-                                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                        GlobalVariables.pipeCmdOutput += $"{FileSystem.GetLastWriteDateDirInfo(directoryInfo)}\n";
-                                    else
-                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, FileSystem.GetLastWriteDateDirInfo(directoryInfo));
-                                }
                                 else
                                 {
                                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                         GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
                                     else
-                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, directoryInfo.Name);
+                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, $"{attributes}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + $"{directoryInfo.Name}");
                                 }
                             }
                         }
@@ -683,7 +630,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="isLastAccessTime"></param>
         /// <param name="isLastWriteTime"></param>
         private static void DisplayFiles(string highlightSearchText, bool displaySizes, bool saveToFile,
-            bool isCreationTime = false, bool isLastAccessTime = false, bool isLastWriteTime = false)
+            bool isCreationTime = false, bool isLastAccessTime = false)
         {
             try
             {
@@ -698,10 +645,10 @@ Commands can be canceled with CTRL+X key combination.
                     {
                         if (!GlobalVariables.excludeFiles.Contains(file.Name))
                         {
-                            string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                            string formattedText = GetFormattedFileInfoText(file);
                             if (saveToFile)
                             {
-                                s_listFiles.Add(file.Name);
+                                s_listFiles.Add(formattedText);
                             }
                             else
                             {
@@ -719,15 +666,13 @@ Commands can be canceled with CTRL+X key combination.
                                     else
                                         Console.WriteLine(FileSystem.GetLastAccessDateFileInfo(file));
                                 }
-                                else if (isLastWriteTime)
+                                else
                                 {
                                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                        GlobalVariables.pipeCmdOutput += $"{FileSystem.GetLastWriteDateFileInfo(file)}\n";
+                                        GlobalVariables.pipeCmdOutput += $"{file.Name}\n";
                                     else
-                                        Console.WriteLine(FileSystem.GetLastWriteDateFileInfo(file));
+                                        DisplayFileInfoText(formattedText, highlightSearchText);
                                 }
-                                else
-                                    DisplayFileInfoText(formattedText, highlightSearchText);
                             }
                         }
                     }
@@ -735,10 +680,10 @@ Commands can be canceled with CTRL+X key combination.
                     {
                         if (!GlobalVariables.excludeFiles.Contains(file.Name))
                         {
-                            string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                            string formattedText = GetFormattedFileInfoText(file);
                             if (saveToFile)
                             {
-                                s_listFiles.Add(file.Name);
+                                s_listFiles.Add(formattedText);
                             }
                             else
                             {
@@ -756,15 +701,13 @@ Commands can be canceled with CTRL+X key combination.
                                     else
                                         Console.WriteLine(FileSystem.GetLastAccessDateFileInfo(file));
                                 }
-                                else if (isLastWriteTime)
+                                else
                                 {
                                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                        GlobalVariables.pipeCmdOutput += $"{FileSystem.GetLastWriteDateFileInfo(file)}\n";
+                                        GlobalVariables.pipeCmdOutput += $"{file.Name}\n";
                                     else
-                                        Console.WriteLine(FileSystem.GetLastWriteDateFileInfo(file));
+                                        DisplayFileInfoText(formattedText, highlightSearchText);
                                 }
-                                else
-                                    DisplayFileInfoText(formattedText, highlightSearchText);
                             }
                         }
                     }
@@ -776,14 +719,13 @@ Commands can be canceled with CTRL+X key combination.
         /// <summary>
         /// Format the the space limit for files sizes.
         /// </summary>
-        /// <param name="fileInfo">File info.</param>
+        /// <param name="fileInfo">File info.</param>.PadRight(30, ' ')
         /// <param name="displaySizes">Display size</param>
         /// <returns></returns>
-        private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
+        private static string GetFormattedFileInfoText(FileInfo fileInfo)
         {
-            return displaySizes
-                ? fileInfo.Name.PadRight(50, ' ') + $"Size:  {FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}"
-                : fileInfo.Name;
+            var fileAttribute = FileSystem.GetAttributes(fileInfo.FullName);
+            return $"{fileAttribute}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
         }
 
 
@@ -819,6 +761,57 @@ Commands can be canceled with CTRL+X key combination.
                         Console.WriteLine(text);
                 }
             }
+        }
+
+        /// <summary>
+        /// Create display header at the beggining of ls command.
+        /// </summary>
+        /// <param name="typeHeader"></param>
+        private static void SetHeader(TypeHeader typeHeader, bool isSaveToFile = false)
+        {
+            var typeHead = "";
+            var sperataor = "";
+            var spacesSize = "";
+            var spacesFile = "";
+            switch (typeHeader)
+            {
+                case TypeHeader.LastWrite:
+                    typeHead = "Last Write";
+                    sperataor = "----------";
+                    spacesSize = "                    ";
+                    spacesFile = "                ";
+                    break;
+                case TypeHeader.LastAccess:
+                    typeHead = "Last Access";
+                    sperataor = "-----------";
+                    spacesSize = "                   ";
+                    spacesFile = "                ";
+                    break;
+                case TypeHeader.CreationTime:
+                    typeHead = "Creation Time";
+                    sperataor = "-------------";
+                    spacesSize = "                 ";
+                    spacesFile = "                ";
+                    break;
+
+            }
+            var header = $@"
+Attributes          Owner               {typeHead}{spacesSize}Size{spacesFile}Directory/File Name
+----------          -----               {sperataor}{spacesSize}----{spacesFile}-------------------               
+";
+            if (isSaveToFile)
+            {
+                s_Header = header+"\n";
+            }
+            else
+                Console.WriteLine(header);
+        }
+
+        enum TypeHeader
+        {
+            LastWrite,
+            LastAccess,
+            CreationTime
         }
     }
 }

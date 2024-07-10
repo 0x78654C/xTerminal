@@ -446,6 +446,13 @@ namespace Shell
             }
         }
 
+        /// <summary>
+        /// Set user color on console.
+        /// </summary>
+        /// <param name="accountName"></param>
+        /// <param name="computerName"></param>
+        /// <param name="currentLocation"></param>
+        /// <param name="currentDir"></param>
         private static void SetUser(string accountName, string computerName, string currentLocation, bool currentDir)
         {
             if (currentDir == false)

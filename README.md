@@ -54,9 +54,6 @@ This is the full list of commands that can be used in xTerminal:
                          Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension).
                          Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)  
                    -s  : Displays size of files in current directory and subdirectories.
-                   -se : List recursively files and directories containing a specific text.
-                         Example1: ls -se <search_text>
-                         Example2: ls -se <search_text> -o <file_to_save>
                    -c  : Counts files and directories and subdirectories from current directory.
                    -cf : Counts files from current directory and subdirectories with name containing a specific text.
                          Example: ls -cf <search_text>
@@ -64,7 +61,6 @@ This is the full list of commands that can be used in xTerminal:
                          Example: ls -cd <search_text>
                    -ct : Display creation date time of files and folders from current directory.
                    -la : Displays last access date time of files and folders from current directory.
-                   -lw : Displays last write date time of files and folders from current directory.
                    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
@@ -221,7 +217,9 @@ This is the full list of commands that can be used in xTerminal:
     pjson     -- Prettify the JSON data.
                  Example 1: pjson <file_path>                    : Will prettify the JSON data and stores back in file.
                  Example 2: pjson <file_path> -o <new_file_path> : Stores the prettified JSON in new file.
-
+    attr      -- Displays/Sets/Removes the current attributes of a file or directory.Use -h for additional help.
+                 Example 1: attr  -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
+                 Example 2: attr  -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
     ispeed    -- Checks the internet speed with Google.
@@ -273,15 +271,16 @@ This is the full list of commands that can be used in xTerminal:
                                          red, green, yellow, white, magenta, cyan, gray, blue 
                     ::Predefined indicators: > , ->, =>, $, >>
 
-                    -h : Displays this help message.
-                    -u : Enables or disables current user@machine information with a predefined color from list:
-                         Example1: ui -u -c <color> :e  -- enables information with a predefined color from list.
-                         Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
-                    -i : Changes command indicator and sets a predefined color from list:
-                         Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
-                         Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
+                    -h  : Displays this help message.
+                    -u  : Enables or disables current user@machine information with a predefined color from list:
+                           Example1: ui -u -c <color> :e  -- enables information with a predefined color from list.
+                           Example2: ui -u -c <color> :d  -- disables information (need to specify color anyway).
+                    -i  : Changes command indicator and sets a predefined color from list:
+                           Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
+                           Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
                     -cd : Changes current directory with a predefined color from list:
-                         Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+                           Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+                    -r  : Reset console foreground and background color to default.
  
     -------------------- Password Manager -------------------
     pwm       -- A simple password manager to store locally the authentication data encrypted for 
