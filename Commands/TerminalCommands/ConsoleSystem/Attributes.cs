@@ -29,6 +29,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                if (arg == Name)
+                {
+                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
+                    return;
+                }
+
                 arg = arg.Replace($"{Name} ", string.Empty);
 
                 if (arg.StartsWith("-h") && arg.Length == 2)
@@ -38,7 +44,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
 
                 // Set attribute
-                if(arg.Contains("-s "))
+                if (arg.Contains("-s "))
                 {
                     var fileDirName = arg.SplitByText("-s", 0).Trim();
                     if (!IsAttributeFIlePreset(fileDirName, true)) return;
