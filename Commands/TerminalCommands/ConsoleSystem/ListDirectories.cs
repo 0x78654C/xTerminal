@@ -518,7 +518,7 @@ Commands can be canceled with CTRL+X key combination.
             {
                 string currentDirectorySize =
                     FileSystem.GetDirSize(new DirectoryInfo(s_currentDirectory));
-                Console.WriteLine($"Current directory size: {currentDirectorySize}\n");
+                FileSystem.SuccessWriteLine($"Current directory size: {currentDirectorySize}\n");
                 return;
             }
 
@@ -645,7 +645,7 @@ Commands can be canceled with CTRL+X key combination.
                     {
                         if (!GlobalVariables.excludeFiles.Contains(file.Name))
                         {
-                            string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                            string formattedText = GetFormattedFileInfoText(file);
                             if (saveToFile)
                             {
                                 s_listFiles.Add(formattedText);
@@ -680,7 +680,7 @@ Commands can be canceled with CTRL+X key combination.
                     {
                         if (!GlobalVariables.excludeFiles.Contains(file.Name))
                         {
-                            string formattedText = GetFormattedFileInfoText(file, displaySizes);
+                            string formattedText = GetFormattedFileInfoText(file);
                             if (saveToFile)
                             {
                                 s_listFiles.Add(formattedText);
@@ -722,7 +722,7 @@ Commands can be canceled with CTRL+X key combination.
         /// <param name="fileInfo">File info.</param>.PadRight(30, ' ')
         /// <param name="displaySizes">Display size</param>
         /// <returns></returns>
-        private static string GetFormattedFileInfoText(FileInfo fileInfo, bool displaySizes)
+        private static string GetFormattedFileInfoText(FileInfo fileInfo)
         {
             var fileAttribute = FileSystem.GetAttributes(fileInfo.FullName);
             return $"{fileAttribute}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(fileInfo.FullName)}".PadRight(20, ' ') + $"{fileInfo.LastWriteTime.ToLocalTime()}".PadRight(30, ' ') + $"{FileSystem.GetFileSize(fileInfo.DirectoryName + "\\" + fileInfo.Name, false)}".PadRight(20, ' ') + fileInfo.Name;
