@@ -99,7 +99,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
                     return;
                 }
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount != 0)
                 {
                     GlobalVariables.pipeCmdOutput = HexDump.Hex(getBytes, 16);
                     return;
