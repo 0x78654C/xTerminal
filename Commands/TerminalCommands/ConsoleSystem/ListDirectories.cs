@@ -444,7 +444,7 @@ Commands can be canceled with CTRL+X key combination.
             string fileList = Environment.NewLine + "-------Files-------" + Environment.NewLine;
             fileList += string.Join(Environment.NewLine, s_listFiles);
             string finalList =s_Header + dirList + fileList;
-            Console.WriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
+            FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
             s_listDirs.Clear();
             s_listFiles.Clear();
         }
