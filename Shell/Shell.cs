@@ -29,6 +29,7 @@ namespace Shell
         private static string s_historyFile = GlobalVariables.historyFile;
         private static string s_addonDir = GlobalVariables.addonDirectory;
         private static string s_regUI = "";
+        private static string s_regUIcd = "";
         private static string s_indicator = "$";
         private static string s_indicatorColor = "white";
         private static string s_userColor = "green";
@@ -39,7 +40,7 @@ namespace Shell
         private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
         private static string s_aliasFile = GlobalVariables.aliasFile;
-
+        private static bool s_isCDVisible = true;
         //-------------------------------
 
 
@@ -94,6 +95,13 @@ namespace Shell
             if (s_regUI == "")
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
+            }
+
+            // Reading UI settings.
+            s_regUIcd = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUIcd);
+            if (s_regUIcd == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, @"True");
             }
 
             // Reading history limit size.
@@ -335,7 +343,7 @@ namespace Shell
                 SettingsLoad();
 
                 // We se the color and user loged in on console.
-                SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI);
+                SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
                 //reading user imput
                 s_input = Console.ReadLine();
@@ -403,7 +411,8 @@ namespace Shell
                             {
                                 FileSystem.ErrorWriteLine("Command position must be a positive number!");
                             }
-                        }catch(Exception e)
+                        }
+                        catch (Exception e)
                         {
                             FileSystem.ErrorWriteLine($"Command position must be a positive number if run the + command. {e.Message}");
                         }
@@ -429,11 +438,11 @@ namespace Shell
 
 
         // We set the name of the current user logged in and machine on console.
-        private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName, string uiSettings)
+        private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName, string uiSettings, string uiCD)
         {
             if (uiSettings != "")
             {
-                UISettingsParse(uiSettings);
+                UISettingsParse(uiSettings, uiCD);
             }
 
             if (currentLocation == GlobalVariables.rootPath)
@@ -507,11 +516,17 @@ namespace Shell
             }
             if (s_cdColor != "cyan")
             {
-                FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"{currentLocation}~");
+                if (s_isCDVisible)
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"{currentLocation}~");
+                else
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"~");
             }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{currentLocation}~");
+                if (s_isCDVisible)
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{currentLocation}~");
+                else
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
             }
             if (!string.IsNullOrEmpty(s_indicator))
             {
@@ -529,9 +544,10 @@ namespace Shell
                 FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
             }
         }
-        private static void UISettingsParse(string settings)
+        private static void UISettingsParse(string settings, string uiCD)
         {
             var parseSettings = settings.Split('|');
+
             string userSetting = parseSettings[0];
             string indicatorSetting = parseSettings[1];
 
@@ -545,6 +561,9 @@ namespace Shell
             // Setting the indicator settings.
             s_indicator = indicatorSetting.Split(';')[1];
             s_indicatorColor = indicatorSetting.Split(';')[0];
+
+            // Setting the visibilaty for current directory.
+            s_isCDVisible = bool.Parse(uiCD);
         }
 
         /// <summary>
@@ -554,17 +573,17 @@ namespace Shell
         /// <param name="commandInput"></param
         private void WriteHistoryCommandFile(string historyFile, string commandInput)
         {
-            s_historyLimitSize  = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
+            s_historyLimitSize = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
             int historyLimitSize = GlobalVariables.historyLimitSize;
             if (s_historyLimitSize != "")
-                 historyLimitSize = Int32.Parse(s_historyLimitSize);
+                historyLimitSize = Int32.Parse(s_historyLimitSize);
             int countLines = File.ReadAllLines(historyFile).Count();
             var lines = File.ReadAllLines(historyFile).Skip(countLines - historyLimitSize);
             List<string> tempList = new List<string>();
 
             for (int i = 0; i < lines.Count(); i++)
             {
-                if(!string.IsNullOrEmpty(lines.ElementAt(i)))
+                if (!string.IsNullOrEmpty(lines.ElementAt(i)))
                     tempList.Add(lines.ElementAt(i));
             }
 
