@@ -15,6 +15,7 @@ namespace Core
         public static string regKeyName { get; set; } = "xTerminal";
         public static string regCurrentEitor = "CurrentEditor";
         public static string regUI = "UI";
+        public static string regUIcd = "UICD";
         public static string regCportTimeOut = "cportTimeOut";
         public static string regOpenAI_APIKey = "OpenAI_APIKey";
         public static string regHistoryLimitSize = "historyLimitSize";
