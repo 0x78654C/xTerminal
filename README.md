@@ -134,6 +134,7 @@ This is the full list of commands that can be used in xTerminal:
  	               fsig <file_path> -ext : Display extension only.
  	               fsig -h               : Display this help message.
               Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signatures
+    pwd       -- Prints current working directory.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
