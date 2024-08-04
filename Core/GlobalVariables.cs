@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Windows.Forms;
 
 namespace Core
 {
+    [SupportedOSPlatform("Windows")]
     /// <summary>
     /// Declaration of necessary global variables
     /// </summary>
