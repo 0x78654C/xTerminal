@@ -36,14 +36,14 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
-                } 
+                }
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                     args = args.Replace("hex", GlobalVariables.pipeCmdOutput.Trim());
 
                 if (arg.ContainsParameter("-o"))
                 {
                     string fileToSave = string.Empty;
-                    string dumpFile1=string.Empty;
+                    string dumpFile1 = string.Empty;
                     string dumpFile = string.Empty;
                     if (!GlobalVariables.isPipeCommand)
                     {
@@ -52,7 +52,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         file = FileSystem.SanitizePath(dumpFile, s_currentDirectory);
                         fileToSave = FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory);
                     }
-                    else{
+                    else
+                    {
                         file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                         var argParseFileToSave = args.SplitByText(" -o ", 1);
                         fileToSave = FileSystem.SanitizePath(argParseFileToSave, s_currentDirectory);
@@ -91,15 +92,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 byte[] getBytes = File.ReadAllBytes(file);
                 if (saveToFile)
                 {
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount != GlobalVariables.pipeCmdCountTemp)
-                    {
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount != 0)
                         FileSystem.ErrorWriteLine("You cannot save to file when using with pipe command!");
-                        return;
-                    }
-                    Console.WriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
+                    else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
+                        FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
+                    else
+                        FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
                     return;
                 }
-                if (GlobalVariables.isPipeCommand)
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount != 0)
                 {
                     GlobalVariables.pipeCmdOutput = HexDump.Hex(getBytes, 16);
                     return;

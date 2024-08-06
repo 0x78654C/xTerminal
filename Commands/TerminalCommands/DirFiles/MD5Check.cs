@@ -59,7 +59,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                         }
                         string fileSaved = FileSystem.SanitizePath(dParam.SplitByText(" -o ", 1), s_currentDirectory);
                         GlobalVariables.eventKeyFlagX = true;
-                        Console.WriteLine(FileSystem.SaveFileOutput(fileSaved, s_currentDirectory, MD5DirCheckFiles(dirPath)));
+                        FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(fileSaved, s_currentDirectory, MD5DirCheckFiles(dirPath)));
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.SuccessWriteLine("Command stopped!");
                         return;

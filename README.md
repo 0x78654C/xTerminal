@@ -134,6 +134,7 @@ This is the full list of commands that can be used in xTerminal:
  	               fsig <file_path> -ext : Display extension only.
  	               fsig -h               : Display this help message.
               Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signatures
+    pwd       -- Prints current working directory.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -280,6 +281,8 @@ This is the full list of commands that can be used in xTerminal:
                            Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
                     -cd : Changes current directory with a predefined color from list:
                            Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+                           Example2: ui -cd :e -- enable display current working directory in console.
+                           Example3: ui -cd :d -- disable display current working directory in console.
                     -r  : Reset console foreground and background color to default.
  
     -------------------- Password Manager -------------------

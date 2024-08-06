@@ -26,6 +26,8 @@ namespace Commands.TerminalCommands.UI
         Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
  -cd : Changes current directory with a predefined color from list:
         Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+        Example2: ui -cd :e -- enable display current working directory in console.
+        Example3: ui -cd :d -- disable display current working directory in console.
  -r  : Reset console foreground and background color to default.
 ";
         public string Name => "ui";
@@ -36,7 +38,7 @@ namespace Commands.TerminalCommands.UI
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
-            
+
             _regUI = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUI);
             var args = arg.Split(' ');
 
@@ -70,6 +72,18 @@ namespace Commands.TerminalCommands.UI
             // Store current directory setting.
             if (arg.ContainsText("-cd"))
             {
+                var argTrimed = arg.Trim();
+                if (argTrimed.EndsWith(" :e")) // Enable current directory display.
+                {
+                    SetUserColor(args.ParameterAfter("-cd"), _regUI, "$", true, Core.SystemTools.UI.Setting.CurrentDirectoy, true);
+                    return;
+                }
+                if (argTrimed.EndsWith(" :d")) // Disable current directory display.
+                {
+                    SetUserColor(args.ParameterAfter("-cd"), _regUI, "$", true, Core.SystemTools.UI.Setting.CurrentDirectoy, false);
+                    return;
+                }
+
                 SetUserColor(args.ParameterAfter("-cd"), _regUI, "$", true, Core.SystemTools.UI.Setting.CurrentDirectoy);
                 return;
             }
@@ -89,15 +103,15 @@ namespace Commands.TerminalCommands.UI
             }
         }
 
-        private void SetUserColor(string color, string settings, string indicator, bool enable, Core.SystemTools.UI.Setting setting)
+        private void SetUserColor(string color, string settings, string indicator, bool enable, Core.SystemTools.UI.Setting setting, bool isCDvisable = true)
         {
             try
             {
-                int indexColor = _colors.FindIndex(c => c == color.ToLower());
-                string outColor = _colors[indexColor];
-                string colorSetting;
                 if (setting.ToString() == "Indicator")
                 {
+                    int indexColor = _colors.FindIndex(c => c == color.ToLower());
+                    string outColor = _colors[indexColor];
+                    string colorSetting;
                     int indexIndicator = _indicators.FindIndex(i => i == indicator);
                     string indiOut = _indicators[indexIndicator];
                     colorSetting = $"{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.UserInfo)}|{outColor};{indiOut}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.CurrentDirectoy)}";
@@ -105,6 +119,9 @@ namespace Commands.TerminalCommands.UI
                 }
                 else if (setting.ToString() == "UserInfo")
                 {
+                    int indexColor = _colors.FindIndex(c => c == color.ToLower());
+                    string outColor = _colors[indexColor];
+                    string colorSetting;
                     if (enable)
                     {
                         colorSetting = $"{outColor};1|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.Indicator)}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.CurrentDirectoy)}";
@@ -116,6 +133,23 @@ namespace Commands.TerminalCommands.UI
                 }
                 else if (setting.ToString() == "CurrentDirectoy")
                 {
+                    string colorSetting;
+                    // Disable display current directory from registry.
+                    if (!isCDvisable)
+                    {
+                        RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, isCDvisable.ToString());
+                        return;
+                    }
+
+                    // Enable display current directory from registry.
+                    if (isCDvisable)
+                    {
+                        RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, isCDvisable.ToString());
+                        return;
+                    }
+           
+                    int indexColor = _colors.FindIndex(c => c == color.ToLower());
+                    string outColor = _colors[indexColor];
                     colorSetting = $"{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.UserInfo)}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.Indicator)}|{outColor}";
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, colorSetting);
                 }
