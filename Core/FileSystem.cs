@@ -233,7 +233,7 @@ namespace Core
             dirPath = SanitizePath(dirPath, currentDirectory);
             if (Directory.Exists(dirPath))
             {
-                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath, false, false,false);
+                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath, false, false, false);
                 return;
             }
             Console.WriteLine($"Directory '{dirPath}' does not exist!");
@@ -268,14 +268,14 @@ namespace Core
         /// <param name="currentDir">Terminal current direcotory.</param>
         /// <returns>string</returns>
         public static string SanitizePath(string path, string currentDir) => path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}{path}";
-    
+
 
         /// <summary>
         /// Check text if contains numbers only.
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        public static bool IsNumberAllowed(string text)=> !s_regexNumber.IsMatch(text);
+        public static bool IsNumberAllowed(string text) => !s_regexNumber.IsMatch(text);
 
         /// <summary>
         /// Get file creation date time.
@@ -368,7 +368,7 @@ namespace Core
                 }
             }
         }
-        
+
         /// <summary>
         /// Convert byte[] to uLong.
         /// </summary>
@@ -399,7 +399,7 @@ namespace Core
             string outData = string.Empty;
             int count = 0;
             byte[] val = new byte[slice];
-            int c=0;
+            int c = 0;
             int ite = 0;
             foreach (var b in bytes)
             {
@@ -416,9 +416,9 @@ namespace Core
                         ite = 0;
                     }
                     else
-                        outData += BinaryPrimitives.ReadUInt32BigEndian(arr).ToString()+"/";
+                        outData += BinaryPrimitives.ReadUInt32BigEndian(arr).ToString() + "/";
                     Array.Clear(val, 0, val.Length);
-                    c = c+count;
+                    c = c + count;
                     count = 0;
                 }
             }
@@ -480,7 +480,7 @@ namespace Core
             var attributes = File.GetAttributes(path);
             var splitAttr = attributes.ToString().Split(',');
             var listParsed = new List<string>();
-            foreach(var attr in splitAttr)
+            foreach (var attr in splitAttr)
             {
                 var parse = attr.Trim();
                 if (listAttr.Contains(parse))
@@ -489,14 +489,14 @@ namespace Core
                         parse = "l";
                     else
                         parse = parse[..1].ToLower();
-                    
+
                     listParsed.Add(parse);
                 }
             }
             var calc = listAttr.Count - listParsed.Count;
-            for(int i =0; i < calc; i++)
+            for (int i = 0; i < calc; i++)
                 listParsed.Add("-");
-            var finalOutput = string.Join("",listParsed);
+            var finalOutput = string.Join("", listParsed);
             return finalOutput;
         }
 
@@ -514,11 +514,20 @@ namespace Core
         /// <returns></returns>
         public static string GetFileDirOwner(string path)
         {
-            var fileInfo = new FileInfo(path);
-            FileSecurity fileSecurity = fileInfo.GetAccessControl();
-            IdentityReference sid = fileSecurity.GetOwner(typeof(SecurityIdentifier));
-            NTAccount ntAccount = sid.Translate(typeof(NTAccount)) as NTAccount;
-            return ntAccount.Value.Split('\\')[1];
+            var outp = "";
+            try
+            {
+                var fileInfo = new FileInfo(path);
+                FileSecurity fileSecurity = fileInfo.GetAccessControl();
+                IdentityReference sid = fileSecurity.GetOwner(typeof(SecurityIdentifier));
+                NTAccount ntAccount = sid.Translate(typeof(NTAccount)) as NTAccount;
+                outp = ntAccount.Value.Split('\\')[1];
+            }
+            catch
+            {
+                outp = "N/A";
+            }
+            return outp;
         }
     }
 }
