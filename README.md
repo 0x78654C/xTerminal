@@ -99,9 +99,13 @@ This is the full list of commands that can be used in xTerminal:
     reboot    -- Reboot the Windows OS. Use -h for additional parameters.
                  reboot    : reboots system normaly.
                  reboot -f : force reboots system.
+                 reboot -m <remotePC>    : reboot a remote system normaly.
+                 reboot -f -m <remotePC> : force reboot a remote system normaly.
     shutdown  -- Shutdown the Windows OS. Use -h for additional parameters.
                  shutdown    : shutdown system normaly.
                  shutdown -f : force shutdown system.
+                 shutdown -m <remotePC>    : shutdown a remote system normaly.
+                 shutdown -f -m <remotePC> : force shutdown a remote system normaly.
     sleep     -- Sleep/Hibernate the Windows OS.
     logoff    -- It force logoff current user.
     lock      -- Locks the screen(similar to Win+L key combination).
