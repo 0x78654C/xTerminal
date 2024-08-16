@@ -18,7 +18,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public string Name => "shutdown";
         private static string s_messageHelp = @"Usage of shutdown command:
     shutdown    : shutdown system normaly.
-    shutdown -f : force shutdown system;
+    shutdown -f : force shutdown system.
 ";
 
         public void Execute(string arg)
