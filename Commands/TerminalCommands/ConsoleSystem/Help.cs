@@ -1,19 +1,23 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.Versioning;
 using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("windows")]
     public class Help : ITerminalCommand
     {
         public string Name => "help";
 
         public void Execute(string arg)
         {
-
+            var versionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
             string helpMGS = $@"
 ----------------------------------------------------------------
-xTerminal Copyright @ 2020-2024 0x078654c
-Version: {GlobalVariables.version.Substring(0, GlobalVariables.version.Length - 2)}
+xTerminal {versionInfo.LegalCopyright}
+Version: {GlobalVariables.version}
 Contact: xcoding.dev@gmail.com
 ----------------------------------------------------------------
 
