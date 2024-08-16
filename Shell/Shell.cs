@@ -370,6 +370,11 @@ namespace Shell
                     {
                         SystemCmd.LogoffCmd();
                     }
+                    else if (s_input == "exit")
+                    {
+                        FileSystem.SuccessWriteLine("xTerminal shutting down...");
+                        return;
+                    }
                     else if (s_input == "lock")
                     {
                         SystemCmd.LockCmd();
