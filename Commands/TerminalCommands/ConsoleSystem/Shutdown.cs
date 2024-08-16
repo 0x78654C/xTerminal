@@ -19,6 +19,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_messageHelp = @"Usage of shutdown command:
     shutdown    : shutdown system normaly.
     shutdown -f : force shutdown system.
+    shutdown -m <remotePC>    : shutdown a remote system normaly.
+    shutdown -f -m <remotePC> : force shutdown a remote system normaly.
 ";
 
         public void Execute(string arg)
@@ -32,8 +34,33 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
 
                 var split = arg.Split(' ');
+
+                if (split[1].Trim() == "-m")
+                {
+                    if (split.Length < 3)
+                    {
+                        FileSystem.ErrorWriteLine($"Remote PC parameter should not be empty. Use -h for more information!");
+                        return;
+                    }
+
+                    var remotePC = split[2].Trim();
+                    SystemCommands.ShutDownCmd(true, remotePC);
+                    return;
+                }
+
                 if (split[1].Trim() == "-f")
                 {
+                    if (split[2].Trim() == "-m")
+                    {
+                        if (split.Length < 4)
+                        {
+                            FileSystem.ErrorWriteLine($"Remote PC parameter should not be empty. Use -h for more information!");
+                            return;
+                        }
+                        var remotePC = split[3].Trim();
+                        SystemCommands.ShutDownCmd(true, remotePC);
+                        return;
+                    }
                     SystemCommands.ShutDownCmd(true);
                     return;
                 }

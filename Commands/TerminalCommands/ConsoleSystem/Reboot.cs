@@ -18,6 +18,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_messageHelp = @"Usage of restart command:
     reboot    : reboots system normaly.
     reboot -f : force reboots system.
+    reboot -m <remotePC>    : reboot a remote system normaly.
+    reboot -f -m <remotePC> : force reboot a remote system normaly.
 ";
 
         public void Execute(string arg)
@@ -31,8 +33,32 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
 
                 var split = arg.Split(' ');
+                if (split[1].Trim() == "-m")
+                {
+                    if (split.Length < 3)
+                    {
+                        FileSystem.ErrorWriteLine($"Remote PC parameter should not be empty. Use -h for more information!");
+                        return;
+                    }
+
+                    var remotePC = split[2].Trim();
+                    SystemCommands.RebootCmd(true, remotePC);
+                    return;
+                }
+
                 if (split[1].Trim() == "-f")
                 {
+                    if (split[2].Trim() == "-m")
+                    {
+                        if (split.Length < 4)
+                        {
+                            FileSystem.ErrorWriteLine($"Remote PC parameter should not be empty. Use -h for more information!");
+                            return;
+                        }
+                        var remotePC = split[3].Trim();
+                        SystemCommands.RebootCmd(true, remotePC);
+                        return;
+                    }
                     SystemCommands.RebootCmd(true);
                     return;
                 }
