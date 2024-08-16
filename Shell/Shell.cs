@@ -365,25 +365,18 @@ namespace Shell
                         command = aliasCommands.Where(f => f.CommandName == s_input).FirstOrDefault()?.CommandName?.Trim() ?? string.Empty;
                     }
 
-                    //rebooting the machine command
-                    if (s_input == "reboot")
-                    {
-                        SystemCmd.RebootCmd();
-                    }
-
-                    //shuting down the machine command
-                    else if (s_input == "shutdown")
-                    {
-                        SystemCmd.ShutDownCmd();
-                    }
                     //log off the machine command
-                    else if (s_input == "logoff")
+                    if (s_input == "logoff")
                     {
                         SystemCmd.LogoffCmd();
                     }
                     else if (s_input == "lock")
                     {
                         SystemCmd.LockCmd();
+                    }
+                    else if (s_input == "sleep")
+                    {
+                        SystemCmd.SleepCcmd();
                     }
                     else if (s_input.StartsWith("cmd") && !command.StartsWith("cmd"))
                     {
