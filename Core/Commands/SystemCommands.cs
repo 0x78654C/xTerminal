@@ -7,10 +7,15 @@ namespace Core.Commands
         /// <summary>
         /// Shutdown command using command promt.
         /// </summary>
-        public static void ShutDownCmd(bool force)
+        public static void ShutDownCmd(bool force, string remotePC="")
         {
             var process = new Process();
-            var arg = (force) ? "/c shutdown /s /f /t 1": "/c shutdown /s /t 1";
+
+            var arg = "";
+            if(string.IsNullOrEmpty(remotePC))
+                arg = (force) ? "/c shutdown /s /f /t 1": "/c shutdown /s /t 1";
+           else
+                arg = (force) ? $@"/c shutdown /s /m \\{remotePC} /f /t 1" : $@"/c shutdown /s /m \\{remotePC} /t 1";
             process.StartInfo = new ProcessStartInfo("cmd.exe")
             {
                 UseShellExecute = false,
@@ -24,9 +29,13 @@ namespace Core.Commands
         /// <summary>
         /// Reboot command using command promt.
         /// </summary>
-        public static void RebootCmd(bool force)
+        public static void RebootCmd(bool force, string remotePC="")
         {
-            var arg = (force) ? "/c shutdown /r /f /t 1" : "/c shutdown /r /t 1";
+            var arg = "";
+            if (string.IsNullOrEmpty(remotePC))
+                arg = (force) ? "/c shutdown /s /f /t 1" : "/c shutdown /s /t 1";
+            else
+                arg = (force) ? $@"/c shutdown /s /m \\{remotePC} /f /t 1" : $@"/c shutdown /s /m \\{remotePC} /t 1";
             var process = new Process();
             process.StartInfo = new ProcessStartInfo("cmd.exe")
             {
