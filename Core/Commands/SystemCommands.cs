@@ -7,13 +7,19 @@ namespace Core.Commands
         /// <summary>
         /// Shutdown command using command promt.
         /// </summary>
-        public static void ShutDownCmd()
+        public static void ShutDownCmd(bool force, string remotePC="")
         {
             var process = new Process();
+
+            var arg = "";
+            if(string.IsNullOrEmpty(remotePC))
+                arg = (force) ? "/c shutdown /s /f /t 1": "/c shutdown /s /t 1";
+           else
+                arg = (force) ? $@"/c shutdown /s /m \\{remotePC} /f /t 1" : $@"/c shutdown /s /m \\{remotePC} /t 1";
             process.StartInfo = new ProcessStartInfo("cmd.exe")
             {
                 UseShellExecute = false,
-                Arguments = "/c shutdown /s /f /t 1"
+                Arguments = arg
 
             };
             process.Start();
@@ -23,13 +29,18 @@ namespace Core.Commands
         /// <summary>
         /// Reboot command using command promt.
         /// </summary>
-        public static void RebootCmd()
+        public static void RebootCmd(bool force, string remotePC="")
         {
+            var arg = "";
+            if (string.IsNullOrEmpty(remotePC))
+                arg = (force) ? "/c shutdown /s /f /t 1" : "/c shutdown /s /t 1";
+            else
+                arg = (force) ? $@"/c shutdown /s /m \\{remotePC} /f /t 1" : $@"/c shutdown /s /m \\{remotePC} /t 1";
             var process = new Process();
             process.StartInfo = new ProcessStartInfo("cmd.exe")
             {
                 UseShellExecute = false,
-                Arguments = "/c shutdown /r /f /t 1"
+                Arguments = arg
 
             };
             process.Start();
@@ -67,5 +78,22 @@ namespace Core.Commands
             process.Start();
             process.WaitForExit();
         }
+
+        /// <summary>
+        /// Sleep/Hibernate.
+        /// </summary>
+        public static void SleepCcmd()
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            {
+                UseShellExecute = false,
+                Arguments = "/c Rundll32.exe powrprof.dll,SetSuspendState"
+
+            };
+            process.Start();
+            process.WaitForExit();
+        }
+
     }
 }

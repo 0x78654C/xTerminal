@@ -100,6 +100,8 @@ Command can be canceled with CTRL+X key combination.
                 if (GlobalVariables.eventCancelKey)
                     FileSystem.SuccessWriteLine("Command stopped!");
                 GlobalVariables.eventCancelKey = false;
+                s_countDirs = 0;
+                s_countFiles = 0;
             }
             catch (Exception e)
             {

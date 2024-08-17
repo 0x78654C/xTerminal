@@ -96,8 +96,17 @@ This is the full list of commands that can be used in xTerminal:
                  Example: ps <ps_command_>
     cmd       -- Opens Windows Command Prompt. It can use Command Prompt commands:
                  Example: ps <cmd_commmand>
-    reboot    -- It force reboots the Windows OS.
-    shutdown  -- It force shutdown the Windows OS.
+    reboot    -- Reboot the Windows OS. Use -h for additional parameters.
+                 reboot    : reboots system normaly.
+                 reboot -f : force reboots system.
+                 reboot -m <remotePC>    : reboot a remote system normaly.
+                 reboot -f -m <remotePC> : force reboot a remote system normaly.
+    shutdown  -- Shutdown the Windows OS. Use -h for additional parameters.
+                 shutdown    : shutdown system normaly.
+                 shutdown -f : force shutdown system.
+                 shutdown -m <remotePC>    : shutdown a remote system normaly.
+                 shutdown -f -m <remotePC> : force shutdown a remote system normaly.
+    sleep     -- Sleep/Hibernate the Windows OS.
     logoff    -- It force logoff current user.
     lock      -- Locks the screen(similar to Win+L key combination).
     bios      -- Displays BIOS information on local machine or remote. Use -h for additional parameters.

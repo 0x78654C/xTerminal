@@ -331,7 +331,6 @@ namespace Shell
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
             // Setting up the title.
-            // s_terminalTitle = s_terminalTitle.Substring(0, s_terminalTitle.Length - 2);  -- disabled untill new release.
             Console.Title = s_terminalTitle;
 
             if (ExecuteParamCommands(args)) { return; };
@@ -365,25 +364,23 @@ namespace Shell
                         command = aliasCommands.Where(f => f.CommandName == s_input).FirstOrDefault()?.CommandName?.Trim() ?? string.Empty;
                     }
 
-                    //rebooting the machine command
-                    if (s_input == "reboot")
-                    {
-                        SystemCmd.RebootCmd();
-                    }
-
-                    //shuting down the machine command
-                    else if (s_input == "shutdown")
-                    {
-                        SystemCmd.ShutDownCmd();
-                    }
                     //log off the machine command
-                    else if (s_input == "logoff")
+                    if (s_input == "logoff")
                     {
                         SystemCmd.LogoffCmd();
+                    }
+                    else if (s_input == "exit")
+                    {
+                        FileSystem.SuccessWriteLine("xTerminal shutting down...");
+                        return;
                     }
                     else if (s_input == "lock")
                     {
                         SystemCmd.LockCmd();
+                    }
+                    else if (s_input == "sleep")
+                    {
+                        SystemCmd.SleepCcmd();
                     }
                     else if (s_input.StartsWith("cmd") && !command.StartsWith("cmd"))
                     {

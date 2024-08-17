@@ -1,19 +1,23 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.Versioning;
 using Core;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("windows")]
     public class Help : ITerminalCommand
     {
         public string Name => "help";
 
         public void Execute(string arg)
         {
-
+            var versionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
             string helpMGS = $@"
 ----------------------------------------------------------------
-xTerminal Copyright @ 2020-2024 0x078654c
-Version: {GlobalVariables.version.Substring(0, GlobalVariables.version.Length - 2)}
+xTerminal {versionInfo.LegalCopyright}
+Version: {GlobalVariables.version}
 Contact: xcoding.dev@gmail.com
 ----------------------------------------------------------------
 
@@ -31,8 +35,9 @@ This is the full list of commands that can be used in xTerminal:
     odir      -- Open current directory or other directory path provided with Windows Explorer.
     ps        -- Opens Windows Powershell.
     cmd       -- Opens Windows Command Prompt.
-    reboot    -- Forces reboot of the Windows OS.
-    shutdown  -- Forces shutdown of the Windows OS.
+    reboot    -- Reboot the Windows OS. Use -h for additional parameters.
+    shutdown  -- Shutdown the Windows OS. Use -h for additional parameters.
+    sleep     -- Sleep/Hibernate the Windows OS.
     logoff    -- Forces logoff of the current user.
     lock      -- Locks the screen (similar to Win+L key combination).
     bios      -- Displays BIOS information on local machine or remote. Use -h for additional parameters.
