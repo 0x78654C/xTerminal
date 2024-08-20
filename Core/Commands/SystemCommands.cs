@@ -15,7 +15,7 @@ namespace Core.Commands
             if(string.IsNullOrEmpty(remotePC))
                 arg = (force) ? "/c shutdown /s /f /t 1": "/c shutdown /s /t 1";
            else
-                arg = (force) ? $@"/c shutdown /s /m \\{remotePC} /f /t 1" : $@"/c shutdown /s /m \\{remotePC} /t 1";
+                arg = (force) ? $@"/c shutdown /s /m {remotePC} /f /t 1" : $@"/c shutdown /s /m {remotePC} /t 1";
             process.StartInfo = new ProcessStartInfo("cmd.exe")
             {
                 UseShellExecute = false,
@@ -35,7 +35,7 @@ namespace Core.Commands
             if (string.IsNullOrEmpty(remotePC))
                 arg = (force) ? "/c shutdown /s /f /t 1" : "/c shutdown /s /t 1";
             else
-                arg = (force) ? $@"/c shutdown /s /m \\{remotePC} /f /t 1" : $@"/c shutdown /s /m \\{remotePC} /t 1";
+                arg = (force) ? $@"/c shutdown /s /m {remotePC} /f /t 1" : $@"/c shutdown /s /m {remotePC} /t 1";
             var process = new Process();
             process.StartInfo = new ProcessStartInfo("cmd.exe")
             {
