@@ -102,6 +102,7 @@ namespace Shell
             if (s_regUIcd == "")
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, @"True");
+                s_regUIcd = "True";
             }
 
             // Reading history limit size.
