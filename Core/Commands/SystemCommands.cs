@@ -33,9 +33,9 @@ namespace Core.Commands
         {
             var arg = "";
             if (string.IsNullOrEmpty(remotePC))
-                arg = (force) ? "/c shutdown /s /f /t 1" : "/c shutdown /s /t 1";
+                arg = (force) ? "/c shutdown /r /f /t 1" : "/c shutdown /r /t 1";
             else
-                arg = (force) ? $@"/c shutdown /s /m {remotePC} /f /t 1" : $@"/c shutdown /s /m {remotePC} /t 1";
+                arg = (force) ? $@"/c shutdown /r /m {remotePC} /f /t 1" : $@"/c shutdown /r /m {remotePC} /t 1";
             var process = new Process();
             process.StartInfo = new ProcessStartInfo("cmd.exe")
             {
