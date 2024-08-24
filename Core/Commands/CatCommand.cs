@@ -321,13 +321,18 @@ namespace Core.Commands
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="linesCount"></param>
-        public static void OutputFirtsLines(string fileName, int linesCount)
+        public static void OutputFirtsLastLines(string fileName, int linesCount, bool isLast=false)
         {
             if (CheckFileContent(fileName))
             {
                 try
                 {
-                    var lines = File.ReadLines(fileName).Take(linesCount);
+                    IEnumerable<string> lines=null;
+                    var linesC = File.ReadLines(fileName).Count();
+                    if(isLast)
+                        lines = File.ReadLines(fileName).Skip(linesC - linesCount).Take(linesCount);
+                    else
+                        lines = File.ReadLines(fileName).Take(linesCount);
                     foreach (var line in lines)
                     {
                         if (!string.IsNullOrEmpty(line))
@@ -365,6 +370,33 @@ namespace Core.Commands
                     GlobalVariables.pipeCmdOutput += $"{line}\n";
                 else
                     Console.WriteLine(line);
+                count++;
+            }
+        }
+
+        /// <summary>
+        /// Display last N lines from string.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="linesCount"></param>
+        public static void OutputLastLinesFromString(string data, int linesCount)
+        {
+            if (string.IsNullOrEmpty(data))
+                return;
+            var reader = new StringReader(data);
+            string line;
+            var count = 0;
+            GlobalVariables.pipeCmdOutput = string.Empty;
+            var lastLinesCount = data.CountLines() - linesCount;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (lastLinesCount <= count)
+                {
+                    if (GlobalVariables.pipeCmdCount > 0)
+                        GlobalVariables.pipeCmdOutput += $"{line}\n";
+                    else
+                        Console.WriteLine(line);
+                }
                 count++;
             }
         }
