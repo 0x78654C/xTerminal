@@ -3,7 +3,7 @@
 </p>
 
 # xTerminal
-A Linux like terminal for windows with some extras.
+A Linux like shell for windows with some extras.
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 
@@ -148,8 +148,10 @@ This is the full list of commands that can be used in xTerminal:
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
                    -h   : Displays this message.
-                   -n   : Displays first N lines from a file.
-                          Example: cat -n 10 <path_of_file_name>
+                   -t   : Displays first N lines from a file.
+                          Example: cat -t 10 <path_of_file_name
+                   -b   : Displays last N lines from a file.
+                          Example: cat -b 10 <path_of_file_name>
                    -l   : Displays data between two lines.
                           Example: cat -l 10-20 <path_of_file_name>
                    -s   : Output lines containing a provided text from a file.
