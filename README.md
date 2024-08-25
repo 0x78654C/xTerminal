@@ -232,7 +232,7 @@ This is the full list of commands that can be used in xTerminal:
     attr      -- Displays/Sets/Removes the current attributes of a file or directory.Use -h for additional help.
                  Example 1: attr  -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
                  Example 2: attr  -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
-    cmp       -- Check if two files are identical
+    cmp       -- Check if two files are identical by comparing MD5 hash.
                  Example: cmp <firstFile>;<secondFile>
 
     ---------------------- Networking ----------------------
