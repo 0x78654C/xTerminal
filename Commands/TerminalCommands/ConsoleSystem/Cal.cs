@@ -19,7 +19,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
-               
                 if (arg.Trim() == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
