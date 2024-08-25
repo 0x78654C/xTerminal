@@ -144,6 +144,9 @@ This is the full list of commands that can be used in xTerminal:
  	               fsig -h               : Display this help message.
               Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signatures
     pwd       -- Prints current working directory.
+    cal       -- Display current date calendar.
+                 cal month-year : Display calendar of a specific year and month. 
+                 Example : cal 02-2023 
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
