@@ -10,7 +10,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "cal";
         private static string s_helpMessage = @"Usage of cal command:
-               cal : Display currant PC date.
+               cal : Display current date calendar.
     cal month-year : Display calendar of a specific year and month. 
                      Example : cal 2-2023 
             cal -h : Display this message.
