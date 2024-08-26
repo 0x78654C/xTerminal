@@ -50,6 +50,7 @@ This is the full list of commands that can be used in xTerminal:
     fsig      -- Check file type singatures (magic numbers). Use -h for additional help.
     pwd       -- Prints current working directory. Use -h for additional help.
     cal       -- Display current date calendar. Use -h for additional help.
+    time      -- Display current time.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

@@ -146,7 +146,8 @@ This is the full list of commands that can be used in xTerminal:
     pwd       -- Prints current working directory.
     cal       -- Display current date calendar.
                  cal month-year : Display calendar of a specific year and month. 
-                 Example : cal 02-2023 
+                 Example : cal 02-2023
+    time      -- Display current time.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
