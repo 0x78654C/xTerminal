@@ -13,11 +13,25 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class Service : ITerminalCommand
     {
         public string Name => "service";
+        private static string s_helpMessage = @"Usage of service command:
+    -l : List all local services running on computer.
+    -d <service_name> : Return the description for a specific service.
+    -s <service_name> : Return the state for a specific service.
+    -stop <service_name> : Stops a specific service service.
+    -start <service_name> : Starts a specific service.
+";
         public void Execute(string arg)
         {
             try
             {
                 arg = arg.Substring(8);
+
+                // Display help message.
+                if (arg.Trim() == "-h")
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
 
                 // List services.
                 if (arg == "-l")
