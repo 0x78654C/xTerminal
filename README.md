@@ -155,6 +155,7 @@ This is the full list of commands that can be used in xTerminal:
                     -s <service_name> : Return the state for a specific service.
                     -stop <service_name>  : Stops a specific service service.
                     -start <service_name> : Starts a specific service.
+                    -restart <service_name> : Restarts a specific service.
 
                  Remote:
                     -l -r <machine_name/IP> : List all local services running on a remote computer.
@@ -162,6 +163,7 @@ This is the full list of commands that can be used in xTerminal:
                     -s <service_name> -r <machine_name/IP> : Return the state for a specific service.
                     -stop <service_name> -r <machine_name/IP>  : Stops a specific service service.
                     -start <service_name> -r <machine_name/IP> : Starts a specific service.
+                    -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
