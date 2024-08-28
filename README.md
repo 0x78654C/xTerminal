@@ -148,6 +148,20 @@ This is the full list of commands that can be used in xTerminal:
                  cal month-year : Display calendar of a specific year and month. 
                  Example : cal 02-2023
     time      -- Display current time.
+    service   -- Manage local or remote services (Requires administrator privileges).
+                 Local:
+                    -l : List all local services running on computer.
+                    -d <service_name> : Return the description for a specific service.
+                    -s <service_name> : Return the state for a specific service.
+                    -stop <service_name>  : Stops a specific service service.
+                    -start <service_name> : Starts a specific service.
+
+                 Remote:
+                    -l -r <machine_name/IP> : List all local services running on a remote computer.
+                    -d <service_name> -r <machine_name/IP> : Return the description for a specific service.
+                    -s <service_name> -r <machine_name/IP> : Return the state for a specific service.
+                    -stop <service_name> -r <machine_name/IP>  : Stops a specific service service.
+                    -start <service_name> -r <machine_name/IP> : Starts a specific service.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
