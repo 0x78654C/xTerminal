@@ -38,6 +38,9 @@ namespace Core.SystemTools
                 case ActionService.Status:
                     Status(MachineName, ServiceName);
                     break;
+                case ActionService.Restart:
+                    Restart(MachineName, ServiceName);
+                    break;
             }
             MachineName = "";
             ServiceName = "";
@@ -114,6 +117,19 @@ namespace Core.SystemTools
                 FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Service {serviceName} is already running!");
             }
         }
+
+        /// <summary>
+        /// Restart a service.
+        /// </summary>
+        /// <param name="machineName"></param>
+        /// <param name="serviceName"></param>
+        private void Restart(string machineName, string serviceName)
+        {
+            FileSystem.SuccessWriteLine($"Restarting {serviceName} ...\n--------------------------\n");
+            Stop(machineName, serviceName);
+            Start(machineName, serviceName);
+        }
+
         /// <summary>
         /// Get service running state by name.
         /// </summary>
@@ -133,6 +149,7 @@ namespace Core.SystemTools
             Stop,
             Description,
             Status,
+            Restart
         }
     }
 }
