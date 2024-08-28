@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Management;
-using System.Management.Automation;
 using System.Runtime.Versioning;
 using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-
+using Wmi = Core.Hardware.WMIDetails;
 
 namespace Core.SystemTools
 {
@@ -16,6 +10,7 @@ namespace Core.SystemTools
     public class ServiceC
     {
         public string ServiceName { get; set; }
+        public string MachineName { get; set; }
         public ServiceC()
         {
         }
@@ -29,29 +24,32 @@ namespace Core.SystemTools
             switch (actionService)
             {
                 case ActionService.Start:
-                    Start();
+                    Start(MachineName, ServiceName);
                     break;
                 case ActionService.Stop:
-                    Stop();
+                    Stop(MachineName, ServiceName);
                     break;
                 case ActionService.List:
-                    ListServices();
+                    ListServices(MachineName, ServiceName);
                     break;
                 case ActionService.Description:
-                    Description();
+                    Description(MachineName, ServiceName);
                     break;
                 case ActionService.Status:
-                    Status();
+                    Status(MachineName, ServiceName);
                     break;
             }
+            MachineName = "";
+            ServiceName = "";
         }
 
         /// <summary>
         /// List all services from current pc.
         /// </summary>
-        private void ListServices()
+        private void ListServices(string machineName, string serviceName)
         {
-            var scServices = ServiceController.GetServices();
+            ServiceController[] scServices = (!string.IsNullOrEmpty(machineName)) ? ServiceController.GetServices(machineName) : scServices = ServiceController.GetServices();
+
             foreach (var service in scServices)
             {
                 var name = service.ServiceName;
@@ -68,31 +66,31 @@ namespace Core.SystemTools
         /// <summary>
         /// Get service description by name.
         /// </summary>
-        private void Description()
+        private void Description(string machineName, string serviceName)
         {
-            var wmiService = new ManagementObject($"Win32_Service.Name='{ServiceName}'");
-            wmiService.Get();
-            var description = wmiService["Description"];
+            var query = $"SELECT Description FROM Win32_Service WHERE Name='{serviceName}'"; ;
+            var pc = (!string.IsNullOrEmpty(machineName)) ? @"\\" + machineName + @"\root\cimv2" : @"\\.\root\cimv2";
+            var description = Wmi.GetWMIDetails(query, pc);
             FileSystem.SuccessWriteLine(description);
         }
 
         /// <summary>
         /// Stop a service.
         /// </summary>
-        private void Stop()
+        private void Stop(string machineName, string serviceName)
         {
-            var sc = new ServiceController();
-            sc.ServiceName = ServiceName;
+            var sc = (!string.IsNullOrEmpty(machineName)) ? new ServiceController(serviceName, machineName) : new ServiceController(serviceName);
+
             if (sc.Status == ServiceControllerStatus.Running)
             {
-                FileSystem.SuccessWriteLine($"Stopping {ServiceName} ...");
+                FileSystem.SuccessWriteLine($"Stopping {serviceName} ...");
                 sc.Stop();
                 sc.WaitForStatus(ServiceControllerStatus.Stopped);
                 FileSystem.SuccessWriteLine($"Status: {sc.Status}");
             }
             else
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Service {ServiceName} is already stopped!");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Service {serviceName} is already stopped!");
             }
         }
 
@@ -100,31 +98,29 @@ namespace Core.SystemTools
         /// <summary>
         /// Start a service.
         /// </summary>
-        private void Start()
+        private void Start(string machineName, string serviceName)
         {
-            var sc = new ServiceController();
-            sc.ServiceName = ServiceName;
+            var sc = (!string.IsNullOrEmpty(machineName)) ? new ServiceController(serviceName, machineName) : new ServiceController(serviceName);
+
             if (sc.Status == ServiceControllerStatus.Stopped)
             {
-                FileSystem.SuccessWriteLine($"Starting {ServiceName} ...");
+                FileSystem.SuccessWriteLine($"Starting {serviceName} ...");
                 sc.Start();
                 sc.WaitForStatus(ServiceControllerStatus.Running);
                 FileSystem.SuccessWriteLine($"Status: {sc.Status}");
             }
             else
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Service {ServiceName} is already running!");
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Service {serviceName} is already running!");
             }
         }
         /// <summary>
         /// Get service running state by name.
         /// </summary>
-        private void Status()
+        private void Status(string machineName, string serviceName)
         {
-            var wmiService = new ManagementObject($"Win32_Service.Name='{ServiceName}'");
-            wmiService.Get();
-            var description = wmiService["State"];
-            FileSystem.SuccessWriteLine(description);
+            var sc = (!string.IsNullOrEmpty(machineName)) ? new ServiceController(serviceName, machineName) : new ServiceController(serviceName);
+            FileSystem.SuccessWriteLine(sc.Status);
         }
 
         /// <summary>
