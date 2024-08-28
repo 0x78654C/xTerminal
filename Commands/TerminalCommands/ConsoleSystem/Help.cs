@@ -51,7 +51,7 @@ This is the full list of commands that can be used in xTerminal:
     pwd       -- Prints current working directory. Use -h for additional help.
     cal       -- Display current date calendar. Use -h for additional help.
     time      -- Display current time.
-    service   -- Manage local or remote services. Use -h for additional help.
+    service   -- Manage local or remote computer services. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
