@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Management;
 using System.Runtime.Versioning;
 using System.ServiceProcess;
 using Wmi = Core.Hardware.WMIDetails;
@@ -11,6 +10,7 @@ namespace Core.SystemTools
     {
         public string ServiceName { get; set; }
         public string MachineName { get; set; }
+        public bool IsDescription { get; set; } = true;
         public ServiceC()
         {
         }
@@ -30,7 +30,7 @@ namespace Core.SystemTools
                     Stop(MachineName, ServiceName);
                     break;
                 case ActionService.List:
-                    ListServices(MachineName, ServiceName);
+                    ListServices(MachineName, ServiceName, IsDescription);
                     break;
                 case ActionService.Description:
                     Description(MachineName, ServiceName);
@@ -44,12 +44,13 @@ namespace Core.SystemTools
             }
             MachineName = "";
             ServiceName = "";
+            IsDescription = true;
         }
 
         /// <summary>
         /// List all services from current pc.
         /// </summary>
-        private void ListServices(string machineName, string serviceName)
+        private void ListServices(string machineName, string serviceName, bool isDescription)
         {
             ServiceController[] scServices = (!string.IsNullOrEmpty(machineName)) ? ServiceController.GetServices(machineName) : scServices = ServiceController.GetServices();
 
@@ -58,11 +59,15 @@ namespace Core.SystemTools
                 var name = service.ServiceName;
                 var status = service.Status;
                 var displayName = service.DisplayName;
-                var wmiService = new ManagementObject($"Win32_Service.Name='{name}'");
-                wmiService.Get();
-                var description = wmiService["Description"];
-                var dataOut = $"{name.PadRight(50, ' ')} | {status} | {displayName}";
-                Console.WriteLine(dataOut);
+                var dataOut = "";
+                if(!string.IsNullOrEmpty(machineName))
+                    dataOut = (isDescription) ? $"{name.PadRight(50, ' ')} | {status} | Remote | {displayName}" : name;
+                else
+                    dataOut = (isDescription) ? $"{name.PadRight(50, ' ')} | {status} | {displayName}" : name;
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += dataOut+Environment.NewLine;
+                else
+                    Console.WriteLine(dataOut);
             }
         }
 
@@ -74,7 +79,8 @@ namespace Core.SystemTools
             var query = $"SELECT Description FROM Win32_Service WHERE Name='{serviceName}'"; ;
             var pc = (!string.IsNullOrEmpty(machineName)) ? @"\\" + machineName + @"\root\cimv2" : @"\\.\root\cimv2";
             var description = Wmi.GetWMIDetails(query, pc);
-            FileSystem.SuccessWriteLine(description);
+            var desc = (!string.IsNullOrEmpty(machineName)) ? $"{description}\n(Remote)" : description;
+            FileSystem.SuccessWriteLine(desc);
         }
 
         /// <summary>
@@ -82,6 +88,8 @@ namespace Core.SystemTools
         /// </summary>
         private void Stop(string machineName, string serviceName)
         {
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                serviceName = GlobalVariables.pipeCmdOutput.Trim();
             var sc = (!string.IsNullOrEmpty(machineName)) ? new ServiceController(serviceName, machineName) : new ServiceController(serviceName);
 
             if (sc.Status == ServiceControllerStatus.Running)
@@ -89,11 +97,13 @@ namespace Core.SystemTools
                 FileSystem.SuccessWriteLine($"Stopping {serviceName} ...");
                 sc.Stop();
                 sc.WaitForStatus(ServiceControllerStatus.Stopped);
-                FileSystem.SuccessWriteLine($"Status: {sc.Status}");
+                var status = (!string.IsNullOrEmpty(machineName)) ? $"Status: {sc.Status} (Remote)" : $"Status: {sc.Status}";
+                FileSystem.SuccessWriteLine(status);
             }
             else
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Service {serviceName} is already stopped!");
+                var statusErr = (!string.IsNullOrEmpty(machineName)) ? $"Service {serviceName} is already stopped! (Remote)" : $"Service {serviceName} is already stopped!";
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, statusErr);
             }
         }
 
@@ -103,6 +113,8 @@ namespace Core.SystemTools
         /// </summary>
         private void Start(string machineName, string serviceName)
         {
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                serviceName = GlobalVariables.pipeCmdOutput.Trim();
             var sc = (!string.IsNullOrEmpty(machineName)) ? new ServiceController(serviceName, machineName) : new ServiceController(serviceName);
 
             if (sc.Status == ServiceControllerStatus.Stopped)
@@ -110,11 +122,13 @@ namespace Core.SystemTools
                 FileSystem.SuccessWriteLine($"Starting {serviceName} ...");
                 sc.Start();
                 sc.WaitForStatus(ServiceControllerStatus.Running);
-                FileSystem.SuccessWriteLine($"Status: {sc.Status}");
+                var status = (!string.IsNullOrEmpty(machineName)) ? $"Status: {sc.Status} (Remote)" : $"Status: {sc.Status}";
+                FileSystem.SuccessWriteLine(status);
             }
             else
             {
-                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, $"Service {serviceName} is already running!");
+                var statusErr = (!string.IsNullOrEmpty(machineName)) ? $"Service {serviceName} is already running! (Remote)" : $"Service {serviceName} is already runing!";
+                FileSystem.ColorConsoleTextLine(ConsoleColor.Red, statusErr);
             }
         }
 
@@ -135,8 +149,11 @@ namespace Core.SystemTools
         /// </summary>
         private void Status(string machineName, string serviceName)
         {
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                serviceName = GlobalVariables.pipeCmdOutput.Trim();
             var sc = (!string.IsNullOrEmpty(machineName)) ? new ServiceController(serviceName, machineName) : new ServiceController(serviceName);
-            FileSystem.SuccessWriteLine(sc.Status);
+            var status = (!string.IsNullOrEmpty(machineName)) ? $"{sc.Status} (Remote)" : sc.Status.ToString();
+            FileSystem.SuccessWriteLine(status);
         }
 
         /// <summary>
