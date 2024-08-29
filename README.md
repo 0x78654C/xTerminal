@@ -150,17 +150,19 @@ This is the full list of commands that can be used in xTerminal:
     time      -- Display current time.
     service   -- Manage local or remote computer services (Requires administrator privileges).
                  Local:
-                    -l : List all local services running on computer.
-                    -d <service_name> : Return the description for a specific service.
-                    -s <service_name> : Return the state for a specific service.
+                    -list : List all local services names, status and description running on computer.
+                    -list --noinfo: List all local services names running on computer.
+                    -des <service_name> : Return the description for a specific service.
+                    -status <service_name> : Return the state for a specific service.
                     -stop <service_name>  : Stops a specific service service.
                     -start <service_name> : Starts a specific service.
                     -restart <service_name> : Restarts a specific service.
 
                  Remote:
-                    -l -r <machine_name/IP> : List all local services running on a remote computer.
-                    -d <service_name> -r <machine_name/IP> : Return the description for a specific service.
-                    -s <service_name> -r <machine_name/IP> : Return the state for a specific service.
+                    -list -r <machine_name/IP> : List all local services names, status and description running on a remote computer.
+                    -list --noinfo: List all local services names running on a remote computer.
+                    -des <service_name> -r <machine_name/IP> : Return the description for a specific service.
+                    -status <service_name> -r <machine_name/IP> : Return the state for a specific service.
                     -stop <service_name> -r <machine_name/IP>  : Stops a specific service service.
                     -start <service_name> -r <machine_name/IP> : Starts a specific service.
                     -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
