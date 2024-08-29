@@ -11,17 +11,19 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public string Name => "service";
         private static string s_helpMessage = @"Usage of service command:
 Local:
-    -l : List all local services running on computer.
-    -d <service_name> : Return the description for a specific service.
-    -s <service_name> : Return the state for a specific service.
+    -list : List all local services names, status and description running on computer.
+    -list --noinfo: List all local services names running on computer.
+    -des <service_name> : Return the description for a specific service.
+    -status <service_name> : Return the state for a specific service.
     -stop <service_name>  : Stops a specific service service.
     -start <service_name> : Starts a specific service.
     -restart <service_name> : Restarts a specific service.
 
 Remote:
-    -l -r <machine_name/IP> : List all local services running on a remote computer.
-    -d <service_name> -r <machine_name/IP> : Return the description for a specific service.
-    -s <service_name> -r <machine_name/IP> : Return the state for a specific service.
+    -list -r <machine_name/IP> : List all local services names, status and description running on a remote computer.
+    -list --noinfo: List all local services names running on a remote computer.
+    -des <service_name> -r <machine_name/IP> : Return the description for a specific service.
+    -status <service_name> -r <machine_name/IP> : Return the state for a specific service.
     -stop <service_name> -r <machine_name/IP>  : Stops a specific service service.
     -start <service_name> -r <machine_name/IP> : Starts a specific service.
     -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
@@ -35,16 +37,22 @@ Note: Requires administrator privileges.
                 arg = arg.Substring(8);
 
                 // Display help message.
-                if (arg.Trim() == "-h")
+                if (arg.Trim() == "-h" && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
 
                 // List services.
-                if (arg.StartsWith("-l"))
+                if (arg.StartsWith("-list"))
                 {
                     var serviceC = new ServiceC();
+                    if (arg.Contains("--noinfo"))
+                    {
+                        arg = arg.Replace("--noinfo", "");
+                        serviceC.IsDescription = false;
+                    }
+
                     if (arg.Contains("-r"))
                     {
                         var machine = arg.SplitByText("-r", 1).Trim();
@@ -68,78 +76,38 @@ Note: Requires administrator privileges.
                 }
 
                 // Service description
-                if (arg.StartsWith("-d "))
+                if (arg.StartsWith("-des"))
                 {
-                    string serviceName = arg.SplitByText("-d", 1).Trim();
-                    if (serviceName.Contains("-r"))
-                    {
-                        RemoteCheck(arg, serviceName, ServiceC.ActionService.Description);
-                        return;
-                    }
-                    var serviceC = new ServiceC();
-                    serviceC.ServiceName = serviceName;
-                    serviceC.Run(ServiceC.ActionService.Description);
+                    RunParameter(arg, "-des", ServiceC.ActionService.Description);
                     return;
                 }
 
                 // Running State
-                if (arg.StartsWith("-s "))
+                if (arg.StartsWith("-status"))
                 {
-                    string serviceName = arg.SplitByText("-s", 1).Trim();
-                    if (serviceName.Contains("-r"))
-                    {
-                        RemoteCheck(arg, serviceName, ServiceC.ActionService.Status);
-                        return;
-                    }
-                    var serviceC = new ServiceC();
-                    serviceC.ServiceName = serviceName;
-                    serviceC.Run(ServiceC.ActionService.Status);
+                    RunParameter(arg, "-status", ServiceC.ActionService.Status);
                     return;
                 }
 
                 // Stop service
-                if (arg.StartsWith("-stop "))
+                if (arg.StartsWith("-stop"))
                 {
-                    string serviceName = arg.SplitByText("-stop", 1).Trim();
-                    if (serviceName.Contains("-r"))
-                    {
-                        RemoteCheck(arg, serviceName, ServiceC.ActionService.Stop);
-                        return;
-                    }
-                    var serviceC = new ServiceC();
-                    serviceC.ServiceName = serviceName;
-                    serviceC.Run(ServiceC.ActionService.Stop);
+                    RunParameter(arg, "-stop", ServiceC.ActionService.Stop);
                     return;
                 }
 
-                // Stop service
-                if (arg.StartsWith("-start "))
+                // Start service
+                if (arg.StartsWith("-start"))
                 {
-                    string serviceName = arg.SplitByText("-start", 1).Trim();
-                    if (serviceName.Contains("-r"))
-                    {
-                        RemoteCheck(arg, serviceName, ServiceC.ActionService.Start);
-                        return;
-                    }
-                    var serviceC = new ServiceC();
-                    serviceC.ServiceName = serviceName;
-                    serviceC.Run(ServiceC.ActionService.Start);
+                    RunParameter(arg, "-start", ServiceC.ActionService.Start);
                     return;
                 }
 
 
                 // Restart service
-                if (arg.StartsWith("-restart "))
+                if (arg.StartsWith("-restart"))
                 {
-                    string serviceName = arg.SplitByText("-restart", 1).Trim();
-                    if (serviceName.Contains("-r"))
-                    {
-                        RemoteCheck(serviceName, serviceName, ServiceC.ActionService.Restart);
-                        return;
-                    }
-                    var serviceC = new ServiceC();
-                    serviceC.ServiceName = serviceName;
-                    serviceC.Run(ServiceC.ActionService.Restart);
+                    RunParameter(arg, "-restart", ServiceC.ActionService.Restart);
                     return;
                 }
             }
@@ -150,11 +118,31 @@ Note: Requires administrator privileges.
         }
 
         /// <summary>
+        /// Run parameters.
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <param name="param"></param>
+        /// <param name="actionService"></param>
+        private void RunParameter(string arg, string param, ServiceC.ActionService actionService)
+        {
+            string serviceName = arg.SplitByText(param, 1).Trim();
+
+            if (serviceName.Contains("-r"))
+            {
+                RemoteCheck(serviceName, serviceName, actionService);
+                return;
+            }
+            var serviceC = new ServiceC();
+            serviceC.ServiceName = serviceName;
+            serviceC.Run(actionService);
+        }
+
+        /// <summary>
         /// Use Remote machine service management.
         /// </summary>
         /// <param name="arg"></param>
         /// <param name="serviceName"></param>
-        private void RemoteCheck(string arg, string serviceName, ServiceC.ActionService actionService )
+        private void RemoteCheck(string arg, string serviceName, ServiceC.ActionService actionService)
         {
             var serviceC = new ServiceC();
             var machine = arg.SplitByText("-r", 1).Trim();
