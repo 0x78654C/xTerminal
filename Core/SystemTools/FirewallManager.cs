@@ -34,10 +34,24 @@ namespace Core.SystemTools
                 FileSystem.ErrorWriteLine("You must add a port for the rule!");
                 return;
             }
+
             var outPut = ProcessStart.ExecuteAppWithOutput("netsh ", RunArg);
             FileSystem.SuccessWriteLine(outPut.ReadToEnd());
         }
 
+
+        public void RemoveRule()
+        {
+            if (string.IsNullOrEmpty(RuleName))
+            {
+                FileSystem.ErrorWriteLine("You must add the rule name that you want to remove!");
+                return;
+            }
+
+            RunArg = $"netsh advfirewall firewall delete rule {RuleName}";
+            var outPut = ProcessStart.ExecuteAppWithOutput("netsh ", RunArg);
+            FileSystem.SuccessWriteLine(outPut.ReadToEnd());
+        }
         public enum Action
         {
             Allow,
