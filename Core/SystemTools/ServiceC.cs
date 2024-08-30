@@ -30,7 +30,7 @@ namespace Core.SystemTools
                     Stop(MachineName, ServiceName);
                     break;
                 case ActionService.List:
-                    ListServices(MachineName, ServiceName, IsDescription);
+                    ListServices(MachineName, IsDescription);
                     break;
                 case ActionService.Description:
                     Description(MachineName, ServiceName);
@@ -50,8 +50,8 @@ namespace Core.SystemTools
         /// <summary>
         /// List all services from current pc.
         /// </summary>
-        private void ListServices(string machineName, string serviceName, bool isDescription)
-        {
+        private void ListServices(string machineName, bool isDescription)
+        {;
             ServiceController[] scServices = (!string.IsNullOrEmpty(machineName)) ? ServiceController.GetServices(machineName) : scServices = ServiceController.GetServices();
 
             foreach (var service in scServices)
