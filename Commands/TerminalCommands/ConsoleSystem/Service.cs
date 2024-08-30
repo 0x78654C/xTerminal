@@ -56,7 +56,8 @@ Note: Requires administrator privileges.
                     if (arg.Contains("-r"))
                     {
                         var machine = arg.SplitByText("-r", 1).Trim();
-
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                            machine = GlobalVariables.pipeCmdOutput.Trim();
                         var isMachineUp = NetWork.PingHost(machine);
                         if (!isMachineUp)
                         {
