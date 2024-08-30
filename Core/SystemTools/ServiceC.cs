@@ -76,6 +76,8 @@ namespace Core.SystemTools
         /// </summary>
         private void Description(string machineName, string serviceName)
         {
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                serviceName = GlobalVariables.pipeCmdOutput.Trim();
             var query = $"SELECT Description FROM Win32_Service WHERE Name='{serviceName}'"; ;
             var pc = (!string.IsNullOrEmpty(machineName)) ? @"\\" + machineName + @"\root\cimv2" : @"\\.\root\cimv2";
             var description = Wmi.GetWMIDetails(query, pc);
