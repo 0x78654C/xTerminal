@@ -18,7 +18,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
             var fw = new FirewallManager();
             fw.Port = "2122";
             fw.RuleName = "testRule";
-            fw.AddRule(FirewallManager.Action.Allow, FirewallManager.Protocol.TCP);
+            //fw.AddRule(FirewallManager.Action.Allow, FirewallManager.Protocol.TCP);
+            fw.ListRules();
         }
     }
 }
