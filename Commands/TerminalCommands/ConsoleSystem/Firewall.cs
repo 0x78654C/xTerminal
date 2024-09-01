@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Versioning;
+using NetFwTypeLib;
+using System.ComponentModel.DataAnnotations;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -26,6 +28,7 @@ Note: Requires administrator privileges.
         {
             try
             {
+                // No parameter.
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine("Use -h for more information!");
@@ -59,6 +62,29 @@ Note: Requires administrator privileges.
                     fw.ListRules(FirewallManager.Direction.AllDirections);
                     return;
                 }
+
+                // Add firewall rule.
+                if (arg.Trim().StartsWith("-add"))
+                {
+                    fw.AddApplication("TestFW","c:\\t.exe", NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN, NET_FW_ACTION_.NET_FW_ACTION_ALLOW, FirewallManager.ActionAdd.Add, FirewallManager.InterfaceTypes.All);
+                }
+
+                // Remove firewall rule
+                if (arg.Trim().StartsWith("-del"))
+                {
+                   var roleName =  arg.Trim().SplitByText("-del",1).Trim();
+                    if(string.IsNullOrEmpty(roleName))
+                    {
+                        FileSystem.ErrorWriteLine("You need to add the role name. Use -h for more information!");
+                        return;
+                    }
+                    fw.RemoveRole(roleName);
+                    return;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                FileSystem.ErrorWriteLine($"{ex.Message}. Requires administrator privileges. Use -h for more information!");
             }
             catch (Exception ex)
             {
