@@ -49,35 +49,30 @@ namespace Core.SystemTools
         /// <summary>
         /// Adds or removes a firewall application rule.
         /// </summary>
+        /// <param name="roleName">Role name.</param>
         /// <param name="path">The path to the executable.</param>
         /// <param name="d">The affected connection type.</param>
         /// <param name="fwaction">Rule action.</param>
         /// <param name="action">"Add (1) or 
         /// remove (0) the specified rule."</param>
-        private void AddApplication(string path, NET_FW_RULE_DIRECTION_ d,
+        public void AddApplication(string roleName, string path, NET_FW_RULE_DIRECTION_ d,
         NET_FW_ACTION_ fwaction, ActionAdd actionAdd, InterfaceTypes interfaceType)
         {
-            try
-            {
-                INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(
-                Type.GetTypeFromProgID("HNetCfg.FWRule"));
-                firewallRule.Action = fwaction;
-                firewallRule.Enabled = true;
-                firewallRule.InterfaceTypes = interfaceType.ToString();
-                firewallRule.ApplicationName = path;
-                firewallRule.Name = "CSwitch: " + Path.GetFileName(path);
-                INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
-                (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-                firewallRule.Direction = d;
-                if (actionAdd.ToString() == "Add")
-                    firewallPolicy.Rules.Add(firewallRule);
-                else
-                    firewallPolicy.Rules.Remove(firewallRule.Name);
-            }
-            catch (Exception ex)
-            {
-                FileSystem.ErrorWriteLine(ex.Message);
-            }
+            INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(
+                  Type.GetTypeFromProgID("HNetCfg.FWRule"));
+            firewallRule.Action = fwaction;
+            firewallRule.Enabled = true;
+            firewallRule.InterfaceTypes = interfaceType.ToString();
+            firewallRule.ApplicationName = path;
+            firewallRule.Name = roleName;
+            INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
+            (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+            firewallRule.Direction = d;
+            if (actionAdd.ToString() == "Add")
+                firewallPolicy.Rules.Add(firewallRule);
+            else
+                firewallPolicy.Rules.Remove(firewallRule.Name);
+
         }
 
         /*
@@ -87,31 +82,74 @@ namespace Core.SystemTools
 NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1"); 
          */
 
-        private void AddPort(string path, NET_FW_RULE_DIRECTION_ d,
+        public void AddPort(string path, NET_FW_RULE_DIRECTION_ d,
        NET_FW_ACTION_ fwaction, ActionAdd actionAdd, InterfaceTypes interfaceType)
         {
-            try
+
+            INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(
+            Type.GetTypeFromProgID("HNetCfg.FWRule"));
+            firewallRule.Action = fwaction;
+            firewallRule.Enabled = true;
+            firewallRule.InterfaceTypes = interfaceType.ToString();
+            firewallRule.ApplicationName = path;
+            firewallRule.RemotePorts =
+            firewallRule.Name = Path.GetFileName(path);
+            INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
+            (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+            firewallRule.Direction = d;
+            if (actionAdd.ToString() == "Add")
+                firewallPolicy.Rules.Add(firewallRule);
+            else
+                firewallPolicy.Rules.Remove(firewallRule.Name);
+        }
+
+
+        /// <summary>
+        /// Remove firewall role.
+        /// </summary>
+        /// <param name="roleName"></param>
+        public void RemoveRole(string ruleName)
+        {
+            if (!IsRulePresent(ruleName))
             {
-                INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(
-                Type.GetTypeFromProgID("HNetCfg.FWRule"));
-                firewallRule.Action = fwaction;
-                firewallRule.Enabled = true;
-                firewallRule.InterfaceTypes = interfaceType.ToString();
-                firewallRule.ApplicationName = path;
-                firewallRule.RemotePorts =
-                firewallRule.Name = "CSwitch: " + Path.GetFileName(path);
-                INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
-                (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-                firewallRule.Direction = d;
-                if (actionAdd.ToString() == "Add")
-                    firewallPolicy.Rules.Add(firewallRule);
-                else
-                    firewallPolicy.Rules.Remove(firewallRule.Name);
+                FileSystem.ErrorWriteLine($"Firewall rule(s) does not exist: {ruleName}");
+                return;
             }
-            catch (Exception ex)
+            INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
+          (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+
+            var count = 0;
+            foreach (INetFwRule rule in firewallPolicy.Rules)
+                if (rule.Name == ruleName)
+                {
+                    firewallPolicy.Rules.Remove(ruleName);
+                    count++;
+                }
+
+            if (!IsRulePresent(ruleName))
+                FileSystem.SuccessWriteLine($"Firewall rule(s) was removed: {ruleName}. Total: {count} rules");
+        }
+
+
+        /// <summary>
+        /// Check if firewall rule exist.
+        /// </summary>
+        /// <param name="ruleName"></param>
+        /// <returns></returns>
+        private bool IsRulePresent(string ruleName)
+        {
+            bool isPresent = false;
+            Type tNetFwPolicy2 = Type.GetTypeFromProgID("HNetCfg.FwPolicy2");
+            INetFwPolicy2 fwPolicy2 = (INetFwPolicy2)Activator.CreateInstance(tNetFwPolicy2);
+            foreach (INetFwRule rule in fwPolicy2.Rules)
             {
-                FileSystem.ErrorWriteLine(ex.Message);
+                if (rule.Name == ruleName)
+                {
+                    isPresent = true;
+                    break;
+                }
             }
+            return isPresent;
         }
 
         // Reference: http://forums.purebasic.com/english/viewtopic.php?f=12&t=33608
@@ -265,9 +303,9 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
                     {
                         if (direction == directionSet.ToString())
                             DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
-                     
-                        if(directionSet.ToString() == "AllDirections")
-                            DisplayData(rule,profile,direction, protocol,src_addr,src_ports,dest_addr,dest_ports);
+
+                        if (directionSet.ToString() == "AllDirections")
+                            DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
                     }
                 }
             }
@@ -288,7 +326,7 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
         /// <param name="src_ports"></param>
         /// <param name="dest_addr"></param>
         /// <param name="dest_ports"></param>
-        private void DisplayData(INetFwRule rule, string profile, string direction, string protocol,string src_addr, string src_ports,
+        private void DisplayData(INetFwRule rule, string profile, string direction, string protocol, string src_addr, string src_ports,
             string dest_addr, string dest_ports)
         {
             var info = @$"-----------------------------------------------
