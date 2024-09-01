@@ -14,7 +14,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "fw";
         private static string s_helpMessage = @"Usage of firewall command parameters:
-    -list : List firewall rules.
+    -list : List all firewall rules.
+    -list -in  : List all inbound firewall rules.
+    -list -out : List all outbound firewall rules.
 
 
 
@@ -24,6 +26,12 @@ Note: Requires administrator privileges.
         {
             try
             {
+                if (arg == Name && !GlobalVariables.isPipeCommand)
+                {
+                    FileSystem.SuccessWriteLine("Use -h for more information!");
+                    return;
+                }
+
                 arg = arg.Substring(2);
 
                 // Display help message.
@@ -36,9 +44,19 @@ Note: Requires administrator privileges.
                 var fw = new FirewallManager();
 
                 // List firewall rules.
-                if (arg.StartsWith("-list"))
+                if (arg.Trim().StartsWith("-list"))
                 {
-                    fw.ListRules();
+                    if (arg.Contains("-in"))
+                    {
+                        fw.ListRules(FirewallManager.Direction.Inbound);
+                        return;
+                    }
+                    if (arg.Contains("-out"))
+                    {
+                        fw.ListRules(FirewallManager.Direction.Outbound);
+                        return;
+                    }
+                    fw.ListRules(FirewallManager.Direction.AllDirections);
                     return;
                 }
             }
