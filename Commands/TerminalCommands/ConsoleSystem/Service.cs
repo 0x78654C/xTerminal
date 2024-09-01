@@ -34,6 +34,12 @@ Note: Requires administrator privileges.
         {
             try
             {
+                if (arg == Name && !GlobalVariables.isPipeCommand)
+                {
+                    FileSystem.SuccessWriteLine("Use -h for more information!");
+                    return;
+                }
+
                 arg = arg.Substring(8);
 
                 // Display help message.
