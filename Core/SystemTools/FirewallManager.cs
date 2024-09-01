@@ -235,8 +235,6 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
                     direction = GetDirectionString((int)rule.Direction);
                     protocol = GetProtocolString((int)rule.Protocol);
 
-                    // Determine source / destination based on directionality of the traffic
-                    // Because explicitly stating source and destination makes way more sense than manually determining it from local / remote and directionality of traffic
                     if (direction == "Inbound")
                     {
                         src_addr = rule.RemoteAddresses ?? "";
