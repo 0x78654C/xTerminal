@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using NetFwTypeLib;
 using System.IO;
 using System.Windows.Forms;
+using System.Data;
 
 namespace Core.SystemTools
 {
@@ -46,7 +47,7 @@ namespace Core.SystemTools
         }
 
         /// <summary>
-        /// Adds or removes a firewall rule.
+        /// Adds or removes a firewall application rule.
         /// </summary>
         /// <param name="path">The path to the executable.</param>
         /// <param name="d">The affected connection type.</param>
@@ -211,23 +212,21 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
             Private = 2,
             Public = 4
         }
-        public void ListRules()
+        public void ListRules(Direction directionSet)
         {
             try
             {
                 Type tNetFwPolicy2 = Type.GetTypeFromProgID("HNetCfg.FwPolicy2");
                 INetFwPolicy2 fwPolicy2 = (INetFwPolicy2)Activator.CreateInstance(tNetFwPolicy2);
-
-                string[] columns = new string[] { "Action", "Protocol", "Source Address", "Source Ports", "Destination Address", "Destination Ports", "Application" };
-                int col_spacer = 2;
-                string direction;
-                string profile;
-                string protocol;
-                string src_addr;
-                string src_ports;
-                string dest_addr;
-                string dest_ports;
-                string current_profile = GetProfileString(fwPolicy2.CurrentProfileTypes);
+                var columns = new string[] { "Action", "Protocol", "Source Address", "Source Ports", "Destination Address", "Destination Ports", "Application" };
+                var direction = "";
+                var profile = "";
+                var protocol = "";
+                var src_addr = "";
+                var src_ports = "";
+                var dest_addr = "";
+                var dest_ports = "";
+                var current_profile = GetProfileString(fwPolicy2.CurrentProfileTypes);
 
 
                 foreach (INetFwRule rule in fwPolicy2.Rules)
@@ -256,18 +255,19 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
                         dest_addr = "";
                         dest_ports = "";
                     }
-                    // Skip disabled rules and invalid protocols in non-verbose mode
+
                     if (!rule.Enabled || protocol == "Invalid")
-                    {
                         continue;
-                    }
 
                     profile = GetProfileString((int)rule.Profiles);
 
-                    // Only list rules from the current profile
                     if (profile == "All" || profile.Contains(current_profile))
                     {
-                        Console.WriteLine($"{GetActionString((int)rule.Action),-8}{protocol,-10}{src_addr,-16}{src_ports,-14}{dest_addr,-21}{dest_ports,-19}{rule.ApplicationName}");
+                        if (direction == directionSet.ToString())
+                            DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
+                     
+                        if(directionSet.ToString() == "AllDirections")
+                            DisplayData(rule,profile,direction, protocol,src_addr,src_ports,dest_addr,dest_ports);
                     }
                 }
             }
@@ -276,6 +276,30 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
                 Console.WriteLine("[-] ERROR: {0}", e.Message);
             }
         }
+
+        /// <summary>
+        /// Display firewall data.
+        /// </summary>
+        /// <param name="rule"></param>
+        /// <param name="profile"></param>
+        /// <param name="direction"></param>
+        /// <param name="protocol"></param>
+        /// <param name="src_addr"></param>
+        /// <param name="src_ports"></param>
+        /// <param name="dest_addr"></param>
+        /// <param name="dest_ports"></param>
+        private void DisplayData(INetFwRule rule, string profile, string direction, string protocol,string src_addr, string src_ports,
+            string dest_addr, string dest_ports)
+        {
+            var info = @$"-----------------------------------------------
+{rule.Name,-60}|{GetActionString((int)rule.Action),-8}|{profile,-19}|{direction,-9}|{protocol,-10}|{src_addr,-16}|{src_ports,-14}|{dest_addr,-21}|{dest_ports,-19}|{rule.ApplicationName}";
+
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                GlobalVariables.pipeCmdOutput += info + Environment.NewLine;
+            else
+                Console.WriteLine(info);
+        }
+
 
         public void RemoveRule()
         {
@@ -312,6 +336,13 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
         {
             Add,
             Remove
+        }
+
+        public enum Direction
+        {
+            Inbound,
+            Outbound,
+            AllDirections
         }
     }
 }
