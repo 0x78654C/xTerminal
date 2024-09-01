@@ -10,16 +10,42 @@ using System.Runtime.Versioning;
 namespace Commands.TerminalCommands.ConsoleSystem
 {
     [SupportedOSPlatform("Windows")]
-    public class Firewall: ITerminalCommand
+    public class Firewall : ITerminalCommand
     {
         public string Name => "fw";
+        private static string s_helpMessage = @"Usage of firewall command parameters:
+    -list : List firewall rules.
+
+
+
+Note: Requires administrator privileges.
+";
         public void Execute(string arg)
         {
-            var fw = new FirewallManager();
-            fw.Port = "2122";
-            fw.RuleName = "testRule";
-            //fw.AddRule(FirewallManager.Action.Allow, FirewallManager.Protocol.TCP);
-            fw.ListRules();
+            try
+            {
+                arg = arg.Substring(2);
+
+                // Display help message.
+                if (arg.Trim() == "-h" && !GlobalVariables.isPipeCommand)
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
+
+                var fw = new FirewallManager();
+
+                // List firewall rules.
+                if (arg.StartsWith("-list"))
+                {
+                    fw.ListRules();
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+            }
         }
     }
 }
