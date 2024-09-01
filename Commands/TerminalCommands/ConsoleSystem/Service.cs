@@ -9,7 +9,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class Service : ITerminalCommand
     {
         public string Name => "service";
-        private static string s_helpMessage = @"Usage of service command:
+        private static string s_helpMessage = @"Usage of service command parameters:
 Local:
     -list : List all local services names, status and description running on computer.
     -list --noinfo: List all local services names running on computer.
