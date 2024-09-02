@@ -23,7 +23,7 @@ namespace Core.SystemTools
         public FirewallManager()
         {
         }
-        public void AddRule(Action action, Protocol protocol)
+        public void AddRule1(Action action, Protocol protocol)
         {
             RunArg = "advfirewall firewall add rule name=" + "\"" + "" + RuleName + "\"" + " action=" + action.ToString() + " protocol=" + protocol + " dir=in localport=" + Port + "";
 
@@ -51,28 +51,48 @@ namespace Core.SystemTools
         /// </summary>
         /// <param name="roleName">Role name.</param>
         /// <param name="path">The path to the executable.</param>
-        /// <param name="d">The affected connection type.</param>
+        /// <param name="direction">The affected connection type.</param>
         /// <param name="fwaction">Rule action.</param>
         /// <param name="action">"Add (1) or 
         /// remove (0) the specified rule."</param>
-        public void AddApplication(string roleName, string path, NET_FW_RULE_DIRECTION_ d,
-        NET_FW_ACTION_ fwaction, ActionAdd actionAdd, InterfaceTypes interfaceType)
+        public void AddRule(string roleName, string path, int profile, NET_FW_RULE_DIRECTION_ direction,
+        NET_FW_ACTION_ fwaction, string localPort = "", string remotePort = ""
+            , string remoteAddress = "", string localAddress = "", int protocol = 256)
         {
-            INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(
-                  Type.GetTypeFromProgID("HNetCfg.FWRule"));
+            INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
             firewallRule.Action = fwaction;
             firewallRule.Enabled = true;
-            firewallRule.InterfaceTypes = interfaceType.ToString();
+            firewallRule.Protocol = protocol;
+            firewallRule.Profiles = profile;
+           // firewallRule.InterfaceTypes = interfaceType.ToString();
             firewallRule.ApplicationName = path;
             firewallRule.Name = roleName;
+            if (!string.IsNullOrEmpty(localAddress))
+                firewallRule.LocalAddresses = localAddress;
+            if (!string.IsNullOrEmpty(remoteAddress))
+                firewallRule.RemoteAddresses = remoteAddress;
+            if (!string.IsNullOrEmpty(localPort))
+            {
+                if (protocol == 256)
+                {
+                    FileSystem.ErrorWriteLine("You cannot set local port when Protocol is set to ANY");
+                    return;
+                }
+                firewallRule.LocalPorts = localPort;
+            }
+            if (!string.IsNullOrEmpty(remotePort))
+            {
+                if (protocol == 256)
+                {
+                    FileSystem.ErrorWriteLine("You cannot set remote port when Protocol is set to ANY");
+                    return;
+                }
+                firewallRule.RemotePorts = remotePort;
+            }
             INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
             (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-            firewallRule.Direction = d;
-            if (actionAdd.ToString() == "Add")
-                firewallPolicy.Rules.Add(firewallRule);
-            else
-                firewallPolicy.Rules.Remove(firewallRule.Name);
-
+            firewallRule.Direction = direction;
+            firewallPolicy.Rules.Add(firewallRule);
         }
 
         /*
@@ -92,7 +112,7 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
             firewallRule.Enabled = true;
             firewallRule.InterfaceTypes = interfaceType.ToString();
             firewallRule.ApplicationName = path;
-            firewallRule.RemotePorts =
+            firewallRule.LocalPorts =
             firewallRule.Name = Path.GetFileName(path);
             INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
             (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
@@ -294,19 +314,14 @@ NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1");
                         dest_ports = "";
                     }
 
-                    if (!rule.Enabled || protocol == "Invalid")
-                        continue;
-
                     profile = GetProfileString((int)rule.Profiles);
 
-                    if (profile == "All" || profile.Contains(current_profile))
-                    {
-                        if (direction == directionSet.ToString())
-                            DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
 
-                        if (directionSet.ToString() == "AllDirections")
-                            DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
-                    }
+                    if (direction == directionSet.ToString())
+                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
+
+                    if (directionSet.ToString() == "AllDirections")
+                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
                 }
             }
             catch (Exception e)
