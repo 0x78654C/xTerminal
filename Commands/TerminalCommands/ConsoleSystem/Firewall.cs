@@ -20,7 +20,26 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -list -in  : List all inbound firewall rules.
     -list -out : List all outbound firewall rules.
 
+Protocols code:
+-1     : Unknown
+0, 256 : ANY (default)
+1      : ICMPv4
+2      : IGMP
+4      : IPv4
+6      : TCP
+17     : UDP
+41     : IPv6
+47     : GRE
+58     : ICMPv6
 
+Profiles code:
+1      : Domain
+2      : Private
+3      : Domain, Private
+4      : Public
+5      : Domain, Public
+6      : Private, Public
+7      : All
 
 Note: Requires administrator privileges.
 ";
@@ -66,7 +85,8 @@ Note: Requires administrator privileges.
                 // Add firewall rule.
                 if (arg.Trim().StartsWith("-add"))
                 {
-                    fw.AddApplication("TestFW","c:\\t.exe", NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN, NET_FW_ACTION_.NET_FW_ACTION_ALLOW, FirewallManager.ActionAdd.Add, FirewallManager.InterfaceTypes.All);
+                    fw.AddRule("TestFW","c:\\t.exe", 7, NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN, NET_FW_ACTION_.NET_FW_ACTION_ALLOW,"","","127.0.0.1","127.0.0.1",
+                        6);
                 }
 
                 // Remove firewall rule
@@ -88,7 +108,7 @@ Note: Requires administrator privileges.
             }
             catch (Exception ex)
             {
-                FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                FileSystem.ErrorWriteLine($"{ex.ToString()}. Use -h for more information!");
             }
         }
     }
