@@ -15,10 +15,25 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class Firewall : ITerminalCommand
     {
         public string Name => "fw";
-        private static string s_helpMessage = @"Usage of firewall command parameters:
+        private static string s_helpMessage = @"Usage of fw command parameters:
     -list : List all firewall rules.
     -list -in  : List all inbound firewall rules.
     -list -out : List all outbound firewall rules.
+
+    -add : Add firewall rule with following options:
+         -n : Set rule name.
+         -p : Set path to application executable.
+         -prf : Set profile code. (See list bellow).
+         -di : Set rule direction. Ex.: -di IN or -di OUT. (IN =  inbound, OUT = Outbound)
+         -a  : Set action. Ex.: -a allow or -a block
+         -lP : Set local port.
+         -rP : Set remote port.
+         -lA : Set local address.
+         -rA : Set remote address.
+         -pr : Set protocol code. (See list bellow).
+         -de : Set description.
+
+    -del : Removes a firewall rule by name.
 
 Protocols code:
 -1     : Unknown
@@ -85,8 +100,22 @@ Note: Requires administrator privileges.
                 // Add firewall rule.
                 if (arg.Trim().StartsWith("-add"))
                 {
-                    fw.AddRule("TestFW","c:\\t.exe", 7, NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN, NET_FW_ACTION_.NET_FW_ACTION_ALLOW,"","","127.0.0.1","127.0.0.1",
-                        6);
+                    var name = "";
+                    var pathApp = "";
+                    var profile = 0;
+                    string direction="";
+                    string action="";
+                    var localPort = "";
+                    var remotePort = "";
+                    var remoteAddress = "";
+                    var localAddress = "";
+                    var protocol = 0;
+                    var description = "";
+
+
+
+                    
+                    fw.AddRule(name,pathApp, profile, direction, action,localPort,remotePort,remoteAddress,localAddress,protocol,description);
                 }
 
                 // Remove firewall rule
