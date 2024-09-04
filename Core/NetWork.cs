@@ -171,7 +171,7 @@ namespace Core
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}\n";
                 else
-                 Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
+                    Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
             }
             else
             {
@@ -191,9 +191,11 @@ namespace Core
         {
             string nicOuptut = string.Empty;
             string ipAddress = string.Empty;
+            string ipAddressV6 = string.Empty;
             string gateway = string.Empty;
             string mask = string.Empty;
             string dnsAddr = string.Empty;
+            var count = 0;
 
             foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -209,16 +211,26 @@ namespace Core
                     }
                     foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
                     {
-                        if(unicastIPAddress.Address.ToString().Contains("."))
-                             ipAddress += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
-                        if(unicastIPAddress.IPv4Mask.ToString() != "0.0.0.0")
+                        if (unicastIPAddress.Address.ToString().Contains("."))
+                            ipAddress += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
+                        if (unicastIPAddress.Address.ToString().Contains(":"))
+                        {
+                            if (count == 1)
+                                ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + " <- Temporary\n";
+                            else
+                                ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
+                            count++;
+
+                        }
+
+                        if (unicastIPAddress.IPv4Mask.ToString() != "0.0.0.0")
                             mask += "".PadRight(15, ' ') + unicastIPAddress.IPv4Mask + "\n";
                     }
                     IPInterfaceProperties iPInterface = networkInterface.GetIPProperties();
                     IPAddressCollection dnsAddresses = iPInterface.DnsAddresses;
                     foreach (var dnsAddress in dnsAddresses)
                     {
-                        if(!dnsAddress.ToString().Contains("::"))
+                        if (!dnsAddress.ToString().Contains("::"))
                             dnsAddr += "".PadRight(15, ' ') + dnsAddress + "\n";
                     }
 
@@ -226,11 +238,12 @@ namespace Core
                     nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
                     nicOuptut += $"Description:".PadRight(15, ' ') + $"{networkInterface.Description}\n";
                     nicOuptut += $"\n-------------------------------------\n\n";
-                    nicOuptut += $"IP Address:".PadRight(15, ' ') + $"{ipAddress.Trim()} \n";
+                    nicOuptut += $"IPv4:".PadRight(15, ' ') + $"{ipAddress.Trim()} \n";
+                    nicOuptut += $"IPv6:".PadRight(15, ' ') + $"{ipAddressV6.Trim()} \n";
                     nicOuptut += $"MASK:".PadRight(15, ' ') + $"{mask.Trim()}\n";
                     nicOuptut += $"Gateway:".PadRight(15, ' ') + $"{gateway.Trim()}\n";
                     nicOuptut += $"\n-------------------------------------\n\n";
-                    nicOuptut += $"MAC Address:".PadRight(15, ' ')+$"{mac}\n";
+                    nicOuptut += $"MAC Address:".PadRight(15, ' ') + $"{mac}\n";
                     nicOuptut += $"\n-------------------------------------\n\n";
                     nicOuptut += $"DNS:".PadRight(15, ' ') + $"{dnsAddr.Trim()}\n";
                 }
@@ -249,8 +262,8 @@ namespace Core
                 if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                     foreach (GatewayIPAddressInformation gatewayIPAddress in networkInterface.GetIPProperties().GatewayAddresses)
                         if (gatewayIPAddress.Address.ToString().Trim().Length > 2)
-                            if(!gatewayIPAddress.Address.ToString().Contains(":"))
-                            gateway += gatewayIPAddress.Address.ToString();
+                            if (!gatewayIPAddress.Address.ToString().Contains(":"))
+                                gateway += gatewayIPAddress.Address.ToString();
             return gateway;
         }
 
@@ -265,8 +278,8 @@ namespace Core
                 if (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet || networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                     foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
                         if (!unicastIPAddress.Address.IsIPv6LinkLocal)
-                            if(!unicastIPAddress.Address.ToString().Contains(":"))
-                            ipAddress += unicastIPAddress.Address;
+                            if (!unicastIPAddress.Address.ToString().Contains(":"))
+                                ipAddress += unicastIPAddress.Address;
             return ipAddress;
         }
 
@@ -319,7 +332,7 @@ namespace Core
                 .Select(x =>
                 {
                     string[] parts = x.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
-                    return new IPAndMac { IP = parts[0].Trim(), MAC = parts[1].Trim().Replace("-",":") };
+                    return new IPAndMac { IP = parts[0].Trim(), MAC = parts[1].Trim().Replace("-", ":") };
                 }).ToList();
         }
 
