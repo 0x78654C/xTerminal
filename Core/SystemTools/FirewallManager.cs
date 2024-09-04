@@ -49,24 +49,32 @@ namespace Core.SystemTools
         /// <summary>
         /// Adds or removes a firewall application rule.
         /// </summary>
-        /// <param name="roleName">Role name.</param>
-        /// <param name="path">The path to the executable.</param>
-        /// <param name="direction">The affected connection type.</param>
-        /// <param name="fwaction">Rule action.</param>
-        /// <param name="action">"Add (1) or 
-        /// remove (0) the specified rule."</param>
-        public void AddRule(string roleName, string path, int profile, NET_FW_RULE_DIRECTION_ direction,
-        NET_FW_ACTION_ fwaction, string localPort = "", string remotePort = ""
-            , string remoteAddress = "", string localAddress = "", int protocol = 256)
+        /// <param name="roleName"></param>
+        /// <param name="pathApp"></param>
+        /// <param name="profile"></param>
+        /// <param name="direction"></param>
+        /// <param name="fwaction"></param>
+        /// <param name="localPort"></param>
+        /// <param name="remotePort"></param>
+        /// <param name="remoteAddress"></param>
+        /// <param name="localAddress"></param>
+        /// <param name="protocol"></param>
+        /// <param name="description"></param>
+        public void AddRule(string roleName, string pathApp, int profile, string direction,
+            string fwaction, string localPort = "", string remotePort = "", string remoteAddress = "",
+            string localAddress = "", int protocol = 256, string description = "")
         {
+            var directionSet = (direction.ToLower().Contains("IN")) ? NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN : NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT;
+            var actionSet = (fwaction.ToLower().Contains("allow")) ? NET_FW_ACTION_.NET_FW_ACTION_ALLOW : NET_FW_ACTION_.NET_FW_ACTION_BLOCK;
+
             INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
-            firewallRule.Action = fwaction;
+            firewallRule.Action = actionSet;
             firewallRule.Enabled = true;
             firewallRule.Protocol = protocol;
             firewallRule.Profiles = profile;
-           // firewallRule.InterfaceTypes = interfaceType.ToString();
-            firewallRule.ApplicationName = path;
+            firewallRule.ApplicationName = pathApp;
             firewallRule.Name = roleName;
+            firewallRule.Description = description;
             if (!string.IsNullOrEmpty(localAddress))
                 firewallRule.LocalAddresses = localAddress;
             if (!string.IsNullOrEmpty(remoteAddress))
@@ -91,16 +99,10 @@ namespace Core.SystemTools
             }
             INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
             (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-            firewallRule.Direction = direction;
+            firewallRule.Direction = directionSet;
             firewallPolicy.Rules.Add(firewallRule);
         }
 
-        /*
-         
-         
-         FWRule(@"C:\test.exe", NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT, 
-NET_FW_ACTION_.NET_FW_ACTION_BLOCK, "1"); 
-         */
 
         public void AddPort(string path, NET_FW_RULE_DIRECTION_ d,
        NET_FW_ACTION_ fwaction, ActionAdd actionAdd, InterfaceTypes interfaceType)
