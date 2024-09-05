@@ -1,51 +1,19 @@
-﻿using Microsoft.VisualBasic;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Threading.Tasks;
 using NetFwTypeLib;
-using System.IO;
-using System.Windows.Forms;
-using System.Data;
 
 namespace Core.SystemTools
 {
     [SupportedOSPlatform("Windows")]
     public class FirewallManager
     {
-        public string RuleName { get; set; }
-        public string Port { get; set; }
-
-        private string RunArg { get; set; }
-
+        /// <summary>
+        /// Filewall managemeng.
+        /// </summary>
         public FirewallManager()
         {
         }
-        public void AddRule1(Action action, Protocol protocol)
-        {
-            RunArg = "advfirewall firewall add rule name=" + "\"" + "" + RuleName + "\"" + " action=" + action.ToString() + " protocol=" + protocol + " dir=in localport=" + Port + "";
-
-            if (string.IsNullOrEmpty(RuleName))
-            {
-                FileSystem.ErrorWriteLine("You must add a name for the rule!");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(Port))
-            {
-                FileSystem.ErrorWriteLine("You must add a port for the rule!");
-                return;
-            }
-
-            var outPut = ProcessStart.ExecuteAppWithOutput("netsh ", RunArg);
-            FileSystem.SuccessWriteLine(outPut.ReadToEnd());
-            INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
-            firewallRule.Action = NET_FW_ACTION_.NET_FW_ACTION_BLOCK;
-
-        }
-
+       
         /// <summary>
         /// Adds or removes a firewall application rule.
         /// </summary>
@@ -64,7 +32,14 @@ namespace Core.SystemTools
             string fwaction, string localPort = "", string remotePort = "", string remoteAddress = "",
             string localAddress = "", int protocol = 256, string description = "")
         {
-            var directionSet = (direction.ToLower().Contains("IN")) ? NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN : NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT;
+            if (string.IsNullOrEmpty(roleName))
+            {
+                FileSystem.ErrorWriteLine("Role name should be specified!");
+                return;
+            }
+
+
+            var directionSet = (direction.ToUpper().Contains("IN")) ? NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN : NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT;
             var actionSet = (fwaction.ToLower().Contains("allow")) ? NET_FW_ACTION_.NET_FW_ACTION_ALLOW : NET_FW_ACTION_.NET_FW_ACTION_BLOCK;
 
             INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
@@ -101,28 +76,7 @@ namespace Core.SystemTools
             (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
             firewallRule.Direction = directionSet;
             firewallPolicy.Rules.Add(firewallRule);
-        }
-
-
-        public void AddPort(string path, NET_FW_RULE_DIRECTION_ d,
-       NET_FW_ACTION_ fwaction, ActionAdd actionAdd, InterfaceTypes interfaceType)
-        {
-
-            INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(
-            Type.GetTypeFromProgID("HNetCfg.FWRule"));
-            firewallRule.Action = fwaction;
-            firewallRule.Enabled = true;
-            firewallRule.InterfaceTypes = interfaceType.ToString();
-            firewallRule.ApplicationName = path;
-            firewallRule.LocalPorts =
-            firewallRule.Name = Path.GetFileName(path);
-            INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
-            (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-            firewallRule.Direction = d;
-            if (actionAdd.ToString() == "Add")
-                firewallPolicy.Rules.Add(firewallRule);
-            else
-                firewallPolicy.Rules.Remove(firewallRule.Name);
+            FileSystem.SuccessWriteLine($"Firewall rule {roleName} was added");
         }
 
 
@@ -174,7 +128,11 @@ namespace Core.SystemTools
             return isPresent;
         }
 
-        // Reference: http://forums.purebasic.com/english/viewtopic.php?f=12&t=33608
+        /// <summary>
+        /// Profile code string.
+        /// </summary>
+        /// <param name="profile"></param>
+        /// <returns></returns>
         static string GetProfileString(int profile)
         {
             switch (profile)
@@ -199,8 +157,11 @@ namespace Core.SystemTools
             }
         }
 
-
-        // Reference: https://github.com/TechnitiumSoftware/TechnitiumLibrary/blob/master/TechnitiumLibrary.Net.Firewall/WindowsFirewall.cs
+        /// <summary>
+        /// Protocol code list.
+        /// </summary>
+        /// <param name="protocol"></param>
+        /// <returns></returns>
         static string GetProtocolString(int protocol)
         {
             switch (protocol)
@@ -232,8 +193,11 @@ namespace Core.SystemTools
         }
 
 
-        // Reference: https://docs.microsoft.com/en-us/windows/win32/api/icftypes/ne-icftypes-net_fw_rule_direction
-        // Reference: http://forums.purebasic.com/english/viewtopic.php?f=12&t=33608
+        /// <summary>
+        /// Direction code list.
+        /// </summary>
+        /// <param name="direction"></param>
+        /// <returns></returns>
         static string GetDirectionString(int direction)
         {
             switch (direction)
@@ -247,8 +211,11 @@ namespace Core.SystemTools
             }
         }
 
-
-        // Reference: https://docs.microsoft.com/en-us/windows/win32/api/icftypes/ne-icftypes-net_fw_rule_direction
+        /// <summary>
+        /// Action code list.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
         static string GetActionString(int action)
         {
             switch (action)
@@ -263,15 +230,10 @@ namespace Core.SystemTools
         }
 
 
-        // Source: https://stackoverflow.com/questions/3261451/using-a-bitmask-in-c-sharp
-        [Flags]
-        public enum Profile
-        {
-            None = 0,
-            Domain = 1,
-            Private = 2,
-            Public = 4
-        }
+        /// <summary>
+        /// List firewall rules
+        /// </summary>
+        /// <param name="directionSet"></param>
         public void ListRules(Direction directionSet)
         {
             try
@@ -355,42 +317,16 @@ namespace Core.SystemTools
                 Console.WriteLine(info);
         }
 
-
-        public void RemoveRule()
-        {
-            if (string.IsNullOrEmpty(RuleName))
-            {
-                FileSystem.ErrorWriteLine("You must add the rule name that you want to remove!");
-                return;
-            }
-
-            RunArg = $"netsh advfirewall firewall delete rule {RuleName}";
-            var outPut = ProcessStart.ExecuteAppWithOutput("netsh ", RunArg);
-            FileSystem.SuccessWriteLine(outPut.ReadToEnd());
-        }
         public enum Action
         {
             Allow,
             Block
         }
 
-        public enum InterfaceTypes
-        {
-            Private,
-            Public,
-            All
-        }
-
         public enum Protocol
         {
             TCP,
             UDP
-        }
-
-        public enum ActionAdd
-        {
-            Add,
-            Remove
         }
 
         public enum Direction
