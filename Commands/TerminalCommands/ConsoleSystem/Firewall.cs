@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Runtime.Versioning;
 using NetFwTypeLib;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -15,6 +16,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class Firewall : ITerminalCommand
     {
         public string Name => "fw";
+        private List<string> _params = ["-n","-p","-pf","-di","-a","-lP", "-rP", "-lA", "-rA", "-pr", "-de"];
         private static string s_helpMessage = @"Usage of fw command parameters:
     -list : List all firewall rules.
     -list -in  : List all inbound firewall rules.
@@ -23,7 +25,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -add : Add firewall rule with following options:
          -n : Set rule name.
          -p : Set path to application executable.
-         -prf : Set profile code. (See list bellow).
+         -pf : Set profile code. (See list bellow).
          -di : Set rule direction. Ex.: -di IN or -di OUT. (IN =  inbound, OUT = Outbound)
          -a  : Set action. Ex.: -a allow or -a block
          -lP : Set local port.
@@ -112,9 +114,59 @@ Note: Requires administrator privileges.
                     var protocol = 0;
                     var description = "";
 
+                    if (arg.Contains("-n "))
+                        name = arg.GetParamValueFirewall("-n ");
 
+                    if (arg.Contains("-p "))
+                    {
+                        var desData = arg.SplitByText("-p ", 1);
+                        var isParamPresent = _params.Any(param => desData.Contains(param));
+                        if (isParamPresent)
+                        {
+                            var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
+                            pathApp = desData.SplitByText(paramPresent, 0).Trim();
+                        }
+                        else
+                            pathApp = desData.Trim();
+                    }
 
+                    if (arg.Contains("-pf "))
+                        profile = Int32.Parse(arg.GetParamValueFirewall("-pf "));
+
+                    if (arg.Contains("-di "))
+                        direction = arg.GetParamValueFirewall("-di ");
+
+                    if (arg.Contains("-a "))
+                        action = arg.GetParamValueFirewall("-a ");
+
+                    if (arg.Contains("-lP "))
+                        localPort = arg.GetParamValueFirewall("-lP ");
+
+                    if (arg.Contains("-rP "))
+                        remotePort = arg.GetParamValueFirewall("-rP ");
                     
+                    if (arg.Contains("-lA "))
+                        localAddress = arg.GetParamValueFirewall("-lA ");
+
+                    if (arg.Contains("-rA "))
+                        remoteAddress = arg.GetParamValueFirewall("-rA ");
+
+                    if (arg.Contains("-pr "))
+                        protocol = Int32.Parse(arg.GetParamValueFirewall("-pr "));
+
+                    if (arg.Contains("-de "))
+                    {
+                        var desData = arg.SplitByText("-de", 1);
+                        var isParamPresent = _params.Any(param => desData.Contains(param));
+                        if (isParamPresent)
+                        {
+                            var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
+                            description = desData.SplitByText(paramPresent,0).Trim();
+                        }
+                        else
+                            description = desData.Trim();
+                    }
+
                     fw.AddRule(name,pathApp, profile, direction, action,localPort,remotePort,remoteAddress,localAddress,protocol,description);
                 }
 
