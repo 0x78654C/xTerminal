@@ -215,11 +215,26 @@ namespace Core
                             ipAddress += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
                         if (unicastIPAddress.Address.ToString().Contains(":"))
                         {
-                            if (count == 1)
-                                ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + " <- Temporary\n";
-                            else
+                            var familly = unicastIPAddress.Address;
+                            //if (familly.IsIPv6LinkLocal)
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + $" <- IPv6LinkLocal \n";
+                            //else if (familly.IsIPv6Multicast)
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + $" <- IPv6Multicast \n";
+                            //else if (familly.IsIPv6SiteLocal)
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + $" <- IPv6SiteLocal \n";
+                            //else if (familly.IsIPv6Teredo)
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + $" <- IPv6Teredo \n";
+                            //else if (familly.IsIPv6UniqueLocal)
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + $" <- IPv6UniqueLocal \n";
+                            //else if (familly.IsIPv4MappedToIPv6)
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + $" <- IPv4MappedToIPv6 \n";
+                            //else
                                 ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
-                            count++;
+                            //if (count == 1)
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + " <- Temporary\n";
+                            //else
+                            //    ipAddressV6 += "".PadRight(15, ' ') + unicastIPAddress.Address + $" {famillly} \n";
+                            //count++;
 
                         }
 
