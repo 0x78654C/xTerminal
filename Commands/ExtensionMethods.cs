@@ -75,5 +75,13 @@ namespace Commands
             string firstParamSplit = input.SplitByText(firstParam + " ", 1);
             return firstParamSplit.SplitByText(" " + secondParam, 0);
         }
+
+        /// <summary>
+        /// Extension for read parameter value.
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        internal static string GetParamValueFirewall(this string arg, string param) => arg.SplitByText(param, 1).Trim().Split(' ')[0];
     }
 }
