@@ -13,7 +13,7 @@ namespace Core.SystemTools
         public FirewallManager()
         {
         }
-       
+
         /// <summary>
         /// Adds or removes a firewall application rule.
         /// </summary>
@@ -84,7 +84,7 @@ namespace Core.SystemTools
         /// Remove firewall role.
         /// </summary>
         /// <param name="roleName"></param>
-        public void RemoveRole(string ruleName)
+        public void RemoveRole(string ruleName, NET_FW_RULE_DIRECTION_ direction)
         {
             if (!IsRulePresent(ruleName))
             {
@@ -98,8 +98,9 @@ namespace Core.SystemTools
             foreach (INetFwRule rule in firewallPolicy.Rules)
                 if (rule.Name == ruleName)
                 {
-                    firewallPolicy.Rules.Remove(ruleName);
                     count++;
+                    if (rule.Direction == direction)
+                        firewallPolicy.Rules.Remove(ruleName);
                 }
 
             if (!IsRulePresent(ruleName))
