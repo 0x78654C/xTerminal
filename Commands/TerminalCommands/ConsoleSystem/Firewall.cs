@@ -174,12 +174,29 @@ Note: Requires administrator privileges.
                 if (arg.Trim().StartsWith("-del"))
                 {
                    var roleName =  arg.Trim().SplitByText("-del",1).Trim();
+
+
                     if(string.IsNullOrEmpty(roleName))
                     {
                         FileSystem.ErrorWriteLine("You need to add the role name. Use -h for more information!");
                         return;
                     }
-                    fw.RemoveRole(roleName);
+
+                    // Inbound connections.
+                    if (arg.Contains("-IN"))
+                    {
+                        roleName = roleName.Replace("-IN", "").Trim();
+                        fw.RemoveRole(roleName,NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN);
+                        return;
+                    }
+
+                    // Outbound connections.
+                    if (arg.Contains("-OUT"))
+                    {
+                        roleName = roleName.Replace("-OUT","").Trim();
+                        fw.RemoveRole(roleName, NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT);
+                        return;
+                    }
                     return;
                 }
             }
