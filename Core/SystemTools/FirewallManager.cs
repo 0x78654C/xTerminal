@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.Versioning;
 using NetFwTypeLib;
+using System.Linq;
 
 namespace Core.SystemTools
 {
@@ -30,7 +31,7 @@ namespace Core.SystemTools
         /// <param name="description"></param>
         public void AddRule(string roleName, string pathApp, int profile, string direction,
             string fwaction, string localPort = "", string remotePort = "", string remoteAddress = "",
-            string localAddress = "", int protocol = 256, string description = "")
+            string localAddress = "", int protocol = 256, string description = "", string enable = "true")
         {
             if (string.IsNullOrEmpty(roleName))
             {
@@ -41,10 +42,11 @@ namespace Core.SystemTools
 
             var directionSet = (direction.ToUpper().Contains("IN")) ? NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN : NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT;
             var actionSet = (fwaction.ToLower().Contains("allow")) ? NET_FW_ACTION_.NET_FW_ACTION_ALLOW : NET_FW_ACTION_.NET_FW_ACTION_BLOCK;
+            var isEnable = (enable.ToLower().Contains("true"))? bool.Parse("true"):bool.Parse("false");
 
             INetFwRule firewallRule = (INetFwRule)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
             firewallRule.Action = actionSet;
-            firewallRule.Enabled = true;
+            firewallRule.Enabled = isEnable;
             firewallRule.Protocol = protocol;
             firewallRule.Profiles = profile;
             firewallRule.ApplicationName = pathApp;
@@ -80,6 +82,7 @@ namespace Core.SystemTools
         }
 
 
+
         /// <summary>
         /// Remove firewall role.
         /// </summary>
@@ -105,8 +108,41 @@ namespace Core.SystemTools
                 }
             }
             if (!IsRulePresent(ruleName))
-                FileSystem.SuccessWriteLine($"Firewall rule(s) was removed: {ruleName}. Total: {count} rules");
+                FileSystem.SuccessWriteLine($"Firewall rule(s) was removed: {ruleName}. Total: {count} rule(s)");
         }
+
+        /// <summary>
+        /// Enable/Disable firewall rule.
+        /// </summary>
+        /// <param name="ruleName"></param>
+        /// <param name="isEnable"></param>
+        public void SetEnableDisbale(string ruleName, bool isEnable)
+        {
+            if (!IsRulePresent(ruleName))
+            {
+                FileSystem.ErrorWriteLine($"Firewall rule(s) does not exist: {ruleName}");
+                return;
+            }
+
+            INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
+          (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+
+            var count = 0;
+            foreach (INetFwRule rule in firewallPolicy.Rules)
+            {
+                if (rule.Name == ruleName)
+                {
+                    count++;
+                   rule.Enabled = isEnable;
+                }
+            }
+          
+            if (isEnable)
+                FileSystem.SuccessWriteLine($"Firewall rule(s) was enabled: {ruleName}. Total: {count} rule(s)");
+            else
+                FileSystem.SuccessWriteLine($"Firewall rule(s) was disbaled: {ruleName}. Total: {count} rule(s)");
+        }
+
 
 
         /// <summary>
@@ -251,6 +287,7 @@ namespace Core.SystemTools
                 var dest_addr = "";
                 var dest_ports = "";
                 var service_name = "";
+                string enable = "";
                 var current_profile = GetProfileString(fwPolicy2.CurrentProfileTypes);
 
 
@@ -266,6 +303,7 @@ namespace Core.SystemTools
                         dest_addr = rule.LocalAddresses ?? "";
                         dest_ports = rule.LocalPorts ?? "";
                         service_name = rule.serviceName ?? "";
+                        enable = rule.Enabled.ToString();
                     }
                     else if (direction == "Outbound")
                     {
@@ -274,6 +312,7 @@ namespace Core.SystemTools
                         dest_addr = rule.RemoteAddresses ?? "";
                         dest_ports = rule.RemotePorts ?? "";
                         service_name = rule.serviceName ?? "";
+                        enable = rule.Enabled.ToString();
                     }
                     else
                     {
@@ -282,16 +321,17 @@ namespace Core.SystemTools
                         dest_addr = "";
                         dest_ports = "";
                         service_name = rule.serviceName ?? "";
+                        enable = rule.Enabled.ToString();
                     }
 
                     profile = GetProfileString((int)rule.Profiles);
 
 
                     if (direction == directionSet.ToString())
-                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports, service_name);
+                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports, service_name, enable);
 
                     if (directionSet.ToString() == "AllDirections")
-                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports, service_name);
+                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports, service_name, enable);
                 }
             }
             catch (Exception e)
@@ -312,10 +352,10 @@ namespace Core.SystemTools
         /// <param name="dest_addr"></param>
         /// <param name="dest_ports"></param>
         private void DisplayData(INetFwRule rule, string profile, string direction, string protocol, string src_addr, string src_ports,
-            string dest_addr, string dest_ports, string service_name)
+            string dest_addr, string dest_ports, string service_name, string enable)
         {
             var info = @$"-----------------------------------------------
-{rule.Name,-60}|{GetActionString((int)rule.Action),-8}|{profile,-19}|{direction,-9}|{protocol,-10}|{src_addr,-16}|{src_ports,-14}|{dest_addr,-21}|{dest_ports,-19}|{service_name,-19}|{rule.ApplicationName}";
+{rule.Name,-60}|{GetActionString((int)rule.Action),-8}|{profile,-19}|{direction,-9}|{protocol,-10}|{src_addr,-16}|{src_ports,-14}|{dest_addr,-21}|{dest_ports,-19}|{enable,-6}|{service_name,-19}|{rule.ApplicationName}";
 
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput += info + Environment.NewLine;
