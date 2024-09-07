@@ -253,6 +253,7 @@ namespace Core.SystemTools
                 var src_ports = "";
                 var dest_addr = "";
                 var dest_ports = "";
+                var service_name = "";
                 var current_profile = GetProfileString(fwPolicy2.CurrentProfileTypes);
 
 
@@ -267,6 +268,7 @@ namespace Core.SystemTools
                         src_ports = rule.RemotePorts ?? "";
                         dest_addr = rule.LocalAddresses ?? "";
                         dest_ports = rule.LocalPorts ?? "";
+                        service_name = rule.serviceName ?? "";
                     }
                     else if (direction == "Outbound")
                     {
@@ -274,6 +276,7 @@ namespace Core.SystemTools
                         src_ports = rule.LocalPorts ?? "";
                         dest_addr = rule.RemoteAddresses ?? "";
                         dest_ports = rule.RemotePorts ?? "";
+                        service_name = rule.serviceName ?? "";
                     }
                     else
                     {
@@ -281,16 +284,17 @@ namespace Core.SystemTools
                         src_ports = "";
                         dest_addr = "";
                         dest_ports = "";
+                        service_name = rule.serviceName ?? "";
                     }
 
                     profile = GetProfileString((int)rule.Profiles);
 
 
                     if (direction == directionSet.ToString())
-                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
+                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports, service_name);
 
                     if (directionSet.ToString() == "AllDirections")
-                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports);
+                        DisplayData(rule, profile, direction, protocol, src_addr, src_ports, dest_addr, dest_ports, service_name);
                 }
             }
             catch (Exception e)
@@ -311,10 +315,10 @@ namespace Core.SystemTools
         /// <param name="dest_addr"></param>
         /// <param name="dest_ports"></param>
         private void DisplayData(INetFwRule rule, string profile, string direction, string protocol, string src_addr, string src_ports,
-            string dest_addr, string dest_ports)
+            string dest_addr, string dest_ports, string service_name)
         {
             var info = @$"-----------------------------------------------
-{rule.Name,-60}|{GetActionString((int)rule.Action),-8}|{profile,-19}|{direction,-9}|{protocol,-10}|{src_addr,-16}|{src_ports,-14}|{dest_addr,-21}|{dest_ports,-19}|{rule.ApplicationName}";
+{rule.Name,-60}|{GetActionString((int)rule.Action),-8}|{profile,-19}|{direction,-9}|{protocol,-10}|{src_addr,-16}|{src_ports,-14}|{dest_addr,-21}|{dest_ports,-19}|{service_name,-19}|{rule.ApplicationName}";
 
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput += info + Environment.NewLine;
