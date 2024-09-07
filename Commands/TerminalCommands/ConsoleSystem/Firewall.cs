@@ -3,12 +3,7 @@ using Core;
 using Core.SystemTools;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.Versioning;
-using NetFwTypeLib;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -36,8 +31,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
          -de : Set description.
 
     -del : Removes a firewall rule by name.
-         -IN : Removes rule by name and Inbound direction.
-         -OUT : Removes rule by name and Outbound direction.
 
 Protocols code:
 -1     : Unknown
@@ -179,37 +172,23 @@ Note: Requires administrator privileges.
                             description = desData.Trim();
                     }
 
+                    // Add role.
                     fw.AddRule(name,pathApp, profile, direction, action,localPort,remotePort,remoteAddress,localAddress,protocol,description);
                 }
 
                 // Remove firewall rule
                 if (arg.Trim().StartsWith("-del"))
                 {
-                    var roleName =  "";
-                    var direction = "";
-
-                    var desData = arg.SplitByText("-del ", 1);
-                    var isParamPresent = _params.Any(param => desData.Contains(param));
-                    if (isParamPresent)
-                    {
-                        var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
-                        roleName = desData.SplitByText(paramPresent, 0).Trim();
-                    }
-                    else
-                        roleName = desData.Trim();
-
+                    var roleName = arg.SplitByText("-del ", 1);
+                    
                     if (string.IsNullOrEmpty(roleName))
                     {
                         FileSystem.ErrorWriteLine("You need to add the role name. Use -h for more information!");
                         return;
                     }
 
-                    // Direction
-                    if (arg.Contains("-di "))
-                        direction = arg.GetParamValueFirewall("-di ");
-
-            
-                    fw.RemoveRole(roleName, direction);
+                    // Rmove rule from firewall.
+                    fw.RemoveRole(roleName);
                 }
             }
             catch (UnauthorizedAccessException ex)
