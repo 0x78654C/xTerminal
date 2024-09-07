@@ -36,6 +36,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
          -de : Set description.
 
     -del : Removes a firewall rule by name.
+         -IN : Removes rule by name and Inbound direction.
+         -OUT : Removes rule by name and Outbound direction.
 
 Protocols code:
 -1     : Unknown
