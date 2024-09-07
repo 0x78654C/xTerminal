@@ -109,10 +109,10 @@ Note: Requires administrator privileges.
                     var profile = 0;
                     string direction="";
                     string action="";
-                    var localPort = "";
-                    var remotePort = "";
-                    var remoteAddress = "";
-                    var localAddress = "";
+                    var localPort = "*";
+                    var remotePort = "*";
+                    var remoteAddress = "*";
+                    var localAddress = "*";
                     var protocol = 0;
                     var description = "";
 
