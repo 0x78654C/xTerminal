@@ -144,12 +144,83 @@ This is the full list of commands that can be used in xTerminal:
  	               fsig -h               : Display this help message.
               Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signatures
     pwd       -- Prints current working directory.
+    cal       -- Display current date calendar.
+                 cal month-year : Display calendar of a specific year and month. 
+                 Example : cal 02-2023
+    time      -- Display current time.
+    sc        -- Manage local or remote computer services (Requires administrator privileges).
+                 Local:
+                    -list : List all local services names, status and description running on computer.
+                    -list --noinfo: List all local services names running on computer.
+                    -des <service_name> : Return the description for a specific service.
+                    -status <service_name> : Return the state for a specific service.
+                    -stop <service_name>  : Stops a specific service.
+                    -start <service_name> : Starts a specific service.
+                    -restart <service_name> : Restarts a specific service.
+
+                 Remote:
+                    -list -r <machine_name/IP> : List all local services names, status and description running on a remote computer.
+                    -list --noinfo: List all local services names running on a remote computer.
+                    -des <service_name> -r <machine_name/IP> : Return the description for a specific service.
+                    -status <service_name> -r <machine_name/IP> : Return the state for a specific service.
+                    -stop <service_name> -r <machine_name/IP>  : Stops a specific service.
+                    -start <service_name> -r <machine_name/IP> : Starts a specific service.
+                    -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
+    fw        -- Manage local firewall rules
+                    -list : List all firewall rules.
+                    -list -in  : List all inbound firewall rules.
+                    -list -out : List all outbound firewall rules.
+
+                    -add : Add firewall rule with following options:
+                         -n : Set rule name.
+                         -e : Enable or disable the rule.  Ex.: -e true or -e false. (Default true)
+                         -p : Set path to application executable.
+                         -pf : Set profile code. (See list bellow).
+                         -di : Set rule direction. Ex.: -di IN or -di OUT. (IN =  inbound, OUT = Outbound)
+                         -a  : Set action. Ex.: -a allow or -a block
+                         -lP : Set local port.
+                         -rP : Set remote port.
+                         -lA : Set local address.
+                         -rA : Set remote address.
+                         -pr : Set protocol code. (See list bellow).
+                         -de : Set description.
+
+                       Example : fw -add -n New Rule -p c:\a b\test.exe -e true -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connections type UDP.
+
+                    -del : Removes firewall rule by name. 
+                    -en  : Enable firewall rule by name.
+                    -dis : Disable firewall rule by name.
+
+                    Profiles code:
+                    1      : Domain
+                    2      : Private
+                    3      : Domain, Private
+                    4      : Public
+                    5      : Domain, Public
+                    6      : Private, Public
+                    7      : All
+
+                    Protocols code:
+                    -1     : Unknown
+                    0, 256 : ANY (default)
+                    1      : ICMPv4
+                    2      : IGMP
+                    4      : IPv4
+                    6      : TCP
+                    17     : UDP
+                    41     : IPv6
+                    47     : GRE
+                    58     : ICMPv6
+
+                    Note: Requires administrator privileges.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
                    -h   : Displays this message.
-                   -n   : Displays first N lines from a file.
-                          Example: cat -n 10 <path_of_file_name>
+                   -t   : Displays first N lines from a file.
+                          Example: cat -t 10 <path_of_file_name
+                   -b   : Displays last N lines from a file.
+                          Example: cat -b 10 <path_of_file_name>
                    -l   : Displays data between two lines.
                           Example: cat -l 10-20 <path_of_file_name>
                    -s   : Output lines containing a provided text from a file.
@@ -217,6 +288,7 @@ This is the full list of commands that can be used in xTerminal:
     echo      -- Write/append data to a file.
                  Example 1: echo hello world > path_to_file (Write data to file.)
                  Example 2: echo hello world >> path_to_file (Append data to file.)
+                 Example 3: echo -con file1;file2 -o file3 (Concatenate data to file.)
     diff      -- Outputs the difference between two files.
                  Example 1: diff first_file_name;second_file_name                               : Display the difference from second file in comparison to first file.
                  Example 2: diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
@@ -227,9 +299,12 @@ This is the full list of commands that can be used in xTerminal:
     pjson     -- Prettify the JSON data.
                  Example 1: pjson <file_path>                    : Will prettify the JSON data and stores back in file.
                  Example 2: pjson <file_path> -o <new_file_path> : Stores the prettified JSON in new file.
-    attr      -- Displays/Sets/Removes the current attributes of a file or directory.Use -h for additional help.
+    attr      -- Displays/Sets/Removes the current attributes of a file or directory
                  Example 1: attr  -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
                  Example 2: attr  -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
+    cmp       -- Check if two files are identical by comparing MD5 hash.
+                 Example: cmp <firstFile>;<secondFile>
+
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
     ispeed    -- Checks the internet speed with Google.
@@ -395,7 +470,8 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![pipe3](https://github.com/0x78654C/xTerminal/assets/13780514/39e749a7-c772-4879-9e71-aa6479c18d0a)
+![commnds](https://github.com/user-attachments/assets/39d9fc8e-9fba-485e-bb6e-5a7c9fbf51b2)
+
 
 Pipe commands cand be added even to alias commands.
 You can use multiple pipe middle commands as well.

@@ -49,6 +49,10 @@ This is the full list of commands that can be used in xTerminal:
     shred     -- Overwrites and deletes a file that will be difficult to recover after. Use -h for additional help.
     fsig      -- Check file type singatures (magic numbers). Use -h for additional help.
     pwd       -- Prints current working directory. Use -h for additional help.
+    cal       -- Display current date calendar. Use -h for additional help.
+    time      -- Display current time.
+    sc        -- Manage local or remote computer services. Use -h for additional help.
+    fw        -- Manage local firewall rules. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -68,7 +72,8 @@ This is the full list of commands that can be used in xTerminal:
     diff      -- Outputs the difference between two files. Use -h for additional help.
     exif      -- Extracts image metadata. Use -h for additional help.
     pjson     -- Prettify the JSON data. Use -h for additional help.
-    attr      -- Displays/Sets/Removes the current attributes of a file or directory.Use -h for additional help.
+    attr      -- Displays/Sets/Removes the current attributes of a file or directory. Use -h for additional help.
+    cmp       -- Check if two files are identical by comparing MD5 hash. Use -h for additional help.
                 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)

@@ -18,8 +18,10 @@ namespace Commands.TerminalCommands.DirFiles
         private static string s_output = string.Empty;
         private static string s_helpMessage = @"Usage of cat command:
   -h   : Displays this message.
-  -n   : Displays first N lines from a file.
-           Example: cat -n 10 <path_of_file_name>
+  -t   : Displays first N lines from a file.
+           Example: cat -t 10 <path_of_file_name>
+  -b   : Displays last N lines from a file.
+           Example: cat -b 10 <path_of_file_name>
   -l   : Displays data between two lines range.
            Example: cat -l 10-20 <path_of_file_name>
   -s   : Outputs lines containing a provided text from a file. 
@@ -128,7 +130,7 @@ Commands can be canceled with CTRL+X key combination.
                         else
                             FileSystem.SuccessWriteLine("No files were concatenated!");
                         break;
-                    case "-n":
+                    case "-t":
                         string lineCounter = arg.Split(' ')[1];
                         if (!FileSystem.IsNumberAllowed(lineCounter))
                         {
@@ -139,7 +141,7 @@ Commands can be canceled with CTRL+X key combination.
                         GlobalVariables.eventKeyFlagX = true;
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         {
-                            var dataPipe = GlobalVariables.pipeCmdOutput;
+                            var dataPipe = GlobalVariables.pipeCmdOutput.Trim();
                             Core.Commands.CatCommand.OutputFirstLinesFromString(dataPipe, lines);
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.SuccessWriteLine("Command stopped!");
@@ -148,7 +150,33 @@ Commands can be canceled with CTRL+X key combination.
                         else
                         {
                             string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounter + " ", 1), s_currentDirectory);
-                            Core.Commands.CatCommand.OutputFirtsLines(filePath, lines);
+                            Core.Commands.CatCommand.OutputFirtsLastLines(filePath, lines);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.SuccessWriteLine("Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        break;
+                    case "-b":
+                        string lineCounterBottom = arg.Split(' ')[1];
+                        if (!FileSystem.IsNumberAllowed(lineCounterBottom))
+                        {
+                            FileSystem.ErrorWriteLine("Invalid parameter. You need to provide how many lines you want to display!");
+                            return;
+                        }
+                        int linesB = Int32.Parse(lineCounterBottom);
+                        GlobalVariables.eventKeyFlagX = true;
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        {
+                            var dataPipe = GlobalVariables.pipeCmdOutput;
+                            Core.Commands.CatCommand.OutputLastLinesFromString(dataPipe, linesB);
+                            if (GlobalVariables.eventCancelKey)
+                                FileSystem.SuccessWriteLine("Command stopped!");
+                            GlobalVariables.eventCancelKey = false;
+                        }
+                        else
+                        {
+                            string filePath = FileSystem.SanitizePath(arg.SplitByText(lineCounterBottom + " ", 1), s_currentDirectory);
+                            Core.Commands.CatCommand.OutputFirtsLastLines(filePath, linesB, true);
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;

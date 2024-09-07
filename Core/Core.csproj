@@ -37,6 +37,17 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
   <ItemGroup>
+    <COMReference Include="NetFwTypeLib">
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>58fbcf7c-e7a9-467c-80b3-fc65e8fcca08</Guid>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.9.2" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
@@ -46,6 +57,7 @@
     <PackageReference Include="Konscious.Security.Cryptography.Blake2" Version="1.1.0" />
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenAI.Api.Client\OpenAI.Api.Client.csproj" />

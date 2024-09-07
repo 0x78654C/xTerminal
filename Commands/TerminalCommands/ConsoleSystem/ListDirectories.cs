@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
@@ -66,6 +65,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
 
 Commands can be canceled with CTRL+X key combination.
+
+Attributes legend:
+d - Directory
+a - Archive
+r - ReadOnly
+h - Hidden
+s - System
+l - ReparsePoint
+c - Compressed
+e - Encrypted
 ";
         public string Name => "ls";
         public void Execute(string args)
