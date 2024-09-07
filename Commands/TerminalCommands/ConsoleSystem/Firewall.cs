@@ -11,7 +11,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class Firewall : ITerminalCommand
     {
         public string Name => "fw";
-        private List<string> _params = ["-n","-p","-pf","-di","-a","-lP", "-rP", "-lA", "-rA", "-pr", "-de"];
+        private List<string> _params = ["-n","-p","-pf","-di","-a","-lP", "-rP", "-lA", "-rA", "-pr", "-de","-e"];
         private static string s_helpMessage = @"Usage of fw command parameters:
     -list : List all firewall rules.
     -list -in  : List all inbound firewall rules.
@@ -19,6 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
     -add : Add firewall rule with following options:
          -n : Set rule name.
+         -e : Enable or disable the rule.  Ex.: -e true or -e false. (Default true)
          -p : Set path to application executable.
          -pf : Set profile code. (See list bellow).
          -di : Set rule direction. Ex.: -di IN or -di OUT. (IN =  inbound, OUT = Outbound)
@@ -31,7 +32,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
          -de : Set description.
        Example : fw -add  -n New Rule -p c:\a b\test.exe -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connections type UDP.
 
-    -del : Removes a firewall rule by name.
+    -del : Removes firewall rule by name. 
+    -en  : Enable firewall rule by name.
+    -dis : Disable firewall rule by name.
 
 Profiles code:
 1      : Domain
@@ -109,6 +112,7 @@ Note: Requires administrator privileges.
                     var localAddress = "*";
                     var protocol = 0;
                     var description = "";
+                    var enable = "";
 
                     if (arg.Contains("-n "))
                     {
@@ -159,6 +163,8 @@ Note: Requires administrator privileges.
 
                     if (arg.Contains("-pr "))
                         protocol = Int32.Parse(arg.GetParamValueFirewall("-pr "));
+                    if (arg.Contains("-e "))
+                        enable = arg.GetParamValueFirewall("-e ");
 
                     if (arg.Contains("-de "))
                     {
@@ -174,7 +180,7 @@ Note: Requires administrator privileges.
                     }
 
                     // Add role.
-                    fw.AddRule(name,pathApp, profile, direction, action,localPort,remotePort,remoteAddress,localAddress,protocol,description);
+                    fw.AddRule(name,pathApp, profile, direction, action,localPort,remotePort,remoteAddress,localAddress,protocol,description,enable);
                 }
 
                 // Remove firewall rule
@@ -191,7 +197,36 @@ Note: Requires administrator privileges.
                     // Rmove rule from firewall.
                     fw.RemoveRole(roleName);
                 }
+
+                // Disable Rule.
+                if (arg.Trim().StartsWith("-dis"))
+                {
+                    var roleName = arg.SplitByText("-dis ", 1);
+
+                    if (string.IsNullOrEmpty(roleName))
+                    {
+                        FileSystem.ErrorWriteLine("You need to add the role name. Use -h for more information!");
+                        return;
+                    }
+
+                    fw.SetEnableDisbale(roleName,false);
+                }
+
+                // Disable Rule.
+                if (arg.Trim().StartsWith("-en"))
+                {
+                    var roleName = arg.SplitByText("-en ", 1);
+
+                    if (string.IsNullOrEmpty(roleName))
+                    {
+                        FileSystem.ErrorWriteLine("You need to add the role name. Use -h for more information!");
+                        return;
+                    }
+
+                    fw.SetEnableDisbale(roleName, true);
+                }
             }
+
             catch (UnauthorizedAccessException ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Requires administrator privileges. Use -h for more information!");
