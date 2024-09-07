@@ -465,7 +465,8 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![pipe3](https://github.com/0x78654C/xTerminal/assets/13780514/39e749a7-c772-4879-9e71-aa6479c18d0a)
+![commnds](https://github.com/user-attachments/assets/0966c38b-c985-4728-80e3-93fec5fb27f4)
+
 
 Pipe commands cand be added even to alias commands.
 You can use multiple pipe middle commands as well.
