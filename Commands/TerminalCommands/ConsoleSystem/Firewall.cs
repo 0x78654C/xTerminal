@@ -30,7 +30,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
          -rA : Set remote address.
          -pr : Set protocol code. (See list bellow).
          -de : Set description.
-       Example : fw -add  -n New Rule -p c:\a b\test.exe -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connections type UDP.
+       Example : fw -add -n New Rule -p c:\a b\test.exe -e true -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connections type UDP.
 
     -del : Removes firewall rule by name. 
     -en  : Enable firewall rule by name.
