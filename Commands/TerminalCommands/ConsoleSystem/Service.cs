@@ -15,7 +15,7 @@ Local:
     -list --noinfo: List all local services names running on computer.
     -des <service_name> : Return the description for a specific service.
     -status <service_name> : Return the state for a specific service.
-    -stop <service_name>  : Stops a specific service service.
+    -stop <service_name>  : Stops a specific service.
     -start <service_name> : Starts a specific service.
     -restart <service_name> : Restarts a specific service.
 
@@ -24,7 +24,7 @@ Remote:
     -list --noinfo: List all local services names running on a remote computer.
     -des <service_name> -r <machine_name/IP> : Return the description for a specific service.
     -status <service_name> -r <machine_name/IP> : Return the state for a specific service.
-    -stop <service_name> -r <machine_name/IP>  : Stops a specific service service.
+    -stop <service_name> -r <machine_name/IP>  : Stops a specific service.
     -start <service_name> -r <machine_name/IP> : Starts a specific service.
     -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
 
