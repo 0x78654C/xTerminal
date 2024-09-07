@@ -8,8 +8,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
     [SupportedOSPlatform("Windows")]
     public class Service : ITerminalCommand
     {
-        public string Name => "service";
-        private static string s_helpMessage = @"Usage of service command parameters:
+        public string Name => "sc";
+        private static string s_helpMessage = @"Usage of sc command parameters:
 Local:
     -list : List all local services names, status and description running on computer.
     -list --noinfo: List all local services names running on computer.
@@ -40,7 +40,7 @@ Note: Requires administrator privileges.
                     return;
                 }
 
-                arg = arg.Substring(8);
+                arg = arg.Substring(3);
 
                 // Display help message.
                 if (arg.Trim() == "-h" && !GlobalVariables.isPipeCommand)
