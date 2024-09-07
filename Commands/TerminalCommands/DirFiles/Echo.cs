@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Core;
 
@@ -16,6 +17,8 @@ namespace Commands.TerminalCommands.DirFiles
           Example: echo hello world > path_to_file
     >>  : Append data to a file. 
           Example: echo hello world >> path_to_file
+    -con: Concatenate files data to a single file.
+          Example: echo -con file1;file2 -o file3
 ";
 
         public void Execute(string arg)
@@ -30,7 +33,7 @@ namespace Commands.TerminalCommands.DirFiles
                 }
 
                 // Display help message.
-                if(arg == "echo -h")
+                if (arg == "echo -h")
                 {
                     Console.WriteLine(_helpMessage);
                     return;
@@ -77,10 +80,41 @@ namespace Commands.TerminalCommands.DirFiles
                     if (File.Exists(fileOutput))
                         FileSystem.SuccessWriteLine($"Data added to {fileOutput}");
                 }
+
+                // Concatenate files
+                if (arg.Contains("-con"))
+                {
+                    var inputData = arg.MiddleString("-con", "-o").Split(';');
+                    var outputData = string.Empty;
+                    if (!arg.Contains(";"))
+                    {
+                        FileSystem.ErrorWriteLine("You need to provide minim two files for concatenate!. Use -h for more information");
+                        return;
+                    }
+
+                    foreach (var item in inputData)
+                    {
+                        var pathItem = FileSystem.SanitizePath(item, _currentLocation);
+                        if (File.Exists(pathItem))
+                        {
+                            var readData = File.ReadAllText(pathItem);
+                            outputData += readData;
+                        }
+                    }
+
+                    var path = arg.SplitByText("-o", 1).Trim();
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        FileSystem.ErrorWriteLine("You need to provide an output file!. Use -h for more information");
+                        return;
+                    }
+                    var store = FileSystem.SaveFileOutput(path, _currentLocation, outputData);
+                    FileSystem.SuccessWriteLine(store);
+                }
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine(e.Message);
+                FileSystem.ErrorWriteLine($"{e.Message}. Use -h for more information!");
             }
         }
     }
