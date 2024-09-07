@@ -173,6 +173,7 @@ This is the full list of commands that can be used in xTerminal:
 
                     -add : Add firewall rule with following options:
                          -n : Set rule name.
+                         -e : Enable or disable the rule.  Ex.: -e true or -e false. (Default true)
                          -p : Set path to application executable.
                          -pf : Set profile code. (See list bellow).
                          -di : Set rule direction. Ex.: -di IN or -di OUT. (IN =  inbound, OUT = Outbound)
@@ -183,9 +184,12 @@ This is the full list of commands that can be used in xTerminal:
                          -rA : Set remote address.
                          -pr : Set protocol code. (See list bellow).
                          -de : Set description.
-                       Example : fw -add  -n New Rule -p c:\a b\test.exe -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connections type UDP.
 
-                    -del : Removes a firewall rule by name.
+                       Example : fw -add -n New Rule -p c:\a b\test.exe -e true -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connections type UDP.
+
+                    -del : Removes firewall rule by name. 
+                    -en  : Enable firewall rule by name.
+                    -dis : Disable firewall rule by name.
 
                     Profiles code:
                     1      : Domain
