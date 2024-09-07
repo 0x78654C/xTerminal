@@ -16,7 +16,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class Firewall : ITerminalCommand
     {
         public string Name => "fw";
-        private List<string> _paramsAdd = ["-n","-p","-pf","-di","-a","-lP", "-rP", "-lA", "-rA", "-pr", "-de"];
+        private List<string> _params = ["-n","-p","-pf","-di","-a","-lP", "-rP", "-lA", "-rA", "-pr", "-de"];
         private static string s_helpMessage = @"Usage of fw command parameters:
     -list : List all firewall rules.
     -list -in  : List all inbound firewall rules.
@@ -117,15 +117,25 @@ Note: Requires administrator privileges.
                     var description = "";
 
                     if (arg.Contains("-n "))
-                        name = arg.GetParamValueFirewall("-n ");
+                    {
+                        var desData = arg.SplitByText("-n ", 1);
+                        var isParamPresent = _params.Any(param => desData.Contains(param));
+                        if (isParamPresent)
+                        {
+                            var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
+                            name = desData.SplitByText(paramPresent, 0).Trim();
+                        }
+                        else
+                            name = desData.Trim();
+                    }
 
                     if (arg.Contains("-p "))
                     {
                         var desData = arg.SplitByText("-p ", 1);
-                        var isParamPresent = _paramsAdd.Any(param => desData.Contains(param));
+                        var isParamPresent = _params.Any(param => desData.Contains(param));
                         if (isParamPresent)
                         {
-                            var paramPresent = _paramsAdd.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
+                            var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
                             pathApp = desData.SplitByText(paramPresent, 0).Trim();
                         }
                         else
@@ -159,10 +169,10 @@ Note: Requires administrator privileges.
                     if (arg.Contains("-de "))
                     {
                         var desData = arg.SplitByText("-de", 1);
-                        var isParamPresent = _paramsAdd.Any(param => desData.Contains(param));
+                        var isParamPresent = _params.Any(param => desData.Contains(param));
                         if (isParamPresent)
                         {
-                            var paramPresent = _paramsAdd.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
+                            var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
                             description = desData.SplitByText(paramPresent,0).Trim();
                         }
                         else
@@ -175,31 +185,29 @@ Note: Requires administrator privileges.
                 // Remove firewall rule
                 if (arg.Trim().StartsWith("-del"))
                 {
-                   var roleName =  arg.Trim().SplitByText("-del",1).Trim();
+                    var roleName =  "";
+                    var direction = "";
 
+                    var desData = arg.SplitByText("-del ", 1);
+                    var isParamPresent = _params.Any(param => desData.Contains(param));
+                    if (isParamPresent)
+                    {
+                        var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
+                        roleName = desData.SplitByText(paramPresent, 0).Trim();
+                    }
+                    else
+                        roleName = desData.Trim();
 
-                    if(string.IsNullOrEmpty(roleName))
+                    if (string.IsNullOrEmpty(roleName))
                     {
                         FileSystem.ErrorWriteLine("You need to add the role name. Use -h for more information!");
                         return;
                     }
+                    if (arg.Contains("-di "))
+                        direction = arg.GetParamValueFirewall("-di ");
 
-                    // Inbound connections.
-                    if (arg.Contains("-IN"))
-                    {
-                        roleName = roleName.Replace("-IN", "").Trim();
-                        fw.RemoveRole(roleName,NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN);
-                        return;
-                    }
-
-                    // Outbound connections.
-                    if (arg.Contains("-OUT"))
-                    {
-                        roleName = roleName.Replace("-OUT","").Trim();
-                        fw.RemoveRole(roleName, NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT);
-                        return;
-                    }
-                    return;
+            
+                    fw.RemoveRole(roleName, direction);
                 }
             }
             catch (UnauthorizedAccessException ex)
