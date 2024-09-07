@@ -29,8 +29,18 @@ namespace Commands.TerminalCommands.ConsoleSystem
          -rA : Set remote address.
          -pr : Set protocol code. (See list bellow).
          -de : Set description.
+       Example : fw -add  -n New Rule -p c:\a b\test.exe -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connecitons type UDP.
 
     -del : Removes a firewall rule by name.
+
+Profiles code:
+1      : Domain
+2      : Private
+3      : Domain, Private
+4      : Public
+5      : Domain, Public
+6      : Private, Public
+7      : All
 
 Protocols code:
 -1     : Unknown
@@ -43,15 +53,6 @@ Protocols code:
 41     : IPv6
 47     : GRE
 58     : ICMPv6
-
-Profiles code:
-1      : Domain
-2      : Private
-3      : Domain, Private
-4      : Public
-5      : Domain, Public
-6      : Private, Public
-7      : All
 
 Note: Requires administrator privileges.
 ";
