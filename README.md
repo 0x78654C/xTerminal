@@ -154,7 +154,7 @@ This is the full list of commands that can be used in xTerminal:
                     -list --noinfo: List all local services names running on computer.
                     -des <service_name> : Return the description for a specific service.
                     -status <service_name> : Return the state for a specific service.
-                    -stop <service_name>  : Stops a specific service service.
+                    -stop <service_name>  : Stops a specific service.
                     -start <service_name> : Starts a specific service.
                     -restart <service_name> : Restarts a specific service.
 
@@ -163,9 +163,52 @@ This is the full list of commands that can be used in xTerminal:
                     -list --noinfo: List all local services names running on a remote computer.
                     -des <service_name> -r <machine_name/IP> : Return the description for a specific service.
                     -status <service_name> -r <machine_name/IP> : Return the state for a specific service.
-                    -stop <service_name> -r <machine_name/IP>  : Stops a specific service service.
+                    -stop <service_name> -r <machine_name/IP>  : Stops a specific service.
                     -start <service_name> -r <machine_name/IP> : Starts a specific service.
                     -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
+    fw        -- Manage local firewall rules
+                    -list : List all firewall rules.
+                    -list -in  : List all inbound firewall rules.
+                    -list -out : List all outbound firewall rules.
+
+                    -add : Add firewall rule with following options:
+                         -n : Set rule name.
+                         -p : Set path to application executable.
+                         -pf : Set profile code. (See list bellow).
+                         -di : Set rule direction. Ex.: -di IN or -di OUT. (IN =  inbound, OUT = Outbound)
+                         -a  : Set action. Ex.: -a allow or -a block
+                         -lP : Set local port.
+                         -rP : Set remote port.
+                         -lA : Set local address.
+                         -rA : Set remote address.
+                         -pr : Set protocol code. (See list bellow).
+                         -de : Set description.
+                       Example : fw -add  -n New Rule -p c:\a b\test.exe -pf 3 -pr 17 -di IN -a block -de Block test.exe for private connections type UDP.
+
+                    -del : Removes a firewall rule by name.
+
+                    Profiles code:
+                    1      : Domain
+                    2      : Private
+                    3      : Domain, Private
+                    4      : Public
+                    5      : Domain, Public
+                    6      : Private, Public
+                    7      : All
+
+                    Protocols code:
+                    -1     : Unknown
+                    0, 256 : ANY (default)
+                    1      : ICMPv4
+                    2      : IGMP
+                    4      : IPv4
+                    6      : TCP
+                    17     : UDP
+                    41     : IPv6
+                    47     : GRE
+                    58     : ICMPv6
+
+                    Note: Requires administrator privileges.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
