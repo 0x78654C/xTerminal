@@ -84,7 +84,7 @@ namespace Core.SystemTools
         /// Remove firewall role.
         /// </summary>
         /// <param name="roleName"></param>
-        public void RemoveRole(string ruleName, string direction)
+        public void RemoveRole(string ruleName)
         {
             if (!IsRulePresent(ruleName))
             {
@@ -92,23 +92,20 @@ namespace Core.SystemTools
                 return;
             }
 
-            var directionSet = (direction.ToUpper().Contains("IN")) ? NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN : NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_OUT;
             INetFwPolicy2 firewallPolicy = (INetFwPolicy2)Activator.CreateInstance
           (Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
 
             var count = 0;
             foreach (INetFwRule rule in firewallPolicy.Rules)
             {
-                if (rule.Name == ruleName && rule.Direction == directionSet)
+                if (rule.Name == ruleName )
                 {
                     count++;
                     firewallPolicy.Rules.Remove(ruleName);
                 }
             }
-            if (IsRulePresent(ruleName))
+            if (!IsRulePresent(ruleName))
                 FileSystem.SuccessWriteLine($"Firewall rule(s) was removed: {ruleName}. Total: {count} rules");
-            else
-                FileSystem.SuccessWriteLine($"All firewall rule(s) are removed with name: {ruleName}");
         }
 
 
