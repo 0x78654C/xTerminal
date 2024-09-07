@@ -52,6 +52,7 @@ This is the full list of commands that can be used in xTerminal:
     cal       -- Display current date calendar. Use -h for additional help.
     time      -- Display current time.
     service   -- Manage local or remote computer services. Use -h for additional help.
+    fw        -- Manage local firewall rules. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
