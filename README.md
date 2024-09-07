@@ -148,7 +148,7 @@ This is the full list of commands that can be used in xTerminal:
                  cal month-year : Display calendar of a specific year and month. 
                  Example : cal 02-2023
     time      -- Display current time.
-    service   -- Manage local or remote computer services (Requires administrator privileges).
+    sc        -- Manage local or remote computer services (Requires administrator privileges).
                  Local:
                     -list : List all local services names, status and description running on computer.
                     -list --noinfo: List all local services names running on computer.
