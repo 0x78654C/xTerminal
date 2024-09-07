@@ -203,6 +203,8 @@ Note: Requires administrator privileges.
                         FileSystem.ErrorWriteLine("You need to add the role name. Use -h for more information!");
                         return;
                     }
+
+                    // Direction
                     if (arg.Contains("-di "))
                         direction = arg.GetParamValueFirewall("-di ");
 
