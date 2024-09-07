@@ -469,7 +469,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![commnds](https://github.com/user-attachments/assets/819343a1-fdee-40c1-b272-8af10d883320)
+![commnds](https://github.com/user-attachments/assets/39d9fc8e-9fba-485e-bb6e-5a7c9fbf51b2)
 
 
 Pipe commands cand be added even to alias commands.
