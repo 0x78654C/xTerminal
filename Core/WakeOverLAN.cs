@@ -42,7 +42,7 @@ namespace Core
             
             var host = NetWork.GetIPV4FromHostName(IP);
             if(!string.IsNullOrEmpty(host))
-                IP = host;
+                IP = host.Trim();
 
             int countSymbolIP = Regex.Matches(IP, "\\.").Count;
             if (countSymbolIP != 3)
