@@ -331,8 +331,8 @@ This is the full list of commands that can be used in xTerminal:
                  Cport check command can be used with --noping parameter to disable ping check on hostname/ip.
                  Example: cport IPAddress/HostName -p 80 --noping
     wol       -- Sends Wake over LAN packet to a machine.
-                 Example 1:  wol -ip IP_Address -mac MAC_Address                   : sends wake packet for ip/mac.
-                 Example 2:  wol -ip IP_Address -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
+                 Example 1:  wol -ip IPAddress/HostName -mac MAC_Address                   : sends wake packet for ip/mac.
+                 Example 2:  wol -ip IPAddress/HostName -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
     dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
 
     ---------------- C# Code Runner and Add-ons -------------
