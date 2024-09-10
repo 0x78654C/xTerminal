@@ -233,7 +233,7 @@ Note: Requires administrator privileges.
             }
             catch (Exception ex)
             {
-                FileSystem.ErrorWriteLine($"{ex.ToString()}. Use -h for more information!");
+                FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
             }
         }
     }
