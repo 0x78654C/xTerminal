@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.DirFiles
     -db : Delete bucket. Example : waifu -db <bucket_token>
     -lb : List all files from bucket with detailed information: waifu -lb <bucket_token>
     -df : Delete file. Example : waifu -df <file_token>
-    -gf : Get updated file information. waifu -gf <file_token>
+    -gf : Get uploaded file information. waifu -gf <file_token>
 
 ATTENTION what you upload. xTerminal developers takes no responsibility for what you upload.
 
