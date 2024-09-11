@@ -16,6 +16,7 @@ namespace Core.DirFiles
         public string URLorFile { get; set; }
 
         private string CurrentDirectory {  get; set; }
+
         /// <summary>
         /// Waifuvault manager
         /// </summary>
@@ -62,6 +63,8 @@ namespace Core.DirFiles
             var uploadResp = Task.Run(()=>Api.uploadFile(uploadFile)).Result;
             var tokenInfo = Task.Run(() => Api.fileInfo(uploadResp.token, true)).Result;
             FileSystem.SuccessWriteLine($"File         {fileUrl} was uploaded!");
+            if(!string.IsNullOrEmpty(bucket))
+                FileSystem.SuccessWriteLine($"Bucket       {bucket}");
             FileSystem.SuccessWriteLine($"URL:         {uploadResp.url}");
             FileSystem.SuccessWriteLine($"Token:       {uploadResp.token}");
             FileSystem.SuccessWriteLine($"Expire date: {tokenInfo.retentionPeriod}");
