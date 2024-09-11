@@ -29,7 +29,7 @@ namespace Commands.TerminalCommands.DirFiles
 
 ATTENTION what you upload. xTerminal developers takes no responsibility for what you upload.
 
-All restriction and private policy information can be found here https://waifuvault.moe/
+All restriction and privacy policy information can be found here https://waifuvault.moe/
 ";
         public void Execute(string arg)
         {
