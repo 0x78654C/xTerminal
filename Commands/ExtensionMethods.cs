@@ -82,6 +82,6 @@ namespace Commands
         /// <param name="arg"></param>
         /// <param name="param"></param>
         /// <returns></returns>
-        internal static string GetParamValueFirewall(this string arg, string param) => arg.SplitByText(param, 1).Trim().Split(' ')[0];
+        internal static string GetParamValue(this string arg, string param) => arg.SplitByText(param, 1).Trim().Split(' ')[0];
     }
 }
