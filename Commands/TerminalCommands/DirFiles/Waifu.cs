@@ -21,11 +21,11 @@ namespace Commands.TerminalCommands.DirFiles
     
     -cb : Create bucket.
     -u  : Upload file (From path or URL).
-        -b : specify bucket token (optional). Specify bucket token.
-        -p : specify file password (optional). Specify password.
-        -o : one time download (optional)
-        -e : expire download link. A string containing a number and a unit (1d = 1day). Valid units are m, h and d
-        -h : hide file name.
+        -b : Specify bucket token. (optional)
+        -p : Specify file password. (optional)
+        -o : Pne time download. (optional)
+        -e : Expire download link. A string containing a number and a unit (1d = 1day). Valid units are m, h and d. (optional)
+        -h : Hide file name.(optional)
     -db : Delete bucket. Example : waifu -db <bucket_token>
     -lb : List all files from bucket with detailed information: waifu -lb <bucket_token>
     -df : Delete file. Example : waifu -df <file_token>
