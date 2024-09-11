@@ -1,7 +1,9 @@
 ﻿using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 using Waifuvault;
+using System.Collections.Generic;
 
 namespace Core.DirFiles
 {
@@ -16,6 +18,7 @@ namespace Core.DirFiles
         public string URLorFile { get; set; }
 
         private string CurrentDirectory {  get; set; }
+        private List<string> ExpireFormatList = ["d","m","h"];
 
         /// <summary>
         /// Waifuvault manager
@@ -45,7 +48,13 @@ namespace Core.DirFiles
             var fileUrl = URLorFile;
             if (string.IsNullOrEmpty(fileUrl))
             {
-                FileSystem.ErrorWriteLine("You need to specify the path to file or URL!");
+                FileSystem.ErrorWriteLine("You need to specify the path to file or URL. Use -h for more information!");
+                return;
+            }
+
+            var isParamPresent = ExpireFormatList.Any(param => expires.EndsWith(param));
+            if (!isParamPresent) {
+                FileSystem.ErrorWriteLine("You need to use the expire data format. Use -h for more information!");
                 return;
             }
 
@@ -55,7 +64,7 @@ namespace Core.DirFiles
                 fileUrl = FileSystem.SanitizePath(fileUrl, CurrentDirectory);
                 if (!File.Exists(fileUrl))
                 {
-                    FileSystem.ErrorWriteLine($"File does not exist: {fileUrl}!");
+                    FileSystem.ErrorWriteLine($"File does not exist: {fileUrl}. Use -h for more information!");
                     return;
                 }
             }
@@ -78,7 +87,7 @@ namespace Core.DirFiles
         {
             if (string.IsNullOrEmpty(token))
             {
-                FileSystem.ErrorWriteLine("You need to specify the uploaded file token!");
+                FileSystem.ErrorWriteLine("You need to specify the uploaded file token. Use -h for more information!");
                 return;
             }
             var deleted = Task.Run(()=>Api.deleteFile(token)).Result;
@@ -96,7 +105,7 @@ namespace Core.DirFiles
         {
             if (string.IsNullOrEmpty(bucketToken))
             {
-                FileSystem.ErrorWriteLine("You need to specify the bucket token!");
+                FileSystem.ErrorWriteLine("You need to specify the bucket token. Use -h for more information!");
                 return;
             }
             var resp = Task.Run(()=> Api.deleteBucket(bucketToken)).Result;
@@ -114,7 +123,7 @@ namespace Core.DirFiles
         {
             if (string.IsNullOrEmpty(fileToken))
             {
-                FileSystem.ErrorWriteLine("You need to specify the uploaded file token!");
+                FileSystem.ErrorWriteLine("You need to specify the uploaded file token. Use -h for more information!");
                 return;
             }
             var tokenInfo = Task.Run(()=>Api.fileInfo(fileToken, true)).Result;
