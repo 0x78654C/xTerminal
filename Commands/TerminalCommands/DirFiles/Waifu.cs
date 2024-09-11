@@ -13,7 +13,11 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "waifu";
         private string _currentLocation;
         private List<string> _params = ["-cb", "-u", "-b", "-p", "-o", "-e", "-h", "-db", "-df","-gf","-lb"];
-        private static string s_helpMessage = $@"Usage of waifu command:
+        private static string s_helpMessage = $@"
+Host files with https://waifuvault.moe/. 
+WaifuVault is a temporary file hosting service that allows for file uploads that are hosted for a set amount of time.
+
+Usage of waifu command:
     
     -cb : Create bucket.
     -u  : Upload file (From path or URL).
