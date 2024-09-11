@@ -1,12 +1,8 @@
 ﻿using Core;
-using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using WaifuManager = Core.DirFiles.WaifuManage;
 
 namespace Commands.TerminalCommands.DirFiles
@@ -35,8 +31,6 @@ namespace Commands.TerminalCommands.DirFiles
         {
             try
             {
-
-
                 arg = arg.Substring(5);
 
                 // Display help message.

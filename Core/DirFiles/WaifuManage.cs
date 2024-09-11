@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Versioning;
-using System.Text;
-using System.Threading;
+﻿using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using System.IO;
 using Waifuvault;
-using System.Management.Automation.Language;
-using System.Management.Automation;
 
 namespace Core.DirFiles
 {
