@@ -35,6 +35,12 @@ All restriction and private policy information can be found here https://waifuva
         {
             try
             {
+                if (arg == Name && !GlobalVariables.isPipeCommand)
+                {
+                    FileSystem.SuccessWriteLine("Use -h for more information!");
+                    return;
+                }
+
                 arg = arg.Substring(5);
 
                 // Display help message.
