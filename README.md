@@ -304,6 +304,21 @@ This is the full list of commands that can be used in xTerminal:
                  Example 2: attr  -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
     cmp       -- Check if two files are identical by comparing MD5 hash.
                  Example: cmp <firstFile>;<secondFile>
+    waifu     -- Host temporary files on https://waifuvault.moe/. 
+                 -cb : Create bucket.
+                 -u  : Upload file (From path or URL).
+                     -b : Specify bucket token. (optional)
+                     -p : Specify file password. (optional)
+                     -o : One time download. (optional)
+                     -e : Expire download link. A string containing a number and a unit (1d = 1day). Valid units are m, h and d. (optional)
+                     -h : Hide file name.(optional)
+                 -db : Delete bucket. Example : waifu -db <bucket_token>
+                 -lb : List all files from bucket with detailed information: waifu -lb <bucket_token>
+                 -df : Delete file. Example : waifu -df <file_token>
+                 -gf : Get uploaded file information. waifu -gf <file_token>
+                 -lr : List wifuvault restrictions types.
+
+                 Example: waifu -u <file_path> -p <password> -b <bucket_token> -o -e 1h -h
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
