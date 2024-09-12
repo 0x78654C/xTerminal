@@ -12,7 +12,7 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "waifu";
         private string _currentLocation;
-        private List<string> _params = ["-cb", "-u", "-b", "-p", "-o", "-e", "-h", "-db", "-df","-gf","-lb"];
+        private List<string> _params = ["-cb", "-u", "-b", "-p", "-o", "-e", "-h", "-db", "-df", "-gf", "-lb"];
         private static string s_helpMessage = $@"
 Host files with https://waifuvault.moe/. 
 WaifuVault is a temporary file hosting service that allows for file uploads that are hosted for a set amount of time.
@@ -42,6 +42,13 @@ All restriction and privacy policy information can be found here https://waifuva
         {
             try
             {
+                // Check if site is up.
+                if (!NetWork.PingHost("waifuvault.moe"))
+                {
+                    FileSystem.SuccessWriteLine("https://waifuvault.moe/ seems down or no internet connection!");
+                    return;
+                }
+
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine("Use -h for more information!");
@@ -119,37 +126,31 @@ All restriction and privacy policy information can be found here https://waifuva
 
 
                     var desData = arg.SplitByText("-u ", 1);
-                    var isParamPresent = _params.Any(param => desData.Contains(param));
-                    if (isParamPresent)
-                    {
-                        var paramPresent = _params.Where(param => desData.Contains(param)).Select(x => x).FirstOrDefault();
-                        fileUrl = desData.SplitByText(paramPresent, 0).Trim();
-                    }
-                    else
-                        fileUrl = desData.Trim();
+                    fileUrl = arg.GetParamValue("-u ");
 
-                    if(arg.Contains("-o"))
+                    if (arg.Contains("-o"))
                         oneTimeDownload = true;
 
                     if (arg.Contains("-h"))
                         hideFileName = true;
 
                     if (arg.Contains("-p "))
+                    {
                         password = arg.GetParamValue("-p ");
-
+                    }
                     if (arg.Contains("-e "))
                         expire = arg.GetParamValue("-e ");
 
                     if (arg.Contains("-b "))
                         bucket = arg.GetParamValue("-b ");
 
-                   waifu.URLorFile = fileUrl;
-                   waifu.Upload(bucket,oneTimeDownload,expire,hideFileName,password);
+                    waifu.URLorFile = fileUrl;
+                    waifu.Upload(bucket, oneTimeDownload, expire, hideFileName, password);
                 }
             }
             catch (Exception ex)
             {
-                if(ex.Message.Contains("Unknown token"))
+                if (ex.Message.Contains("Unknown token"))
                 {
                     FileSystem.ErrorWriteLine("Bucket/File token was already removed! Use -h for more information!");
                     return;
