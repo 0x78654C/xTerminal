@@ -1,7 +1,6 @@
 ﻿using Core;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Versioning;
 using WaifuManager = Core.DirFiles.WaifuManage;
 
