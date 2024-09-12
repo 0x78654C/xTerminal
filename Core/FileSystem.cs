@@ -529,5 +529,18 @@ namespace Core
             }
             return outp;
         }
+
+        /// <summary>
+        /// Convert time stamp to local time.
+        /// </summary>
+        /// <param name="unixTimeStamp"></param>
+        /// <returns></returns>
+        public static string EpohConverter(long unixTimeStamp)
+        {
+            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            var epoh = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + unixTimeStamp;
+            dateTime = dateTime.AddMilliseconds(epoh).ToLocalTime();
+            return dateTime.ToString("HH:mm:ss dd/MM/yyyy");
+        }
     }
 }

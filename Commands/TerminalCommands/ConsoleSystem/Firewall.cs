@@ -141,30 +141,30 @@ Note: Requires administrator privileges.
                     }
 
                     if (arg.Contains("-pf "))
-                        profile = Int32.Parse(arg.GetParamValueFirewall("-pf "));
+                        profile = Int32.Parse(arg.GetParamValue("-pf "));
 
                     if (arg.Contains("-di "))
-                        direction = arg.GetParamValueFirewall("-di ");
+                        direction = arg.GetParamValue("-di ");
 
                     if (arg.Contains("-a "))
-                        action = arg.GetParamValueFirewall("-a ");
+                        action = arg.GetParamValue("-a ");
 
                     if (arg.Contains("-lP "))
-                        localPort = arg.GetParamValueFirewall("-lP ");
+                        localPort = arg.GetParamValue("-lP ");
 
                     if (arg.Contains("-rP "))
-                        remotePort = arg.GetParamValueFirewall("-rP ");
+                        remotePort = arg.GetParamValue("-rP ");
                     
                     if (arg.Contains("-lA "))
-                        localAddress = arg.GetParamValueFirewall("-lA ");
+                        localAddress = arg.GetParamValue("-lA ");
 
                     if (arg.Contains("-rA "))
-                        remoteAddress = arg.GetParamValueFirewall("-rA ");
+                        remoteAddress = arg.GetParamValue("-rA ");
 
                     if (arg.Contains("-pr "))
-                        protocol = Int32.Parse(arg.GetParamValueFirewall("-pr "));
+                        protocol = Int32.Parse(arg.GetParamValue("-pr "));
                     if (arg.Contains("-e "))
-                        enable = arg.GetParamValueFirewall("-e ");
+                        enable = arg.GetParamValue("-e ");
 
                     if (arg.Contains("-de "))
                     {
