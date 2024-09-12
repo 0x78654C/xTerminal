@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Waifuvault;
 using System.Collections.Generic;
+using System;
 
 namespace Core.DirFiles
 {
@@ -149,6 +150,23 @@ namespace Core.DirFiles
                 FileSystem.SuccessWriteLine($"Expire date:        {FileSystem.EpohConverter(long.Parse(file.retentionPeriod))}");
                 FileSystem.SuccessWriteLine($"Hidden Name:        {file.options.hideFilename}");
                 FileSystem.SuccessWriteLine($"Password protected: {file.options.fileprotected}");
+            }
+        }
+
+        /// <summary>
+        /// List vault restrictions.
+        /// </summary>
+        public void ListRestrictions()
+        {
+            Api.clearRestrictions();
+            var restrictions =Task.Run(()=> Api.getRestrictions()).Result;
+            foreach (var restriction in restrictions.Restrictions)
+            {
+                var restrictionType = restriction.type;
+                if (restrictionType.Contains("MAX_")) 
+                    FileSystem.SuccessWriteLine($"{restriction.type} : {FileSystem.GetSize(restriction.value,false)}");
+                else
+                    FileSystem.SuccessWriteLine($"{restriction.type} : {restriction.value}");
             }
         }
     }
