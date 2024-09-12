@@ -30,6 +30,7 @@ Usage of waifu command:
     -lb : List all files from bucket with detailed information: waifu -lb <bucket_token>
     -df : Delete file. Example : waifu -df <file_token>
     -gf : Get uploaded file information. waifu -gf <file_token>
+    -lr : List wifuvault restrictions types.
 
 ATTENTION what you upload. xTerminal developers takes no responsibility for what you upload.
 
@@ -93,6 +94,13 @@ All restriction and privacy policy information can be found here https://waifuva
                 {
                     var token = arg.SplitByText("-gf", 1);
                     waifu.GetFileInfo(token.Trim());
+                    return;
+                }
+
+                // List waifuvault restrictions.
+                if (arg.Trim().StartsWith("-lr"))
+                {
+                    waifu.ListRestrictions();
                     return;
                 }
 
