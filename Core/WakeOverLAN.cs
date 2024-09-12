@@ -39,6 +39,10 @@ namespace Core
                 Log.ErrorWriteLine("Parameters should not be empty!");
                 return;
             }
+            
+            var host = NetWork.GetIPV4FromHostName(IP);
+            if(!string.IsNullOrEmpty(host))
+                IP = host.Trim();
 
             int countSymbolIP = Regex.Matches(IP, "\\.").Count;
             if (countSymbolIP != 3)

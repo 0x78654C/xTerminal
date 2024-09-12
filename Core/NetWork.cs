@@ -312,6 +312,28 @@ namespace Core
             return macAddress;
         }
 
+        /// <summary>
+        /// Return IP address from hostname.
+        /// </summary>
+        /// <param name="host"></param>
+        /// <returns></returns>
+        public static string GetIPV4FromHostName(string host)
+        {
+            var ip = "";
+            try
+            {
+                IPHostEntry hostEntry = Dns.GetHostEntry(host);
+                var firstIp = hostEntry.AddressList[0];
+                if(!firstIp.ToString().Contains(":"))
+                    ip = firstIp.ToString();
+            }
+            catch
+            {
+                //Ignore
+            }
+            return ip;
+        }
+
 
         /// <summary>
         /// Inititialize the Get IP and MAC from IP

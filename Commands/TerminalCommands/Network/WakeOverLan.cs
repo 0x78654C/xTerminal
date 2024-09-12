@@ -10,8 +10,8 @@ namespace Commands.TerminalCommands.Network
     {
         private const int _port = 9;
         private static string s_helpMessage = @"Usage of wol (Wake Over LAN) command:
-    wol -ip IP_Address -mac MAC_Address                   : sends wake packet for ip/mac.
-    wol -ip IP_Address -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
+    wol -ip IPAddress/HostName -mac MAC_Address                   : sends wake packet for ip/mac.
+    wol -ip IPAddress/HostName -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
 ";
         public string Name => "wol";
         public void Execute(string args)

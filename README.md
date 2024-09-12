@@ -304,6 +304,20 @@ This is the full list of commands that can be used in xTerminal:
                  Example 2: attr  -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
     cmp       -- Check if two files are identical by comparing MD5 hash.
                  Example: cmp <firstFile>;<secondFile>
+    waifu     -- Host temporary files on https://waifuvault.moe/. 
+                     -cb : Create bucket.
+                     -u  : Upload file (From path or URL).
+                         -b : Specify bucket token. (optional)
+                         -p : Specify file password. (optional)
+                         -o : One time download. (optional)
+                         -e : Expire download link. A string containing a number and a unit (1d = 1day). Valid units are m, h and d. (optional)
+                         -h : Hide file name.(optional)
+                     -db : Delete bucket. Example : waifu -db <bucket_token>
+                     -lb : List all files from bucket with detailed information: waifu -lb <bucket_token>
+                     -df : Delete file. Example : waifu -df <file_token>
+                     -gf : Get uploaded file information. waifu -gf <file_token>
+                     -lr : List wifuvault restrictions types.
+                 Example: waifu -u <file_path> -p <password> -b <bucket_token> -o -e 1h -h
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
@@ -331,8 +345,8 @@ This is the full list of commands that can be used in xTerminal:
                  Cport check command can be used with --noping parameter to disable ping check on hostname/ip.
                  Example: cport IPAddress/HostName -p 80 --noping
     wol       -- Sends Wake over LAN packet to a machine.
-                 Example 1:  wol -ip IP_Address -mac MAC_Address                   : sends wake packet for ip/mac.
-                 Example 2:  wol -ip IP_Address -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
+                 Example 1:  wol -ip IPAddress/HostName -mac MAC_Address                   : sends wake packet for ip/mac.
+                 Example 2:  wol -ip IPAddress/HostName -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
     dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
 
     ---------------- C# Code Runner and Add-ons -------------

@@ -2,9 +2,11 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace Core.OpenAI
 {
+    [SupportedOSPlatform("windows")]
     public class OpenAIManage
     {
         private string _apiKey = string.Empty;
