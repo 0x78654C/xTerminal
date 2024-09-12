@@ -146,7 +146,7 @@ namespace Core.DirFiles
                 FileSystem.SuccessWriteLine($"-----------------------------------------------");
                 FileSystem.SuccessWriteLine($"URL:                {file.url}");
                 FileSystem.SuccessWriteLine($"File Token:         {file.token}");
-                FileSystem.SuccessWriteLine($"Expire date:        {file.retentionPeriod}");
+                FileSystem.SuccessWriteLine($"Expire date:        {FileSystem.EpohConverter(long.Parse(file.retentionPeriod))}");
                 FileSystem.SuccessWriteLine($"Hidden Name:        {file.options.hideFilename}");
                 FileSystem.SuccessWriteLine($"Password protected: {file.options.fileprotected}");
             }
