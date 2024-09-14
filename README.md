@@ -430,7 +430,7 @@ namespace Test_Code
    }
 }
 ```
-Now you can use Top Level Statement too.
+You can use Top Level Statement too.
 
 ## Usage of the Password Manager:
 
