@@ -50,6 +50,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 if (split[1].Trim() == "-f")
                 {
+                    if(!arg.Contains("-m"))
+                    {
+                        SystemCommands.ShutDownCmd(true);
+                        return;
+                    }
+
                     if (split[2].Trim() == "-m")
                     {
                         if (split.Length < 4)
@@ -61,8 +67,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         SystemCommands.ShutDownCmd(true, remotePC);
                         return;
                     }
-                    SystemCommands.ShutDownCmd(true);
-                    return;
                 }
 
                 if (split[1].Trim() == "-h")
