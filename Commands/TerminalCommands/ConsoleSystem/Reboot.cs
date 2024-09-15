@@ -48,6 +48,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
                 if (split[1].Trim() == "-f")
                 {
+                    if (!arg.Contains("-m"))
+                    {
+                        SystemCommands.RebootCmd(true);
+                        return;
+                    }
+
                     if (split[2].Trim() == "-m")
                     {
                         if (split.Length < 4)
@@ -59,8 +65,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         SystemCommands.RebootCmd(true, remotePC);
                         return;
                     }
-                    SystemCommands.RebootCmd(true);
-                    return;
                 }
 
                 if (split[1].Trim() == "-h")

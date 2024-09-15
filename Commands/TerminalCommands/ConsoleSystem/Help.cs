@@ -19,6 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 xTerminal {versionInfo.LegalCopyright}
 Version: {GlobalVariables.version}
 Contact: xcoding.dev@gmail.com
+Source : https://github.com/0x78654C/xTerminal
 ----------------------------------------------------------------
 
 This is the full list of commands that can be used in xTerminal:
