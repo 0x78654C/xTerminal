@@ -62,21 +62,28 @@ namespace Core.SystemTools
                     process.StartInfo.Arguments = arguments.Trim();
                     Console.Write("User name: ");
                     var userName = Console.ReadLine();
-                    if (!string.IsNullOrEmpty(userName))
+                    if (string.IsNullOrEmpty(userName))
                     {
-                        process.StartInfo.UserName = userName;
+                        Console.WriteLine();
+                        FileSystem.ErrorWriteLine("User name must be provieded!");
+                        return;
                     }
+                    process.StartInfo.UserName = userName;
                     Console.Write("Passwod: ");
                     var password = PasswordValidator.GetHiddenConsoleInput();
-                    if (password.Length > 0)
+                    if (password.Length <= 0)
                     {
-                        process.StartInfo.Password = password;
+                        FileSystem.ErrorWriteLine($"Password for {userName} must be provided!");
+                        return;
                     }
+                    process.StartInfo.Password = password;
                     Console.WriteLine();
-                    Console.Write("Domain: ");
+                    Console.Write("Domain(optional): ");
                     var domain = Console.ReadLine() ?? string.Empty;
                     if (!string.IsNullOrEmpty(domain))
                         process.StartInfo.Domain = domain;
+                    process.StartInfo.RedirectStandardInput = true;
+                    process.StartInfo.RedirectStandardError = true;
                 }
                 else
                 {
@@ -119,7 +126,10 @@ namespace Core.SystemTools
             }
             catch (System.ComponentModel.Win32Exception win)
             {
-                FileSystem.ErrorWriteLine(win.Message);
+                if (win.Message.Contains("The user name or password is incorrect."))
+                    FileSystem.ErrorWriteLine("The user name or password is incorrect!");
+                else
+                    FileSystem.ErrorWriteLine(win.Message);
             }
             catch (Exception e)
             {
