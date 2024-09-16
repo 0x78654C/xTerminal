@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Encryption;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -48,20 +49,37 @@ namespace Core.SystemTools
                     arguments = $@"/c start {input} {arguments}";
                     input = null;
                 }
+                process.StartInfo = new ProcessStartInfo(input);
 
                 if (asAdmin)
                 {
-                    process.StartInfo = new ProcessStartInfo(input);
+
+                    var secureString = new System.Security.SecureString();
                     if (exe)
                         process.StartInfo.FileName = "cmd";
                     process.StartInfo.WorkingDirectory = GetExecutablePath(input);
-                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.UseShellExecute = false;
                     process.StartInfo.Arguments = arguments.Trim();
-                    process.StartInfo.Verb = "runas";
+                    Console.Write("User name: ");
+                    var userName = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(userName))
+                    {
+                        process.StartInfo.UserName = userName;
+                    }
+                    Console.Write("Passwod: ");
+                    var password = PasswordValidator.GetHiddenConsoleInput();
+                    if (password.Length > 0)
+                    {
+                        process.StartInfo.Password = password;
+                    }
+                    Console.WriteLine();
+                    Console.Write("Domain: ");
+                    var domain = Console.ReadLine() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(domain))
+                        process.StartInfo.Domain = domain;
                 }
                 else
                 {
-                    process.StartInfo = new ProcessStartInfo(input);
                     if (exe)
                         process.StartInfo.FileName = "cmd";
                     process.StartInfo.WorkingDirectory = GetExecutablePath(input);
