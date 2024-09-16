@@ -152,9 +152,30 @@ namespace Core.SystemTools
                 {
                     process.StartInfo = new ProcessStartInfo(input)
                     {
-                        UseShellExecute = true,
-                        Verb = "runas"
+                        UseShellExecute = false
                     };
+                    Console.Write("User name: ");
+                    var userName = Console.ReadLine();
+                    if (string.IsNullOrEmpty(userName))
+                    {
+                        Console.WriteLine();
+                        FileSystem.ErrorWriteLine("User name must be provieded!");
+                        return;
+                    }
+                    process.StartInfo.UserName = userName;
+                    Console.Write("Passwod: ");
+                    var password = PasswordValidator.GetHiddenConsoleInput();
+                    if (password.Length <= 0)
+                    {
+                        FileSystem.ErrorWriteLine($"Password for {userName} must be provided!");
+                        return;
+                    }
+                    process.StartInfo.Password = password;
+                    Console.WriteLine();
+                    Console.Write("Domain(optional): ");
+                    var domain = Console.ReadLine() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(domain))
+                        process.StartInfo.Domain = domain;
                 }
                 else
                 {
