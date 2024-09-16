@@ -18,12 +18,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
 ";
         public void Execute(string args)
         {
-
-            if (args ==Name && !args.Contains("-u"))
-            {
-                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
-                return;
-            }
             if (args == $"{Name} -h")
             {
                 Console.WriteLine(s_helpMessage);
