@@ -58,7 +58,6 @@ namespace Core.SystemTools
                     if (exe)
                         process.StartInfo.FileName = "cmd";
                     process.StartInfo.WorkingDirectory = GetExecutablePath(input);
-                    process.StartInfo.UseShellExecute = false;
                     process.StartInfo.Arguments = arguments.Trim();
                     Console.Write("User name: ");
                     var userName = Console.ReadLine();
@@ -69,6 +68,7 @@ namespace Core.SystemTools
                         return;
                     }
                     process.StartInfo.UserName = userName;
+
                     Console.Write("Passwod: ");
                     var password = PasswordValidator.GetHiddenConsoleInput();
                     if (password.Length <= 0)
@@ -82,8 +82,9 @@ namespace Core.SystemTools
                     var domain = Console.ReadLine() ?? string.Empty;
                     if (!string.IsNullOrEmpty(domain))
                         process.StartInfo.Domain = domain;
-                    process.StartInfo.RedirectStandardInput = true;
-                    process.StartInfo.RedirectStandardError = true;
+                  
+                        process.StartInfo.RedirectStandardInput = true;
+                        process.StartInfo.RedirectStandardError = true;
                 }
                 else
                 {
