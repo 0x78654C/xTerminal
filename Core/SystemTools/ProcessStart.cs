@@ -10,21 +10,8 @@ namespace Core.SystemTools
     [SupportedOSPlatform("Windows")]
     public class ProcessStart
     {
-        /// <summary>
-        /// Process execution with arguments.
-        /// </summary>
-        /// <param name="input">File name.</param>
-        /// <param name="arguments">Specific file arguments.</param>
-        /// <param name="fileCheck">Check file if exists before process exection. </param>
-        /// <param name="asAdmin">Run as different user.</param>
         private static string s_currentDirectory;
 
-        /// <summary>
-        /// Get path of assembly.
-        /// </summary>
-        /// <param name="executableFilePath"></param>
-        /// <returns></returns>
-        private static string GetExecutablePath(string executableFilePath) => Path.GetDirectoryName(executableFilePath);
 
         /// <summary>
         /// Execute process command.
@@ -40,24 +27,21 @@ namespace Core.SystemTools
             {
                 var process = new Process();
 
-                bool exe = !input.Trim().EndsWith(".exe") && !input.Trim().EndsWith(".msi");
+                bool exe = input.Trim().EndsWith(".exe") || input.Trim().EndsWith(".msi");
+                string cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
 
 
                 // Check is execautable or not.
-                if (exe)
-                {
-                    arguments = $@"/c start {input} {arguments}";
-                    input = null;
-                }
-                process.StartInfo = new ProcessStartInfo(input);
+
 
                 if (asAdmin)
                 {
-
+                    arguments = $@"/c start {input} {arguments}";
+                    process.StartInfo.FileName = cmdPath;
+                    process.StartInfo = new ProcessStartInfo(cmdPath);
                     var secureString = new System.Security.SecureString();
-                    if (exe)
-                        process.StartInfo.FileName = "cmd";
-                    process.StartInfo.WorkingDirectory = GetExecutablePath(input);
+                    if (!exe)
+                        process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.Arguments = arguments.Trim();
                     Console.Write("User name: ");
                     var userName = Console.ReadLine();
@@ -82,15 +66,23 @@ namespace Core.SystemTools
                     var domain = Console.ReadLine() ?? string.Empty;
                     if (!string.IsNullOrEmpty(domain))
                         process.StartInfo.Domain = domain;
-                  
+                    if (!waitForExit)
+                    {
                         process.StartInfo.RedirectStandardInput = true;
                         process.StartInfo.RedirectStandardError = true;
+                    }
                 }
                 else
                 {
-                    if (exe)
-                        process.StartInfo.FileName = "cmd";
-                    process.StartInfo.WorkingDirectory = GetExecutablePath(input);
+                    var fileName = input;
+                    if (!exe)
+                    {
+                        arguments = $@"/c start {input} {arguments}";
+                        process.StartInfo.FileName = cmdPath;
+                        fileName = cmdPath;
+                    }
+                    process.StartInfo = new ProcessStartInfo(fileName); ;
+                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
                     {
@@ -101,7 +93,7 @@ namespace Core.SystemTools
                 }
 
                 // Runing non executable files.
-                if (exe)
+                if (!exe)
                 {
                     process.Start();
                     if (waitForExit)
