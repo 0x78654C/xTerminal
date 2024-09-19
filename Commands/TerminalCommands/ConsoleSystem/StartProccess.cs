@@ -16,10 +16,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
 Can be used with the following parameters:
     -h    : Displays this message.
     -u    : Can run process with different user.
+    -r    : Can run process with RunAs parameter.
     -we   : Disable wait for process to exit.
     -param: Start process with specified parameters.
          Example1: ./ -u <file_name>
          Example2: ./ -u <file_name> -param <file_paramters>
+         Example3: ./ -r <file_name>
 Both examples can be used with -we parameter.
 ";
 
@@ -63,10 +65,19 @@ Both examples can be used with -we parameter.
                     {
                         args = args.Replace("-u ", "");
                         args = FileSystem.SanitizePath(args, s_currentDirectory);
-
                         StartApplication(args, paramApp, true, !waitForExit);
                         return;
                     }
+
+                    if(param == "-r")
+                    {
+                        args = args.Replace("-r ", "");
+                        args = FileSystem.SanitizePath(args, s_currentDirectory);
+                        StartApplication(args, paramApp, false, !waitForExit,true);
+                        return;
+                    }
+
+                    args = FileSystem.SanitizePath(args, s_currentDirectory);
                     StartApplication(args, paramApp, false, !waitForExit);
                     return;
                 }
@@ -76,6 +87,13 @@ Both examples can be used with -we parameter.
                 {
                     args = args.Replace("-u ", "");
                     StartApplication(args, paramApp, true, !waitForExit);
+                    return;
+                }
+
+                if (param == "-r")
+                {
+                    args = args.Replace("-r ", "");
+                    StartApplication(args, paramApp, false, !waitForExit, true);
                     return;
                 }
                 StartApplication(args, paramApp, false, !waitForExit);
@@ -92,7 +110,7 @@ Both examples can be used with -we parameter.
         /// <param name="inputCommand">Path to procces required to be started.</param>
         /// <param name="arg">Arguments</param>
         /// <param name="admin">Use other user for run procces.</param>
-        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit)
+        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit, bool runAs=false)
         {
             try
             {
@@ -105,10 +123,10 @@ Both examples can be used with -we parameter.
                 }
                 if (admin)
                 {
-                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit);
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit,runAs);
                     return;
                 }
-                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit);
+                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit, runAs);
                 return;
             }
             catch (Exception e)
