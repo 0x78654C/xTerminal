@@ -1,5 +1,4 @@
-﻿using Core.Encryption;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,7 +10,7 @@ namespace Core.SystemTools
     public class ProcessStart
     {
         private static string s_currentDirectory;
-
+        private static string _cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
 
         /// <summary>
         /// Execute process command.
@@ -28,22 +27,10 @@ namespace Core.SystemTools
                 var process = new Process();
 
                 bool exe = input.Trim().EndsWith(".exe") || input.Trim().EndsWith(".msi");
-                string cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
-
-
-                // Check is execautable or not.
 
 
                 if (asAdmin)
                 {
-                    arguments = $@"/c start {input} {arguments}";
-                    process.StartInfo.FileName = cmdPath;
-                    process.StartInfo = new ProcessStartInfo(cmdPath);
-                    var secureString = new System.Security.SecureString();
-                    if (!exe)
-                        process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
-                    process.StartInfo.Arguments = arguments.Trim();
-
                     Console.Write("User name: ");
                     var userName = Console.ReadLine();
                     if (string.IsNullOrEmpty(userName))
@@ -52,25 +39,19 @@ namespace Core.SystemTools
                         FileSystem.ErrorWriteLine("User name must be provieded!");
                         return;
                     }
-                    process.StartInfo.UserName = userName;
-
-                    Console.Write("Passwod: ");
-                    var password = PasswordValidator.GetHiddenConsoleInput();
-                    if (password.Length <= 0)
-                    {
-                        FileSystem.ErrorWriteLine($"Password for {userName} must be provided!");
-                        return;
-                    }
-                    process.StartInfo.Password = password;
-                    Console.WriteLine();
-                    Console.Write("Domain(optional): ");
-                    var domain = Console.ReadLine() ?? string.Empty;
-                    if (!string.IsNullOrEmpty(domain))
-                        process.StartInfo.Domain = domain;
+                    arguments = $"/c runas /user:{userName} {input}";
+                    process.StartInfo = new ProcessStartInfo();
+                    process.StartInfo.FileName = _cmdPath;
+                    var secureString = new System.Security.SecureString();
+                    if (!exe)
+                        process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
+                    process.StartInfo.Arguments = arguments.Trim();
+                    process.StartInfo.UseShellExecute = true;
                     if (!waitForExit)
                     {
                         process.StartInfo.RedirectStandardInput = true;
                         process.StartInfo.RedirectStandardError = true;
+                        process.StartInfo.RedirectStandardOutput = true;
                     }
                 }
                 else
@@ -79,18 +60,17 @@ namespace Core.SystemTools
                     if (!exe)
                     {
                         arguments = $@"/c start {input} {arguments}";
-                        process.StartInfo.FileName = cmdPath;
-                        fileName = cmdPath;
+                        process.StartInfo.FileName = _cmdPath;
+                        fileName = _cmdPath;
                     }
                     process.StartInfo = new ProcessStartInfo(fileName); ;
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.UseShellExecute = false;
-                    if (runAs)
-                        process.StartInfo.Verb = "runas";
                     if (!waitForExit)
                     {
                         process.StartInfo.RedirectStandardInput = true;
                         process.StartInfo.RedirectStandardError = true;
+                        process.StartInfo.RedirectStandardOutput = true;
                     }
                     process.StartInfo.Arguments = arguments.Trim();
                 }
@@ -146,10 +126,6 @@ namespace Core.SystemTools
 
                 if (asAdmin)
                 {
-                    process.StartInfo = new ProcessStartInfo(input)
-                    {
-                        UseShellExecute = false
-                    };
                     Console.Write("User name: ");
                     var userName = Console.ReadLine();
                     if (string.IsNullOrEmpty(userName))
@@ -158,20 +134,14 @@ namespace Core.SystemTools
                         FileSystem.ErrorWriteLine("User name must be provieded!");
                         return;
                     }
-                    process.StartInfo.UserName = userName;
-                    Console.Write("Passwod: ");
-                    var password = PasswordValidator.GetHiddenConsoleInput();
-                    if (password.Length <= 0)
+                    var arg = $"/c runas /user:{userName} {input}";
+                    process.StartInfo = new ProcessStartInfo(_cmdPath)
                     {
-                        FileSystem.ErrorWriteLine($"Password for {userName} must be provided!");
-                        return;
-                    }
-                    process.StartInfo.Password = password;
-                    Console.WriteLine();
-                    Console.Write("Domain(optional): ");
-                    var domain = Console.ReadLine() ?? string.Empty;
-                    if (!string.IsNullOrEmpty(domain))
-                        process.StartInfo.Domain = domain;
+                        Arguments = arg,
+                        UseShellExecute = true
+                    };
+         
+                    process.Start();
                 }
                 else
                 {
@@ -180,8 +150,8 @@ namespace Core.SystemTools
                         UseShellExecute = true,
                         WindowStyle = ProcessWindowStyle.Normal
                     };
+                    process.Start();
                 }
-                process.Start();
             }
             catch (System.ComponentModel.Win32Exception win)
             {
