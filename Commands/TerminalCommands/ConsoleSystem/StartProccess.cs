@@ -16,12 +16,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
 Can be used with the following parameters:
     -h    : Displays this message.
     -u    : Can run process with different user.
-    -r    : Can run process with RunAs parameter.
     -we   : Disable wait for process to exit.
     -param: Start process with specified parameters.
          Example1: ./ -u <file_name>
          Example2: ./ -u <file_name> -param <file_paramters>
-         Example3: ./ -r <file_name>
 Both examples can be used with -we parameter.
 ";
 
