@@ -21,7 +21,7 @@ namespace Core.SystemTools
         /// <param name="fileCheck"></param>
         /// <param name="asAdmin"></param>
         /// <param name="waitForExit"></param>
-        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
+        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit, bool runAs = false)
         {
             try
             {
@@ -43,6 +43,7 @@ namespace Core.SystemTools
                     if (!exe)
                         process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.Arguments = arguments.Trim();
+
                     Console.Write("User name: ");
                     var userName = Console.ReadLine();
                     if (string.IsNullOrEmpty(userName))
@@ -84,6 +85,8 @@ namespace Core.SystemTools
                     process.StartInfo = new ProcessStartInfo(fileName); ;
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.UseShellExecute = false;
+                    if (runAs)
+                        process.StartInfo.Verb = "runas";
                     if (!waitForExit)
                     {
                         process.StartInfo.RedirectStandardInput = true;
