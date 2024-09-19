@@ -46,7 +46,7 @@ namespace Core.SystemTools
                     if (!exe)
                         process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.Arguments = arguments.Trim();
-                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
                     {
                         process.StartInfo.RedirectStandardInput = true;
@@ -72,7 +72,6 @@ namespace Core.SystemTools
                         process.StartInfo.RedirectStandardError = true;
                         process.StartInfo.RedirectStandardOutput = true;
                     }
-                    process.StartInfo.Arguments = arguments.Trim();
                 }
 
                 // Runing non executable files.
