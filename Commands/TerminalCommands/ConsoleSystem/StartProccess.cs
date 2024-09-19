@@ -67,14 +67,6 @@ Both examples can be used with -we parameter.
                         return;
                     }
 
-                    if(param == "-r")
-                    {
-                        args = args.Replace("-r ", "");
-                        args = FileSystem.SanitizePath(args, s_currentDirectory);
-                        StartApplication(args, paramApp, false, !waitForExit,true);
-                        return;
-                    }
-
                     args = FileSystem.SanitizePath(args, s_currentDirectory);
                     StartApplication(args, paramApp, false, !waitForExit);
                     return;
@@ -88,12 +80,6 @@ Both examples can be used with -we parameter.
                     return;
                 }
 
-                if (param == "-r")
-                {
-                    args = args.Replace("-r ", "");
-                    StartApplication(args, paramApp, false, !waitForExit, true);
-                    return;
-                }
                 StartApplication(args, paramApp, false, !waitForExit);
             }
             catch (Exception e)
