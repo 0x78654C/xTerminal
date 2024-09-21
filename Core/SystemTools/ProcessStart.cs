@@ -20,7 +20,7 @@ namespace Core.SystemTools
         /// <param name="fileCheck"></param>
         /// <param name="asAdmin"></param>
         /// <param name="waitForExit"></param>
-        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit, bool runAs = false)
+        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
         {
             try
             {
@@ -31,7 +31,7 @@ namespace Core.SystemTools
 
                 if (asAdmin)
                 {
-                    arguments = $"/c {input}";
+                    arguments = "/c "+"\""+input+"\"";
                     process.StartInfo = new ProcessStartInfo();
                     process.StartInfo.FileName = _cmdPath;
                     process.StartInfo.Verb = "runas";
@@ -126,13 +126,14 @@ namespace Core.SystemTools
                         FileSystem.ErrorWriteLine("User name must be provieded!");
                         return;
                     }
+                    Console.WriteLine(input);
+                    Console.ReadLine();
                     var arg = $"/c runas /user:{userName} {input}";
                     process.StartInfo = new ProcessStartInfo(_cmdPath)
                     {
                         Arguments = arg,
                         UseShellExecute = true
                     };
-         
                     process.Start();
                 }
                 else

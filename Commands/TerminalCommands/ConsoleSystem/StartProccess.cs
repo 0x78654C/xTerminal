@@ -94,7 +94,7 @@ Both examples can be used with -we parameter.
         /// <param name="inputCommand">Path to procces required to be started.</param>
         /// <param name="arg">Arguments</param>
         /// <param name="admin">Use other user for run procces.</param>
-        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit, bool runAs=false)
+        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit)
         {
             try
             {
@@ -114,10 +114,10 @@ Both examples can be used with -we parameter.
 
                 if (admin)
                 {
-                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit,runAs);
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit);
                     return;
                 }
-                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit, runAs);
+                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit);
                 return;
             }
             catch (Exception e)
