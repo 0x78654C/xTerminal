@@ -25,10 +25,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             if (args.ContainsText("-u"))
             {
-                Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "\\xTerminal.exe", true);
+                Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "xTerminal.exe", true);
                 return;
             }
-            Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "\\xTerminal.exe", false);
+            Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "xTerminal.exe", false);
         }
     }
 }
