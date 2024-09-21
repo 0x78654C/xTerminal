@@ -31,17 +31,10 @@ namespace Core.SystemTools
 
                 if (asAdmin)
                 {
-                    Console.Write("User name: ");
-                    var userName = Console.ReadLine();
-                    if (string.IsNullOrEmpty(userName))
-                    {
-                        Console.WriteLine();
-                        FileSystem.ErrorWriteLine("User name must be provieded!");
-                        return;
-                    }
-                    arguments = $"/c runas /user:{userName} {input}";
+                    arguments = $"/c {input}";
                     process.StartInfo = new ProcessStartInfo();
                     process.StartInfo.FileName = _cmdPath;
+                    process.StartInfo.Verb = "runas";
                     var secureString = new System.Security.SecureString();
                     if (!exe)
                         process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
