@@ -1,8 +1,8 @@
 ﻿using Core;
 using System;
 using System.Runtime.Versioning;
-using ping = Core.NetWork;
-using wmi = Core.Hardware.WMIDetails;
+using Ping = Core.NetWork;
+using Wmi = Core.Hardware.WMIDetails;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -38,7 +38,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 case "-r":
                     Console.Write("Type remote PC name or IP: ");
                     pc = Console.ReadLine();
-                    if (!ping.PingHost(pc))
+                    if (!Ping.PingHost(pc))
                     {
                         Console.WriteLine($"{pc} is offline!");
                         return;
@@ -46,12 +46,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (GlobalVariables.isPipeCommand)
                     {
                         if (GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput = wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2");
+                            GlobalVariables.pipeCmdOutput = Wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2");
                         else
-                            Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2"));
+                            Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2"));
                     }
                     else
-                        Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2"));
+                        Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\" + pc + @"\root\cimv2"));
                     break;
                 case "-h":
                     Console.WriteLine(HelpCommand());
@@ -60,12 +60,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (GlobalVariables.isPipeCommand)
                     {
                         if(GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput = wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2");
+                            GlobalVariables.pipeCmdOutput = Wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2");
                         else
-                            Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2"));
+                            Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2"));
                     }
                     else
-                        Console.WriteLine(wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2"));
+                        Console.WriteLine(Wmi.GetWMIDetails("SELECT * FROM Win32_BIOS", @"\\.\root\cimv2"));
                     break;
             }
         }

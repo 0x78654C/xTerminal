@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -67,6 +68,8 @@ Both examples can be used with -we parameter.
                         StartApplication(args, paramApp, true, !waitForExit);
                         return;
                     }
+
+                    args = FileSystem.SanitizePath(args, s_currentDirectory);
                     StartApplication(args, paramApp, false, !waitForExit);
                     return;
                 }
@@ -78,6 +81,7 @@ Both examples can be used with -we parameter.
                     StartApplication(args, paramApp, true, !waitForExit);
                     return;
                 }
+
                 StartApplication(args, paramApp, false, !waitForExit);
             }
             catch (Exception e)
@@ -98,11 +102,18 @@ Both examples can be used with -we parameter.
             {
                 int _ch = Regex.Matches(inputCommand, " ").Count;
 
+                if (File.Exists(inputCommand + ".exe"))
+                    inputCommand = inputCommand + ".exe";
+
+                if (File.Exists(inputCommand + ".msi"))
+                    inputCommand = inputCommand + ".msi";
+
                 if (!File.Exists(inputCommand))
                 {
                     FileSystem.ErrorWriteLine($"File {inputCommand} does not exist!");
                     return;
                 }
+
                 if (admin)
                 {
                     Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit);

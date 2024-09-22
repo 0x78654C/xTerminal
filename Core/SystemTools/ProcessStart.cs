@@ -9,21 +9,8 @@ namespace Core.SystemTools
     [SupportedOSPlatform("Windows")]
     public class ProcessStart
     {
-        /// <summary>
-        /// Process execution with arguments.
-        /// </summary>
-        /// <param name="input">File name.</param>
-        /// <param name="arguments">Specific file arguments.</param>
-        /// <param name="fileCheck">Check file if exists before process exection. </param>
-        /// <param name="asAdmin">Run as different user.</param>
         private static string s_currentDirectory;
-
-        /// <summary>
-        /// Get path of assembly.
-        /// </summary>
-        /// <param name="executableFilePath"></param>
-        /// <returns></returns>
-        private static string GetExecutablePath(string executableFilePath) => Path.GetDirectoryName(executableFilePath);
+        private static string _cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
 
         /// <summary>
         /// Execute process command.
@@ -39,43 +26,75 @@ namespace Core.SystemTools
             {
                 var process = new Process();
 
-                bool exe = !input.Trim().EndsWith(".exe") && !input.Trim().EndsWith(".msi");
+              
+                bool exe = input.Trim().EndsWith(".exe") || input.Trim().EndsWith(".msi");
 
-
-                // Check is execautable or not.
-                if (exe)
-                {
-                    arguments = $@"/c start {input} {arguments}";
-                    input = null;
-                }
 
                 if (asAdmin)
                 {
-                    process.StartInfo = new ProcessStartInfo(input);
-                    if (exe)
-                        process.StartInfo.FileName = "cmd";
-                    process.StartInfo.WorkingDirectory = GetExecutablePath(input);
-                    process.StartInfo.UseShellExecute = true;
-                    process.StartInfo.Arguments = arguments.Trim();
+                    var arg = arguments;
+                    var inp = input;
+                    if (!string.IsNullOrEmpty(arguments) && arguments.Contains(" "))
+                    {
+                        arg = $"\"{arguments}\"";
+                        arguments = "/c " + "\"" + input + "\"";
+                    }
+                    else
+                        arguments = "/c " + "\"" + input + "\"" + $" {arg}";
+                    process.StartInfo = new ProcessStartInfo();
+                    process.StartInfo.FileName = _cmdPath;
                     process.StartInfo.Verb = "runas";
-                }
-                else
-                {
-                    process.StartInfo = new ProcessStartInfo(input);
-                    if (exe)
-                        process.StartInfo.FileName = "cmd";
-                    process.StartInfo.WorkingDirectory = GetExecutablePath(input);
+                    var secureString = new System.Security.SecureString();
+                    if (!exe)
+                        process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
+                    process.StartInfo.Arguments = arguments.Trim();
                     process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
                     {
                         process.StartInfo.RedirectStandardInput = true;
                         process.StartInfo.RedirectStandardError = true;
+                        process.StartInfo.RedirectStandardOutput = true;
                     }
-                    process.StartInfo.Arguments = arguments.Trim();
+                }
+                else
+                {
+                    var fileName = input;
+
+                    if (!exe)
+                    {
+                        if (string.IsNullOrEmpty(arguments))
+                        {
+                            if (input.Contains(" "))
+                                arguments = $@"/c ""{input}""";
+                            else
+                                arguments = $@"/c {input}";
+                        }
+                        else
+                        {
+                            var inp = input;
+                            if (input.Contains(" "))
+                                inp = $"\"{input}\"";
+                            var arg = arguments;
+                            if (arguments.Contains(" "))
+                                arg = $"\"{arguments}\"";
+                            arguments = $@"/c {inp} {arg}";
+                        }
+                        fileName = _cmdPath;
+                    }
+                    process.StartInfo.FileName = fileName;
+                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.Arguments = arguments;
+                    if (!waitForExit)
+                    {
+                        process.StartInfo.RedirectStandardInput = true;
+                        process.StartInfo.RedirectStandardError = true;
+                        process.StartInfo.RedirectStandardOutput = true;
+                    }
                 }
 
                 // Runing non executable files.
-                if (exe)
+                if (!exe)
                 {
                     process.Start();
                     if (waitForExit)
@@ -101,12 +120,28 @@ namespace Core.SystemTools
             }
             catch (System.ComponentModel.Win32Exception win)
             {
-                FileSystem.ErrorWriteLine(win.Message);
+                if (win.Message.Contains("The user name or password is incorrect."))
+                    FileSystem.ErrorWriteLine("The user name or password is incorrect!");
+                else
+                    FileSystem.ErrorWriteLine(win.Message);
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }
+        }
+
+        /// <summary>
+        /// Open current directory.
+        /// </summary>
+        /// <param name="path"></param>
+        public static void OpenDirProc(string path)
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo("explorer");
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.Arguments = path.Trim();
+            process.Start();
         }
 
         /// <summary>
@@ -122,11 +157,22 @@ namespace Core.SystemTools
 
                 if (asAdmin)
                 {
-                    process.StartInfo = new ProcessStartInfo(input)
+                    Console.Write("User name: ");
+                    var userName = Console.ReadLine();
+                    if (string.IsNullOrEmpty(userName))
                     {
-                        UseShellExecute = true,
-                        Verb = "runas"
+                        Console.WriteLine();
+                        FileSystem.ErrorWriteLine("User name must be provieded!");
+                        return;
+                    }
+                    Console.WriteLine(input);
+                    var arg = $"/c runas /user:{userName} {input}";
+                    process.StartInfo = new ProcessStartInfo(_cmdPath)
+                    {
+                        Arguments = arg,
+                        UseShellExecute = true
                     };
+                    process.Start();
                 }
                 else
                 {
@@ -135,8 +181,8 @@ namespace Core.SystemTools
                         UseShellExecute = true,
                         WindowStyle = ProcessWindowStyle.Normal
                     };
+                    process.Start();
                 }
-                process.Start();
             }
             catch (System.ComponentModel.Win32Exception win)
             {

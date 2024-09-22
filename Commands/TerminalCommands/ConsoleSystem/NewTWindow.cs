@@ -18,12 +18,6 @@ namespace Commands.TerminalCommands.ConsoleSystem
 ";
         public void Execute(string args)
         {
-
-            if (args ==Name && !args.Contains("-u"))
-            {
-                FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
-                return;
-            }
             if (args == $"{Name} -h")
             {
                 Console.WriteLine(s_helpMessage);
@@ -31,10 +25,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             if (args.ContainsText("-u"))
             {
-                Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "\\xTerminal.exe", true);
+                Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "xTerminal.exe", true);
                 return;
             }
-            Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "\\xTerminal.exe", false);
+            Core.SystemTools.ProcessStart.ProcessExecute(Application.StartupPath + "xTerminal.exe", false);
         }
     }
 }
