@@ -26,10 +26,7 @@ namespace Core.SystemTools
             {
                 var process = new Process();
 
-                //process.StartInfo.StandardErrorEncoding = System.Text.Encoding.UTF8;
-                //process.StartInfo.StandardInputEncoding = System.Text.Encoding.UTF8;
-                //process.StartInfo.StandardOutputEncoding = System.Text.Encoding.UTF8;
-
+              
                 bool exe = input.Trim().EndsWith(".exe") || input.Trim().EndsWith(".msi");
 
 

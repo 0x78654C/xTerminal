@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -63,6 +64,7 @@ Both examples can be used with -we parameter.
                     {
                         args = args.Replace("-u ", "");
                         args = FileSystem.SanitizePath(args, s_currentDirectory);
+
                         StartApplication(args, paramApp, true, !waitForExit);
                         return;
                     }
