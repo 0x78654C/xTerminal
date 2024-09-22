@@ -10,11 +10,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
     {
         public string Name => "enc";
         private static string s_helpMessage = $@" Usage of enc command:
-    enc defalut  : Set input/output encoding to system default .NET encoding.
-    enc utf8     : Set input/output encoding to system UTF8.
-    enc unicode  : Set input/output encoding to system Unicode.
-    enc ascii    : Set input/output encoding to system ascii.
+    enc defalut  : Set input/output encoding to default .NET encoding.
+    enc utf8     : Set input/output encoding to UTF8.
+    enc unicode  : Set input/output encoding to Unicode.
+    enc ascii    : Set input/output encoding to ASCII.
     enc -current : Show the current input/output encoding.  
+
+Default input/output encoding for xTerminal is UTF-8.
 ";
         public void Execute(string arg)
         {
