@@ -35,7 +35,15 @@ namespace Core.SystemTools
 
                 if (asAdmin)
                 {
-                    arguments = "/c "+"\""+input+"\"";
+                    var arg = arguments;
+                    var inp = input;
+                    if (!string.IsNullOrEmpty(arguments) && arguments.Contains(" "))
+                    {
+                        arg = $"\"{arguments}\"";
+                        arguments = "/c " + "\"" + input + "\"";
+                    }
+                    else
+                        arguments = "/c " + "\"" + input + "\"" + $" {arg}";
                     process.StartInfo = new ProcessStartInfo();
                     process.StartInfo.FileName = _cmdPath;
                     process.StartInfo.Verb = "runas";
@@ -54,13 +62,26 @@ namespace Core.SystemTools
                 else
                 {
                     var fileName = input;
-                    
+
                     if (!exe)
                     {
-                        if(string.IsNullOrEmpty(arguments))
-                            arguments = $@"/c ""{input}""";
+                        if (string.IsNullOrEmpty(arguments))
+                        {
+                            if (input.Contains(" "))
+                                arguments = $@"/c ""{input}""";
+                            else
+                                arguments = $@"/c {input}";
+                        }
                         else
-                            arguments = $@"/c ""{input}"" ""{arguments}""";
+                        {
+                            var inp = input;
+                            if (input.Contains(" "))
+                                inp = $"\"{input}\"";
+                            var arg = arguments;
+                            if (arguments.Contains(" "))
+                                arg = $"\"{arguments}\"";
+                            arguments = $@"/c {inp} {arg}";
+                        }
                         fileName = _cmdPath;
                     }
                     process.StartInfo.FileName = fileName;
