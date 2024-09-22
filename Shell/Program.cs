@@ -58,8 +58,8 @@ namespace Shell
 
         static void Main(string[] args)
         {
-            // confgure console
-            Console.OutputEncoding = System.Text.Encoding.UTF8;//set utf8 encoding (for support Russian letters)
+            Console.InputEncoding = System.Text.Encoding.UTF8;
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
             DeleteCDFIle();
             var shell = new Shell();
             shell.Run(args);//Running the shell
