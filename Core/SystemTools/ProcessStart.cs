@@ -26,6 +26,10 @@ namespace Core.SystemTools
             {
                 var process = new Process();
 
+                //process.StartInfo.StandardErrorEncoding = System.Text.Encoding.UTF8;
+                //process.StartInfo.StandardInputEncoding = System.Text.Encoding.UTF8;
+                //process.StartInfo.StandardOutputEncoding = System.Text.Encoding.UTF8;
+
                 bool exe = input.Trim().EndsWith(".exe") || input.Trim().EndsWith(".msi");
 
 
@@ -50,14 +54,19 @@ namespace Core.SystemTools
                 else
                 {
                     var fileName = input;
+                    
                     if (!exe)
                     {
-                        arguments = $@"/c start {input} ""{arguments}""";
-                        process.StartInfo.FileName = _cmdPath;
+                        if(string.IsNullOrEmpty(arguments))
+                            arguments = $@"/c ""{input}""";
+                        else
+                            arguments = $@"/c ""{input}"" ""{arguments}""";
                         fileName = _cmdPath;
                     }
+                    process.StartInfo.FileName = fileName;
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.Arguments = arguments;
                     if (!waitForExit)
                     {
                         process.StartInfo.RedirectStandardInput = true;
