@@ -166,7 +166,6 @@ namespace Core.SystemTools
                         return;
                     }
                     Console.WriteLine(input);
-                    Console.ReadLine();
                     var arg = $"/c runas /user:{userName} {input}";
                     process.StartInfo = new ProcessStartInfo(_cmdPath)
                     {
