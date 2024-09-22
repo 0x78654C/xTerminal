@@ -52,11 +52,10 @@ namespace Core.SystemTools
                     var fileName = input;
                     if (!exe)
                     {
-                        arguments = $@"/c start {input} {arguments}";
+                        arguments = $@"/c start {input} ""{arguments}""";
                         process.StartInfo.FileName = _cmdPath;
                         fileName = _cmdPath;
                     }
-                    process.StartInfo = new ProcessStartInfo(fileName); ;
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
@@ -103,6 +102,19 @@ namespace Core.SystemTools
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }
+        }
+
+        /// <summary>
+        /// Open current directory.
+        /// </summary>
+        /// <param name="path"></param>
+        public static void OpenDirProc(string path)
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo("explorer");
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.Arguments = path.Trim();
+            process.Start();
         }
 
         /// <summary>

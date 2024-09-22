@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualBasic;
+﻿using Core.SystemTools;
+using Microsoft.VisualBasic;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -233,7 +234,7 @@ namespace Core
             dirPath = SanitizePath(dirPath, currentDirectory);
             if (Directory.Exists(dirPath))
             {
-                SystemTools.ProcessStart.ProcessExecute("explorer", dirPath, false, false, false);
+                ProcessStart.OpenDirProc(dirPath);
                 return;
             }
             Console.WriteLine($"Directory '{dirPath}' does not exist!");
