@@ -213,6 +213,13 @@ This is the full list of commands that can be used in xTerminal:
                     58     : ICMPv6
 
                     Note: Requires administrator privileges.
+    enc       -- Set input/output encoding for xTerminal.
+                   enc defalut  : Set input/output encoding to default .NET encoding.
+                   enc utf8     : Set input/output encoding to UTF8.
+                   enc unicode  : Set input/output encoding to Unicode.
+                   enc ascii    : Set input/output encoding to ASCII.
+                   enc -current : Show the current input/output encoding.  
+
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
