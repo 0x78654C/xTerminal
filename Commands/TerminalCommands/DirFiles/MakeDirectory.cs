@@ -1,4 +1,5 @@
 ﻿using Core;
+using Core.DirFiles;
 using System;
 using System.IO;
 using System.Runtime.Versioning;
@@ -17,9 +18,8 @@ namespace Commands.TerminalCommands.DirFiles
 
                 string input = arg.Substring(6, argLength);
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory); ; // Get the new location
-                string path = FileSystem.SanitizePath(input, currentDir);
-                Directory.CreateDirectory(path);
-                FileSystem.SuccessWriteLine($"Directory {input} is created!");
+                var makeDirectory = new DirectoryMake(input, currentDir);
+                makeDirectory.Create();
             }
             catch (Exception)
             {
