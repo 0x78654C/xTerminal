@@ -16,36 +16,14 @@ namespace Commands.TerminalCommands.DirFiles
                 int argLength = arg.Length - 6;
 
                 string input = arg.Substring(6, argLength);
-                string newlocation = File.ReadAllText(GlobalVariables.currentDirectory); ; // Get the new location
-                string locinput = newlocation + input; // New location+input
-                if (input.Contains(":") && input.Contains(@"\"))
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(input);
-                        FileSystem.SuccessWriteLine($"Directory {input} is created!");
-                    }
-                    catch (Exception)
-                    {
-                        FileSystem.ErrorWriteLine("Something went wrong. Check path maybe!");
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(locinput);
-                        FileSystem.SuccessWriteLine($"Directory {locinput} is created!");
-                    }
-                    catch (Exception)
-                    {
-                        FileSystem.ErrorWriteLine("Something went wrong. Check path maybe!");
-                    }
-                }
+                string currentDir = File.ReadAllText(GlobalVariables.currentDirectory); ; // Get the new location
+                string path = FileSystem.SanitizePath(input, currentDir);
+                Directory.CreateDirectory(path);
+                FileSystem.SuccessWriteLine($"Directory {input} is created!");
             }
-            catch
+            catch (Exception)
             {
-                FileSystem.ErrorWriteLine("You must type the directory name!");
+                FileSystem.ErrorWriteLine("Something went wrong. Check path maybe!");
             }
         }
     }
