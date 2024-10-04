@@ -28,8 +28,8 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory);  // Get the new location
-                var makeDirectory = new DirectoryMake(input, currentDir);
-                makeDirectory.Create();
+                var makeDirectory = new DirectoryMake( currentDir);
+                makeDirectory.Create(input);
             }
             catch (Exception)
             {
