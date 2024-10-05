@@ -269,6 +269,8 @@ This is the full list of commands that can be used in xTerminal:
                    -a  : Deletes all files and directories in current directory. 
                    -af : Deletes all files in current directory. 
                    -ad : Deletes all directories in current directory. 
+                 Example1: del <dir_path>    
+                 Example2: del <dir_path1;dir_path2;dir_path3>    
     cp        -- Check file/folder permissions.
     md5       -- Checks the md5 checksum of a file. Use -h for additional parameters.
                      md5 <file_name> : Display the MD5 CheckSUM of a file.
