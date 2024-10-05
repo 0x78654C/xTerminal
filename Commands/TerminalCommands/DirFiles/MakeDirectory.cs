@@ -22,7 +22,7 @@ namespace Commands.TerminalCommands.DirFiles
                 int argLength = arg.Length - 6;
 
                 string input = arg.Substring(6, argLength);
-                if (input == $"{Name} -h")
+                if (input == "-h")
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
