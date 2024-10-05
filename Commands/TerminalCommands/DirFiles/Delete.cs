@@ -53,20 +53,26 @@ Example2: del <dir_path1;dir_path2;dir_path3>
             else
             {
                 args = args.Replace("del ", "");
-                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                    args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
-                else
-                    args = FileSystem.SanitizePath(args, _currentLocation);
+
 
                 // Multi dir delete
                 if (args.Contains(";"))
                 {
                     var dirs = args.Split(';');
-                    foreach(var dir in dirs)
-                        DeleteFile(dir);
+                    foreach (var dir in dirs)
+                    {
+                        var sanitizedPath = FileSystem.SanitizePath(dir, _currentLocation);
+                        DeleteFile(sanitizedPath);
+                    }
                 }
                 else
+                {
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
+                    else
+                        args = FileSystem.SanitizePath(args, _currentLocation);
                     DeleteFile(args);
+                }
             }
         }
 
