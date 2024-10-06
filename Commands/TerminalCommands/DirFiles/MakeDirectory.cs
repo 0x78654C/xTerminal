@@ -11,8 +11,8 @@ namespace Commands.TerminalCommands.DirFiles
     {
         public string Name => "mkdir";
         private string s_helpMessage = @"Usage of mkdir command:
-    mkdir <dir_name>
-    mkdir <dir_name1;dir_name2;dir_name3>
+    mkdir <dir_name>                      : Create one directory.
+    mkdir <dir_name1;dir_name2;dir_name3> : Create multiple directories.
 ";
 
         public void Execute(string arg)
