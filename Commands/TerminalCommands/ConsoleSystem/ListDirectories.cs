@@ -1,6 +1,5 @@
 ﻿using Core;
 using Core.SystemTools;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -67,7 +66,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -la : Displays last access date time of files and folders from current directory.
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-    -t  : Display tree structure of directories. Use with param -o for store in a file: Ex.: ls -t -o <file_name>
+    -t  : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
 
 Commands can be canceled with CTRL+X key combination.
 
