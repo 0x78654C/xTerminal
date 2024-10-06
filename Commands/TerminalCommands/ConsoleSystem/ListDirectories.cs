@@ -63,6 +63,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -la : Displays last access date time of files and folders from current directory.
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
+    -t  : Display tree structure of directories.
 
 Commands can be canceled with CTRL+X key combination.
 
@@ -268,6 +269,18 @@ e - Encrypted
                     return;
                 }
 
+                if (arg.ContainsParameter("-t"))
+                {
+                    GlobalVariables.eventKeyFlagX = true;
+                    var currDir = File.ReadAllText(GlobalVariables.currentDirectory);
+                    DisplayTreeDirStructure(currDir);
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.SuccessWriteLine("Command stopped!");
+                    ClearCounters();
+                    return;
+                }
+
+
                 // Save ls output to a file
                 if (arg.ContainsParameter("-o"))
                 {
@@ -306,6 +319,35 @@ e - Encrypted
                 FileSystem.ErrorWriteLine(e.Message);
             }
         }
+
+        private void DisplayTreeDirStructure(string currDir)
+        {
+            try
+            {
+                var directories = Directory.GetDirectories(currDir);
+
+                foreach (var directory in directories)
+                {
+          
+                    if (s_scount == 1)
+                    {
+                        s_separator += "-";
+                        FileSystem.SuccessWriteLine($"|{s_separator} {directory}");
+                    }
+                    else
+                    {
+                        FileSystem.SuccessWriteLine($"| {directory}");
+                    }
+                    DisplayTreeDirStructure(directory);
+                }
+                Console.WriteLine("---------------------------------------------");
+            }
+            catch
+            {
+                // Ignore if no access.
+            }
+        }
+
 
         /// <summary>
         /// Get duplicates files based on MD5 checksuma and file size.
