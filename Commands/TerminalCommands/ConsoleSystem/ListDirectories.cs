@@ -1,5 +1,6 @@
 ﻿using Core;
 using Core.SystemTools;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,6 +37,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
+        private static string s_tree;
         private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la" };
         private static string s_Header = "";
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
@@ -65,7 +67,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -la : Displays last access date time of files and folders from current directory.
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-    -t  : Display tree structure of directories.
+    -t  : Display tree structure of directories. Use with param -o for store in a file: Ex.: ls -t -o <file_name>
 
 Commands can be canceled with CTRL+X key combination.
 
@@ -276,6 +278,15 @@ e - Encrypted
                     GlobalVariables.eventKeyFlagX = true;
                     var currDir = File.ReadAllText(GlobalVariables.currentDirectory);
                     DisplayTreeDirStructure(currDir);
+                    if (arg.ContainsParameter("-o"))
+                    {
+                        var fileName = args.SplitByText("-o", 1).Trim();
+                        FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(fileName, currDir, s_tree));
+                        s_tree = "";
+                    }
+                    else
+                        FileSystem.SuccessWriteLine(s_tree);
+                    s_tree = "";
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                     ClearCounters();
@@ -344,14 +355,14 @@ e - Encrypted
                         s_sm = countDirsMain - sman;
                         var separator1 = SeparatorIncrement(s_sm+(countDirs-1));
                         if (sman == s_countDirLen + 1)
-                            FileSystem.SuccessWriteLine($"{separator}|_ {dirInfo.Name}");
+                            s_tree+=$"{separator}|_ {dirInfo.Name}\n";
                         else
                         {
-                            FileSystem.SuccessWriteLine($"{separator}|{separator1}|_ {dirInfo.Name}");
+                            s_tree += $"{separator}|{separator1}|_ {dirInfo.Name}\n";
                         }
                     }
                     else
-                        FileSystem.SuccessWriteLine($"{directory}");
+                        s_tree += $"{directory}\n";
                     DisplayTreeDirStructure(directory);
                 }
             }
