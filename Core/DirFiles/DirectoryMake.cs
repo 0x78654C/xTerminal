@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 
 namespace Core.DirFiles
 {
@@ -16,14 +11,13 @@ namespace Core.DirFiles
         /// Current Diretory location.
         /// </summary>
         private string CurrentDir { get; set; }
-        private string SubDriDelimiter = "";
         public DirectoryMake(string currentDirectory) {
 
             CurrentDir = currentDirectory;
         }
 
         /// <summary>
-        /// Create directory/directories.
+        /// Create directory/directories and subdirectories.
         ///  dir1;dir2{sdir1,sdir2};dir3
         /// </summary>
         public void Create(string pathDir)
@@ -32,7 +26,6 @@ namespace Core.DirFiles
             {
                 var splitPath = pathDir.Split(';');
                 var listDirs = new List<string>();
-                SubDriDelimiter += "-";
                 foreach (var dir in splitPath)
                 {
                     if (dir.Contains("{"))
@@ -47,7 +40,7 @@ namespace Core.DirFiles
                             var pathSubWithRoot = $"{pathRoot}\\{dirSub}"; 
                             var pathSub = FileSystem.SanitizePath(pathSubWithRoot, CurrentDir);
                             Directory.CreateDirectory(pathSub);
-                            listDirs.Add($"|{SubDriDelimiter} {pathSub}");
+                            listDirs.Add($"|- {pathSub}");
                         }
                     }
                     else
