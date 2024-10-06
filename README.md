@@ -250,7 +250,11 @@ This is the full list of commands that can be used in xTerminal:
                    -con : Concatenate text files to a single file.
                           Example: cat -con file1;file2;file3 -o fileOut
     mkdir     -- It creates a directory in the current place.
+                 mkdir <dir_name>                      : Create one directory.
+                 mkdir <dir_name1;dir_name2;dir_name3> : Create multiple directories.
     mkfile    -- It creates a file in the current place.
+                 mkfile <file_name>                        : Create one file.
+                 mkfile <file_name1;file_name2;file_name3> : Create multiple files.
     fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
                    -h  : displays this message
                    -ca <destination_directory> : copy all files from current directory in a specific directory
