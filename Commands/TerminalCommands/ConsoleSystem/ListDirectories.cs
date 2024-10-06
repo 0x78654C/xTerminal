@@ -27,6 +27,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countFilesText = 0;
         private static int s_countDirectories = 0;
         private static int s_countDirectoriesText = 0;
+        private static int s_countDirLen = 0;
         private Stopwatch s_stopWatch;
         private TimeSpan s_timeSpan;
         private static List<string> s_listFiles = new List<string>();
@@ -85,7 +86,7 @@ e - Encrypted
                 // Set directory, to be used in other functions
                 s_currentDirectory =
                                 File.ReadAllText(GlobalVariables.currentDirectory);
-
+                s_countDirLen = s_currentDirectory.Split('\\').Count()-1;
                 string[] arg = args.Split(' ');
                 GlobalVariables.eventCancelKey = false;
 
@@ -328,19 +329,18 @@ e - Encrypted
 
                 foreach (var directory in directories)
                 {
-          
-                    if (s_scount == 1)
+                    
+                    var countDirs = directory.Split("\\").Count() - s_countDirLen;
+                    if (countDirs > 1)
                     {
-                        s_separator += "-";
-                        FileSystem.SuccessWriteLine($"|{s_separator} {directory}");
+                        var dirInfo = new DirectoryInfo(directory);
+                        var separator = SeparatorIncrement(countDirs);
+                        FileSystem.SuccessWriteLine($"{separator} |_ {dirInfo.Name}");
                     }
                     else
-                    {
-                        FileSystem.SuccessWriteLine($"| {directory}");
-                    }
+                        FileSystem.SuccessWriteLine($"{directory}");
                     DisplayTreeDirStructure(directory);
                 }
-                Console.WriteLine("---------------------------------------------");
             }
             catch
             {
@@ -348,6 +348,14 @@ e - Encrypted
             }
         }
 
+
+        private string SeparatorIncrement(int count)
+        {
+            var sep = "";
+            for (int i = 0; i < count; i++)
+                sep += "  ";
+            return sep;
+        }
 
         /// <summary>
         /// Get duplicates files based on MD5 checksuma and file size.
@@ -494,7 +502,7 @@ e - Encrypted
             dirList += string.Join(Environment.NewLine, s_listDirs);
             string fileList = Environment.NewLine + "-------Files-------" + Environment.NewLine;
             fileList += string.Join(Environment.NewLine, s_listFiles);
-            string finalList =s_Header + dirList + fileList;
+            string finalList = s_Header + dirList + fileList;
             FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
             s_listDirs.Clear();
             s_listFiles.Clear();
@@ -581,7 +589,7 @@ e - Encrypted
             else
             {
                 var isPipe = GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0;
-                    if (isCreationTime)
+                if (isCreationTime)
                     SetHeader(TypeHeader.CreationTime);
                 else if (isLastAccessTime)
                     SetHeader(TypeHeader.LastAccess);
@@ -852,7 +860,7 @@ Attributes          Owner               {typeHead}{spacesSize}Size{spacesFile}Di
 ";
             if (isSaveToFile)
             {
-                s_Header = header+"\n";
+                s_Header = header + "\n";
             }
             else
                 Console.WriteLine(header);
