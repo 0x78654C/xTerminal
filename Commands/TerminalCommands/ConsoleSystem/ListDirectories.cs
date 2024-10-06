@@ -351,11 +351,11 @@ e - Encrypted
                     if (countDirs > 1)
                     {
                         var dirInfo = new DirectoryInfo(directory);
-                        var separator = SeparatorIncrement(s_countDirLen-1);
+                        var separator = SeparatorIncrement(s_countDirLen - 1);
                         s_sm = countDirsMain - sman;
-                        var separator1 = SeparatorIncrement(s_sm+(countDirs-1));
+                        var separator1 = SeparatorIncrement(s_sm + (countDirs - 1));
                         if (sman == s_countDirLen + 1)
-                            s_tree+=$"{separator}|_ {dirInfo.Name}\n";
+                            s_tree += $"{separator}|_ {dirInfo.Name}\n";
                         else
                             s_tree += $"{separator}|{separator1}|_ {dirInfo.Name}\n";
                     }
