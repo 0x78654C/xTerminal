@@ -357,9 +357,7 @@ e - Encrypted
                         if (sman == s_countDirLen + 1)
                             s_tree+=$"{separator}|_ {dirInfo.Name}\n";
                         else
-                        {
                             s_tree += $"{separator}|{separator1}|_ {dirInfo.Name}\n";
-                        }
                     }
                     else
                         s_tree += $"{directory}\n";
