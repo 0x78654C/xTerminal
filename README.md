@@ -63,6 +63,7 @@ This is the full list of commands that can be used in xTerminal:
                    -la : Displays last access date time of files and folders from current directory.
                    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
+                   -t  : Display tree structure of directories. Use with param -o for store in a file: Ex.: ls -t -o <file_name>
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.
