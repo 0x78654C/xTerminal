@@ -321,21 +321,27 @@ e - Encrypted
             }
         }
 
+        /// <summary>
+        /// Display structure dirs.
+        /// </summary>
+        /// <param name="currDir"></param>
         private void DisplayTreeDirStructure(string currDir)
         {
             try
             {
                 var directories = Directory.GetDirectories(currDir);
-
+                var sman = 0;
                 foreach (var directory in directories)
                 {
                     
                     var countDirs = directory.Split("\\").Count() - s_countDirLen;
+                    sman = directory.Split("\\").Count();
                     if (countDirs > 1)
                     {
                         var dirInfo = new DirectoryInfo(directory);
                         var separator = SeparatorIncrement(countDirs);
-                        FileSystem.SuccessWriteLine($"{separator} |_ {dirInfo.Name}");
+                        var barSep = SeparatorIncrement((countDirs - sman)+s_countDirLen);
+                        FileSystem.SuccessWriteLine($"{separator}|_ {dirInfo.Name}");
                     }
                     else
                         FileSystem.SuccessWriteLine($"{directory}");
@@ -344,7 +350,7 @@ e - Encrypted
             }
             catch
             {
-                // Ignore if no access.
+                // Ignore if no access. 
             }
         }
 
