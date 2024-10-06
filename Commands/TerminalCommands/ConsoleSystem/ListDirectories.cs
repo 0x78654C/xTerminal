@@ -28,6 +28,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countDirectories = 0;
         private static int s_countDirectoriesText = 0;
         private static int s_countDirLen = 0;
+        private static int s_sm = 0;
         private Stopwatch s_stopWatch;
         private TimeSpan s_timeSpan;
         private static List<string> s_listFiles = new List<string>();
@@ -86,7 +87,7 @@ e - Encrypted
                 // Set directory, to be used in other functions
                 s_currentDirectory =
                                 File.ReadAllText(GlobalVariables.currentDirectory);
-                s_countDirLen = s_currentDirectory.Split('\\').Count()-1;
+                s_countDirLen = s_currentDirectory.Split('\\').Count() - 1;
                 string[] arg = args.Split(' ');
                 GlobalVariables.eventCancelKey = false;
 
@@ -325,23 +326,29 @@ e - Encrypted
         /// Display structure dirs.
         /// </summary>
         /// <param name="currDir"></param>
+
         private void DisplayTreeDirStructure(string currDir)
         {
             try
             {
                 var directories = Directory.GetDirectories(currDir);
-                var sman = 0;
+                var sman = currDir.Split("\\").Count();
                 foreach (var directory in directories)
                 {
-                    
                     var countDirs = directory.Split("\\").Count() - s_countDirLen;
-                    sman = directory.Split("\\").Count();
+                    var countDirsMain = directory.Split("\\").Count();
                     if (countDirs > 1)
                     {
                         var dirInfo = new DirectoryInfo(directory);
-                        var separator = SeparatorIncrement(countDirs);
-                        var barSep = SeparatorIncrement((countDirs - sman)+s_countDirLen);
-                        FileSystem.SuccessWriteLine($"{separator}|_ {dirInfo.Name}");
+                        var separator = SeparatorIncrement(s_countDirLen-1);
+                        s_sm = countDirsMain - sman;
+                        var separator1 = SeparatorIncrement(s_sm+(countDirs-1));
+                        if (sman == s_countDirLen + 1)
+                            FileSystem.SuccessWriteLine($"{separator}|_ {dirInfo.Name}");
+                        else
+                        {
+                            FileSystem.SuccessWriteLine($"{separator}|{separator1}|_ {dirInfo.Name}");
+                        }
                     }
                     else
                         FileSystem.SuccessWriteLine($"{directory}");
