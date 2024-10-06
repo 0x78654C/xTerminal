@@ -337,39 +337,26 @@ e - Encrypted
         /// Display structure dirs.
         /// </summary>
         /// <param name="currDir"></param>
-
-        private void DisplayTreeDirStructure(string currDir)
+        private void DisplayTreeDirStructure(string currDir, string indent = "", bool isLast = true)
         {
             try
             {
                 var directories = Directory.GetDirectories(currDir);
-                var sman = currDir.Split("\\").Count();
-                foreach (var directory in directories)
+                var dirInfo = new DirectoryInfo(currDir);
+                s_tree += indent + (isLast ? "└─ " : "├─ ") + dirInfo.Name + "\n";
+                indent += isLast ? "   " : "│  ";
+                for (int i = 0; i < directories.Length; i++)
                 {
-                    var countDirs = directory.Split("\\").Count() - s_countDirLen;
-                    var countDirsMain = directory.Split("\\").Count();
-                    if (countDirs > 1)
-                    {
-                        var dirInfo = new DirectoryInfo(directory);
-                        var separator = SeparatorIncrement(s_countDirLen - 1);
-                        s_sm = countDirsMain - sman;
-                        var separator1 = SeparatorIncrement(s_sm + (countDirs - 1));
-                        if (sman == s_countDirLen + 1)
-                            s_tree += $"{separator}|_ {dirInfo.Name}\n";
-                        else
-                            s_tree += $"{separator}|{separator1}|_ {dirInfo.Name}\n";
-                    }
-                    else
-                        s_tree += $"{directory}\n";
-                    DisplayTreeDirStructure(directory);
+                    var directory = directories[i];
+                    bool isLastDirectory = (i == directories.Length - 1);
+                    DisplayTreeDirStructure(directory, indent, isLastDirectory);
                 }
             }
             catch
             {
-                // Ignore if no access. 
+                // Ignore if no access or any exceptions.
             }
         }
-
 
         private string SeparatorIncrement(int count)
         {
