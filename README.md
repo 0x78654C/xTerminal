@@ -63,6 +63,7 @@ This is the full list of commands that can be used in xTerminal:
                    -la : Displays last access date time of files and folders from current directory.
                    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
                    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
+                   -t  : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.
@@ -250,7 +251,14 @@ This is the full list of commands that can be used in xTerminal:
                    -con : Concatenate text files to a single file.
                           Example: cat -con file1;file2;file3 -o fileOut
     mkdir     -- It creates a directory in the current place.
+                 mkdir dir_name                        : Create one directory.
+                 mkdir dir_name1;dir_name2;dir_name3   : Create multiple directories.
+                 mkdir new;new2{snew1,snew3{dnew1,dnew3}};new3{rnew1{tne1,tne2},rnew2} : Create directories with nested subdirectories.
+                 Root directories are splitted with ';'
+                 Sub directoriers must be between '{' '}' and splited by ','
     mkfile    -- It creates a file in the current place.
+                 mkfile <file_name>                        : Create one file.
+                 mkfile <file_name1;file_name2;file_name3> : Create multiple files.
     fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
                    -h  : displays this message
                    -ca <destination_directory> : copy all files from current directory in a specific directory
@@ -269,6 +277,8 @@ This is the full list of commands that can be used in xTerminal:
                    -a  : Deletes all files and directories in current directory. 
                    -af : Deletes all files in current directory. 
                    -ad : Deletes all directories in current directory. 
+                 Example1: del <dir_path>    
+                 Example2: del <dir_path1;dir_path2;dir_path3>    
     cp        -- Check file/folder permissions.
     md5       -- Checks the md5 checksum of a file. Use -h for additional parameters.
                      md5 <file_name> : Display the MD5 CheckSUM of a file.

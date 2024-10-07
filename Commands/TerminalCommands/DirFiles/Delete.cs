@@ -15,6 +15,9 @@ namespace Commands.TerminalCommands.DirFiles
     -a  : Deletes all files and directories in the current directory. 
     -af : Deletes all files in the current directory. 
     -ad : Deletes all directories in the current directory. 
+
+Example1: del <dir_path>    
+Example2: del <dir_path1;dir_path2;dir_path3>    
 ";
 
         public void Execute(string args)
@@ -50,11 +53,26 @@ namespace Commands.TerminalCommands.DirFiles
             else
             {
                 args = args.Replace("del ", "");
-                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                    args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
+
+
+                // Multi dir delete
+                if (args.Contains(";"))
+                {
+                    var dirs = args.Split(';');
+                    foreach (var dir in dirs)
+                    {
+                        var sanitizedPath = FileSystem.SanitizePath(dir, _currentLocation);
+                        DeleteFile(sanitizedPath);
+                    }
+                }
                 else
-                    args = FileSystem.SanitizePath(args, _currentLocation);
-                DeleteFile(args);
+                {
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
+                    else
+                        args = FileSystem.SanitizePath(args, _currentLocation);
+                    DeleteFile(args);
+                }
             }
         }
 

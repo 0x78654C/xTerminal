@@ -27,6 +27,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countFilesText = 0;
         private static int s_countDirectories = 0;
         private static int s_countDirectoriesText = 0;
+        private static int s_countDirLen = 0;
+        private static int s_sm = 0;
         private Stopwatch s_stopWatch;
         private TimeSpan s_timeSpan;
         private static List<string> s_listFiles = new List<string>();
@@ -34,6 +36,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listDuplicateFiles = new List<string>();
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
+        private static string s_tree;
         private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la" };
         private static string s_Header = "";
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
@@ -63,6 +66,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -la : Displays last access date time of files and folders from current directory.
     -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
+    -t  : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
 
 Commands can be canceled with CTRL+X key combination.
 
@@ -84,7 +88,7 @@ e - Encrypted
                 // Set directory, to be used in other functions
                 s_currentDirectory =
                                 File.ReadAllText(GlobalVariables.currentDirectory);
-
+                s_countDirLen = s_currentDirectory.Split('\\').Count() - 1;
                 string[] arg = args.Split(' ');
                 GlobalVariables.eventCancelKey = false;
 
@@ -268,6 +272,27 @@ e - Encrypted
                     return;
                 }
 
+                if (arg.ContainsParameter("-t"))
+                {
+                    GlobalVariables.eventKeyFlagX = true;
+                    var currDir = File.ReadAllText(GlobalVariables.currentDirectory);
+                    DisplayTreeDirStructure(currDir);
+                    if (arg.ContainsParameter("-o"))
+                    {
+                        var fileName = args.SplitByText("-o", 1).Trim();
+                        FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(fileName, currDir, s_tree));
+                        s_tree = "";
+                    }
+                    else
+                        FileSystem.SuccessWriteLine(s_tree);
+                    s_tree = "";
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.SuccessWriteLine("Command stopped!");
+                    ClearCounters();
+                    return;
+                }
+
+
                 // Save ls output to a file
                 if (arg.ContainsParameter("-o"))
                 {
@@ -305,6 +330,39 @@ e - Encrypted
                 }
                 FileSystem.ErrorWriteLine(e.Message);
             }
+        }
+
+        /// <summary>
+        /// Display structure dirs.
+        /// </summary>
+        /// <param name="currDir"></param>
+        private void DisplayTreeDirStructure(string currDir, string indent = "", bool isLast = true)
+        {
+            try
+            {
+                var directories = Directory.GetDirectories(currDir);
+                var dirInfo = new DirectoryInfo(currDir);
+                s_tree += indent + (isLast ? "└─ " : "├─ ") + dirInfo.Name + "\n";
+                indent += isLast ? "   " : "│  ";
+                for (int i = 0; i < directories.Length; i++)
+                {
+                    var directory = directories[i];
+                    bool isLastDirectory = (i == directories.Length - 1);
+                    DisplayTreeDirStructure(directory, indent, isLastDirectory);
+                }
+            }
+            catch
+            {
+                // Ignore if no access or any exceptions.
+            }
+        }
+
+        private string SeparatorIncrement(int count)
+        {
+            var sep = "";
+            for (int i = 0; i < count; i++)
+                sep += "  ";
+            return sep;
         }
 
         /// <summary>
@@ -452,7 +510,7 @@ e - Encrypted
             dirList += string.Join(Environment.NewLine, s_listDirs);
             string fileList = Environment.NewLine + "-------Files-------" + Environment.NewLine;
             fileList += string.Join(Environment.NewLine, s_listFiles);
-            string finalList =s_Header + dirList + fileList;
+            string finalList = s_Header + dirList + fileList;
             FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(path, s_currentDirectory, finalList));
             s_listDirs.Clear();
             s_listFiles.Clear();
@@ -539,7 +597,7 @@ e - Encrypted
             else
             {
                 var isPipe = GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0;
-                    if (isCreationTime)
+                if (isCreationTime)
                     SetHeader(TypeHeader.CreationTime);
                 else if (isLastAccessTime)
                     SetHeader(TypeHeader.LastAccess);
@@ -810,7 +868,7 @@ Attributes          Owner               {typeHead}{spacesSize}Size{spacesFile}Di
 ";
             if (isSaveToFile)
             {
-                s_Header = header+"\n";
+                s_Header = header + "\n";
             }
             else
                 Console.WriteLine(header);
