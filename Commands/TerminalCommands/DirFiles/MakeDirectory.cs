@@ -13,7 +13,7 @@ namespace Commands.TerminalCommands.DirFiles
         private string s_helpMessage = @"Usage of mkdir command:
     mkdir dir_name                        : Create one directory.
     mkdir dir_name1;dir_name2;dir_name3   : Create multiple directories.
-    mkdir new;new2{snew1,snew3{dnew1,dnew3}};new3{rnew1{tne1,tne2},rnew2} : Create directories with subdirectories.
+    mkdir new;new2{snew1,snew3{dnew1,dnew3}};new3{rnew1{tne1,tne2},rnew2} : Create directories with nested subdirectories.
 
 Root directories are splitted with ';'
 Sub directoriers must be between '{' '}' and splited by ','
