@@ -121,7 +121,7 @@ namespace Commands.TerminalCommands.DirFiles
                 if (arg.Contains("-e"))
                 {   
                     var argE = arg.SplitByText("-e", 1).Trim();
-                    var procesedInput = FileSystem.ConvertUnicodeEscapes(argE);
+                    var procesedInput = GlobalVariables.isPipeCommand? FileSystem.ConvertUnicodeEscapes(GlobalVariables.pipeCmdOutput) : FileSystem.ConvertUnicodeEscapes(argE);
                     FileSystem.SuccessWriteLine(procesedInput);
                     return;
                 }
