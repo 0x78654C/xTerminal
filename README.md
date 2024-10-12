@@ -507,7 +507,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![image](https://github.com/user-attachments/assets/b5dfa44a-2266-4dbf-81a3-cdc0ddfe005f)
+![image](https://github.com/user-attachments/assets/4a8174a8-3e67-4b5c-a848-4ccbb20baa5b)
 
 
 Pipe commands cand be added even to alias commands.
