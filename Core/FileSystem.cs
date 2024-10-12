@@ -1,10 +1,8 @@
 ﻿using Core.SystemTools;
-using Microsoft.VisualBasic;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
@@ -20,6 +18,64 @@ namespace Core
         private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };  // Array with types of store data
         private static readonly Regex s_regexNumber = new Regex("[^0-9.-]+"); //regex that matches disallowed text
 
+
+
+        /// <summary>
+        /// Convert unicode escaped chars: \uXXXX
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string ConvertUnicodeEscapes(string input)
+        {
+            return Regex.Replace(input, @"\\u([0-9A-Fa-f]{4})(?:\\u([0-9A-Fa-f]{4}))?", match =>
+            {
+                // Get the first matched hexadecimal value
+                string hexValue1 = match.Groups[1].Value;
+                int unicodeValue1 = Convert.ToInt32(hexValue1, 16);
+
+                if (match.Groups[2].Success)
+                {
+                    // Handle surrogate pairs (when there is a second \uXXXX)
+                    string hexValue2 = match.Groups[2].Value;
+                    int unicodeValue2 = Convert.ToInt32(hexValue2, 16);
+
+                    // Combine the surrogate pair into a single UTF-32 codepoint
+                    if (IsSurrogatePair(unicodeValue1, unicodeValue2))
+                    {
+                        int combinedCodepoint = CombineSurrogatePair(unicodeValue1, unicodeValue2);
+                        return char.ConvertFromUtf32(combinedCodepoint);
+                    }
+                    else
+                    {
+                        // If it's not a valid surrogate pair, return the two separate characters
+                        return char.ConvertFromUtf32(unicodeValue1) + char.ConvertFromUtf32(unicodeValue2);
+                    }
+                }
+                else
+                {
+                    // Single \uXXXX value
+                    return char.ConvertFromUtf32(unicodeValue1);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Check if the given values form a valid surrogate pair
+        /// </summary>
+        /// <param name="highSurrogate"></param>
+        /// <param name="lowSurrogate"></param>
+        /// <returns></returns>
+        private static bool IsSurrogatePair(int highSurrogate, int lowSurrogate) =>
+            highSurrogate >= 0xD800 && highSurrogate <= 0xDBFF && lowSurrogate >= 0xDC00 && lowSurrogate <= 0xDFFF;
+
+        /// <summary>
+        /// // Combine the high and low surrogate into a single UTF-32 codepoint
+        /// </summary>
+        /// <param name="highSurrogate"></param>
+        /// <param name="lowSurrogate"></param>
+        /// <returns></returns>
+        static int CombineSurrogatePair(int highSurrogate, int lowSurrogate) =>
+            0x10000 + ((highSurrogate - 0xD800) * 0x400) + (lowSurrogate - 0xDC00);
         /// <summary>
         /// Get the size of a file.
         /// </summary>
@@ -221,7 +277,7 @@ namespace Core
         {
             ConsoleColor currentForeground = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Error.WriteLine(data);
+            Console.WriteLine(data);
             Console.ForegroundColor = currentForeground;
         }
 
