@@ -126,7 +126,7 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
                 var args = arg.Substring(4, argsLenght).Trim();
-                FileSystem.ErrorWriteLine(args);
+                FileSystem.SuccessWriteLine(args);
             }
             catch (Exception e)
             {
