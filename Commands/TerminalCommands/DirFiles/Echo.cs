@@ -2,6 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
+using System.Text.RegularExpressions;
 using Core;
 
 namespace Commands.TerminalCommands.DirFiles
@@ -58,6 +60,7 @@ namespace Commands.TerminalCommands.DirFiles
                     File.WriteAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
                         FileSystem.SuccessWriteLine($"Data saved in {fileOutput}");
+                    return;
                 }
 
                 // Append data to file.
@@ -79,6 +82,7 @@ namespace Commands.TerminalCommands.DirFiles
                     File.AppendAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
                         FileSystem.SuccessWriteLine($"Data added to {fileOutput}");
+                    return;
                 }
 
                 // Concatenate files
@@ -110,6 +114,16 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     var store = FileSystem.SaveFileOutput(path, _currentLocation, outputData);
                     FileSystem.SuccessWriteLine(store);
+                    return;
+                }
+
+                if (arg.Contains("-e"))
+                {
+                    int argsLenght = arg.Length - 4;
+                    var args = arg.SplitByText("-e", 1).Trim();
+                    var procesedInput = FileSystem.ConvertUnicodeEscapes(args);
+                    FileSystem.SuccessWriteLine(procesedInput);
+                    return;
                 }
             }
             catch (Exception e)
