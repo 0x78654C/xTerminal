@@ -405,6 +405,8 @@ This is the full list of commands that can be used in xTerminal:
                            Example2: ui -cd :e -- enable display current working directory in console.
                            Example3: ui -cd :d -- disable display current working directory in console.
                     -r  : Reset console foreground and background color to default.
+                    -p  : Change color of success output data. Default is gray.
+                           Exanmple: ui -p red
  
     -------------------- Password Manager -------------------
     pwm       -- A simple password manager to store locally the authentication data encrypted for 
