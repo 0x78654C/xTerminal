@@ -29,6 +29,8 @@ namespace Commands.TerminalCommands.UI
         Example2: ui -cd :e -- enable display current working directory in console.
         Example3: ui -cd :d -- disable display current working directory in console.
  -r  : Reset console foreground and background color to default.
+ -p  : Change color of success output data. Default is gray.
+        Exanmple: ui -p red
 ";
         public string Name => "ui";
         public void Execute(string arg)
@@ -96,6 +98,23 @@ namespace Commands.TerminalCommands.UI
                 return;
             }
 
+            // Set success output message color.
+            if (arg.ContainsText("-p"))
+            {
+                var color = arg.SplitByText("-p", 1).Trim();
+                if(string.IsNullOrEmpty(color))
+                    throw new Exception("You need to type a color name. Use -h for more information!");
+
+                var isColorPresent = Enum.TryParse(typeof(ConsoleColor), color, true, out _);
+                if (!isColorPresent)
+                    throw new Exception("This color does not exist. Check -h param for color list.");
+                
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIsc, color);
+                GlobalVariables.successColorOutput = color;
+                FileSystem.SuccessWriteLine($"Output success console color set to: {color}");
+                return;
+            }
+
             // Display help message.
             if (arg == $"{Name} -h")
             {
@@ -147,7 +166,7 @@ namespace Commands.TerminalCommands.UI
                         RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, isCDvisable.ToString());
                         return;
                     }
-           
+
                     int indexColor = _colors.FindIndex(c => c == color.ToLower());
                     string outColor = _colors[indexColor];
                     colorSetting = $"{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.UserInfo)}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.Indicator)}|{outColor}";
