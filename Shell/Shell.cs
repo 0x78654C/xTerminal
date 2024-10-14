@@ -382,7 +382,7 @@ namespace Shell
                     else if (s_input == "exit")
                     {
                         FileSystem.SuccessWriteLine("xTerminal shutting down...");
-                        return;
+                        Environment.Exit(0);
                     }
                     else if (s_input == "lock")
                     {
