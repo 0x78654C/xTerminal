@@ -268,15 +268,16 @@ namespace Core
             Console.ForegroundColor = currentForeground;
         }
 
-
         /// <summary>
-        /// Write warning message in yellow.
+        /// Write success message.
         /// </summary>
         /// <param name="data"></param>
+        /// <param name="color"></param>
         public static void SuccessWriteLine(object data)
         {
+            var consoleC = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), GlobalVariables.successColorOutput, true);
             ConsoleColor currentForeground = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor =consoleC;
             Console.WriteLine(data);
             Console.ForegroundColor = currentForeground;
         }
