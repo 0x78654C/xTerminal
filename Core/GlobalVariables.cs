@@ -18,6 +18,7 @@ namespace Core
         public static string regCurrentEitor = "CurrentEditor";
         public static string regUI = "UI";
         public static string regUIcd = "UICD";
+        public static string regUIsc = "UISC";
         public static string regCportTimeOut = "cportTimeOut";
         public static string regOpenAI_APIKey = "OpenAI_APIKey";
         public static string regHistoryLimitSize = "historyLimitSize";
@@ -49,5 +50,6 @@ namespace Core
         public static int pipeCmdCount { get; set; } = 0;
         public static int pipeCmdCountTemp { get; set; } = 0;
         public static int fileHexLength { get; set; } = 0;
+        public static string successColorOutput = "Gray";
     }
 }

@@ -303,9 +303,15 @@ This is the full list of commands that can be used in xTerminal:
                             Example 1: locate -eq <text>
                             Example 2: locate -eq <text> -o <save_to_file>
     echo      -- Write/append data to a file.
-                 Example 1: echo hello world > path_to_file (Write data to file.)
-                 Example 2: echo hello world >> path_to_file (Append data to file.)
-                 Example 3: echo -con file1;file2 -o file3 (Concatenate data to file.)
+                     echo <text> :  Displays in console the <text> data.
+                     >   : Write data to a file.
+                           Example: echo hello world > path_to_file
+                     >>  : Append data to a file. 
+                           Example: echo hello world >> path_to_file
+                    -con : Concatenate files data to a single file.
+                           Example: echo -con file1;file2 -o file3
+                    -e   : Displays text in console including Unicode escape sequances.
+                           Example: echo -e <text> 
     diff      -- Outputs the difference between two files.
                  Example 1: diff first_file_name;second_file_name                               : Display the difference from second file in comparison to first file.
                  Example 2: diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
@@ -399,6 +405,8 @@ This is the full list of commands that can be used in xTerminal:
                            Example2: ui -cd :e -- enable display current working directory in console.
                            Example3: ui -cd :d -- disable display current working directory in console.
                     -r  : Reset console foreground and background color to default.
+                    -p  : Change color of success output data. Default is gray.
+                           Exanmple: ui -p red
  
     -------------------- Password Manager -------------------
     pwm       -- A simple password manager to store locally the authentication data encrypted for 
@@ -501,8 +509,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![image](https://github.com/user-attachments/assets/841bb21c-821f-49ba-a7d5-95737b204884)
-
+![image](https://github.com/user-attachments/assets/9ff3120e-66c1-49f0-8d33-0e6569857d9d)
 
 
 Pipe commands cand be added even to alias commands.

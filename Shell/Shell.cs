@@ -30,6 +30,7 @@ namespace Shell
         private static string s_addonDir = GlobalVariables.addonDirectory;
         private static string s_regUI = "";
         private static string s_regUIcd = "";
+        private static string s_regUIsc = "";
         private static string s_indicator = "$";
         private static string s_indicatorColor = "white";
         private static string s_userColor = "green";
@@ -97,12 +98,20 @@ namespace Shell
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, @"green;1|white;$|cyan");
             }
 
-            // Reading UI settings.
+            // Reading UI CD settings.
             s_regUIcd = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUIcd);
             if (s_regUIcd == "")
             {
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, @"True");
                 s_regUIcd = "True";
+            }
+
+            // Reading UI success color settings.
+            GlobalVariables.successColorOutput = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regUIsc);
+            if (GlobalVariables.successColorOutput == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIsc, "Gray");
+                GlobalVariables.successColorOutput = "Gray";
             }
 
             // Reading history limit size.
@@ -373,7 +382,7 @@ namespace Shell
                     else if (s_input == "exit")
                     {
                         FileSystem.SuccessWriteLine("xTerminal shutting down...");
-                        return;
+                        Environment.Exit(0);
                     }
                     else if (s_input == "lock")
                     {

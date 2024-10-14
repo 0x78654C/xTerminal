@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Runtime.Versioning;
 using Core;
 
@@ -13,12 +12,15 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "echo";
         private string _currentLocation;
         private string _helpMessage = @"Usage of echo command:
+    echo <text> :  Displays in console the <text> data.
     >   : Write data to a file.
           Example: echo hello world > path_to_file
     >>  : Append data to a file. 
           Example: echo hello world >> path_to_file
     -con: Concatenate files data to a single file.
           Example: echo -con file1;file2 -o file3
+    -e  : Displays text in console including Unicode escape sequances.
+          Example: echo -e <text>  
 ";
 
         public void Execute(string arg)
@@ -38,6 +40,7 @@ namespace Commands.TerminalCommands.DirFiles
                     Console.WriteLine(_helpMessage);
                     return;
                 }
+                int argsLenght = arg.Length - 4;
 
                 // Save data to file.
                 if (arg.Contains(" > "))
@@ -58,6 +61,7 @@ namespace Commands.TerminalCommands.DirFiles
                     File.WriteAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
                         FileSystem.SuccessWriteLine($"Data saved in {fileOutput}");
+                    return;
                 }
 
                 // Append data to file.
@@ -79,6 +83,7 @@ namespace Commands.TerminalCommands.DirFiles
                     File.AppendAllText(fileOutput, inputData);
                     if (File.Exists(fileOutput))
                         FileSystem.SuccessWriteLine($"Data added to {fileOutput}");
+                    return;
                 }
 
                 // Concatenate files
@@ -110,7 +115,18 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     var store = FileSystem.SaveFileOutput(path, _currentLocation, outputData);
                     FileSystem.SuccessWriteLine(store);
+                    return;
                 }
+
+                if (arg.Contains("-e"))
+                {   
+                    var argE = arg.SplitByText("-e", 1).Trim();
+                    var procesedInput = GlobalVariables.isPipeCommand? FileSystem.ConvertUnicodeEscapes(GlobalVariables.pipeCmdOutput) : FileSystem.ConvertUnicodeEscapes(argE);
+                    FileSystem.SuccessWriteLine(procesedInput);
+                    return;
+                }
+                var args = arg.Substring(4, argsLenght).Trim();
+                FileSystem.SuccessWriteLine(args);
             }
             catch (Exception e)
             {
