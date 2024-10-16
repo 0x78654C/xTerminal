@@ -19,6 +19,7 @@ namespace Core.Commands
         {
             try
             {
+                
                 if (consoleInput.StartsWith(".-"))
                     consoleInput = consoleInput.Replace(".-", "./");
 
@@ -28,8 +29,8 @@ namespace Core.Commands
                     GlobalVariables.autoSuggestion = true;
                     GlobalVariables.commandOut = command;
                     Console.WriteLine("\r\n For auto suggestion use: command<SPACE KEY>start characters of files/directories");
-                    SendKeys.Send("{ENTER}");
-                    SendKeys.Send(consoleInput);
+                    SendKeys.SendWait("{ENTER}");
+                    SendKeys.SendWait(consoleInput);
                 }
                 if ((consoleInput.StartsWith(command) && consoleInput.Length > command.Length))
                 {
@@ -40,14 +41,14 @@ namespace Core.Commands
                         SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory);
                         consoleInput = consoleInput.Replace(".-", "./");
                         GlobalVariables.commandOut = command + " " + consoleInput;
-                        SendKeys.Send(command + " " + consoleInput);
+                        SendKeys.SendWait(command + " " + consoleInput);
                         return;
                     }
                     GlobalVariables.autoSuggestion = true;
                     consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                     SystemTools.AutoSuggestion.DirCompletion(consoleInput, currentDirectory);
                     GlobalVariables.commandOut = command + " " + consoleInput;
-                    SendKeys.Send(command + " " + consoleInput);
+                    SendKeys.SendWait(command + " " + consoleInput);
                 }
             }
             catch { }
