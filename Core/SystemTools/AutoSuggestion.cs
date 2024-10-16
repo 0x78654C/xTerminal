@@ -47,7 +47,7 @@ namespace Core.SystemTools
                     }
                 }
             }
-            SendKeys.Send("{ENTER}");
+            SendKeys.SendWait("{ENTER}");
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace Core.SystemTools
                     }
                 }
             }
-            SendKeys.Send("{ENTER}");
+            SendKeys.SendWait("{ENTER}");
         }
 
         
