@@ -43,6 +43,8 @@ namespace Shell
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
         private static string s_aliasFile = GlobalVariables.aliasFile;
         private static bool s_isCDVisible = true;
+        private static List<string> commandHistory = new List<string>();
+        private static int historyIndex = -1;  // Tracks the current position in the history
         //-------------------------------
 
 
@@ -310,33 +312,44 @@ namespace Shell
                         Console.Write("\b \b");
                     }
                 }
+                else if (key.Key == ConsoleKey.UpArrow)
+                {
+                    // Navigate backward in history
+                    if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
+                    {
+                        historyIndex++;
+                        command = commandHistory[commandHistory.Count - 1 - historyIndex];
+
+                        Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
+                        SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                        Console.Write(command);
+                    }
+                }
+                else if (key.Key == ConsoleKey.DownArrow)
+                {
+                    // Navigate forward in history
+                    if (historyIndex > 0)
+                    {
+                        historyIndex--;
+                        command = commandHistory[commandHistory.Count - 1 - historyIndex];
+
+                        Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
+                        SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                        Console.Write(command);
+                    }
+                    else if (historyIndex == 0)
+                    {
+                        historyIndex = -1;
+                        command = string.Empty;
+                        Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
+                        SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                    }
+                }
                 else
                 {
                     command += key.KeyChar;
                     Console.Write(key.KeyChar);
                 }
-            }
-
-            return command;
-        }
-
-
-        static string CompleteCommand(string command)
-        {
-            string currentPath = Directory.GetCurrentDirectory();
-            string directoryPart = Path.GetDirectoryName(command) ?? currentPath;
-            string filePart = Path.GetFileName(command);
-
-            if (string.IsNullOrEmpty(filePart))
-            {
-                filePart = "*";
-            }
-
-            string[] suggestions = Directory.GetFileSystemEntries(directoryPart, filePart + "*");
-
-            if (suggestions.Length > 0)
-            {
-                return Path.Combine(directoryPart, suggestions.First().Substring(directoryPart.Length));
             }
 
             return command;
@@ -466,6 +479,12 @@ namespace Shell
                 //cleaning input
                 s_input = s_input.Trim();
 
+                // Add the command to history only if it's not empty
+                if (!string.IsNullOrWhiteSpace(s_input))
+                {
+                    commandHistory.Add(s_input);
+                    historyIndex = -1; // Reset the history index after executing a command
+                }
 
                 if (File.Exists(s_historyFile))
                 {
