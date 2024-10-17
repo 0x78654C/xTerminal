@@ -31,7 +31,6 @@ namespace Shell
         private static string s_addonDir = GlobalVariables.addonDirectory;
         private static string s_regUI = "";
         private static string s_regUIcd = "";
-        private static string s_regUIsc = "";
         private static string s_indicator = "$";
         private static string s_indicatorColor = "white";
         private static string s_userColor = "green";
@@ -237,6 +236,11 @@ namespace Shell
             }
             catch { return false; }
         }
+
+        /// <summary>
+        /// Read commands from keyborad by keystroke with autosugestions for several commands.
+        /// </summary>
+        /// <returns></returns>
         private static string ReadCommandWithTabCompletion()
         {
             string command = string.Empty;
@@ -244,29 +248,13 @@ namespace Shell
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
-                //s_intercept += key.Key.ToString();
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "d", 2, string.Empty, () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "numpad", 7, string.Empty, () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "oemminus", 8, "-", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "oemplus", 7, "+", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "add", 3, "+", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "substract", 9, "-", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "multiply", 9, "*", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "decimal", 7, ".", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "oemperiod", 9, ".", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "decimal", 7, "-", () => s_ctrlCount = 0);
-                //s_intercept += AutoSuggestion.KeyConvertor(key.Key.ToString(), "oemquestion", 11, "-", () => s_ctrlCount = 0);
-
+                               
                 if (key.Key == ConsoleKey.Backspace && !string.IsNullOrEmpty(s_intercept))
                     s_intercept = s_intercept.Substring(0, s_intercept.Length - 1);
 
                 if (key.Key == ConsoleKey.Spacebar)
                     s_intercept += " ";
-                //if (key.Key == ConsoleKey.Tab)
-                //{
-                //    s_intercept+="";
-                //}
-
+           
                 if (key.Key.ToString().Length == 1)
                 {
                     s_intercept += key.Key.ToString().ToLower();
@@ -347,6 +335,8 @@ namespace Shell
                 }
                 else
                 {
+                    if (key.KeyChar == '\0')
+                        continue;
                     command += key.KeyChar;
                     Console.Write(key.KeyChar);
                 }
