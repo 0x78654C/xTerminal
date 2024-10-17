@@ -266,6 +266,7 @@ namespace Shell
                 {
                     Console.WriteLine(); // Move to the next line
                     s_intercept = "";
+                    GlobalVariables.lengthPS1 = 0;
                     break;
                 }
                 else if (key.Key == ConsoleKey.Tab)
@@ -322,7 +323,8 @@ namespace Shell
                     {
                         historyIndex++;
                         command = commandHistory[commandHistory.Count - 1 - historyIndex];
-
+                        var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
+                        //GlobalVariables.lengthPS1 = GlobalVariables.lengthPS1+ hLength;
                         Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
                         SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
                         Console.Write(command);
@@ -336,7 +338,8 @@ namespace Shell
                     {
                         historyIndex--;
                         command = commandHistory[commandHistory.Count - 1 - historyIndex];
-
+                        var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
+                      //  GlobalVariables.lengthPS1 = GlobalVariables.lengthPS1 + hLength;
                         Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
                         SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
                         Console.Write(command);
@@ -357,7 +360,6 @@ namespace Shell
                     {
                         cursorPosition--;
                         Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor left
-                        GlobalVariables.lengthPS1 = 0;
                     }
                 }
                 else if (key.Key == ConsoleKey.RightArrow)
@@ -366,7 +368,6 @@ namespace Shell
                     {
                         cursorPosition++;
                         Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor right
-                        GlobalVariables.lengthPS1 = 0;
                     }
                 }
                 else
@@ -377,6 +378,7 @@ namespace Shell
                     command = command.Replace("\0", "");
                     Console.Write(key.KeyChar);
                     cursorPosition++;
+                    Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor right
                 }
             }
             GlobalVariables.lengthPS1 = 0;
@@ -639,6 +641,7 @@ namespace Shell
         /// <param name="currentDir"></param>
         private static void SetUser(string accountName, string computerName, string currentLocation, bool currentDir)
         {
+            GlobalVariables.lengthPS1 = 0;
             if (currentDir == false)
             {
                 if (s_userEnabled == 1)
