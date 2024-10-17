@@ -382,8 +382,6 @@ namespace Shell
                 }
                 else
                 {
-                    //if (key.KeyChar == '\0')
-                    //    continue;
                     command += key.KeyChar;
                     command = command.Replace("\0", "");
                     Console.Write(key.KeyChar);
