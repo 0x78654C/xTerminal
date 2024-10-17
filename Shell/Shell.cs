@@ -359,7 +359,7 @@ namespace Shell
                     if (cursorPosition > 0)
                     {
                         cursorPosition--;
-                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor left
+                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); 
                     }
                 }
                 else if (key.Key == ConsoleKey.RightArrow)
@@ -367,8 +367,18 @@ namespace Shell
                     if (cursorPosition < command.Length)
                     {
                         cursorPosition++;
-                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor right
+                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); 
                     }
+                }
+                else if (key.Key == ConsoleKey.Home)
+                {
+                    cursorPosition = 0;
+                    Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
+                }
+                else if (key.Key == ConsoleKey.End)
+                {
+                    cursorPosition = command.Length;
+                    Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
                 }
                 else
                 {
@@ -378,7 +388,7 @@ namespace Shell
                     command = command.Replace("\0", "");
                     Console.Write(key.KeyChar);
                     cursorPosition++;
-                    Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor right
+                    Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
                 }
             }
             GlobalVariables.lengthPS1 = 0;
