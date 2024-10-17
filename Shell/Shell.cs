@@ -11,6 +11,7 @@ using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Shell
 {
@@ -245,16 +246,17 @@ namespace Shell
         {
             string command = string.Empty;
             int tabPressCount = 0;
+            int cursorPosition = 0;
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
-                               
+
                 if (key.Key == ConsoleKey.Backspace && !string.IsNullOrEmpty(s_intercept))
                     s_intercept = s_intercept.Substring(0, s_intercept.Length - 1);
 
                 if (key.Key == ConsoleKey.Spacebar)
                     s_intercept += " ";
-           
+
                 if (key.Key.ToString().Length == 1)
                 {
                     s_intercept += key.Key.ToString().ToLower();
@@ -290,6 +292,7 @@ namespace Shell
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
                         s_intercept = "";
                         tabPressCount = 0;
+                        cursorPosition = command.Length;
                     }
                 }
                 else if (key.Key == ConsoleKey.Backspace)
@@ -297,7 +300,19 @@ namespace Shell
                     if (command.Length > 0)
                     {
                         command = command.Substring(0, command.Length - 1);
+                        cursorPosition--;
                         Console.Write("\b \b");
+                    }
+                }
+                else if (key.Key == ConsoleKey.Delete)
+                {
+                    // Delete the character at the current caret position
+                    if (cursorPosition < command.Length)
+                    {
+                        List<char> x = command.ToList(); // Remove the character at the caret
+                        x.RemoveAt(cursorPosition);
+                        RedrawCommand(x, cursorPosition); // Redraw the command
+                        command = new string(x.ToArray());
                     }
                 }
                 else if (key.Key == ConsoleKey.UpArrow)
@@ -311,6 +326,7 @@ namespace Shell
                         Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
                         SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
                         Console.Write(command);
+                        cursorPosition = command.Length;
                     }
                 }
                 else if (key.Key == ConsoleKey.DownArrow)
@@ -324,6 +340,7 @@ namespace Shell
                         Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
                         SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
                         Console.Write(command);
+                        cursorPosition = command.Length;
                     }
                     else if (historyIndex == 0)
                     {
@@ -331,18 +348,54 @@ namespace Shell
                         command = string.Empty;
                         Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
                         SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                        cursorPosition = 0;
+                    }
+                }
+                else if (key.Key == ConsoleKey.LeftArrow)
+                {
+                    if (cursorPosition > 0)
+                    {
+                        cursorPosition--;
+                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor left
+                        GlobalVariables.lengthPS1 = 0;
+                    }
+                }
+                else if (key.Key == ConsoleKey.RightArrow)
+                {
+                    if (cursorPosition < command.Length)
+                    {
+                        cursorPosition++;
+                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); // Move the cursor right
+                        GlobalVariables.lengthPS1 = 0;
                     }
                 }
                 else
                 {
-                    if (key.KeyChar == '\0')
-                        continue;
+                    //if (key.KeyChar == '\0')
+                    //    continue;
                     command += key.KeyChar;
+                    command = command.Replace("\0", "");
                     Console.Write(key.KeyChar);
+                    cursorPosition++;
                 }
             }
+            GlobalVariables.lengthPS1 = 0;
 
             return command;
+        }
+        // Redraws the entire command and moves the caret to the correct position
+        static void RedrawCommand(List<char> command, int cursorPosition)
+        {
+            // Clear the current input line
+            Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
+            SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+
+            // Write the current command
+            Console.Write(new string(command.ToArray()));
+
+            // Move the cursor back to the current position
+            Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
+            GlobalVariables.lengthPS1 = 0;
         }
 
         /// <summary>
@@ -592,36 +645,52 @@ namespace Shell
                 {
                     if (s_userColor != "green")
                     {
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName}@{computerName}:");
+
+                        var ps = $"{accountName}@{computerName}:";
+                        GlobalVariables.lengthPS1 += ps.Length;
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor),ps);
+
                     }
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName}@{computerName}:");
+                        var ps = $"{accountName}@{computerName}:";
+                        GlobalVariables.lengthPS1 += ps.Length ;
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, ps);
                     }
                 }
 
                 if (s_cdColor != "cyan")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"~");
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), ps);
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, ps);
                 }
                 if (!string.IsNullOrEmpty(s_indicator))
                 {
                     if (s_indicatorColor != "white")
                     {
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
+                        var ps = $" {s_indicator} ";
+                        GlobalVariables.lengthPS1 += ps.Length;
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), ps);
                     }
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
+                        var ps = $" {s_indicator} ";
+                        GlobalVariables.lengthPS1 += ps.Length;
+                        FileSystem.ColorConsoleText(ConsoleColor.White, ps);
                     }
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
+                    var ps = " $ ";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.White, ps);
                 }
                 return;
             }
@@ -629,43 +698,70 @@ namespace Shell
             {
                 if (s_userColor != "green")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName}@{computerName}:");
+                    var ps = $"{accountName}@{computerName}:";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), ps);
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName}@{computerName}:");
+                    var ps = $"{accountName}@{computerName}:";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, ps);
                 }
             }
             if (s_cdColor != "cyan")
             {
                 if (s_isCDVisible)
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"{currentLocation}~");
+                {
+                    var ps = $"{currentLocation}~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), ps);
+                }
                 else
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"~");
+                {
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length ;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), ps);
+                }
             }
             else
             {
                 if (s_isCDVisible)
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{currentLocation}~");
+                {
+                    var ps = $"{currentLocation}~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, ps);
+                }
                 else
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
+                {
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, ps);
+                }
             }
             if (!string.IsNullOrEmpty(s_indicator))
             {
                 if (s_indicatorColor != "white")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
+                    var ps = $" {s_indicator} ";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), ps);
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
+                    var ps = $" {s_indicator} ";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.White, ps);
                 }
             }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
+                var ps = " $ ";
+                GlobalVariables.lengthPS1 += ps.Length;
+                FileSystem.ColorConsoleText(ConsoleColor.White,ps);
             }
         }
+
         private static void UISettingsParse(string settings, string uiCD)
         {
             var parseSettings = settings.Split('|');
