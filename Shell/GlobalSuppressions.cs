@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "RE0001:Regex issue: {0}", Justification = "<Pending>", Scope = "member", Target = "~M:Shell.Shell.KeyDown(System.Windows.Forms.KeyEventArgs)")]
+//[assembly: SuppressMessage("Style", "RE0001:Regex issue: {0}", Justification = "<Pending>", Scope = "member", Target = "~M:Shell.Shell.KeyDown(System.Windows.Forms.KeyEventArgs)")]
