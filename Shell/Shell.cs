@@ -280,24 +280,24 @@ namespace Shell
                     tabPressCount++;
                     if (tabPressCount == 2)
                     {
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cd", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "./", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "mv", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
-                        s_intercept = "";
+                        var c = new string (command.ToArray());
+                        AutoSuggestionCommands.FileDirSuggestion(c, "cd", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "odir", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "ls", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "hex", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "./", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "ccs", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "fcopy", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "mv", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "fmove", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "del", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "del", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "edit", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "cp", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "cp", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "md5", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "sort", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(c, "cat", s_currentDirectory, true);
                         tabPressCount = 0;
                         cursorPosition = command.Count;
                     }
