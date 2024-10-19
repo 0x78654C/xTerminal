@@ -18,6 +18,22 @@ namespace Core
         private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };  // Array with types of store data
         private static readonly Regex s_regexNumber = new Regex("[^0-9.-]+"); //regex that matches disallowed text
 
+        /// <summary>
+        /// Read lines for string and addd to list.
+        /// </summary>
+        /// <param name="listLines"></param>
+        /// <param name="data"></param>
+        public static void ReadStringLine(ref List<string> listLines, string data)
+        {
+            if(string.IsNullOrEmpty(data))
+                return;
+            using (var reader = new StringReader(data)) 
+            {
+                string line;
+                while (null != (line = reader.ReadLine()) )
+                    listLines.Add(line);
+            }
+        }
 
 
         /// <summary>
