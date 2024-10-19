@@ -248,6 +248,9 @@ namespace Shell
             int tabPressCount = 0;
             int cursorPosition = 0;
             List<char> command = new List<char>();
+            commandHistory.Clear();
+            var historyStored = File.ReadAllText(s_historyFile);
+            FileSystem.ReadStringLine(ref commandHistory, historyStored);
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
@@ -301,9 +304,6 @@ namespace Shell
                 {
                     if (command.Count > 0)
                     {
-                        //command = command.Substring(0, command.Length - 1);
-                        //cursorPosition--;
-                        //Console.Write("\b \b");
                         command.RemoveAt(cursorPosition - 1);
                         cursorPosition--;
                         RedrawCommand(command, cursorPosition);
@@ -315,10 +315,6 @@ namespace Shell
                     // Delete the character at the current caret position
                     if (cursorPosition < command.Count)
                     {
-                        //List<char> x = command.ToList(); // Remove the character at the caret
-                        //x.RemoveAt(cursorPosition);
-                        //RedrawCommand(x, cursorPosition); // Redraw the command
-                        //command = new string(x.ToArray());
                         command.RemoveAt(cursorPosition); // Remove the character at the caret
                         RedrawCommand(command, cursorPosition); // Redraw the command
                     }
@@ -327,15 +323,7 @@ namespace Shell
                 {
                     // Navigate backward in history
                     if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
-                    {
-                        //historyIndex++;
-                        //command = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        //var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
-                        ////GlobalVariables.lengthPS1 = GlobalVariables.lengthPS1+ hLength;
-                        //Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-                        //SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
-                        //Console.Write(command);
-                        //cursorPosition = command.Length;
+                    {                       
                         historyIndex++;
                         string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
                         command = new List<char>(historyCommand);
@@ -348,14 +336,6 @@ namespace Shell
                     // Navigate forward in history
                     if (historyIndex > 0)
                     {
-                        //historyIndex--;
-                        //command = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        //var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
-                        //Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-                        //SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
-                        //Console.Write(command);
-                        //cursorPosition = command.Length;
-
                         historyIndex--;
                         string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
                         command = new List<char>(historyCommand);
@@ -364,11 +344,6 @@ namespace Shell
                     }
                     else if (historyIndex == 0)
                     {
-                        //historyIndex = -1;
-                        //command = string.Empty;
-                        //Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-                        //SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
-                        //cursorPosition = 0;
                         historyIndex = -1;
                         command.Clear();
                         cursorPosition = 0;
@@ -403,16 +378,6 @@ namespace Shell
                 }
                 else
                 {
-                    //command += key.KeyChar;
-                    //command = command.Replace("\0", "");
-                    //var x = command.ToList();
-                    //x.Insert(cursorPosition,key.KeyChar);
-                    ////Console.Write(key.KeyChar);
-                    //cursorPosition++;
-                    //RedrawCommand(x,cursorPosition);
-                    //tabPressCount = 0;
-                    ////Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
-                    ///
                     command.Insert(cursorPosition, key.KeyChar);
                     cursorPosition++;
                     RedrawCommand(command, cursorPosition);
@@ -431,6 +396,9 @@ namespace Shell
         /// <param name="cursorPosition"></param>
         static void RedrawCommand(List<char> command, int cursorPosition)
         {
+            // Hide carret.
+            Console.CursorVisible = false;
+
             // Clear the current input line
             Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
             SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
@@ -440,7 +408,9 @@ namespace Shell
 
             // Move the cursor back to the current position
             Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
-           // GlobalVariables.lengthPS1 = cursorPosition + GlobalVariables.lengthPS1;
+
+            // Show carret.
+            Console.CursorVisible = true;
         }
 
         /// <summary>
