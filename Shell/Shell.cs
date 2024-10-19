@@ -244,7 +244,7 @@ namespace Shell
         /// <returns></returns>
         private static string ReadCommandWithTabCompletion()
         {
-           // string command = string.Empty;
+            // string command = string.Empty;
             int tabPressCount = 0;
             int cursorPosition = 0;
             List<char> command = new List<char>();
@@ -278,23 +278,23 @@ namespace Shell
                     tabPressCount++;
                     if (tabPressCount == 2)
                     {
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cd", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "./", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "mv", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cd", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "./", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "mv", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
                         s_intercept = "";
                         tabPressCount = 0;
                         cursorPosition = command.Count;
@@ -323,7 +323,7 @@ namespace Shell
                 {
                     // Navigate backward in history
                     if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
-                    {                       
+                    {
                         historyIndex++;
                         string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
                         command = new List<char>(historyCommand);
@@ -355,7 +355,7 @@ namespace Shell
                     if (cursorPosition > 0)
                     {
                         cursorPosition--;
-                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); 
+                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
                     }
                 }
                 else if (key.Key == ConsoleKey.RightArrow)
@@ -363,7 +363,7 @@ namespace Shell
                     if (cursorPosition < command.Count)
                     {
                         cursorPosition++;
-                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); 
+                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
                     }
                 }
                 else if (key.Key == ConsoleKey.Home)
@@ -664,13 +664,13 @@ namespace Shell
 
                         var ps = $"{accountName}@{computerName}:";
                         GlobalVariables.lengthPS1 += ps.Length;
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor),ps);
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), ps);
 
                     }
                     else
                     {
                         var ps = $"{accountName}@{computerName}:";
-                        GlobalVariables.lengthPS1 += ps.Length ;
+                        GlobalVariables.lengthPS1 += ps.Length;
                         FileSystem.ColorConsoleText(ConsoleColor.Green, ps);
                     }
                 }
@@ -736,7 +736,7 @@ namespace Shell
                 else
                 {
                     var ps = $"~";
-                    GlobalVariables.lengthPS1 += ps.Length ;
+                    GlobalVariables.lengthPS1 += ps.Length;
                     FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), ps);
                 }
             }
@@ -774,7 +774,7 @@ namespace Shell
             {
                 var ps = " $ ";
                 GlobalVariables.lengthPS1 += ps.Length;
-                FileSystem.ColorConsoleText(ConsoleColor.White,ps);
+                FileSystem.ColorConsoleText(ConsoleColor.White, ps);
             }
         }
 
