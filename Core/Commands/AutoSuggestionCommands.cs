@@ -19,7 +19,6 @@ namespace Core.Commands
         {
             try
             {
-                
                 if (consoleInput.StartsWith(".-"))
                     consoleInput = consoleInput.Replace(".-", "./");
 
