@@ -244,9 +244,10 @@ namespace Shell
         /// <returns></returns>
         private static string ReadCommandWithTabCompletion()
         {
-            string command = string.Empty;
+           // string command = string.Empty;
             int tabPressCount = 0;
             int cursorPosition = 0;
+            List<char> command = new List<char>();
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
@@ -293,27 +294,33 @@ namespace Shell
                         Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
                         s_intercept = "";
                         tabPressCount = 0;
-                        cursorPosition = command.Length;
+                        cursorPosition = command.Count;
                     }
                 }
                 else if (key.Key == ConsoleKey.Backspace)
                 {
-                    if (command.Length > 0)
+                    if (command.Count > 0)
                     {
-                        command = command.Substring(0, command.Length - 1);
+                        //command = command.Substring(0, command.Length - 1);
+                        //cursorPosition--;
+                        //Console.Write("\b \b");
+                        command.RemoveAt(cursorPosition - 1);
                         cursorPosition--;
-                        Console.Write("\b \b");
+                        RedrawCommand(command, cursorPosition);
                     }
+                    tabPressCount = 0;
                 }
                 else if (key.Key == ConsoleKey.Delete)
                 {
                     // Delete the character at the current caret position
-                    if (cursorPosition < command.Length)
+                    if (cursorPosition < command.Count)
                     {
-                        List<char> x = command.ToList(); // Remove the character at the caret
-                        x.RemoveAt(cursorPosition);
-                        RedrawCommand(x, cursorPosition); // Redraw the command
-                        command = new string(x.ToArray());
+                        //List<char> x = command.ToList(); // Remove the character at the caret
+                        //x.RemoveAt(cursorPosition);
+                        //RedrawCommand(x, cursorPosition); // Redraw the command
+                        //command = new string(x.ToArray());
+                        command.RemoveAt(cursorPosition); // Remove the character at the caret
+                        RedrawCommand(command, cursorPosition); // Redraw the command
                     }
                 }
                 else if (key.Key == ConsoleKey.UpArrow)
@@ -321,14 +328,19 @@ namespace Shell
                     // Navigate backward in history
                     if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
                     {
+                        //historyIndex++;
+                        //command = commandHistory[commandHistory.Count - 1 - historyIndex];
+                        //var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
+                        ////GlobalVariables.lengthPS1 = GlobalVariables.lengthPS1+ hLength;
+                        //Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
+                        //SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                        //Console.Write(command);
+                        //cursorPosition = command.Length;
                         historyIndex++;
-                        command = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
-                        //GlobalVariables.lengthPS1 = GlobalVariables.lengthPS1+ hLength;
-                        Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-                        SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
-                        Console.Write(command);
-                        cursorPosition = command.Length;
+                        string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
+                        command = new List<char>(historyCommand);
+                        cursorPosition = command.Count;  // Move the caret to the end
+                        RedrawCommand(command, cursorPosition);
                     }
                 }
                 else if (key.Key == ConsoleKey.DownArrow)
@@ -336,22 +348,31 @@ namespace Shell
                     // Navigate forward in history
                     if (historyIndex > 0)
                     {
+                        //historyIndex--;
+                        //command = commandHistory[commandHistory.Count - 1 - historyIndex];
+                        //var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
+                        //Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
+                        //SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                        //Console.Write(command);
+                        //cursorPosition = command.Length;
+
                         historyIndex--;
-                        command = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        var hLength = commandHistory[commandHistory.Count - 1 - historyIndex].Length;
-                      //  GlobalVariables.lengthPS1 = GlobalVariables.lengthPS1 + hLength;
-                        Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-                        SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
-                        Console.Write(command);
-                        cursorPosition = command.Length;
+                        string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
+                        command = new List<char>(historyCommand);
+                        cursorPosition = command.Count;  // Move the caret to the end
+                        RedrawCommand(command, cursorPosition);
                     }
                     else if (historyIndex == 0)
                     {
+                        //historyIndex = -1;
+                        //command = string.Empty;
+                        //Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
+                        //SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                        //cursorPosition = 0;
                         historyIndex = -1;
-                        command = string.Empty;
-                        Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-                        SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+                        command.Clear();
                         cursorPosition = 0;
+                        RedrawCommand(command, cursorPosition);
                     }
                 }
                 else if (key.Key == ConsoleKey.LeftArrow)
@@ -364,7 +385,7 @@ namespace Shell
                 }
                 else if (key.Key == ConsoleKey.RightArrow)
                 {
-                    if (cursorPosition < command.Length)
+                    if (cursorPosition < command.Count)
                     {
                         cursorPosition++;
                         Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop); 
@@ -377,23 +398,37 @@ namespace Shell
                 }
                 else if (key.Key == ConsoleKey.End)
                 {
-                    cursorPosition = command.Length;
+                    cursorPosition = command.Count;
                     Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
                 }
                 else
                 {
-                    command += key.KeyChar;
-                    command = command.Replace("\0", "");
-                    Console.Write(key.KeyChar);
+                    //command += key.KeyChar;
+                    //command = command.Replace("\0", "");
+                    //var x = command.ToList();
+                    //x.Insert(cursorPosition,key.KeyChar);
+                    ////Console.Write(key.KeyChar);
+                    //cursorPosition++;
+                    //RedrawCommand(x,cursorPosition);
+                    //tabPressCount = 0;
+                    ////Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
+                    ///
+                    command.Insert(cursorPosition, key.KeyChar);
                     cursorPosition++;
-                    Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
+                    RedrawCommand(command, cursorPosition);
+                    tabPressCount = 0; // Reset tab press count on other keypress
                 }
             }
             GlobalVariables.lengthPS1 = 0;
-
-            return command;
+            return new string(command.ToArray());
         }
-        // Redraws the entire command and moves the caret to the correct position
+
+
+        /// <summary>
+        /// Redraws the entire command and moves the caret to the correct position.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="cursorPosition"></param>
         static void RedrawCommand(List<char> command, int cursorPosition)
         {
             // Clear the current input line
@@ -405,7 +440,7 @@ namespace Shell
 
             // Move the cursor back to the current position
             Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
-            GlobalVariables.lengthPS1 = 0;
+           // GlobalVariables.lengthPS1 = cursorPosition + GlobalVariables.lengthPS1;
         }
 
         /// <summary>
