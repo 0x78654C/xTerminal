@@ -19,9 +19,6 @@ namespace Core.Commands
         {
             try
             {
-                if (consoleInput.StartsWith(".-"))
-                    consoleInput = consoleInput.Replace(".-", "./");
-
                 int commandLenght = command.Length + 1;
                 if (consoleInput == command)
                 {
@@ -38,7 +35,6 @@ namespace Core.Commands
                         GlobalVariables.autoSuggestion = true;
                         consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                         SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory);
-                        consoleInput = consoleInput.Replace(".-", "./");
                         GlobalVariables.commandOut = command + " " + consoleInput;
                         SendKeys.SendWait(command + " " + consoleInput);
                         return;
