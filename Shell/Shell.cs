@@ -268,9 +268,11 @@ namespace Shell
 
                 if (key.Key == ConsoleKey.Enter)
                 {
+                    Console.CursorVisible = false;
                     Console.WriteLine(); // Move to the next line
                     s_intercept = "";
                     GlobalVariables.lengthPS1 = 0;
+                    Console.CursorVisible = true;
                     break;
                 }
                 else if (key.Key == ConsoleKey.Tab)
