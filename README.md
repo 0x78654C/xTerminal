@@ -28,18 +28,18 @@ A Linux like shell for windows with some extras.
 
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
-cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
+cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, ./ , cp, del, ccs, sort
 
 Example:
  ```
  ~> cd win
  ```
- Double press CTRL key and will suggest you all the directories that starts with the letters 'win' from current location.
+ Double press TAB key and will suggest you all the directories that starts with the letters 'win' from current location.
 
   ```
- ~> start ap
+ ~> ./ ap
  ```
- Double press 'CTRL' key and will suggest you all the files that starts with the letters 'ap' from current location.
+ Double press TAB key and will suggest you all the files that starts with the letters 'ap' from current location.
 
  ## Commands
 This is the full list of commands that can be used in xTerminal:
