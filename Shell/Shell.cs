@@ -237,7 +237,7 @@ namespace Shell
             catch { return false; }
         }
 
-    
+
 
 
         /// <summary>
@@ -297,31 +297,36 @@ namespace Shell
                         {
                             var getCommandStr = string.Join("", command);
                             var getCommand = getCommandStr.Split(' ')[0];
-                            var paramCommand = getCommandStr.SplitByText($"{getCommand} ",1);
+                            var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
+                            Console.CursorVisible = false;
                             command.Clear();
                             foreach (var item in getCommand)
                                 command.Insert(command.Count, item);
                             command.Insert(command.Count, ' ');
                             foreach (var item in outCompletion)
                                 command.Insert(command.Count, item);
-                            Console.CursorVisible = false;
-                            foreach (var paramChar in paramCommand)
+                            Console.SetCursorPosition(getCommandStr.Length + GlobalVariables.lengthPS1, Console.CursorTop);
+                            foreach (var paramChar in getCommandStr)
                                 Console.Write('\b');
-                            Console.Write(outCompletion);
+                            Console.Write(new string(command.ToArray()));
                             Console.CursorVisible = true;
                             cursorPosition = countOut + getCommand.Length + 1;
                         }
-                        cursorPosition = command.Count;
+                        else
+                            cursorPosition = command.Count;
                     }
                 }
                 else if (key.Key == ConsoleKey.Backspace)
                 {
-                    if (command.Count > 0)
+                    try
                     {
-                        command.RemoveAt(cursorPosition - 1);
-                        cursorPosition--;
-                        RedrawCommand(command, cursorPosition);
-                    }
+                        if (command.Count > 0)
+                        {
+                            command.RemoveAt(cursorPosition - 1);
+                            cursorPosition--;
+                            RedrawCommand(command, cursorPosition);
+                        }
+                    }catch { }
                     tabPressCount = 0;
                 }
                 else if (key.Key == ConsoleKey.Delete)
