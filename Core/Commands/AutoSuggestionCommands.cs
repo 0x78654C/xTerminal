@@ -15,7 +15,7 @@ namespace Core.Commands
         /// <param name="command">Command you use.</param>
         /// <param name="currentDirectory">Current directory.</param>
         /// <param name="isFile">If sugestion is for file.</param>
-        public static void FileDirSuggestion(string consoleInput, string command, string currentDirectory, bool isFile)
+        public static void FileDirSuggestion(string consoleInput, string command, string currentDirectory, bool isFile, ref string addedCompletion)
         {
             try
             {
@@ -32,18 +32,24 @@ namespace Core.Commands
                 {
                     if (isFile)
                     {
-                        GlobalVariables.autoSuggestion = true;
                         consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
-                        SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory);
-                        GlobalVariables.commandOut = command + " " + consoleInput;
-                        SendKeys.SendWait(command + " " + consoleInput);
+                        SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory, ref addedCompletion);
+                         GlobalVariables.commandOut = command + " " + consoleInput;
+                        if (string.IsNullOrEmpty(addedCompletion))
+                        {
+                            GlobalVariables.autoSuggestion = true;
+                            SendKeys.SendWait(command + " " + consoleInput);
+                        }
                         return;
                     }
-                    GlobalVariables.autoSuggestion = true;
                     consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
-                    SystemTools.AutoSuggestion.DirCompletion(consoleInput, currentDirectory);
+                    SystemTools.AutoSuggestion.DirCompletion(consoleInput, currentDirectory, ref addedCompletion);
                     GlobalVariables.commandOut = command + " " + consoleInput;
-                    SendKeys.SendWait(command + " " + consoleInput);
+                    if (string.IsNullOrEmpty(addedCompletion))
+                    {
+                        GlobalVariables.autoSuggestion = true;
+                        SendKeys.SendWait(command + " " + consoleInput);
+                    }
                 }
             }
             catch { }
