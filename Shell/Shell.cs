@@ -406,46 +406,52 @@ namespace Shell
         /// </summary>
         /// <param name="command"></param>
         /// <param name="cursorPosition"></param>
-        private static void RedrawCommand(List<char> command, int cursorPosition)
+        static void RedrawCommand(List<char> command, int cursorPosition)
         {
             // Hide caret while redrawing.
             Console.CursorVisible = false;
 
-            // Calculate command length and prompt length
-            int commandLength = command.Count;
+            // Save the current cursor top to restore it later
+            int initialCursorTop = Console.CursorTop;
+
+            // Calculate the prompt length and window width
             int promptLength = GlobalVariables.lengthPS1;
-            int totalLength = commandLength + promptLength;
             int windowWidth = Console.WindowWidth;
 
-            // Calculate how many lines the command spans
-            int linesOccupied = (totalLength / windowWidth) + 1;
+            // Move the cursor to the start of the input area (after the prompt)
+            Console.SetCursorPosition(0, initialCursorTop);
 
-            // Move the cursor to the start of the input (after the prompt)
-            Console.SetCursorPosition(promptLength, Console.CursorTop);
+            // Redraw the prompt and the command
+            SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+            var cmdStr = string.Join("", command.ToArray());
+            Console.Write(cmdStr);
 
-            // Redraw the prompt and command
-            Console.Write(new string(command.ToArray()));
+            // Clear any extra characters from the previous input
+            int commandLength = command.Count;
+            int totalLength = promptLength + commandLength;
+            int remainingSpaces = windowWidth - ((promptLength + commandLength) % windowWidth);
+            int currentLineLength = totalLength % windowWidth;
+            if (remainingSpaces > 0 && remainingSpaces < windowWidth)
+                Console.Write(new string(' ', remainingSpaces)); // Clear residual characters
 
-            // Clear any remaining characters from the previous state
-            int remainingChars = windowWidth - (totalLength % windowWidth);
-            if (remainingChars > 0)
-                Console.Write(new string(' ', 1));
+            // Calculate the new cursor position
+            int totalCursorPosition = cursorPosition + promptLength;
+            int cursorLeft = totalCursorPosition % windowWidth;
+            int cursorTop = initialCursorTop + (totalCursorPosition / windowWidth);
 
-            // Move cursor back to the correct position within the command
-            int cursorLeft = (promptLength + cursorPosition) % windowWidth;
-            int cursorTop = Console.CursorTop - (linesOccupied - 1) + (promptLength + cursorPosition) / windowWidth;
+            // Set the cursor to the calculated position
             Console.SetCursorPosition(cursorLeft, cursorTop);
 
-            // Show caret again
-            Console.CursorVisible = true;
+            // Show caret again.
         }
 
-        /// <summary>
-        /// Entry point of shell
-        /// </summary>
-        /// <param name="args"></param>
+        //Entry point of shell
         public void Run(string[] args)
         {
+            // Hook key event on KeyDown press.
+            //InterceptKeys.SetupHook(KeyDown);
+            //InterceptKeys.ReleaseHook();
+
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
