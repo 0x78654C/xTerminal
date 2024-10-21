@@ -440,13 +440,12 @@ namespace Shell
             Console.CursorVisible = true;
         }
 
-        //Entry point of shell
+        /// <summary>
+        /// Entry point of shell
+        /// </summary>
+        /// <param name="args"></param>
         public void Run(string[] args)
         {
-            // Hook key event on KeyDown press.
-            //InterceptKeys.SetupHook(KeyDown);
-            //InterceptKeys.ReleaseHook();
-
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
