@@ -443,6 +443,7 @@ namespace Shell
             Console.SetCursorPosition(cursorLeft, cursorTop);
 
             // Show caret again.
+            Console.CursorVisible = true;
         }
 
         //Entry point of shell
