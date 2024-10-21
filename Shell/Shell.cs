@@ -253,7 +253,6 @@ namespace Shell
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
-           
                 if (key.Key == ConsoleKey.Enter)
                 {
                     Console.CursorVisible = false;
@@ -407,22 +406,37 @@ namespace Shell
         /// </summary>
         /// <param name="command"></param>
         /// <param name="cursorPosition"></param>
-        static void RedrawCommand(List<char> command, int cursorPosition)
+        private static void RedrawCommand(List<char> command, int cursorPosition)
         {
-            // Hide carret.
+            // Hide caret while redrawing.
             Console.CursorVisible = false;
 
-            // Clear the current input line
-            Console.Write("\r" + new string(' ', Console.WindowWidth) + "\r");
-            SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
+            // Calculate command length and prompt length
+            int commandLength = command.Count;
+            int promptLength = GlobalVariables.lengthPS1;
+            int totalLength = commandLength + promptLength;
+            int windowWidth = Console.WindowWidth;
 
-            // Write the current command
+            // Calculate how many lines the command spans
+            int linesOccupied = (totalLength / windowWidth) + 1;
+
+            // Move the cursor to the start of the input (after the prompt)
+            Console.SetCursorPosition(promptLength, Console.CursorTop);
+
+            // Redraw the prompt and command
             Console.Write(new string(command.ToArray()));
 
-            // Move the cursor back to the current position
-            Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
+            // Clear any remaining characters from the previous state
+            int remainingChars = windowWidth - (totalLength % windowWidth);
+            if (remainingChars > 0)
+                Console.Write(new string(' ', 1));
 
-            // Show carret.
+            // Move cursor back to the correct position within the command
+            int cursorLeft = (promptLength + cursorPosition) % windowWidth;
+            int cursorTop = Console.CursorTop - (linesOccupied - 1) + (promptLength + cursorPosition) / windowWidth;
+            Console.SetCursorPosition(cursorLeft, cursorTop);
+
+            // Show caret again
             Console.CursorVisible = true;
         }
 
