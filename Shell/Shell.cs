@@ -22,8 +22,6 @@ namespace Shell
         private static readonly string s_accountName = GlobalVariables.accountName;    //extract current loged username
         private static readonly string s_computerName = GlobalVariables.computerName; //extract machine name
         private static string s_input = null;
-        private static string s_intercept = "";
-        private static int s_ctrlCount = 0;
         private static string s_historyFilePath = GlobalVariables.terminalWorkDirectory;
         private static string s_passwordManagerDirectory = GlobalVariables.passwordManagerDirectory;
         private static List<string> s_listReg = new List<string>() { "UI" };
@@ -37,8 +35,6 @@ namespace Shell
         private static int s_userEnabled = 1;
         private static string s_cdColor = "cyan";
         private static string s_historyLimitSize = "2000";
-        private static int s_ctrlKey = 1;
-        private static int s_xKey = 0;
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
         private static string s_aliasFile = GlobalVariables.aliasFile;
         private static bool s_isCDVisible = true;
@@ -257,13 +253,11 @@ namespace Shell
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
-                if (string.IsNullOrEmpty(key.KeyChar.ToString()))
-                    return new string(command.ToArray());
+           
                 if (key.Key == ConsoleKey.Enter)
                 {
                     Console.CursorVisible = false;
                     Console.WriteLine(); // Move to the next line
-                    s_intercept = "";
                     GlobalVariables.lengthPS1 = 0;
                     Console.CursorVisible = true;
                     break;
