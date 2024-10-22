@@ -478,10 +478,6 @@ namespace Shell
         //Entry point of shell
         public void Run(string[] args)
         {
-            // Hook key event on KeyDown press.
-            //InterceptKeys.SetupHook(KeyDown);
-            //InterceptKeys.ReleaseHook();
-
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
 
