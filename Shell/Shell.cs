@@ -40,6 +40,7 @@ namespace Shell
         private static bool s_isCDVisible = true;
         private static List<string> commandHistory = new List<string>();
         private static int historyIndex = -1;  // Tracks the current position in the history
+        private static int lastWindowWidth = Console.WindowWidth;
         //-------------------------------
 
 
@@ -250,6 +251,9 @@ namespace Shell
             var outCompletion = "";
             var historyStored = File.ReadAllText(s_historyFile);
             FileSystem.ReadStringLine(ref commandHistory, historyStored);
+            lastWindowWidth = Console.WindowWidth;
+            RedrawCommand(command, cursorPosition);
+
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
@@ -319,7 +323,8 @@ namespace Shell
                             cursorPosition--;
                             RedrawCommand(command, cursorPosition);
                         }
-                    }catch { }
+                    }
+                    catch { }
                     tabPressCount = 0;
                 }
                 else if (key.Key == ConsoleKey.Delete)
@@ -338,7 +343,7 @@ namespace Shell
                     {
                         historyIndex++;
                         string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        command = new List<char>(historyCommand);
+                        command = new List<char>(historyCommand.ToCharArray());
                         cursorPosition = command.Count;  // Move the caret to the end
                         RedrawCommand(command, cursorPosition);
                     }
@@ -350,7 +355,7 @@ namespace Shell
                     {
                         historyIndex--;
                         string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        command = new List<char>(historyCommand);
+                        command = new List<char>(historyCommand.ToCharArray());
                         cursorPosition = command.Count;  // Move the caret to the end
                         RedrawCommand(command, cursorPosition);
                     }
@@ -367,7 +372,17 @@ namespace Shell
                     if (cursorPosition > 0)
                     {
                         cursorPosition--;
-                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
+                        // Calculate cursor position for wrapped lines
+                        int totalCursorPosition = cursorPosition + GlobalVariables.lengthPS1;
+                        int cursorLeft = totalCursorPosition % Console.WindowWidth;
+                        int cursorTop = Console.CursorTop + (totalCursorPosition / Console.WindowWidth);
+
+                        // Ensure valid cursor position
+                        if (cursorLeft < 0) cursorLeft = 0;
+                        if (cursorLeft >= Console.WindowWidth) cursorLeft = Console.WindowWidth - 1;
+                        if (cursorTop >= Console.BufferHeight) cursorTop = Console.BufferHeight - 1;
+
+                        Console.SetCursorPosition(cursorLeft, cursorTop);
                     }
                 }
                 else if (key.Key == ConsoleKey.RightArrow)
@@ -375,7 +390,17 @@ namespace Shell
                     if (cursorPosition < command.Count)
                     {
                         cursorPosition++;
-                        Console.SetCursorPosition(cursorPosition + GlobalVariables.lengthPS1, Console.CursorTop);
+                        // Calculate cursor position for wrapped lines
+                        int totalCursorPosition = cursorPosition + GlobalVariables.lengthPS1;
+                        int cursorLeft = totalCursorPosition % Console.WindowWidth;
+                        int cursorTop = Console.CursorTop + (totalCursorPosition / Console.WindowWidth);
+
+                        // Ensure valid cursor position
+                        if (cursorLeft < 0) cursorLeft = 0;
+                        if (cursorLeft >= Console.WindowWidth) cursorLeft = Console.WindowWidth - 1;
+                        if (cursorTop >= Console.BufferHeight) cursorTop = Console.BufferHeight - 1;
+
+                        Console.SetCursorPosition(cursorLeft, cursorTop);
                     }
                 }
                 else if (key.Key == ConsoleKey.Home)
@@ -416,7 +441,7 @@ namespace Shell
 
             // Calculate the prompt length and window width
             int promptLength = GlobalVariables.lengthPS1;
-            int windowWidth = Console.WindowWidth;
+            int windowWidth = lastWindowWidth;
 
             // Move the cursor to the start of the input area (after the prompt)
             Console.SetCursorPosition(0, initialCursorTop);
@@ -430,14 +455,18 @@ namespace Shell
             int commandLength = command.Count;
             int totalLength = promptLength + commandLength;
             int remainingSpaces = windowWidth - ((promptLength + commandLength) % windowWidth);
-            int currentLineLength = totalLength % windowWidth;
             if (remainingSpaces > 0 && remainingSpaces < windowWidth)
-                Console.Write(new string(' ', remainingSpaces)); // Clear residual characters
+                Console.Write(new string(' ', remainingSpaces - 1)); // Clear residual characters
 
-            // Calculate the new cursor position
+            // Ensure cursor position is within valid bounds
             int totalCursorPosition = cursorPosition + promptLength;
             int cursorLeft = totalCursorPosition % windowWidth;
             int cursorTop = initialCursorTop + (totalCursorPosition / windowWidth);
+
+            // Ensure the cursor position stays within valid bounds
+            if (cursorLeft < 0) cursorLeft = 0;
+            if (cursorLeft >= windowWidth) cursorLeft = windowWidth - 1;  // Avoid going out of the right bound
+            if (cursorTop >= Console.BufferHeight) cursorTop = Console.BufferHeight - 1; // Avoid going out of bottom bound
 
             // Set the cursor to the calculated position
             Console.SetCursorPosition(cursorLeft, cursorTop);
