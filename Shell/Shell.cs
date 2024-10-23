@@ -456,7 +456,7 @@ namespace Shell
             int totalLength = promptLength + commandLength;
             int remainingSpaces = windowWidth - ((promptLength + commandLength) % windowWidth);
             if (remainingSpaces > 0 && remainingSpaces < windowWidth)
-                Console.Write(new string(' ', remainingSpaces - 1)); // Clear residual characters
+                Console.Write(new string(' ', remainingSpaces)); // Clear residual characters
 
             // Ensure cursor position is within valid bounds
             int totalCursorPosition = cursorPosition + promptLength;
