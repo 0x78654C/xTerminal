@@ -11,6 +11,7 @@ using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
 using Commands;
+using System.Text;
 
 namespace Shell
 {
@@ -271,23 +272,23 @@ namespace Shell
                     if (tabPressCount == 2)
                     {
                         var c = new string(command.ToArray());
-                        AutoSuggestionCommands.FileDirSuggestion(c, "cd", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "odir", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "ls", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "hex", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "./", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "ccs", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "fcopy", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "mv", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "fmove", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "del", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "del", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "edit", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "cp", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "cp", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "md5", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "sort", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(c, "cat", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", s_currentDirectory, false, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", s_currentDirectory, false, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", s_currentDirectory, false, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "./", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, false, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, false, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", s_currentDirectory, true, ref outCompletion);
+                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", s_currentDirectory, true, ref outCompletion);
                         tabPressCount = 0;
                         var countOut = outCompletion.ToList().Count;
                         if (countOut > 0)
@@ -425,6 +426,93 @@ namespace Shell
             return new string(command.ToArray());
         }
 
+        public static string ReadLineWithKeywordExpansion()
+        {
+            int top = Console.CursorTop;
+            int left = Console.CursorLeft;
+            var tabs = 0;
+            var outCompletion = "";
+            var sb = new StringBuilder();
+            while (true)
+            {
+                var k = Console.ReadKey(true);
+                if (k.Key == ConsoleKey.Enter)
+                {
+                    Console.WriteLine();
+                    return sb.ToString();
+                }
+                else if (k.Key == ConsoleKey.Backspace)
+                {
+                    if (sb.Length > 0)
+                    {
+                        --sb.Length;
+                        Console.CursorVisible = false;
+                        Console.SetCursorPosition(left, top);
+                        Console.Write(sb.ToString() + " ");
+                        Console.SetCursorPosition(left + sb.Length, top);
+                        Console.CursorVisible = true;
+                    }
+                }
+                else if (k.Key == ConsoleKey.Tab)
+                {
+                    int index = 0;
+                    tabs++;
+                    if (tabs == 2)
+                    {
+                        string candidate = sb.ToString();
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", s_currentDirectory, false, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", s_currentDirectory, false, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", s_currentDirectory, false, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "./", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, false, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, false, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", s_currentDirectory, true, ref outCompletion);
+                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", s_currentDirectory, true, ref outCompletion);
+                        for (int i = (sb.Length - 1); i >= 0; i--)
+                        {
+                            if (sb[i] == ' ')
+                            {
+                                index = i + 1;
+                                candidate = sb.ToString().Substring(index);
+                                break;
+                            }
+                        }
+                        if (candidate != "")
+                        {
+                            string command = outCompletion;
+                            if (command != null)
+                            {
+                                sb.Length = index;
+                                sb.Append(command);
+                                Console.CursorVisible = false;
+                                Console.SetCursorPosition(left, top);
+                                Console.Write(sb.ToString());
+                                Console.CursorVisible = true;
+                            }
+                        }
+                        tabs = 0;
+                    }
+                }
+                else if (k.KeyChar != '\0') // Ignore special keys.
+                {
+                    sb.Append(k.KeyChar);
+                    Console.CursorVisible = false;
+                    Console.SetCursorPosition(left, top);
+                    Console.Write(sb.ToString());
+                    Console.CursorVisible = true;
+
+                }
+            }
+        }
 
         /// <summary>
         /// Redraws the entire command and moves the caret to the correct position.
@@ -444,13 +532,12 @@ namespace Shell
             int windowWidth = lastWindowWidth;
 
             // Move the cursor to the start of the input area (after the prompt)
-            Console.SetCursorPosition(0, initialCursorTop);
+            Console.SetCursorPosition(promptLength, initialCursorTop);
 
             // Redraw the prompt and the command
-            SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
             var cmdStr = string.Join("", command.ToArray());
             Console.Write(cmdStr);
-
+            
             // Clear any extra characters from the previous input
             int commandLength = command.Count;
             int totalLength = promptLength + commandLength;
@@ -496,7 +583,8 @@ namespace Shell
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
                 //reading user imput
-                s_input = ReadCommand();
+
+                s_input = ReadLineWithKeywordExpansion();
 
                 //cleaning input
                 s_input = s_input.Trim();
