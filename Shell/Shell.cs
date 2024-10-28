@@ -430,6 +430,7 @@ namespace Shell
         {
             int top = Console.CursorTop;
             int left = Console.CursorLeft;
+            int lastWindowWidth = Console.WindowWidth; // Track the last known window width
             var tabs = 0;
             string historyCommand = "";
             int cursorPosition = 0;
@@ -438,8 +439,24 @@ namespace Shell
             commandHistory.Clear();
             var historyStored = File.ReadAllText(s_historyFile);
             FileSystem.ReadStringLine(ref commandHistory, historyStored);
+
             while (true)
             {
+                // Check if the window width has changed
+                if (Console.WindowWidth != lastWindowWidth)
+                {
+                    lastWindowWidth = Console.WindowWidth;
+
+                    // Ensure the cursor position doesn't exceed the new window width
+                    if (left + cursorPosition >= Console.WindowWidth)
+                    {
+                        cursorPosition = Console.WindowWidth - left - 1;
+                    }
+
+                    // Adjust cursor position if within bounds
+                    Console.SetCursorPosition(Math.Max(0, left + cursorPosition), top);
+                }
+
                 var k = Console.ReadKey(true);
                 if (k.Key == ConsoleKey.Enter)
                 {
@@ -448,13 +465,14 @@ namespace Shell
                 }
                 else if (k.Key == ConsoleKey.Backspace)
                 {
-                    if (sb.Length > 0)
+                    if (sb.Length > 0 && cursorPosition > 0)
                     {
-                        --sb.Length;
+                        sb.Remove(cursorPosition - 1, 1);
+                        cursorPosition--;
                         Console.CursorVisible = false;
                         Console.SetCursorPosition(left, top);
                         Console.Write(sb.ToString() + " ");
-                        Console.SetCursorPosition(left + sb.Length, top);
+                        Console.SetCursorPosition(Math.Max(0, left + cursorPosition), top);
                         Console.CursorVisible = true;
                     }
                 }
@@ -501,6 +519,7 @@ namespace Shell
                                 Console.CursorVisible = false;
                                 Console.SetCursorPosition(left, top);
                                 Console.Write(sb.ToString());
+                                cursorPosition = sb.Length;
                                 Console.CursorVisible = true;
                             }
                         }
@@ -509,23 +528,23 @@ namespace Shell
                 }
                 else if (k.Key == ConsoleKey.UpArrow)
                 {
-                    // Navigate backward in history
                     if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
                     {
                         historyIndex++;
                         historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
                         sb.Clear();
-                        sb.Append(historyCommand);                        //Console.CursorVisible = false;
+                        sb.Append(historyCommand);
+                        Console.CursorVisible = false;
                         Console.SetCursorPosition(left, top);
                         Console.Write(new string(' ', historyCommand.Length));
                         Console.SetCursorPosition(left, top);
                         Console.Write(sb.ToString());
+                        cursorPosition = sb.Length;
                         Console.CursorVisible = true;
                     }
                 }
                 else if (k.Key == ConsoleKey.DownArrow)
                 {
-                    // Navigate forward in history
                     if (historyIndex > 0)
                     {
                         historyIndex--;
@@ -537,6 +556,7 @@ namespace Shell
                         Console.Write(new string(' ', historyCommand.Length));
                         Console.SetCursorPosition(left, top);
                         Console.Write(sb.ToString());
+                        cursorPosition = sb.Length;
                         Console.CursorVisible = true;
                     }
                     else if (historyIndex == 0)
@@ -544,20 +564,11 @@ namespace Shell
                         historyIndex = -1;
                         cursorPosition = 0;
                         sb.Clear();
-                        //Console.CursorVisible = false;
-                        //Console.SetCursorPosition(left, top);
-                        //Console.Write(sb.ToString());
-                        //Console.CursorVisible = true;
-                        // Clear the console line
-                        string blank = new string(' ', Console.WindowWidth - 1);
-
                         Console.CursorVisible = false;
                         Console.SetCursorPosition(left, top);
-                        Console.Write(new string(' ', historyCommand.Length));
-
+                        Console.Write(new string(' ', Console.WindowWidth - 1));
                         Console.SetCursorPosition(left, top);
                         Console.CursorVisible = true;
-
                     }
                 }
                 else if (k.Key == ConsoleKey.LeftArrow)
@@ -565,12 +576,12 @@ namespace Shell
                     if (cursorPosition > 0)
                     {
                         cursorPosition--;
-                        Console.SetCursorPosition(left + cursorPosition, top);
+                        Console.SetCursorPosition(Math.Max(0, left + cursorPosition), top);
                     }
                 }
                 else if (k.Key == ConsoleKey.RightArrow)
                 {
-                    if (cursorPosition < sb.Length)
+                    if (cursorPosition < sb.Length && left + cursorPosition < Console.WindowWidth - 1)
                     {
                         cursorPosition++;
                         Console.SetCursorPosition(left + cursorPosition, top);
@@ -583,21 +594,39 @@ namespace Shell
                 }
                 else if (k.Key == ConsoleKey.End)
                 {
-                    cursorPosition = left + sb.ToString().Length;
-                    Console.SetCursorPosition(left + sb.ToString().Length, Console.CursorTop);
+                    cursorPosition = sb.Length;
+                    if (left + cursorPosition < Console.WindowWidth)
+                    {
+                        Console.SetCursorPosition(left + cursorPosition, top);
+                    }
+                    else
+                    {
+                        cursorPosition = Console.WindowWidth - left - 1;
+                        Console.SetCursorPosition(left + cursorPosition, top);
+                    }
                 }
                 else if (k.KeyChar != '\0') // Ignore special keys.
                 {
-                    sb.Append(k.KeyChar);
+                    sb.Insert(cursorPosition, k.KeyChar);
+                    cursorPosition++;
                     Console.CursorVisible = false;
-                    cursorPosition = left;
                     Console.SetCursorPosition(left, top);
                     Console.Write(sb.ToString());
+
+                    // Ensure cursor stays within bounds
+                    if (left + cursorPosition < Console.WindowWidth)
+                    {
+                        Console.SetCursorPosition(left + cursorPosition, top);
+                    }
+                    else
+                    {
+                        cursorPosition = Console.WindowWidth - left - 1;
+                        Console.SetCursorPosition(left + cursorPosition, top);
+                    }
                     Console.CursorVisible = true;
                 }
             }
         }
-
 
 
         /// <summary>
