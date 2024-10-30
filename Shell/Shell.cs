@@ -10,11 +10,7 @@ using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
-using Commands;
 using System.Text;
-using System.Threading;
-using Commands.TerminalCommands.ConsoleSystem;
-using System.Windows.Input;
 using System.ComponentModel;
 
 namespace Shell
@@ -46,7 +42,6 @@ namespace Shell
         private static List<string> commandHistory = new List<string>();
         private static int historyIndex = -1;  // Tracks the current position in the history
         private static int lastWindowWidth = Console.WindowWidth;
-        private static BackgroundWorker s_backgroundWorker;
         //-------------------------------
 
 
@@ -430,7 +425,7 @@ namespace Shell
             GlobalVariables.lengthPS1 = 0;
             return new string(command.ToArray());
         }
-        public static string ReadLineWithKeywordExpansion1()
+        public static string ReadLineWithKeywordExpansion()
         {
             int top = Console.CursorTop;
             int left = Console.CursorLeft;
@@ -637,192 +632,6 @@ namespace Shell
                 }
             }
         }
-        private static int top, left, cursorPosition;
-        private static StringBuilder sb = new StringBuilder();
-        private static string historyCommand = "";
-        // private static List<string> commandHistory = new List<string>();
-        private static bool isResized;
-
-        public static string ReadLineWithKeywordExpansion()
-        {
-            top = Console.CursorTop;
-            left = Console.CursorLeft;
-            cursorPosition = 0;
-            lastWindowWidth = Console.WindowWidth;
-            sb.Clear();
-            LoadCommandHistory();
-
-            Console.CancelKeyPress += (_, _) => Console.SetCursorPosition(0, top + 1); // Handle Ctrl+C gracefully
-
-            while (true)
-            {
-                // Poll for window width change
-                if (Console.WindowWidth != lastWindowWidth)
-                {
-                    lastWindowWidth = Console.WindowWidth;
-                    RedrawInput();
-                }
-
-                // Introduce a small delay to avoid high CPU usage during polling
-                Thread.Sleep(50);
-
-                var key = Console.ReadKey(intercept: true);
-                switch (key.Key)
-                {
-                    case ConsoleKey.Enter:
-                        Console.WriteLine();
-                        SaveCommand(sb.ToString());
-                        return sb.ToString();
-
-                    case ConsoleKey.Backspace:
-                        if (cursorPosition > 0)
-                        {
-                            sb.Remove(--cursorPosition, 1);
-                            RedrawInput();
-                        }
-                        break;
-
-                    case ConsoleKey.Tab:
-                        HandleTabCompletion();
-                        break;
-
-                    case ConsoleKey.UpArrow:
-                        NavigateHistory(up: true);
-                        break;
-
-                    case ConsoleKey.DownArrow:
-                        NavigateHistory(up: false);
-                        break;
-
-                    case ConsoleKey.LeftArrow:
-                        if (cursorPosition > 0)
-                        {
-                            cursorPosition--;
-                            SetCursorPosition();
-                        }
-                        break;
-
-                    case ConsoleKey.RightArrow:
-                        if (cursorPosition < sb.Length)
-                        {
-                            cursorPosition++;
-                            SetCursorPosition();
-                        }
-                        break;
-
-                    case ConsoleKey.Home:
-                        cursorPosition = 0;
-                        SetCursorPosition();
-                        break;
-
-                    case ConsoleKey.End:
-                        cursorPosition = sb.Length;
-                        SetCursorPosition();
-                        break;
-
-                    default:
-                        if (key.KeyChar != '\0')
-                        {
-                            sb.Insert(cursorPosition++, key.KeyChar);
-                            RedrawInput();
-                        }
-                        break;
-                }
-            }
-        }
-
-        private static void HandleTabCompletion()
-        {
-            // Placeholder implementation for tab completion logic
-            // Add logic for command suggestion based on `sb.ToString()` and set `outCompletion` as needed
-            string outCompletion = "SuggestedCommand"; // Replace with actual suggestion logic
-            string candidate = sb.ToString();
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", s_currentDirectory, false, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", s_currentDirectory, false, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", s_currentDirectory, false, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "./", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, false, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, false, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", s_currentDirectory, true, ref outCompletion);
-            AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", s_currentDirectory, true, ref outCompletion);
-            if (!string.IsNullOrEmpty(outCompletion))
-            {
-                sb.Clear();
-                sb.Append(outCompletion);
-                cursorPosition = sb.Length;
-                RedrawInput();
-            }
-        }
-
-        private static void NavigateHistory(bool up)
-        {
-            if (commandHistory.Count == 0) return;
-
-            if (up && historyIndex < commandHistory.Count - 1)
-            {
-                historyCommand = commandHistory[++historyIndex];
-            }
-            else if (!up && historyIndex > 0)
-            {
-                historyCommand = commandHistory[--historyIndex];
-            }
-            else if (!up && historyIndex == 0)
-            {
-                historyCommand = "";
-                historyIndex = -1;
-            }
-
-            sb.Clear();
-            sb.Append(historyCommand);
-            cursorPosition = sb.Length;
-            RedrawInput();
-        }
-
-        private static void RedrawInput()
-        {
-            Console.SetCursorPosition(left, top);
-            Console.Write(new string(' ', Console.WindowWidth - left - 1)); // Clear the current line
-            Console.SetCursorPosition(left, top);
-            Console.Write(sb.ToString());
-            SetCursorPosition();
-        }
-
-        private static void SetCursorPosition()
-        {
-            int adjustedLeft = left + cursorPosition;
-            if (adjustedLeft >= Console.WindowWidth)
-            {
-                top += adjustedLeft / Console.WindowWidth;
-                adjustedLeft %= Console.WindowWidth;
-            }
-            Console.SetCursorPosition(adjustedLeft, top);
-        }
-
-        private static void LoadCommandHistory()
-        {
-            if (File.Exists(s_historyFile))
-            {
-                commandHistory = new List<string>(File.ReadAllLines(s_historyFile));
-            }
-        }
-
-        private static void SaveCommand(string command)
-        {
-            if (!string.IsNullOrEmpty(command))
-            {
-                commandHistory.Add(command);
-                File.AppendAllLines(s_historyFile, new[] { command });
-            }
-        }
 
         /// <summary>
         /// Redraws the entire command and moves the caret to the correct position.
@@ -872,86 +681,13 @@ namespace Shell
             Console.CursorVisible = true;
         }
 
-        private static void ListenKeys( object sender, DoWorkEventArgs e)
-        {
-            int tabPressCount = 0;
-            var commands = new List<string>();
-            while (true)
-            {
-                var key = Console.ReadKey(intercept: true);
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    Console.CursorVisible = false;
-                    Console.CursorVisible = true;
-                    commands.Clear();
-                    break;
-                }
-                else if (key.Modifiers.HasFlag(ConsoleModifiers.Control))
-                {
-                    tabPressCount++;
-                    if (tabPressCount == 2)
-                    {
-                        //var candidate = new string(command.ToArray());
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", s_currentDirectory, false, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", s_currentDirectory, false, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", s_currentDirectory, false, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "./", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, false, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, false, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", s_currentDirectory, true, ref outCompletion);
-                        //AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", s_currentDirectory, true, ref outCompletion);
-                        //tabPressCount = 0;
-                        //var countOut = outCompletion.ToList().Count;
-                        //if (countOut > 0)
-                        //{
-                        //    var getCommandStr = string.Join("", command);
-                        //    var getCommand = getCommandStr.Split(' ')[0];
-                        //    var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
-                        //    Console.CursorVisible = false;
-                        //    command.Clear();
-                        //    foreach (var item in getCommand)
-                        //        command.Insert(command.Count, item);
-                        //    command.Insert(command.Count, ' ');
-                        //    foreach (var item in outCompletion)
-                        //        command.Insert(command.Count, item);
-                        //    Console.SetCursorPosition(getCommandStr.Length + GlobalVariables.lengthPS1, Console.CursorTop);
-                        //    foreach (var paramChar in getCommandStr)
-                        //        Console.Write('\b');
-                        //    Console.Write(new string(command.ToArray()));
-                        //    Console.CursorVisible = true;
-                        //    cursorPosition = countOut + getCommand.Length + 1;
-                        //}
-                        //else
-                        //    cursorPosition = command.Count;
-                        SendKeys.SendWait(string.Join("", commands));
-                        commands.Clear();
-                    }
-                }
-                if (key.KeyChar != '\0')
-                {
-                    commands.Add(key.KeyChar.ToString());
-                }
-            }
-        }
+       
 
         //Entry point of shell
         public void Run(string[] args)
         {
             // Check if current path subkey exists in registry. 
             RegistryManagement.CheckRegKeysStart(s_listReg, GlobalVariables.regKeyName, "", false);
-
-            s_backgroundWorker  =  new BackgroundWorker();
-            s_backgroundWorker.DoWork += ListenKeys;
-            s_backgroundWorker.RunWorkerAsync();
 
             // Setting up the title.
             Console.Title = s_terminalTitle;
@@ -967,10 +703,8 @@ namespace Shell
                 // We se the color and user loged in on console.
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
-                //reading user imput
-
-               
-                s_input = Console.ReadLine();
+                // Reading user imput
+                s_input = ReadCommand();
 
                 //cleaning input
                 s_input = s_input.Trim();
