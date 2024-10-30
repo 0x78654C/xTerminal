@@ -42,6 +42,7 @@ namespace Shell
         private static List<string> commandHistory = new List<string>();
         private static int historyIndex = -1;  // Tracks the current position in the history
         private static int lastWindowWidth = Console.WindowWidth;
+        private static int s_initialCursorTop = 0;
         //-------------------------------
 
 
@@ -253,7 +254,7 @@ namespace Shell
             var historyStored = File.ReadAllText(s_historyFile);
             FileSystem.ReadStringLine(ref commandHistory, historyStored);
             lastWindowWidth = Console.WindowWidth;
-            RedrawCommand(command, cursorPosition);
+            //RedrawCommand(command, cursorPosition);
 
             while (true)
             {
@@ -263,6 +264,7 @@ namespace Shell
                     Console.CursorVisible = false;
                     Console.WriteLine(); // Move to the next line
                     GlobalVariables.lengthPS1 = 0;
+                    s_initialCursorTop = Console.CursorTop;
                     Console.CursorVisible = true;
                     break;
                 }
@@ -320,9 +322,9 @@ namespace Shell
                     {
                         if (command.Count > 0)
                         {
-                            command.RemoveAt(cursorPosition - 1);
+                            //command.RemoveAt(cursorPosition - 1);
                             cursorPosition--;
-                            RedrawCommand(command, cursorPosition);
+                            RedrawCommand(command, cursorPosition, "back");
                         }
                     }
                     catch { }
@@ -418,227 +420,21 @@ namespace Shell
                 {
                     command.Insert(cursorPosition, key.KeyChar);
                     cursorPosition++;
-                    RedrawCommand(command, cursorPosition);
+                    RedrawCommand(command, cursorPosition, key.KeyChar.ToString());
                     tabPressCount = 0; // Reset tab press count on other keypress
                 }
             }
             GlobalVariables.lengthPS1 = 0;
             return new string(command.ToArray());
         }
-        public static string ReadLineWithKeywordExpansion()
-        {
-            int top = Console.CursorTop;
-            int left = Console.CursorLeft;
-            int lastWindowWidth = Console.WindowWidth;
-            var tabs = 0;
-            string historyCommand = "";
-            int cursorPosition = 0;
-            var outCompletion = "";
-            var sb = new StringBuilder();
-            commandHistory.Clear();
-            var historyStored = File.ReadAllText(s_historyFile);
-            FileSystem.ReadStringLine(ref commandHistory, historyStored);
 
-            while (true)
-            {
-                if (Console.WindowWidth != lastWindowWidth)
-                {
-                    lastWindowWidth = Console.WindowWidth;
-
-                    if (left + cursorPosition >= Console.WindowWidth)
-                    {
-                        cursorPosition = Console.WindowWidth - left - 1;
-                    }
-
-                    Console.SetCursorPosition(Math.Max(0, left + cursorPosition), top);
-                }
-
-                var k = Console.ReadKey(true);
-                if (k.Key == ConsoleKey.Enter)
-                {
-                    Console.WriteLine();
-                    return sb.ToString();
-                }
-                else if (k.Key == ConsoleKey.Backspace)
-                {
-                    if (sb.Length > 0 && cursorPosition > 0)
-                    {
-                        sb.Remove(cursorPosition - 1, 1);
-                        cursorPosition--;
-                        Console.CursorVisible = false;
-                        Console.SetCursorPosition(left, top);
-                        Console.Write(sb.ToString());
-                        Console.Write(" \b");
-                        Console.SetCursorPosition(Math.Max(0, left + cursorPosition), top);
-                        Console.CursorVisible = true;
-                    }
-                }
-                else if (k.Key == ConsoleKey.Tab)
-                {
-                    int index = 0;
-                    tabs++;
-                    if (tabs == 2)
-                    {
-                        string candidate = sb.ToString();
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "./", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "del", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, false, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", s_currentDirectory, true, ref outCompletion);
-                        AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", s_currentDirectory, true, ref outCompletion);
-                        for (int i = (sb.Length - 1); i >= 0; i--)
-                        {
-                            if (sb[i] == ' ')
-                            {
-                                index = i + 1;
-                                candidate = sb.ToString().Substring(index);
-                                break;
-                            }
-                        }
-                        if (candidate != "")
-                        {
-                            string command = outCompletion;
-                            if (command != null)
-                            {
-                                sb.Length = index;
-                                sb.Append(command);
-                                Console.CursorVisible = false;
-                                Console.SetCursorPosition(left, top);
-                                Console.Write(sb.ToString());
-                                cursorPosition = sb.Length;
-                                Console.CursorVisible = true;
-                            }
-                        }
-                        tabs = 0;
-                    }
-                }
-                else if (k.Key == ConsoleKey.UpArrow)
-                {
-                    if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
-                    {
-                        historyIndex++;
-                        historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        sb.Clear();
-                        sb.Append(historyCommand);
-                        Console.CursorVisible = false;
-                        Console.SetCursorPosition(left, top);
-
-                        foreach (char _ in historyCommand)
-                            Console.Write("\b \b");
-
-                        Console.SetCursorPosition(left, top);
-                        Console.Write(sb.ToString());
-                        cursorPosition = sb.Length;
-                        Console.CursorVisible = true;
-                    }
-                }
-                else if (k.Key == ConsoleKey.DownArrow)
-                {
-                    if (historyIndex > 0)
-                    {
-                        historyIndex--;
-                        historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        sb.Clear();
-                        sb.Append(historyCommand);
-                        Console.CursorVisible = false;
-                        Console.SetCursorPosition(left, top);
-
-                        foreach (char _ in historyCommand)
-                            Console.Write("\b \b");
-
-                        Console.SetCursorPosition(left, top);
-                        Console.Write(sb.ToString());
-                        cursorPosition = sb.Length;
-                        Console.CursorVisible = true;
-                    }
-                    else if (historyIndex == 0)
-                    {
-                        historyIndex = -1;
-                        cursorPosition = 0;
-                        sb.Clear();
-                        Console.CursorVisible = false;
-                        Console.SetCursorPosition(left, top);
-
-                        foreach (char _ in historyCommand)
-                            Console.Write("\b \b");
-
-                        Console.SetCursorPosition(left, top);
-                        Console.CursorVisible = true;
-                    }
-                }
-                else if (k.Key == ConsoleKey.LeftArrow)
-                {
-                    if (cursorPosition > 0)
-                    {
-                        cursorPosition--;
-                        Console.SetCursorPosition(Math.Max(0, left + cursorPosition), top);
-                    }
-                }
-                else if (k.Key == ConsoleKey.RightArrow)
-                {
-                    if (cursorPosition < sb.Length && left + cursorPosition < Console.WindowWidth - 1)
-                    {
-                        cursorPosition++;
-                        Console.SetCursorPosition(left + cursorPosition, top);
-                    }
-                }
-                else if (k.Key == ConsoleKey.Home)
-                {
-                    cursorPosition = 0;
-                    Console.SetCursorPosition(left, top);
-                }
-                else if (k.Key == ConsoleKey.End)
-                {
-                    cursorPosition = sb.Length;
-                    if (left + cursorPosition < Console.WindowWidth)
-                    {
-                        Console.SetCursorPosition(left + cursorPosition, top);
-                    }
-                    else
-                    {
-                        cursorPosition = Console.WindowWidth - left - 1;
-                        Console.SetCursorPosition(left + cursorPosition, top);
-                    }
-                }
-                else if (k.KeyChar != '\0')
-                {
-                    sb.Insert(cursorPosition, k.KeyChar);
-                    cursorPosition++;
-                    Console.CursorVisible = false;
-                    Console.SetCursorPosition(left, top);
-                    Console.Write(sb.ToString());
-
-                    if (left + cursorPosition < Console.WindowWidth)
-                    {
-                        Console.SetCursorPosition(left + cursorPosition, top);
-                    }
-                    else
-                    {
-                        cursorPosition = Console.WindowWidth - left - 1;
-                        Console.SetCursorPosition(left + cursorPosition, top);
-                    }
-                    Console.CursorVisible = true;
-                }
-            }
-        }
 
         /// <summary>
-        /// Redraws the entire command and moves the caret to the correct position.
+        /// Redraws the entire command and moves the caret to the correct position, clearing residual characters if needed.
         /// </summary>
-        /// <param name="command"></param>
-        /// <param name="cursorPosition"></param>
-        static void RedrawCommand(List<char> command, int cursorPosition)
+        /// <param name="command">The command input as a list of characters.</param>
+        /// <param name="cursorPosition">The position of the cursor within the command.</param>
+        static void RedrawCommand(List<char> command, int cursorPosition, string keyChar = "")
         {
             // Hide caret while redrawing.
             Console.CursorVisible = false;
@@ -648,21 +444,52 @@ namespace Shell
 
             // Calculate the prompt length and window width
             int promptLength = GlobalVariables.lengthPS1;
-            int windowWidth = lastWindowWidth;
+            int windowWidth = Console.WindowWidth;
 
-            // Move the cursor to the start of the input area (after the prompt)
-            Console.SetCursorPosition(promptLength, initialCursorTop);
+            ////// Move the cursor to the start of the input area (after the prompt)
+            //if (keyChar == "")
+            //    Console.SetCursorPosition(promptLength, initialCursorTop);
+            //else if (keyChar == "history")
+            //{
+            // //   Console.SetCursorPosition(promptLength, s_initialCursorTop);
+            //}
+            if (keyChar == "")
+                Console.SetCursorPosition(promptLength, initialCursorTop);
+            // Combine command characters into a single string
+            var cmdStr = string.Join("", command);
 
-            // Redraw the prompt and the command
-            var cmdStr = string.Join("", command.ToArray());
-            Console.Write(cmdStr);
+            // Print the command
+            if (keyChar == "")
+                Console.Write(cmdStr);
+            if (keyChar == "back")
+            {
+                if (command.Count > 0)
+                {
+                    command.RemoveAt(command.Count() - 1);
+                    Console.Write("\b \b");
+                }
+            }
+            else
+                Console.Write(keyChar);
 
-            // Clear any extra characters from the previous input
+            // Calculate how many extra characters we need to clear from a previous command if it was longer
             int commandLength = command.Count;
-            int totalLength = promptLength + commandLength;
-            int remainingSpaces = windowWidth - ((promptLength + commandLength) % windowWidth);
-            if (remainingSpaces > 0 && remainingSpaces < windowWidth)
-                Console.Write(new string(' ', remainingSpaces)); // Clear residual characters
+            int previousCommandLength = GlobalVariables.previousCommandLength;
+            GlobalVariables.previousCommandLength = commandLength; // Update previous command length for next time
+
+            // If previous command was longer, clear the extra characters
+            if (previousCommandLength > commandLength)
+            {
+                // Calculate how many extra characters need to be cleared
+                int extraChars = previousCommandLength - commandLength;
+
+                // Clear these characters by writing spaces and backtracking
+                if (keyChar == "")
+                {
+                    Console.Write(new string(' ', extraChars));
+                    Console.SetCursorPosition(promptLength + commandLength, initialCursorTop);
+                }
+            }
 
             // Ensure cursor position is within valid bounds
             int totalCursorPosition = cursorPosition + promptLength;
@@ -674,14 +501,15 @@ namespace Shell
             if (cursorLeft >= windowWidth) cursorLeft = windowWidth - 1;  // Avoid going out of the right bound
             if (cursorTop >= Console.BufferHeight) cursorTop = Console.BufferHeight - 1; // Avoid going out of bottom bound
 
-            // Set the cursor to the calculated position
-            Console.SetCursorPosition(cursorLeft, cursorTop);
+            //// Set the cursor to the calculated position
+            if (keyChar == "")
+                Console.SetCursorPosition(cursorLeft, cursorTop);
 
             // Show caret again.
             Console.CursorVisible = true;
         }
 
-       
+
 
         //Entry point of shell
         public void Run(string[] args)
@@ -706,7 +534,7 @@ namespace Shell
                 // Reading user imput
                 s_input = ReadCommand();
 
-                //cleaning input
+                // Cleaning input
                 s_input = s_input.Trim();
 
                 // Add the command to history only if it's not empty
