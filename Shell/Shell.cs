@@ -12,6 +12,7 @@ using Core.SystemTools;
 using Core.Commands;
 using System.Text;
 using System.ComponentModel;
+using System.Reflection.Metadata;
 
 namespace Shell
 {
@@ -348,7 +349,7 @@ namespace Shell
                         string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
                         command = new List<char>(historyCommand.ToCharArray());
                         cursorPosition = command.Count;  // Move the caret to the end
-                        RedrawCommand(command, cursorPosition);
+                        RedrawCommand(command, cursorPosition, "", true);
                     }
                 }
                 else if (key.Key == ConsoleKey.DownArrow)
@@ -360,14 +361,14 @@ namespace Shell
                         string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
                         command = new List<char>(historyCommand.ToCharArray());
                         cursorPosition = command.Count;  // Move the caret to the end
-                        RedrawCommand(command, cursorPosition);
+                        RedrawCommand(command, cursorPosition, "", true);
                     }
                     else if (historyIndex == 0)
                     {
                         historyIndex = -1;
                         command.Clear();
                         cursorPosition = 0;
-                        RedrawCommand(command, cursorPosition);
+                        RedrawCommand(command, cursorPosition, "", true);
                     }
                 }
                 else if (key.Key == ConsoleKey.LeftArrow)
@@ -434,13 +435,14 @@ namespace Shell
         /// </summary>
         /// <param name="command">The command input as a list of characters.</param>
         /// <param name="cursorPosition">The position of the cursor within the command.</param>
-        static void RedrawCommand(List<char> command, int cursorPosition, string keyChar = "")
+        static void RedrawCommand(List<char> command, int cursorPosition, string keyChar = "", bool isPrev = false)
         {
             // Hide caret while redrawing.
             Console.CursorVisible = false;
 
             // Save the current cursor top to restore it later
             int initialCursorTop = Console.CursorTop;
+            int initialCursorLeft = Console.CursorLeft;
 
             // Calculate the prompt length and window width
             int promptLength = GlobalVariables.lengthPS1;
@@ -453,9 +455,18 @@ namespace Shell
             //{
             // //   Console.SetCursorPosition(promptLength, s_initialCursorTop);
             //}
-            if (keyChar == "")
-                Console.SetCursorPosition(promptLength, initialCursorTop);
+            //if (keyChar == "")
+            //    Console.SetCursorPosition(promptLength, initialCursorTop);
             // Combine command characters into a single string
+            int commandLength = command.Count;
+            int previousCommandLength = GlobalVariables.previousCommandLength;
+            int extraChars = previousCommandLength - commandLength;
+            if (isPrev)
+            {
+                for (int i = 0; i < previousCommandLength; i++)
+                    Console.Write("\b \b");
+            }
+
             var cmdStr = string.Join("", command);
 
             // Print the command
@@ -466,28 +477,36 @@ namespace Shell
                 if (command.Count > 0)
                 {
                     command.RemoveAt(command.Count() - 1);
-                    Console.Write("\b \b");
+                    if (initialCursorLeft == 0)
+                    {
+                        if (initialCursorTop >= 0)
+                        {
+                            Console.SetCursorPosition(windowWidth - 1, initialCursorTop - 1);
+                            Console.Write("\b \b");
+                        }
+                    }
+                    else
+                        Console.Write("\b \b");
                 }
             }
             else
                 Console.Write(keyChar);
-
-            // Calculate how many extra characters we need to clear from a previous command if it was longer
-            int commandLength = command.Count;
-            int previousCommandLength = GlobalVariables.previousCommandLength;
             GlobalVariables.previousCommandLength = commandLength; // Update previous command length for next time
 
-            // If previous command was longer, clear the extra characters
-            if (previousCommandLength > commandLength)
-            {
-                // Calculate how many extra characters need to be cleared
-                int extraChars = previousCommandLength - commandLength;
 
-                // Clear these characters by writing spaces and backtracking
-                if (keyChar == "")
+            // Clear these characters by writing spaces and backtracking
+            if (keyChar == "")
+            {
+                // If previous command was longer, clear the extra characters
+                if (previousCommandLength > commandLength)
                 {
-                    Console.Write(new string(' ', extraChars));
-                    Console.SetCursorPosition(promptLength + commandLength, initialCursorTop);
+                    // Calculate how many extra characters need to be cleared
+
+
+                    //Console.Write(new string(' ', extraChars));
+                    //for (int i = 0; i < extraChars; i++)
+                    //    Console.Write("\b \b");
+                    //Console.SetCursorPosition(promptLength + commandLength, initialCursorTop);
                 }
             }
 
@@ -502,8 +521,8 @@ namespace Shell
             if (cursorTop >= Console.BufferHeight) cursorTop = Console.BufferHeight - 1; // Avoid going out of bottom bound
 
             //// Set the cursor to the calculated position
-            if (keyChar == "")
-                Console.SetCursorPosition(cursorLeft, cursorTop);
+            //if (keyChar == "")
+            //    Console.SetCursorPosition(cursorLeft, cursorTop);
 
             // Show caret again.
             Console.CursorVisible = true;
