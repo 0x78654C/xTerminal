@@ -13,6 +13,11 @@ using Core.Commands;
 using System.Text;
 using System.ComponentModel;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
+using System.Management;
 
 namespace Shell
 {
@@ -129,7 +134,12 @@ namespace Shell
 
             // Store xTerminal version.
             GlobalVariables.version = Application.ProductVersion;
+
+            var worker = new BackgroundWorker();
+            worker.DoWork +=TopMost.KeyMonitorWorker_DoWork;
+            worker.RunWorkerAsync();
         }
+
 
         /// <summary>
         /// Execute predifined xTerminal commands.
@@ -236,8 +246,6 @@ namespace Shell
             }
             catch { return false; }
         }
-
-
 
 
         /// <summary>
@@ -551,7 +559,7 @@ namespace Shell
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
                 // Reading user imput
-                s_input = ReadCommand();
+                s_input = Console.ReadLine();
 
                 // Cleaning input
                 s_input = s_input.Trim();
