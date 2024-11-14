@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.Versioning;
+using System.Security.Permissions;
 using System.Windows.Forms;
 
 namespace Core
@@ -53,5 +54,6 @@ namespace Core
         public static string successColorOutput = "Gray";
         public static int lengthPS1 = 0;
         public static int previousCommandLength = 0;
+        public static bool isKeyPressed = false;
     }
 }
