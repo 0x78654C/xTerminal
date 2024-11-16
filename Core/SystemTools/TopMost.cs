@@ -97,6 +97,25 @@ namespace Core.SystemTools
         }
 
         /// <summary>
+        /// Check Top most apps and compare with current running process id.
+        /// </summary>
+        /// <returns></returns>
+        public static bool ApplicationIsActivated()
+        {
+            var activatedHandle = GetForegroundWindow();
+            if (activatedHandle == IntPtr.Zero)
+            {
+                return false;       // No window is currently activated
+            }
+
+            var procId = Process.GetCurrentProcess().Id;
+            int activeProcId;
+            GetWindowThreadProcessId(activatedHandle, out activeProcId);
+            Console.Write(activeProcId);
+            return activeProcId == procId;
+        }
+
+        /// <summary>
         /// Key Press event.
         /// </summary>
         /// <param name="sender"></param>
@@ -105,16 +124,15 @@ namespace Core.SystemTools
         {
             var currProcesName = Process.GetCurrentProcess().ProcessName;
             var currProcesId = Process.GetCurrentProcess().Id;
-            var childProcessId = GetChildProcessIdByName("WindowsTerminal", currProcesName);
+            var childProcessId = GetChildProcessIdByName("VsDebugConsole", currProcesName);
             int activeProcId=0;
-            var activatedHandle = GetForegroundWindow();
-            var isNotForground = activatedHandle == IntPtr.Zero;
-  
+
             while (true)
             {
-                if (childProcessId == currProcesId && !isNotForground)
-                {
-                    if (GetAsyncKeyState(0x10) < 0)
+                var isNotForground = ApplicationIsActivated();
+                //if (isNotForground)
+                //   {
+                if (GetAsyncKeyState(0x10) < 0)
                     {
                         if (!GlobalVariables.isKeyPressed)
                         {
@@ -125,11 +143,12 @@ namespace Core.SystemTools
                     }
                     else
                     {
-                        GlobalVariables.isKeyPressed = false; // Reset flag when button is released
+                    Console.WriteLine($"child {childProcessId} curr {currProcesId} foreground {isNotForground}");
+                    GlobalVariables.isKeyPressed = false; // Reset flag when button is released
                     }
 
                     Thread.Sleep(50); // Small delay to reduce CPU usage
-                }
+               // }
             }
         }
     }
