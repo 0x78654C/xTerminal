@@ -111,7 +111,6 @@ namespace Core.SystemTools
             var procId = Process.GetCurrentProcess().Id;
             int activeProcId;
             GetWindowThreadProcessId(activatedHandle, out activeProcId);
-            Console.Write(activeProcId);
             return activeProcId == procId;
         }
 
@@ -125,30 +124,30 @@ namespace Core.SystemTools
             var currProcesName = Process.GetCurrentProcess().ProcessName;
             var currProcesId = Process.GetCurrentProcess().Id;
             var childProcessId = GetChildProcessIdByName("VsDebugConsole", currProcesName);
-            int activeProcId=0;
+            int activeProcId = 0;
 
             while (true)
             {
                 var isNotForground = ApplicationIsActivated();
-                //if (isNotForground)
-                //   {
-                if (GetAsyncKeyState(0x10) < 0)
-                    {
-                        if (!GlobalVariables.isKeyPressed)
-                        {
-                            Console.Write($"child {childProcessId} curr {currProcesId} foreground {isNotForground}");
-                            Console.WriteLine();
-                            GlobalVariables.isKeyPressed = true;
-                        }
-                    }
-                    else
-                    {
-                    Console.WriteLine($"child {childProcessId} curr {currProcesId} foreground {isNotForground}");
-                    GlobalVariables.isKeyPressed = false; // Reset flag when button is released
-                    }
 
-                    Thread.Sleep(50); // Small delay to reduce CPU usage
-               // }
+                if (GetAsyncKeyState(0x11) < 0)
+                {
+                    int promptLength = GlobalVariables.lengthPS1;
+                    int windowWidth = Console.WindowWidth;
+                    if (!GlobalVariables.isKeyPressed)
+                    {
+                        Console.Write($"child {childProcessId} curr {currProcesId} foreground {isNotForground} name {currProcesName}");
+                        Console.WriteLine();
+                        GlobalVariables.isKeyPressed = true;
+                    }
+                }
+                else
+                {
+                    //Console.WriteLine($"child {childProcessId} curr {currProcesId} foreground {isNotForground}");
+                    GlobalVariables.isKeyPressed = false; // Reset flag when button is released
+                }
+
+                Thread.Sleep(50); // Small delay to reduce CPU usage
             }
         }
     }
