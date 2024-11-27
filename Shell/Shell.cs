@@ -136,7 +136,7 @@ namespace Shell
             GlobalVariables.version = Application.ProductVersion;
 
             var worker = new BackgroundWorker();
-            worker.DoWork +=TopMost.KeyMonitorWorker_DoWork;
+            worker.DoWork += TopMost.KeyMonitorWorker_DoWork;
             worker.RunWorkerAsync();
         }
 
@@ -456,13 +456,13 @@ namespace Shell
             int promptLength = GlobalVariables.lengthPS1;
             int windowWidth = Console.WindowWidth;
 
-            ////// Move the cursor to the start of the input area (after the prompt)
+            //// Move the cursor to the start of the input area (after the prompt)
             //if (keyChar == "")
             //    Console.SetCursorPosition(promptLength, initialCursorTop);
-            //else if (keyChar == "history")
-            //{
-            // //   Console.SetCursorPosition(promptLength, s_initialCursorTop);
-            //}
+            if (keyChar == "history")
+            {
+                   Console.SetCursorPosition(promptLength, s_initialCursorTop);
+            }
             //if (keyChar == "")
             //    Console.SetCursorPosition(promptLength, initialCursorTop);
             // Combine command characters into a single string
@@ -489,12 +489,14 @@ namespace Shell
                     {
                         if (initialCursorTop >= 0)
                         {
-                            Console.SetCursorPosition(windowWidth - 1, initialCursorTop - 1);
+                            Console.SetCursorPosition(windowWidth-1, initialCursorTop - 1);
+                            Console.SetCursorPosition(windowWidth +1, initialCursorTop - 1);
                             Console.Write("\b \b");
                         }
                     }
                     else
-                        Console.Write("\b \b");
+                        if (windowWidth >= promptLength)
+                                 Console.Write("\b \b");
                 }
             }
             else
@@ -559,7 +561,7 @@ namespace Shell
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
                 // Reading user imput
-                s_input = Console.ReadLine();
+                s_input = ReadCommand();
 
                 // Cleaning input
                 s_input = s_input.Trim();
