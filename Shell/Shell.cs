@@ -561,7 +561,7 @@ namespace Shell
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
                 // Reading user imput
-                s_input = ReadCommand();
+                s_input = Console.ReadLine();
 
                 // Cleaning input
                 s_input = s_input.Trim();
