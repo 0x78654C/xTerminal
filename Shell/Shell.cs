@@ -525,14 +525,21 @@ namespace Shell
             int cursorLeft = totalCursorPosition % windowWidth;
             int cursorTop = initialCursorTop + (totalCursorPosition / windowWidth);
 
+
+            if (cursorLeft == 0 && totalCursorPosition > 0)
+            {
+                cursorLeft = 0; // Explicitly set to the start of the new line
+                cursorTop++;    // Move to the next line
+            }
+
             // Ensure the cursor position stays within valid bounds
             if (cursorLeft < 0) cursorLeft = 0;
             if (cursorLeft >= windowWidth) cursorLeft = windowWidth - 1;  // Avoid going out of the right bound
             if (cursorTop >= Console.BufferHeight) cursorTop = Console.BufferHeight - 1; // Avoid going out of bottom bound
 
             //// Set the cursor to the calculated position
-            //if (keyChar == "")
-            //    Console.SetCursorPosition(cursorLeft, cursorTop);
+            if (keyChar == "")
+                Console.SetCursorPosition(cursorLeft, cursorTop);
 
             // Show caret again.
             Console.CursorVisible = true;
