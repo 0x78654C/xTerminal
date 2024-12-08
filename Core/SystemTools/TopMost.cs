@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.Devices;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
+using System.Windows.Forms;
+using System.Windows.Input;
 
 namespace Core.SystemTools
 {
@@ -16,6 +20,9 @@ namespace Core.SystemTools
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
         [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vKey);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        public static extern short GetKeyState(int nVirtKey);
 
         [DllImport("ntdll.dll")]
         private static extern int NtQueryInformationProcess(
@@ -47,7 +54,8 @@ namespace Core.SystemTools
         private enum ProcessAccessFlags : uint
         {
             QueryInformation = 0x0400,
-            VMRead = 0x0010
+            VMRead = 0x0010,
+            All = 0x001F0FFF
         }
 
         private const int ProcessBasicInformation = 0;
@@ -107,11 +115,19 @@ namespace Core.SystemTools
             {
                 return false;       // No window is currently activated
             }
-
             var procId = Process.GetCurrentProcess().Id;
+            var parrentProcessId = GetParentProcessId(procId);
+            var nameParentProc = "";
+            try {
+                nameParentProc = Process.GetProcessById(parrentProcessId).ProcessName;
+                if (nameParentProc.Contains("explorer"))
+                    return true;
+            } catch { }
             int activeProcId;
             GetWindowThreadProcessId(activatedHandle, out activeProcId);
-            return activeProcId == procId;
+            Console.WriteLine($"activeProcId {activeProcId} | parrentProcessId {parrentProcessId} nameParentProc {nameParentProc}");
+
+            return activeProcId == parrentProcessId;
         }
 
         /// <summary>
@@ -123,30 +139,36 @@ namespace Core.SystemTools
         {
             var currProcesName = Process.GetCurrentProcess().ProcessName;
             var currProcesId = Process.GetCurrentProcess().Id;
+            var parrentProcessId = GetParentProcessId(currProcesId);
             var childProcessId = GetChildProcessIdByName("VsDebugConsole", currProcesName);
             int activeProcId = 0;
-
+            var isNotForground = ApplicationIsActivated();
             while (true)
             {
-                var isNotForground = ApplicationIsActivated();
-
-                if (GetAsyncKeyState(0x11) < 0)
+                if (isNotForground)
                 {
-                    int promptLength = GlobalVariables.lengthPS1;
-                    int windowWidth = Console.WindowWidth;
-                    if (!GlobalVariables.isKeyPressed)
+                    if (GetKeyState(0x11) < 0)
                     {
-                        Console.Write($"child {childProcessId} curr {currProcesId} foreground {isNotForground} name {currProcesName}");
-                        Console.WriteLine();
-                        GlobalVariables.isKeyPressed = true;
+                        int promptLength = GlobalVariables.lengthPS1;
+                        int windowWidth = Console.WindowWidth;
+                        if (!GlobalVariables.isKeyPressed)
+                        {
+                            var activatedHandle = GetForegroundWindow();
+                            var procId = Process.GetCurrentProcess().Id;
+                            var parrentProcessId1 = GetParentProcessId(procId);
+                            int activeProcId1;
+                            GetWindowThreadProcessId(activatedHandle, out activeProcId1);
+                            Console.Write($"child {childProcessId} curr {currProcesId} foreground {isNotForground} name {currProcesName} parrentId {parrentProcessId}\n activeProcId1 {activeProcId1} activatedHandle {activatedHandle != IntPtr.Zero} \n");
+                            Console.WriteLine();
+                            GlobalVariables.isKeyPressed = true;
+                        }
+                    }
+                    else
+                    {
+                        //Console.WriteLine($"child {childProcessId} curr {currProcesId} foreground {isNotForground}");
+                        GlobalVariables.isKeyPressed = false; // Reset flag when button is released
                     }
                 }
-                else
-                {
-                    //Console.WriteLine($"child {childProcessId} curr {currProcesId} foreground {isNotForground}");
-                    GlobalVariables.isKeyPressed = false; // Reset flag when button is released
-                }
-
                 Thread.Sleep(50); // Small delay to reduce CPU usage
             }
         }
