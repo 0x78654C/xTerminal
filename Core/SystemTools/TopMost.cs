@@ -3,6 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
@@ -104,6 +105,24 @@ namespace Core.SystemTools
             return -1;
         }
 
+
+        private static int GetParentProcessIdWMI(int processId)
+        {
+            try
+            {
+                string query = $"SELECT ParentProcessId FROM Win32_Process WHERE ProcessId = {processId}";
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
+                foreach (ManagementObject obj in searcher.Get())
+                {
+                    return Convert.ToInt32(obj["ParentProcessId"]);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return -1;
+        }
+
         /// <summary>
         /// Check Top most apps and compare with current running process id.
         /// </summary>
@@ -116,16 +135,16 @@ namespace Core.SystemTools
                 return false;       // No window is currently activated
             }
             var procId = Process.GetCurrentProcess().Id;
-            var parrentProcessId = GetParentProcessId(procId);
+            var parrentProcessId = GetParentProcessIdWMI(procId);
             var nameParentProc = "";
             try {
                 nameParentProc = Process.GetProcessById(parrentProcessId).ProcessName;
-                if (nameParentProc.Contains("explorer"))
-                    return true;
+                //if (nameParentProc.Contains("explorer"))
+                //    return true;
             } catch { }
             int activeProcId;
             GetWindowThreadProcessId(activatedHandle, out activeProcId);
-            Console.WriteLine($"activeProcId {activeProcId} | parrentProcessId {parrentProcessId} nameParentProc {nameParentProc}");
+            Console.WriteLine($"activeProcId {activeProcId} | parrentProcessId {parrentProcessId} nameParentProc {nameParentProc} activatedHandle {activatedHandle == IntPtr.Zero}");
 
             return activeProcId == parrentProcessId;
         }
@@ -153,12 +172,8 @@ namespace Core.SystemTools
                         int windowWidth = Console.WindowWidth;
                         if (!GlobalVariables.isKeyPressed)
                         {
-                            var activatedHandle = GetForegroundWindow();
-                            var procId = Process.GetCurrentProcess().Id;
-                            var parrentProcessId1 = GetParentProcessId(procId);
-                            int activeProcId1;
-                            GetWindowThreadProcessId(activatedHandle, out activeProcId1);
-                            Console.Write($"child {childProcessId} curr {currProcesId} foreground {isNotForground} name {currProcesName} parrentId {parrentProcessId}\n activeProcId1 {activeProcId1} activatedHandle {activatedHandle != IntPtr.Zero} \n");
+                       
+                            Console.WriteLine($"child {childProcessId} curr {currProcesId} foreground {isNotForground} name {currProcesName} parrentId {parrentProcessId}");
                             Console.WriteLine();
                             GlobalVariables.isKeyPressed = true;
                         }
