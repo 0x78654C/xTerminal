@@ -15,6 +15,7 @@ namespace Core.SystemTools
     [SupportedOSPlatform("Windows")]
     public class TopMost
     {
+        private static int s_countProc = 0;
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
         private static extern IntPtr GetForegroundWindow();
 
@@ -114,6 +115,7 @@ namespace Core.SystemTools
                 ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
                 foreach (ManagementObject obj in searcher.Get())
                 {
+                    s_countProc++;
                     return Convert.ToInt32(obj["ParentProcessId"]);
                 }
             }
@@ -144,8 +146,8 @@ namespace Core.SystemTools
             } catch { }
             int activeProcId;
             GetWindowThreadProcessId(activatedHandle, out activeProcId);
-            Console.WriteLine($"activeProcId {activeProcId} | parrentProcessId {parrentProcessId} nameParentProc {nameParentProc} activatedHandle {activatedHandle == IntPtr.Zero}");
-
+            Console.WriteLine($"activeProcId {activeProcId} | parrentProcessId {parrentProcessId} nameParentProc {nameParentProc} activatedHandle {activatedHandle == IntPtr.Zero} count {s_countProc}");
+            s_countProc = 0;
             return activeProcId == parrentProcessId;
         }
 
