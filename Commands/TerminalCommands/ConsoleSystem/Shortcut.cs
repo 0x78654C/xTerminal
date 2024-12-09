@@ -10,7 +10,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     [SupportedOSPlatform("Windows")]
     public class Shortcut: ITerminalCommand
     {
-        public string Name => "ls";
+        public string Name => "ln";
         public void Execute(string args)
         {
 
