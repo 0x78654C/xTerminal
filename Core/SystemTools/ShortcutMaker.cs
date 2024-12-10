@@ -77,6 +77,7 @@ namespace Core.SystemTools
                 shortcut = (IWshShortcut)wshShell.CreateShortcut(finalPath);
             }
             shortcut.TargetPath = path;
+            shortcut.WorkingDirectory = System.IO.Path.GetDirectoryName(path);
             shortcut.IconLocation = path;
             shortcut.Save();
             FileSystem.SuccessWriteLine($"Shortcut created: {finalPath}");
