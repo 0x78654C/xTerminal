@@ -220,7 +220,9 @@ This is the full list of commands that can be used in xTerminal:
                    enc unicode  : Set input/output encoding to Unicode.
                    enc ascii    : Set input/output encoding to ASCII.
                    enc -current : Show the current input/output encoding.  
-
+    ln        -- Create shortcut of a file/folder.
+                  ln <path_file_folder> : Create shortcut of a specific file/directory on Desktop.
+                  ln <path_file_folder> -o <path_location_shortcut> : Create shortcut in a specific location.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
