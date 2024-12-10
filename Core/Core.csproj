@@ -53,7 +53,7 @@
       <Lcid>0</Lcid>
       <Isolated>false</Isolated>
       <EmbedInteropTypes>False</EmbedInteropTypes>
-      <Private>True</Private>
+      <Private></Private>
     </COMReference>
   </ItemGroup>
   <ItemGroup>
