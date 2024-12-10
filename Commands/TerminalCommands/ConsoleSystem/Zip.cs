@@ -1,11 +1,14 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
+    [SupportedOSPlatform("Windows")] 
     public class Zip : ITerminalCommand
     {
         public string Name => "zip";
@@ -15,6 +18,30 @@ namespace Commands.TerminalCommands.ConsoleSystem
 ";
         public void Execute(string arg)
         {
+            try
+            {
+                // No parameter.
+                if (arg == Name)
+                {
+                    FileSystem.SuccessWriteLine("Use -h for more information!");
+                    return;
+                }
+
+                arg = arg.Substring(3);
+
+                // Display help message.
+                if (arg.Trim() == "-h")
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+            }
         }
     }
 }
