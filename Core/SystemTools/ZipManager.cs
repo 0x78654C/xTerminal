@@ -44,19 +44,25 @@ namespace Core.SystemTools
             FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
         }
 
+
+        private void CompressFiles()
+        {
+            FileSystem
+        }
+
         /// <summary>
         /// List content of zip file.
         /// </summary>
         public void List()
         {
-            string pathDir = FileSystem.SanitizePath(ZipDir, _currentDirectory);//folder to add
-            if (!Directory.Exists(pathDir))
+            string pathFile = FileSystem.SanitizePath(ZipName, _currentDirectory);//folder to add
+            if (!File.Exists(pathFile))
             {
-                FileSystem.ErrorWriteLine($"Directory does not exist: {pathDir}");
+                FileSystem.ErrorWriteLine($"Archive does not exist: {pathFile}");
                 return;
             }
 
-            var zipEntries = ZipFile.OpenRead(pathDir).Entries;
+            var zipEntries = ZipFile.OpenRead(pathFile).Entries;
             foreach (var entry in zipEntries)
                 Console.WriteLine(entry);
         }
