@@ -1,4 +1,5 @@
 ﻿using Core;
+using Core.SystemTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,8 +36,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
-
-
+                var zipManager = new ZipManager();
+                if (arg.Trim().StartsWith("-list"))
+                {
+                    var archiveFile = arg.SplitByText("-list ",1).Trim();
+                    zipManager.ZipName = archiveFile;
+                    zipManager.List();
+                }
             }
             catch (Exception ex)
             {
