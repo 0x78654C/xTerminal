@@ -96,7 +96,7 @@ Example2: del <dir_path1;dir_path2;dir_path3>
                     if (Directory.Exists(dir))
                     {
                         var dirInfo = new DirectoryInfo(dir);
-                        RecursiveDeleteDir(dirInfo);
+                        FileDirManager.RecursiveDeleteDir(dirInfo);
                     }
                 }
             }
@@ -116,7 +116,7 @@ Example2: del <dir_path1;dir_path2;dir_path3>
                 if (attr.HasFlag(FileAttributes.Directory))
                 {
                     var dir = new DirectoryInfo(arg);
-                    RecursiveDeleteDir(dir);
+                    FileDirManager.RecursiveDeleteDir(dir);
                     FileSystem.SuccessWriteLine($"Directory {arg} deleted!");
                 }
                 else
@@ -130,31 +130,6 @@ Example2: del <dir_path1;dir_path2;dir_path3>
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }
-        }
-
-        /// <summary>
-        /// Recursive directory delete with file atribute set.
-        /// </summary>
-        /// <param name="directory"></param>
-        private void RecursiveDeleteDir(DirectoryInfo directory)
-        {
-            if (!directory.Exists)
-            {
-                FileSystem.ErrorWriteLine($"Directory '{directory}' does not exist!");
-                return;
-            }
-
-            foreach (var dir in directory.EnumerateDirectories())
-            {
-                RecursiveDeleteDir(dir);
-            }
-            var files = directory.GetFiles();
-            foreach (var file in files)
-            {
-                file.IsReadOnly = false;
-                file.Delete();
-            }
-            directory.Delete();
         }
     }
 }
