@@ -40,5 +40,31 @@ namespace Core
                 }
             }
         }
+
+
+        /// <summary>
+        /// Recursive directory delete with file atribute set.
+        /// </summary>
+        /// <param name="directory"></param>
+        public static void RecursiveDeleteDir(DirectoryInfo directory)
+        {
+            if (!directory.Exists)
+            {
+                FileSystem.ErrorWriteLine($"Directory '{directory}' does not exist!");
+                return;
+            }
+
+            foreach (var dir in directory.EnumerateDirectories())
+            {
+                RecursiveDeleteDir(dir);
+            }
+            var files = directory.GetFiles();
+            foreach (var file in files)
+            {
+                file.IsReadOnly = false;
+                file.Delete();
+            }
+            directory.Delete();
+        }
     }
 }
