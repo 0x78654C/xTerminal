@@ -2,6 +2,7 @@
 using System.IO.Compression;
 using System.IO;
 using System.Runtime.Versioning;
+using System.Linq;
 
 namespace Core.SystemTools
 {
@@ -29,25 +30,89 @@ namespace Core.SystemTools
         public ZipManager() { }
 
         /// <summary>
-        /// Create Zip file.
+        /// Create Zip folder.
         /// </summary>
         public void Compress()
         {
-            string pathDir = FileSystem.SanitizePath(ZipDir,_currentDirectory);//folder to add
+            string pathDir = FileSystem.SanitizePath(ZipDir, _currentDirectory);//folder to add
             if (!Directory.Exists(pathDir))
             {
                 FileSystem.ErrorWriteLine($"Directory does not exist: {pathDir}");
                 return;
             }
-            string zipPath = Path.Combine(pathDir, ZipName + ".zip");//URL for your ZIP file
-            ZipFile.CreateFromDirectory(pathDir, zipPath, CompressionLevel.Fastest,true);
+            var count = pathDir.Split('\\').Length;
+            var lastDir = pathDir.Split('\\')[count - 1].Length;
+            var parentPath = pathDir.Substring(0, pathDir.Length - lastDir);
+            string zipPath = Path.Combine(parentPath, ZipName + ".zip");//URL for your ZIP file
+            ZipFile.CreateFromDirectory(pathDir, zipPath, CompressionLevel.Fastest, true);
             FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
         }
 
-
-        private void CompressFiles()
+        /// <summary>
+        /// Start compress and create achives.
+        /// </summary>
+        public void Archive()
         {
-            FileSystem
+            bool isTempCreated = false;
+            var tempDir = "";
+            if (ZipDir.Contains(";"))
+            {
+                var splitFiles = ZipDir.Split(";");
+                var pathFile = "";
+                foreach (var file in splitFiles)
+                {
+                    pathFile = FileSystem.SanitizePath(file, _currentDirectory);//folder to add
+       
+                    if (!isTempCreated)
+                    {
+                        var getPath = "";
+                        if (FileSystem.IsFile(pathFile))
+                            getPath = Path.GetDirectoryName(pathFile);
+                        else
+                        {
+                            var len = pathFile.Split('\\').Count();
+                            getPath = pathFile.Substring(0, pathFile.Length - pathFile.Split('\\')[len - 1].Length - 1);
+                        }
+                        tempDir = $"{getPath}\\tmpZip";
+                        if (Directory.Exists(tempDir))
+                            Directory.Delete(tempDir, true);
+                        Directory.CreateDirectory(tempDir);
+                        isTempCreated = true;
+                    }
+                    if (!FileSystem.IsFile(pathFile))
+                    {
+                        var len = pathFile.Split('\\').Count();
+                        var dirName = pathFile.Split('\\')[len - 1];
+                        FileDirManager.CopyDirectory(pathFile, $"{tempDir}\\{dirName}",true); ;
+                    }
+                    else
+                       File.Copy(pathFile, $"{tempDir}\\{Path.GetFileName(pathFile)}");
+                }
+
+                var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
+                ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Fastest, false);
+                FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
+            }
+            else
+            {
+                var pathFile = FileSystem.SanitizePath(ZipDir, _currentDirectory);//folder to add
+                if (!FileSystem.IsFile(pathFile))
+                {
+                    Compress();
+                    return;
+                }
+                var getPath = Path.GetDirectoryName(pathFile);
+                tempDir = $"{getPath}\\tmpZip";
+                if (Directory.Exists(tempDir))
+                    Directory.Delete(tempDir, true);
+                Directory.CreateDirectory(tempDir);
+                File.Copy(pathFile, $"{tempDir}\\{Path.GetFileName(pathFile)}");
+                var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
+                ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Fastest, false);
+                FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
+            }
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, true);
         }
 
         /// <summary>
@@ -72,10 +137,10 @@ namespace Core.SystemTools
         /// </summary>
         public void Decompress()
         {
-            string pathDir = FileSystem.SanitizePath(ZipDir, _currentDirectory);//folder to add
-            if (!Directory.Exists(pathDir))
+            string pathFile = FileSystem.SanitizePath(ZipDir, _currentDirectory);//folder to add
+            if (!File.Exists(pathFile))
             {
-                FileSystem.ErrorWriteLine($"Directory does not exist: {pathDir}");
+                FileSystem.ErrorWriteLine($"Zip file does not exist: {pathFile}");
                 return;
             }
 
