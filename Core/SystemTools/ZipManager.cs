@@ -44,6 +44,7 @@ namespace Core.SystemTools
             var lastDir = pathDir.Split('\\')[count - 1].Length;
             var parentPath = pathDir.Substring(0, pathDir.Length - lastDir);
             string zipPath = Path.Combine(parentPath, ZipName + ".zip");//URL for your ZIP file
+            FileSystem.SuccessWriteLine($"Creating Zip file...");
             ZipFile.CreateFromDirectory(pathDir, zipPath, CompressionLevel.Fastest, true);
             FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
         }
@@ -74,8 +75,7 @@ namespace Core.SystemTools
                             getPath = pathFile.Substring(0, pathFile.Length - pathFile.Split('\\')[len - 1].Length - 1);
                         }
                         tempDir = $"{getPath}\\tmpZip";
-                        if (Directory.Exists(tempDir))
-                            Directory.Delete(tempDir, true);
+                        DeleteTempDir(tempDir);
                         Directory.CreateDirectory(tempDir);
                         isTempCreated = true;
                     }
@@ -90,6 +90,7 @@ namespace Core.SystemTools
                 }
 
                 var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
+                FileSystem.SuccessWriteLine($"Creating Zip file...");
                 ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Fastest, false);
                 FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
             }
@@ -103,16 +104,28 @@ namespace Core.SystemTools
                 }
                 var getPath = Path.GetDirectoryName(pathFile);
                 tempDir = $"{getPath}\\tmpZip";
-                if (Directory.Exists(tempDir))
-                    Directory.Delete(tempDir, true);
+                DeleteTempDir(tempDir);
                 Directory.CreateDirectory(tempDir);
                 File.Copy(pathFile, $"{tempDir}\\{Path.GetFileName(pathFile)}");
                 var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
+                FileSystem.SuccessWriteLine($"Creating Zip file...");
                 ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Fastest, false);
                 FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
             }
-            if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, true);
+            DeleteTempDir(tempDir);
+        }
+
+        /// <summary>
+        /// Delete temp dir recursive.
+        /// </summary>
+        /// <param name="dir"></param>
+        private static void DeleteTempDir(string dir)
+        {
+            if (Directory.Exists(dir))
+            {
+                var dirInfo = new DirectoryInfo(dir);
+                FileDirManager.RecursiveDeleteDir(dirInfo);
+            }
         }
 
         /// <summary>
@@ -137,16 +150,15 @@ namespace Core.SystemTools
         /// </summary>
         public void Decompress()
         {
-            string pathFile = FileSystem.SanitizePath(ZipDir, _currentDirectory);//folder to add
+            string pathFile = FileSystem.SanitizePath(ZipName, _currentDirectory);//folder to add
             if (!File.Exists(pathFile))
             {
                 FileSystem.ErrorWriteLine($"Zip file does not exist: {pathFile}");
                 return;
             }
-
-            string zipFile = FileSystem.SanitizePath(ZipName, _currentDirectory);//folder to add
-            ZipFile.ExtractToDirectory(zipFile, Path.GetDirectoryName(zipFile));
-            FileSystem.SuccessWriteLine($"Extracted Zip file: {zipFile}");
+            FileSystem.SuccessWriteLine($"Extracting.....");
+            ZipFile.ExtractToDirectory(pathFile, Path.GetDirectoryName(pathFile) +$"\\{Path.GetFileNameWithoutExtension(pathFile)}");
+            FileSystem.SuccessWriteLine($"Extracted Zip file: {Path.GetDirectoryName(pathFile)}\\{Path.GetFileNameWithoutExtension(pathFile)}");
         }
     }
 }
