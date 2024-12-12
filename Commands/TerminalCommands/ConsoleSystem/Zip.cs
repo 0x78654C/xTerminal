@@ -37,11 +37,21 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     return;
                 }
                 var zipManager = new ZipManager();
-                if (arg.Trim().StartsWith("-list"))
+                if (arg.Trim().StartsWith("-list "))
                 {
                     var archiveFile = arg.SplitByText("-list ",1).Trim();
                     zipManager.ZipName = archiveFile;
                     zipManager.List();
+                    return;
+                }
+
+                if (arg.Trim().Contains(" -n "))
+                {
+                    var archiveFile = arg.SplitByText(" -n ", 1).Trim();
+                    var filesToBeArchived = arg.SplitByText(" -n ", 0).Trim();
+                    zipManager.ZipName = archiveFile;
+                    zipManager.ZipDir = filesToBeArchived;
+                    zipManager.Archive();
                 }
             }
             catch (Exception ex)
