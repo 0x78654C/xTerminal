@@ -52,6 +52,15 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     zipManager.ZipName = archiveFile;
                     zipManager.ZipDir = filesToBeArchived;
                     zipManager.Archive();
+                    return;
+                }
+
+                if (arg.Trim().StartsWith("-x "))
+                {
+                    var archiveFile = arg.SplitByText("-x ", 1).Trim();
+                    zipManager.ZipName = archiveFile;
+                    zipManager.Decompress();
+                    return;
                 }
             }
             catch (Exception ex)
