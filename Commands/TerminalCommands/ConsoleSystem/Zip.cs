@@ -1,16 +1,12 @@
 ﻿using Core;
 using Core.SystemTools;
 using System;
-using System.Collections.Generic;
 using System.IO.Compression;
-using System.Linq;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
-    [SupportedOSPlatform("Windows")] 
+    [SupportedOSPlatform("Windows")]
     public class Zip : ITerminalCommand
     {
         public string Name => "zip";
@@ -30,7 +26,7 @@ s  - SmallestSize
             try
             {
                 // No parameter.
-                if (arg == Name)
+                if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine("Use -h for more information!");
                     return;
@@ -39,7 +35,7 @@ s  - SmallestSize
                 arg = arg.Substring(3);
 
                 // Display help message.
-                if (arg.Trim() == "-h")
+                if (arg.Trim() == "-h" && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
@@ -48,7 +44,7 @@ s  - SmallestSize
                 if (arg.Trim().StartsWith("-c "))
                 {
                     var compresionLevel = arg.SplitByText("-c ", 1).Trim();
-                    switch(compresionLevel)
+                    switch (compresionLevel)
                     {
                         case "o":
                             GlobalVariables.compressionLevel = CompressionLevel.Optimal;
@@ -70,27 +66,40 @@ s  - SmallestSize
                     return;
                 }
 
-                if (arg.Trim().StartsWith("-list "))
+                if (arg.Trim().StartsWith("-list"))
                 {
-                    var archiveFile = arg.SplitByText("-list ",1).Trim();
+                    var archiveFile = "";
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        archiveFile = GlobalVariables.pipeCmdOutput.Trim();
+                    else
+                        archiveFile = arg.SplitByText("-list ", 1).Trim();
                     zipManager.ZipName = archiveFile;
                     zipManager.List();
                     return;
                 }
 
-                if (arg.Trim().Contains(" -n "))
+                if (arg.Trim().Contains("-n "))
                 {
-                    var archiveFile = arg.SplitByText(" -n ", 1).Trim();
-                    var filesToBeArchived = arg.SplitByText(" -n ", 0).Trim();
+                    var archiveFile = arg.SplitByText("-n ", 1).Trim();
+                    var filesToBeArchived = "";
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        filesToBeArchived = GlobalVariables.pipeCmdOutput.Trim();
+                    else
+                        filesToBeArchived = arg.SplitByText("-n ", 0).Trim();
+
                     zipManager.ZipName = archiveFile;
                     zipManager.ZipDir = filesToBeArchived;
                     zipManager.Archive();
                     return;
                 }
 
-                if (arg.Trim().StartsWith("-x "))
+                if (arg.Trim().StartsWith("-x"))
                 {
-                    var archiveFile = arg.SplitByText("-x ", 1).Trim();
+                    var archiveFile = "";
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        archiveFile = GlobalVariables.pipeCmdOutput.Trim();
+                    else
+                        archiveFile = arg.SplitByText(" -x ", 1).Trim();
                     zipManager.ZipName = archiveFile;
                     zipManager.Decompress();
                     return;
