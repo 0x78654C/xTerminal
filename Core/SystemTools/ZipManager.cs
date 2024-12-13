@@ -45,7 +45,7 @@ namespace Core.SystemTools
             var parentPath = pathDir.Substring(0, pathDir.Length - lastDir);
             string zipPath = Path.Combine(parentPath, ZipName + ".zip");//URL for your ZIP file
             FileSystem.SuccessWriteLine($"Creating Zip file...");
-            ZipFile.CreateFromDirectory(pathDir, zipPath, CompressionLevel.Fastest, true);
+            ZipFile.CreateFromDirectory(pathDir, zipPath, GlobalVariables.compressionLevel, true);
             FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
         }
 
@@ -91,7 +91,7 @@ namespace Core.SystemTools
 
                 var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
                 FileSystem.SuccessWriteLine($"Creating Zip file...");
-                ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Fastest, false);
+                ZipFile.CreateFromDirectory(tempDir, zipPath, GlobalVariables.compressionLevel, false);
                 FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
             }
             else
@@ -109,7 +109,7 @@ namespace Core.SystemTools
                 File.Copy(pathFile, $"{tempDir}\\{Path.GetFileName(pathFile)}");
                 var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
                 FileSystem.SuccessWriteLine($"Creating Zip file...");
-                ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Fastest, false);
+                ZipFile.CreateFromDirectory(tempDir, zipPath, GlobalVariables.compressionLevel, false);
                 FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
             }
             DeleteTempDir(tempDir);
