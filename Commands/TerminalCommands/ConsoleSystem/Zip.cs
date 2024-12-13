@@ -2,6 +2,7 @@
 using Core.SystemTools;
 using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
@@ -13,9 +14,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class Zip : ITerminalCommand
     {
         public string Name => "zip";
-        private static string s_helpMessage = @"Usage of ln command parameters:
-    ln <path_file_folder> : Create shortcut of a specific file/directory on Desktop.
-    ln <path_file_folder> -o <path_location_shortcut> : Create shortcut in a specific location.
+        private static string s_helpMessage = @"Usage of zip command parameters:
+    zip <file_/directory_name> -n <name_of_archive> : Creates zip archive with the file/folder mentioned.
+    zip <file;dir;dir1;file1> -n <name_of_archive>  : Creates zip archive with the multiple files/folders mentioned.
+    zip -c                                          : Sets the compression level (default is Fastest). Example: zip -c s
+
+Compresion levels:
+o  - Optimal
+nc - NoCompression
+f  - Fastest
+s  - SmallestSize
 ";
         public void Execute(string arg)
         {
@@ -37,6 +45,31 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     return;
                 }
                 var zipManager = new ZipManager();
+                if (arg.Trim().StartsWith("-c "))
+                {
+                    var compresionLevel = arg.SplitByText("-c ", 1).Trim();
+                    switch(compresionLevel)
+                    {
+                        case "o":
+                            GlobalVariables.compressionLevel = CompressionLevel.Optimal;
+                            FileSystem.SuccessWriteLine($"Compression set to: Optimal");
+                            break;
+                        case "nc":
+                            GlobalVariables.compressionLevel = CompressionLevel.NoCompression;
+                            FileSystem.SuccessWriteLine($"Compression set to: NoCompression");
+                            break;
+                        case "f":
+                            GlobalVariables.compressionLevel = CompressionLevel.Fastest;
+                            FileSystem.SuccessWriteLine($"Compression set to: Fastest");
+                            break;
+                        case "s":
+                            GlobalVariables.compressionLevel = CompressionLevel.SmallestSize;
+                            FileSystem.SuccessWriteLine($"Compression set to: SmallestSize");
+                            break;
+                    }
+                    return;
+                }
+
                 if (arg.Trim().StartsWith("-list "))
                 {
                     var archiveFile = arg.SplitByText("-list ",1).Trim();
