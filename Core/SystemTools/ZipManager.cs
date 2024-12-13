@@ -3,6 +3,8 @@ using System.IO.Compression;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Linq;
+using System.Data;
+using Castle.Components.DictionaryAdapter.Xml;
 
 namespace Core.SystemTools
 {
@@ -141,8 +143,13 @@ namespace Core.SystemTools
             }
 
             var zipEntries = ZipFile.OpenRead(pathFile).Entries;
+            var dataOut = "";
             foreach (var entry in zipEntries)
-                Console.WriteLine(entry);
+                dataOut += entry + Environment.NewLine;
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                GlobalVariables.pipeCmdOutput = dataOut;
+            else
+                Console.WriteLine(dataOut);
         }
 
         /// <summary>
