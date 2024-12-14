@@ -17,9 +17,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
-
-                // No parameter.
-                if (arg == Name)
+                if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine("Use -h for more information!");
                     return;
@@ -28,7 +26,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 arg = arg.Substring(2);
 
                 // Display help message.
-                if (arg.Trim() == "-h")
+                if (arg.Trim() == "-h" && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
@@ -36,9 +34,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 var shortcutMaker =  new ShortcutMaker();
 
                 // Save shortcut to specific directory.
-                if(arg.Contains(" -o "))
+                if(arg.Contains("-o "))
                 {
-                    var fileShort = arg.SplitByText(" -o ", 0).Trim();
+                    var fileShort = "";
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        fileShort = GlobalVariables.pipeCmdOutput.Trim();
+                    else 
+                        arg.SplitByText(" -o ", 0).Trim();
                     var pathShort = arg.SplitByText(" -o ", 1).Trim();
                     shortcutMaker.PathShortcut = pathShort;
                     shortcutMaker.Path = fileShort;
@@ -46,7 +48,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     shortcutMaker.CreateShortcut();
                     return;
                 }
-                shortcutMaker.Path = arg.Trim();
+                var fileShortDesk = "";
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    fileShortDesk = GlobalVariables.pipeCmdOutput.Trim();
+                else
+                    fileShortDesk = arg.Trim();
+                shortcutMaker.Path =  fileShortDesk;
                 shortcutMaker.CreateShortcut();
             }
             catch (Exception ex)
