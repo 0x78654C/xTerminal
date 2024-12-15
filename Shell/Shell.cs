@@ -1,5 +1,4 @@
 ﻿using Core;
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,14 +10,7 @@ using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
-using System.Text;
-using System.ComponentModel;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Diagnostics;
-using System.Management;
+
 
 namespace Shell
 {
@@ -555,7 +547,7 @@ namespace Shell
             Console.Write(prompt);
             KeyHandler keyHandler = new KeyHandler(new Core.Abstractions.Console2(), _history, AutoCompletionHandler);
             string text = GetText(keyHandler);
-            GlobalVariables.currentCommand = text;
+            //GlobalVariables.currentCommand = text;
             if (String.IsNullOrWhiteSpace(text) && !String.IsNullOrWhiteSpace(@default))
             {
                 text = @default;
@@ -569,7 +561,10 @@ namespace Shell
             {
                 keyHandler.Handle(keyInfo);
                 keyInfo = Console.ReadKey(true);
+                if(keyInfo. != '\b')
+                    GlobalVariables.currentCommand += keyInfo.KeyChar.ToString();
             }
+            GlobalVariables.currentCommand = "";
             Console.WriteLine();
             return keyHandler.Text;
         }
