@@ -1,11 +1,15 @@
 ﻿using Core.Abstractions;
-
+using Core.Commands;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Versioning;
 using System.Text;
+using System.Windows.Forms;
 
 namespace Core
 {
+    [SupportedOSPlatform("windows")]
     public class KeyHandler
     {
         private int _cursorPos;
@@ -294,7 +298,26 @@ namespace Core
 
             _keyActions["Tab"] = () =>
             {
-                    Console.Write("aaaaaaa1");
+                var outCompletion = "";
+                var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
+                var candidate = GlobalVariables.currentCommand;
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, false, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, false, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, false, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "./", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "del", currentDirectory, false, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "del", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", currentDirectory, false, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, true, ref outCompletion);
+                AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, true, ref outCompletion);
 
                 //if (IsInAutoCompleteMode())
                 //{
