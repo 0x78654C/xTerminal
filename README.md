@@ -229,7 +229,7 @@ This is the full list of commands that can be used in xTerminal:
                   zip -list <zip_file_path>                       : Lists the content of the Zip archive file.
                   zip -c                                          : Sets the compression level (default is Fastest). Example: zip -c s
                   
-                  Compresion levels:
+                  Compression levels:
                   o  - Optimal
                   nc - NoCompression
                   f  - Fastest
