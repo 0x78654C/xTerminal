@@ -14,6 +14,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     zip <file_/directory_name> -n <name_of_archive> : Creates zip archive with the file/folder mentioned.
     zip <file;dir;dir1;file1> -n <name_of_archive>  : Creates zip archive with the multiple files/folders mentioned.
     zip -list <zip_file_path>                       : Lists the content of the Zip archive file.
+    zip -x <zip_file_path>                          : Decompress zip archive.
     zip -c                                          : Sets the compression level (default is Fastest). Example: zip -c s
 
 Compression levels:
