@@ -3,8 +3,6 @@ using System.IO.Compression;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Linq;
-using System.Data;
-using Castle.Components.DictionaryAdapter.Xml;
 
 namespace Core.SystemTools
 {
