@@ -18,7 +18,16 @@ namespace Core
         private static readonly string[] s_sizes = { "B", "KB", "MB", "GB", "TB" };  // Array with types of store data
         private static readonly Regex s_regexNumber = new Regex("[^0-9.-]+"); //regex that matches disallowed text
 
-
+        /// <summary>
+        /// Check if object is a file or directory.
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        public static bool IsFile(string file)
+        {
+            var attr = File.GetAttributes(file);
+            return !attr.HasFlag(FileAttributes.Directory);
+        }
 
         /// <summary>
         /// Convert unicode escaped chars: \uXXXX

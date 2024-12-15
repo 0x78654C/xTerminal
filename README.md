@@ -220,7 +220,20 @@ This is the full list of commands that can be used in xTerminal:
                    enc unicode  : Set input/output encoding to Unicode.
                    enc ascii    : Set input/output encoding to ASCII.
                    enc -current : Show the current input/output encoding.  
-
+    ln        -- Create shortcut of a file/folder.
+                  ln <path_file_folder> : Create shortcut of a specific file/directory on Desktop.
+                  ln <path_file_folder> -o <path_location_shortcut> : Create shortcut in a specific location.
+    zip       -- Create Zip archive files.
+                  zip <file_/directory_name> -n <name_of_archive> : Creates zip archive with the file/folder mentioned.
+                  zip <file;dir;dir1;file1> -n <name_of_archive>  : Creates zip archive with the multiple files/folders mentioned.
+                  zip -list <zip_file_path>                       : Lists the content of the Zip archive file.
+                  zip -c                                          : Sets the compression level (default is Fastest). Example: zip -c s
+                  
+                  Compression levels:
+                  o  - Optimal
+                  nc - NoCompression
+                  f  - Fastest
+                  s  - SmallestSize
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -509,7 +522,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![image](https://github.com/user-attachments/assets/9ff3120e-66c1-49f0-8d33-0e6569857d9d)
+![image](https://github.com/user-attachments/assets/807086f9-7fa1-4ec9-b940-ed09e2e0e335)
 
 
 Pipe commands cand be added even to alias commands.

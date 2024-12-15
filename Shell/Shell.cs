@@ -292,23 +292,25 @@ namespace Shell
                     if (s_ctrlCount == 2 && !string.IsNullOrEmpty(s_intercept))
                     {
                         //Auto sugestion commands
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cd", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "./", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "mv", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
-                        Core.Commands.AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cd", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "./", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "mv", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ln", s_currentDirectory, true);
+                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ln", s_currentDirectory, false);
 
                         //Reset flags.
                         s_ctrlCount = 0;

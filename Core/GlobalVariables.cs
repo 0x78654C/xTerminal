@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.Versioning;
 using System.Windows.Forms;
 
@@ -51,5 +52,6 @@ namespace Core
         public static int pipeCmdCountTemp { get; set; } = 0;
         public static int fileHexLength { get; set; } = 0;
         public static string successColorOutput = "Gray";
+        public static CompressionLevel compressionLevel = CompressionLevel.Fastest;
     }
 }
