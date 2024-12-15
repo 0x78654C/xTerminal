@@ -300,7 +300,7 @@ namespace Core
             {
                 var outCompletion = "";
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-                var candidate = GlobalVariables.currentCommand;
+                var candidate = GlobalVariables.currentCommand.Trim('\t');
                 AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, false, ref outCompletion);
                 AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, false, ref outCompletion);
                 AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, false, ref outCompletion);

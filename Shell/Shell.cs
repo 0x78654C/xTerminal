@@ -561,8 +561,7 @@ namespace Shell
             {
                 keyHandler.Handle(keyInfo);
                 keyInfo = Console.ReadKey(true);
-                if(keyInfo. != '\b')
-                    GlobalVariables.currentCommand += keyInfo.KeyChar.ToString();
+                GlobalVariables.currentCommand += keyInfo.KeyChar.ToString();
             }
             GlobalVariables.currentCommand = "";
             Console.WriteLine();
