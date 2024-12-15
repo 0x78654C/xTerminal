@@ -1,4 +1,5 @@
 ﻿using Core;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -49,6 +50,9 @@ namespace Shell
         private static int historyIndex = -1;  // Tracks the current position in the history
         private static int lastWindowWidth = Console.WindowWidth;
         private static int s_initialCursorTop = 0;
+        private static List<string> _history;
+        public static bool HistoryEnabled { get; set; }
+        public static IAutoCompleteHandler AutoCompletionHandler { private get; set; }
         //-------------------------------
 
 
@@ -135,9 +139,9 @@ namespace Shell
             // Store xTerminal version.
             GlobalVariables.version = Application.ProductVersion;
 
-            var worker = new BackgroundWorker();
-            worker.DoWork += TopMost.KeyMonitorWorker_DoWork;
-            worker.RunWorkerAsync();
+            //var worker = new BackgroundWorker();
+            //worker.DoWork += TopMost.KeyMonitorWorker_DoWork;
+            //worker.RunWorkerAsync();
         }
 
 
@@ -257,7 +261,7 @@ namespace Shell
             // string command = string.Empty;
             int tabPressCount = 0;
             int cursorPosition = 0;
-            List<char> command = new List<char>();
+            List<char> command = new List<char>(); 
             commandHistory.Clear();
             var outCompletion = "";
             var historyStored = File.ReadAllText(s_historyFile);
@@ -275,6 +279,7 @@ namespace Shell
                     GlobalVariables.lengthPS1 = 0;
                     s_initialCursorTop = Console.CursorTop;
                     Console.CursorVisible = true;
+                    cursorPosition = 0;
                     break;
                 }
                 else if (key.Key == ConsoleKey.Tab)
@@ -348,37 +353,37 @@ namespace Shell
                         RedrawCommand(command, cursorPosition); // Redraw the command
                     }
                 }
-                else if (key.Key == ConsoleKey.UpArrow)
-                {
-                    // Navigate backward in history
-                    if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
-                    {
-                        historyIndex++;
-                        string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        command = new List<char>(historyCommand.ToCharArray());
-                        cursorPosition = command.Count;  // Move the caret to the end
-                        RedrawCommand(command, cursorPosition, "", true);
-                    }
-                }
-                else if (key.Key == ConsoleKey.DownArrow)
-                {
-                    // Navigate forward in history
-                    if (historyIndex > 0)
-                    {
-                        historyIndex--;
-                        string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
-                        command = new List<char>(historyCommand.ToCharArray());
-                        cursorPosition = command.Count;  // Move the caret to the end
-                        RedrawCommand(command, cursorPosition, "", true);
-                    }
-                    else if (historyIndex == 0)
-                    {
-                        historyIndex = -1;
-                        command.Clear();
-                        cursorPosition = 0;
-                        RedrawCommand(command, cursorPosition, "", true);
-                    }
-                }
+                //else if (key.Key == ConsoleKey.UpArrow)
+                //{
+                //    // Navigate backward in history
+                //    if (commandHistory.Count > 0 && historyIndex < commandHistory.Count - 1)
+                //    {
+                //        historyIndex++;
+                //        string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
+                //        command = new List<char>(historyCommand.ToCharArray());
+                //        cursorPosition = command.Count;  // Move the caret to the end
+                //        RedrawCommand(command, cursorPosition, "", true);
+                //    }
+                //}
+                //else if (key.Key == ConsoleKey.DownArrow)
+                //{
+                //    // Navigate forward in history
+                //    if (historyIndex > 0)
+                //    {
+                //        historyIndex--;
+                //        string historyCommand = commandHistory[commandHistory.Count - 1 - historyIndex];
+                //        command = new List<char>(historyCommand.ToCharArray());
+                //        cursorPosition = command.Count;  // Move the caret to the end
+                //        RedrawCommand(command, cursorPosition, "", true);
+                //    }
+                //    else if (historyIndex == 0)
+                //    {
+                //        historyIndex = -1;
+                //        command.Clear();
+                //        cursorPosition = 0;
+                //        RedrawCommand(command, cursorPosition, "", true);
+                //    }
+                //}
                 else if (key.Key == ConsoleKey.LeftArrow)
                 {
                     if (cursorPosition > 0)
@@ -545,7 +550,29 @@ namespace Shell
             Console.CursorVisible = true;
         }
 
-
+        public static string Read(string prompt = "", string @default = "")
+        {
+            Console.Write(prompt);
+            KeyHandler keyHandler = new KeyHandler(new Core.Abstractions.Console2(), _history, AutoCompletionHandler);
+            string text = GetText(keyHandler);
+            GlobalVariables.currentCommand = text;
+            if (String.IsNullOrWhiteSpace(text) && !String.IsNullOrWhiteSpace(@default))
+            {
+                text = @default;
+            }
+            return text;
+        }
+        private static string GetText(KeyHandler keyHandler)
+        {
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            while (keyInfo.Key != ConsoleKey.Enter)
+            {
+                keyHandler.Handle(keyInfo);
+                keyInfo = Console.ReadKey(true);
+            }
+            Console.WriteLine();
+            return keyHandler.Text;
+        }
 
         //Entry point of shell
         public void Run(string[] args)
@@ -568,7 +595,7 @@ namespace Shell
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
                 // Reading user imput
-                s_input = Console.ReadLine();
+                s_input = Read();
 
                 // Cleaning input
                 s_input = s_input.Trim();

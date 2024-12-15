@@ -55,5 +55,6 @@ namespace Core
         public static int lengthPS1 = 0;
         public static int previousCommandLength = 0;
         public static bool isKeyPressed = false;
+        public static string currentCommand = "";
     }
 }
