@@ -56,7 +56,7 @@ namespace Core
         private IConsole Console2;
         private int s_ctrlKey = 1;
         private int s_xKey = 0;
-        private int tabPressCount=0;
+        private int tabPressCount = 0;
 
         private bool IsStartOfLine() => _cursorPos == 0;
 
@@ -169,6 +169,16 @@ namespace Core
             Console2.Write(string.Format("{0} ", replacement));
             Console2.SetCursorPosition(left, top);
             _cursorLimit--;
+            var candidate = GlobalVariables.currentCommand.Trim('\t');
+            candidate = candidate.Trim('\b');
+            candidate = candidate.Trim('\0');
+            candidate = candidate.Trim('\r');
+            candidate = candidate.Trim('\n');
+            if (candidate.Length > 0)
+            {
+                var len = candidate.Length;
+                GlobalVariables.currentCommand = candidate.Substring(0, len - 1);
+            }
         }
 
         private void Delete()
