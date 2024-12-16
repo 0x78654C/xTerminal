@@ -430,7 +430,6 @@ namespace Shell
         /// <returns></returns>
         public static string Read(string prompt = "", string @default = "")
         {
-            Console.CursorVisible = false;
             Console.Write(prompt);
             KeyHandler keyHandler = new KeyHandler(new Core.Abstractions.Console2(), _history, AutoCompletionHandler);
             string text = GetText(keyHandler);
@@ -461,7 +460,6 @@ namespace Shell
                 GlobalVariables.currentCommand += keyInfo.KeyChar.ToString();
             }
             Console.WriteLine();
-            Console.CursorVisible = false;
             return keyHandler.Text;
         }
 
