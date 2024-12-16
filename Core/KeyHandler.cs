@@ -174,11 +174,11 @@ namespace Core
             candidate = candidate.Trim('\0');
             candidate = candidate.Trim('\r');
             candidate = candidate.Trim('\n');
-            if (candidate.Length > 0)
-            {
-                var len = candidate.Length;
-                GlobalVariables.currentCommand = candidate.Substring(0, len - 1);
-            }
+            //if (candidate.Length > 0)
+            //{
+            //    var len = candidate.Length;
+            //    GlobalVariables.currentCommand = candidate.Substring(0, len - 1);
+            //}
         }
 
         private void Delete()
@@ -188,6 +188,7 @@ namespace Core
 
             int index = _cursorPos;
             _text.Remove(index, 1);
+          //  GlobalVariables.currentCommand = _text.ToString();
             string replacement = _text.ToString().Substring(index);
             int left = Console2.CursorLeft;
             int top = Console2.CursorTop;
@@ -347,11 +348,12 @@ namespace Core
                 {
                     var outCompletion = "";
                     var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-                    var candidate = GlobalVariables.currentCommand.Trim('\t');
-                    candidate = candidate.Trim('\b');
-                    candidate = candidate.Trim('\0');
-                    candidate = candidate.Trim('\r');
-                    candidate = candidate.Trim('\n');
+                    var candidate = _text.ToString();
+                    //var candidate = GlobalVariables.currentCommand.Trim('\t');
+                    //candidate = candidate.Trim('\b');
+                    //candidate = candidate.Trim('\0');
+                    //candidate = candidate.Trim('\r');
+                    //candidate = candidate.Trim('\n');
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, false, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, false, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, false, ref outCompletion);
@@ -369,6 +371,8 @@ namespace Core
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, true, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, true, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, true, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, true, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, false, ref outCompletion);
                     var countOut = outCompletion.ToList().Count;
                     if (countOut > 0)
                     {
