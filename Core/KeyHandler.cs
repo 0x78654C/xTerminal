@@ -3,6 +3,8 @@ using Core.Commands;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Management.Automation.Runspaces;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Windows.Forms;
@@ -318,7 +320,19 @@ namespace Core
                 AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, true, ref outCompletion);
                 AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, true, ref outCompletion);
                 AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, true, ref outCompletion);
-
+                var countOut = outCompletion.ToList().Count;
+                if (countOut > 0)
+                {
+                    var getCommandStr = candidate;
+                    var getCommand = getCommandStr.Split(' ')[0];
+                    var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
+                    Console.CursorVisible = false;
+                    Console.SetCursorPosition(getCommandStr.Length + GlobalVariables.lengthPS1, Console.CursorTop);
+                    foreach (var paramChar in getCommandStr)
+                        SendKeys.SendWait("\b \b");
+                    SendKeys.SendWait($"{getCommand} {outCompletion}");
+                    Console.CursorVisible = true;
+                }
                 //if (IsInAutoCompleteMode())
                 //{
                 //    NextAutoComplete();
