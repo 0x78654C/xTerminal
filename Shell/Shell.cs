@@ -557,6 +557,7 @@ namespace Shell
         private static string GetText(KeyHandler keyHandler)
         {
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            GlobalVariables.currentCommand += keyInfo.KeyChar.ToString();
             while (keyInfo.Key != ConsoleKey.Enter)
             {
                 keyHandler.Handle(keyInfo);
