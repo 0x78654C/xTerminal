@@ -53,7 +53,6 @@ namespace Core
         public static int fileHexLength { get; set; } = 0;
         public static string successColorOutput = "Gray";
         public static CompressionLevel compressionLevel = CompressionLevel.Fastest;
-        public static string currentCommand = "";
         public static int lengthPS1 = 0;
     }
 }

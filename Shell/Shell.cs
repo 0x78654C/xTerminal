@@ -438,7 +438,6 @@ namespace Shell
             }
             if(!string.IsNullOrWhiteSpace(text) && !string.IsNullOrEmpty(text))
              _history.Add(text);
-            GlobalVariables.currentCommand = "";
             return text;
         }
 
@@ -450,12 +449,10 @@ namespace Shell
         private static string GetText(KeyHandler keyHandler)
         {
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-            GlobalVariables.currentCommand += keyInfo.KeyChar.ToString();
             while (keyInfo.Key != ConsoleKey.Enter)
             {
                 keyHandler.Handle(keyInfo);
                 keyInfo = Console.ReadKey(true);
-                GlobalVariables.currentCommand += keyInfo.KeyChar.ToString();
             }
             Console.WriteLine();
             return keyHandler.Text;
