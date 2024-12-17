@@ -426,12 +426,15 @@ namespace Shell
                 text = @default;
             }
             if (!string.IsNullOrWhiteSpace(text) && !string.IsNullOrEmpty(text))
+            {
                 text = text.Replace("\b", "");
                 text = text.Replace("\0", "");
                 text = text.Replace("\t", "");
                 text = text.Replace("\r", "");
                 text = text.Replace("\n", "");
-             _history.Add(text);
+                text = text.Replace("\u0018", "");
+                _history.Add(text);
+            }
             return text;
         }
 
