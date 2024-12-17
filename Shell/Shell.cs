@@ -338,8 +338,7 @@ namespace Shell
 
                 //cleaning input
                 s_input = s_input.Trim();
-
-
+                
                 if (File.Exists(s_historyFile))
                 {
                     // Don't store in history with + commands.
@@ -433,7 +432,6 @@ namespace Shell
             Console.Write(prompt);
             KeyHandler keyHandler = new KeyHandler(new Core.Abstractions.Console2(), _history, AutoCompletionHandler);
             string text = GetText(keyHandler);
-            //GlobalVariables.currentCommand = text;
             if (String.IsNullOrWhiteSpace(text) && !String.IsNullOrWhiteSpace(@default))
             {
                 text = @default;
