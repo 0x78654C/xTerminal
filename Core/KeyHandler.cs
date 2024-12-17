@@ -338,6 +338,11 @@ namespace Core
                     var outCompletion = "";
                     var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                     var candidate = _text.ToString();
+                    candidate = candidate.Trim('\t');
+                    candidate = candidate.Trim('\b');
+                    candidate = candidate.Trim('\0');
+                    candidate = candidate.Trim('\r');
+                    candidate = candidate.Trim('\n');
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, false, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, false, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, false, ref outCompletion);

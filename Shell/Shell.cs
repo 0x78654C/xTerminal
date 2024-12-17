@@ -270,25 +270,11 @@ namespace Shell
 
             if (e.KeyCode.ToString().Length == 1)
             {
-                s_intercept += e.KeyData.ToString().ToLower();
                 //Reset flags for reuse.
                 s_xKey = 0;
             }
 
-            if (e.KeyCode == Keys.Back && !string.IsNullOrEmpty(s_intercept))
-                s_intercept = s_intercept.Substring(0, s_intercept.Length - 1);
 
-            if (e.KeyCode == Keys.Space)
-                s_intercept += " ";
-
-            if (e.KeyCode == Keys.Tab)
-                s_intercept += " ";
-
-            if (e.KeyData == Keys.Enter)
-            {
-                s_intercept = "";
-                s_ctrlCount = 0;
-            }
 
             if (e.KeyData == Keys.X)
                 s_xKey = DateTime.Now.Second;
@@ -439,7 +425,12 @@ namespace Shell
             {
                 text = @default;
             }
-            if(!string.IsNullOrWhiteSpace(text) && !string.IsNullOrEmpty(text))
+            if (!string.IsNullOrWhiteSpace(text) && !string.IsNullOrEmpty(text))
+                text = text.Replace("\b", "");
+                text = text.Replace("\0", "");
+                text = text.Replace("\t", "");
+                text = text.Replace("\r", "");
+                text = text.Replace("\n", "");
              _history.Add(text);
             return text;
         }
