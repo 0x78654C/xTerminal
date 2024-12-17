@@ -215,7 +215,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         GlobalVariables.pipeCmdOutput += $"{d.Name}:  Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n";
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name}: ");
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name} -");
                         Console.Write($" Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n");
                     }
                 }
