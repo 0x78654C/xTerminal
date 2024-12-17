@@ -67,8 +67,11 @@ namespace Shell
                 Directory.CreateDirectory(s_historyFilePath);
 
             // Read commands history
-            var historyStored = File.ReadAllText(s_historyFile);
-            FileSystem.ReadStringLine(ref _history, historyStored);
+            if (File.Exists(s_historyFile))
+            {
+                var historyStored = File.ReadAllText(s_historyFile);
+                FileSystem.ReadStringLine(ref _history, historyStored);
+            }
 
             // Creating history file if not exist
             if (!File.Exists(s_historyFile))
