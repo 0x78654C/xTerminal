@@ -10,8 +10,6 @@ using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
-using System.Runtime.CompilerServices;
-using Commands.TerminalCommands.ConsoleSystem;
 
 namespace Shell
 {
@@ -65,13 +63,6 @@ namespace Shell
             // Creating the history file directory in USERPROFILE\AppData\Local if not exist.
             if (!Directory.Exists(s_historyFilePath))
                 Directory.CreateDirectory(s_historyFilePath);
-
-            // Read commands history
-            if (File.Exists(s_historyFile))
-            {
-                var historyStored = File.ReadAllText(s_historyFile);
-                FileSystem.ReadStringLine(ref _history, historyStored);
-            }
 
             // Creating history file if not exist
             if (!File.Exists(s_historyFile))
@@ -311,6 +302,13 @@ namespace Shell
             // Setting up the title.
             Console.Title = s_terminalTitle;
 
+            // Read commands history
+            if (File.Exists(s_historyFile))
+            {
+                var historyStored = File.ReadAllText(s_historyFile);
+                FileSystem.ReadStringLine(ref _history, historyStored);
+            }
+
             if (ExecuteParamCommands(args)) { return; };
 
             // We loop until exit commands is hit
@@ -327,7 +325,7 @@ namespace Shell
 
                 //cleaning input
                 s_input = s_input.Trim();
-                
+
                 if (File.Exists(s_historyFile))
                 {
                     // Don't store in history with + commands.
