@@ -280,6 +280,7 @@ namespace Shell
 
             if ((s_xKey == s_ctrlKey) && GlobalVariables.eventKeyFlagX)
             {
+                e.Handled = true;
                 GlobalVariables.eventKeyFlagX = false;
                 GlobalVariables.eventCancelKey = true;
 
