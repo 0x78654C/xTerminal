@@ -299,17 +299,19 @@ namespace Core
             _keyActions["ControlA"] = MoveCursorHome;
             _keyActions["ControlB"] = MoveCursorLeft;
             _keyActions["RightArrow"] = MoveCursorRight;
-            _keyActions["ControlF"] = MoveCursorRight;
-            _keyActions["ControlE"] = MoveCursorEnd;
+            _keyActions["ControlX"] = MoveCursorEnd;
             _keyActions["Backspace"] = Backspace;
             _keyActions["Delete"] = Delete;
+            _keyActions["Escape"] = ClearLine;
+            _keyActions["UpArrow"] = PrevHistory;
+            _keyActions["DownArrow"] = NextHistory;
+
+            //_keyActions["ControlP"] = PrevHistory;
             //_keyActions["ControlD"] = Delete;
             //keyActions["ControlH"] = Backspace;
             //_keyActions["ControlL"] = ClearLine;
-            _keyActions["Escape"] = ClearLine;
-            _keyActions["UpArrow"] = PrevHistory;
-            //_keyActions["ControlP"] = PrevHistory;
-            _keyActions["DownArrow"] = NextHistory;
+            //_keyActions["ControlF"] = MoveCursorRight;
+            //_keyActions["ControlE"] = MoveCursorEnd;
             //_keyActions["ControlN"] = NextHistory;
             //_keyActions["ControlU"] = () =>
             //{
