@@ -350,9 +350,11 @@ namespace Core
                         foreach (var paramChar in getCommandStr)
                             backSpaceChar+="\b \b";
                         //SendKeys.SendWait($"{backSpaceChar}{getCommand} {outCompletion}");
-                        Console2.Write($"{backSpaceChar}");
+                        var command = $"{getCommand} {outCompletion}";
+                        _cursorPos += command.Length - _text.Length;
                         _text.Clear();
-                        _text.Append($"{getCommand} {outCompletion}");
+                        _text.Append(command);
+                        Console2.Write($"{backSpaceChar}");
                         Console2.Write(_text.ToString());
                     }
                     tabPressCount = 0;
