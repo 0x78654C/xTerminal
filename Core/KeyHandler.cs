@@ -349,7 +349,6 @@ namespace Core
                         var backSpaceChar = "";
                         foreach (var paramChar in getCommandStr)
                             backSpaceChar+="\b \b";
-                        //SendKeys.SendWait($"{backSpaceChar}{getCommand} {outCompletion}");
                         var command = $"{getCommand} {outCompletion}";
                         _cursorPos += command.Length - _text.Length;
                         _text.Clear();
