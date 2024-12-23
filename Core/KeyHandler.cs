@@ -305,7 +305,6 @@ namespace Core
             _keyActions["Escape"] = ClearLine;
             _keyActions["UpArrow"] = PrevHistory;
             _keyActions["DownArrow"] = NextHistory;
-
            
             _keyActions["Tab"] = () =>
             {
@@ -347,17 +346,17 @@ namespace Core
                         var getCommandStr = candidate;
                         var getCommand = getCommandStr.Split(' ')[0];
                         var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
-                        Console.SetCursorPosition(getCommandStr.Length + GlobalVariables.lengthPS1, Console.CursorTop);
+                        var backSpaceChar = "";
                         foreach (var paramChar in getCommandStr)
-                            SendKeys.SendWait("\b \b");
-                        SendKeys.SendWait($"{getCommand} {outCompletion}");
+                            backSpaceChar+="\b \b";
+                        SendKeys.SendWait($"{backSpaceChar}{getCommand} {outCompletion}");
                     }
                     tabPressCount = 0;
                 }
 
                 //_keyActions["ControlP"] = PrevHistory;
                 //_keyActions["ControlD"] = Delete;
-                //keyActions["ControlH"] = Backspace;
+                //_keyActions["ControlH"] = Backspace;
                 //_keyActions["ControlL"] = ClearLine;
                 //_keyActions["ControlF"] = MoveCursorRight;
                 //_keyActions["ControlE"] = MoveCursorEnd;
