@@ -306,32 +306,7 @@ namespace Core
             _keyActions["UpArrow"] = PrevHistory;
             _keyActions["DownArrow"] = NextHistory;
 
-            //_keyActions["ControlP"] = PrevHistory;
-            //_keyActions["ControlD"] = Delete;
-            //keyActions["ControlH"] = Backspace;
-            //_keyActions["ControlL"] = ClearLine;
-            //_keyActions["ControlF"] = MoveCursorRight;
-            //_keyActions["ControlE"] = MoveCursorEnd;
-            //_keyActions["ControlN"] = NextHistory;
-            //_keyActions["ControlU"] = () =>
-            //{
-            //    while (!IsStartOfLine())
-            //        Backspace();
-            //};
-            //_keyActions["ControlK"] = () =>
-            //{
-            //    int pos = _cursorPos;
-            //    MoveCursorEnd();
-            //    while (_cursorPos > pos)
-            //        Backspace();
-            //};
-            //_keyActions["ControlW"] = () =>
-            //{
-            //    while (!IsStartOfLine() && _text[_cursorPos - 1] != ' ')
-            //        Backspace();
-            //};
-            //_keyActions["ControlT"] = TransposeChars;
-
+           
             _keyActions["Tab"] = () =>
             {
                 tabPressCount++;
@@ -380,6 +355,33 @@ namespace Core
                     }
                     tabPressCount = 0;
                 }
+
+                //_keyActions["ControlP"] = PrevHistory;
+                //_keyActions["ControlD"] = Delete;
+                //keyActions["ControlH"] = Backspace;
+                //_keyActions["ControlL"] = ClearLine;
+                //_keyActions["ControlF"] = MoveCursorRight;
+                //_keyActions["ControlE"] = MoveCursorEnd;
+                //_keyActions["ControlN"] = NextHistory;
+                //_keyActions["ControlU"] = () =>
+                //{
+                //    while (!IsStartOfLine())
+                //        Backspace();
+                //};
+                //_keyActions["ControlK"] = () =>
+                //{
+                //    int pos = _cursorPos;
+                //    MoveCursorEnd();
+                //    while (_cursorPos > pos)
+                //        Backspace();
+                //};
+                //_keyActions["ControlW"] = () =>
+                //{
+                //    while (!IsStartOfLine() && _text[_cursorPos - 1] != ' ')
+                //        Backspace();
+                //};
+                //_keyActions["ControlT"] = TransposeChars;
+
                 //if (IsInAutoCompleteMode())
                 //{
                 //    NextAutoComplete();
