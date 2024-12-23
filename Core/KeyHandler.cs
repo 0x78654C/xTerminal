@@ -320,6 +320,7 @@ namespace Core
                     candidate = candidate.Trim('\0');
                     candidate = candidate.Trim('\r');
                     candidate = candidate.Trim('\n');
+                    candidate = candidate.Trim('\u0018'); 
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, false, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, false, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, false, ref outCompletion);
