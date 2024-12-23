@@ -347,12 +347,10 @@ namespace Core
                         var getCommandStr = candidate;
                         var getCommand = getCommandStr.Split(' ')[0];
                         var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
-                        Console.CursorVisible = false;
                         Console.SetCursorPosition(getCommandStr.Length + GlobalVariables.lengthPS1, Console.CursorTop);
                         foreach (var paramChar in getCommandStr)
                             SendKeys.SendWait("\b \b");
                         SendKeys.SendWait($"{getCommand} {outCompletion}");
-                        Console.CursorVisible = true;
                     }
                     tabPressCount = 0;
                 }
