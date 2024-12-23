@@ -349,7 +349,11 @@ namespace Core
                         var backSpaceChar = "";
                         foreach (var paramChar in getCommandStr)
                             backSpaceChar+="\b \b";
-                        SendKeys.SendWait($"{backSpaceChar}{getCommand} {outCompletion}");
+                        //SendKeys.SendWait($"{backSpaceChar}{getCommand} {outCompletion}");
+                        Console2.Write($"{backSpaceChar}");
+                        _text.Clear();
+                        _text.Append($"{getCommand} {outCompletion}");
+                        Console2.Write(_text.ToString());
                     }
                     tabPressCount = 0;
                 }
