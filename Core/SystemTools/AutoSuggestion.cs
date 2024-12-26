@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Windows.Forms;
 
@@ -25,15 +26,22 @@ namespace Core.SystemTools
         /// </summary>
         /// <param name="startChar">Start letters.</param>
         /// <param name="currentDirectory">Current directory path.</param>
-        public static void DirCompletion(string startChar, string currentDirectory)
+        public static void DirCompletion(string startChar, string currentDirectory, ref string addedCompletion)
         {
             var directories = Directory.GetDirectories(currentDirectory);
             int tabs = 5;
+            addedCompletion = "";
+            var dirStart = directories.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            if (dirStart.Count == 1)
+            {
+                addedCompletion = new DirectoryInfo(dirStart[0]).Name;
+                return;
+            }
             Console.WriteLine();
             foreach (var dir in directories)
             {
                 DirectoryInfo dirInfo = new DirectoryInfo(dir);
-                if (dirInfo.Name.ToLower().StartsWith(startChar.ToLower()))
+                if (dirInfo.Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase))
                 {
                     tabs--;
                     if (tabs != 0)
@@ -47,7 +55,7 @@ namespace Core.SystemTools
                     }
                 }
             }
-            SendKeys.Send("{ENTER}");
+            SendKeys.SendWait("{ENTER}");
         }
 
         /// <summary>
@@ -55,15 +63,22 @@ namespace Core.SystemTools
         /// </summary>
         /// <param name="startChar">Start letters.</param>
         /// <param name="currentDirectory">Current directory path.</param>
-        public static void FileCompletion(string startChar, string currentDirectory)
+        public static void FileCompletion(string startChar, string currentDirectory, ref string addedCompletion)
         {
             var files = Directory.GetFiles(currentDirectory);
             int tabs = 5;
+            var fileStart = files.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            addedCompletion = "";
+            if (fileStart.Count == 1)
+            {
+                addedCompletion = new DirectoryInfo(fileStart[0]).Name;
+                return;
+            }
             Console.WriteLine();
             foreach (var file in files)
             {
                 FileInfo fileInfo = new FileInfo(file);
-                if (fileInfo.Name.ToLower().StartsWith(startChar.ToLower()))
+                if (fileInfo.Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase))
                 {
                     tabs--;
                     if (tabs != 0)
@@ -77,10 +92,10 @@ namespace Core.SystemTools
                     }
                 }
             }
-            SendKeys.Send("{ENTER}");
+            SendKeys.SendWait("{ENTER}");
         }
 
-        
+
         private static int PadLenghtCheck(int fileDirNameLenght)
         {
             return (fileDirNameLenght > 30) ? fileDirNameLenght + 5 : 30;

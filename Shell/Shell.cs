@@ -42,6 +42,9 @@ namespace Shell
         private static string s_terminalTitle = $"xTerminal {Application.ProductVersion}";
         private static string s_aliasFile = GlobalVariables.aliasFile;
         private static bool s_isCDVisible = true;
+        private static List<string> _history = new List<string>();
+        public static bool HistoryEnabled { get; set; }
+        public static IAutoCompleteHandler AutoCompletionHandler { private get; set; }
         //-------------------------------
 
 
@@ -128,6 +131,7 @@ namespace Shell
             // Store xTerminal version.
             GlobalVariables.version = Application.ProductVersion;
         }
+
 
         /// <summary>
         /// Execute predifined xTerminal commands.
@@ -242,93 +246,47 @@ namespace Shell
         /// <param name="e"></param>
         static void KeyDown(KeyEventArgs e)
         {
-            bool topMost = TopMost.ApplicationIsActivated();
-            if (topMost)
+            string keycode = e.KeyCode.ToString().ToLower();
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "d", 2, string.Empty, () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "numpad", 7, string.Empty, () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemminus", 8, "-", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemplus", 7, "+", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "add", 3, "+", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "substract", 9, "-", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "multiply", 9, "*", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "decimal", 7, ".", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemperiod", 9, ".", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "decimal", 7, "-", () => s_ctrlCount = 0);
+            s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemquestion", 11, "-", () => s_ctrlCount = 0);
+
+            if (e.KeyCode.ToString().Length == 1)
             {
-                string keycode = e.KeyCode.ToString().ToLower();
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "d", 2, string.Empty, () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "numpad", 7, string.Empty, () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemminus", 8, "-", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemplus", 7, "+", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "add", 3, "+", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "substract", 9, "-", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "multiply", 9, "*", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "decimal", 7, ".", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemperiod", 9, ".", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "decimal", 7, "-", () => s_ctrlCount = 0);
-                s_intercept += AutoSuggestion.KeyConvertor(keycode, "oemquestion", 11, "-", () => s_ctrlCount = 0);
-
-                if (e.KeyCode.ToString().Length == 1)
-                {
-                    s_intercept += e.KeyData.ToString().ToLower();
-                    //Reset flags for reuse.
-                    s_xKey = 0;
-                }
-
-                if (e.KeyCode == Keys.Back && !string.IsNullOrEmpty(s_intercept))
-                    s_intercept = s_intercept.Substring(0, s_intercept.Length - 1);
-
-                if (e.KeyCode == Keys.Space)
-                    s_intercept += " ";
-
-                if (e.KeyCode == Keys.Tab)
-                    s_intercept += " ";
-
-                if (e.KeyData == Keys.Enter)
-                {
-                    s_intercept = "";
-                    s_ctrlCount = 0;
-                }
-
-                if (e.KeyData == Keys.X)
-                    s_xKey = DateTime.Now.Second;
-
-
-                if (e.KeyData.ToString() == "RControlKey" || e.KeyData.ToString() == "LControlKey")
-                {
-                    s_ctrlKey = DateTime.Now.Second;
-                    s_ctrlCount++;
-
-                    if (s_ctrlCount == 2 && !string.IsNullOrEmpty(s_intercept))
-                    {
-                        //Auto sugestion commands
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cd", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "odir", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ls", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "hex", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "./", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ccs", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fcopy", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "mv", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "fmove", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "del", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "edit", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, false);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cp", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "md5", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "sort", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "cat", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ln", s_currentDirectory, true);
-                        AutoSuggestionCommands.FileDirSuggestion(s_intercept, "ln", s_currentDirectory, false);
-
-                        //Reset flags.
-                        s_ctrlCount = 0;
-                        s_intercept = GlobalVariables.commandOut;
-                    }
-                }
+                //Reset flags for reuse.
+                s_xKey = 0;
+            }
 
 
 
-                if ((s_xKey == s_ctrlKey) && GlobalVariables.eventKeyFlagX)
-                {
-                    GlobalVariables.eventKeyFlagX = false;
-                    GlobalVariables.eventCancelKey = true;
+            if (e.KeyData == Keys.X)
+                s_xKey = DateTime.Now.Second;
 
-                    //Reset flags for reuse.
-                    s_xKey = 0;
-                    s_ctrlKey = 1;
-                }
+
+            if (e.KeyData.ToString() == "RControlKey" || e.KeyData.ToString() == "LControlKey")
+            {
+                s_ctrlKey = DateTime.Now.Second;
+                s_ctrlCount++;
+            }
+
+
+            if ((s_xKey == s_ctrlKey) && GlobalVariables.eventKeyFlagX)
+            {
+                e.Handled = true;
+                GlobalVariables.eventKeyFlagX = false;
+                GlobalVariables.eventCancelKey = true;
+
+                //Reset flags for reuse.
+                s_xKey = 0;
+                s_ctrlKey = 1;
             }
         }
 
@@ -345,6 +303,13 @@ namespace Shell
             // Setting up the title.
             Console.Title = s_terminalTitle;
 
+            // Read commands history
+            if (File.Exists(s_historyFile))
+            {
+                var historyStored = File.ReadAllText(s_historyFile);
+                FileSystem.ReadStringLine(ref _history, historyStored);
+            }
+
             if (ExecuteParamCommands(args)) { return; };
 
             // We loop until exit commands is hit
@@ -357,11 +322,10 @@ namespace Shell
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
                 //reading user imput
-                s_input = Console.ReadLine();
+                s_input = Read();
 
                 //cleaning input
                 s_input = s_input.Trim();
-
 
                 if (File.Exists(s_historyFile))
                 {
@@ -445,6 +409,51 @@ namespace Shell
             } while (s_input != "exit");
         }
 
+        /// <summary>
+        /// Read command input and check keys handler.
+        /// </summary>
+        /// <param name="prompt"></param>
+        /// <param name="default"></param>
+        /// <returns></returns>
+        public static string Read(string prompt = "", string @default = "")
+        {
+            Console.Write(prompt);
+            KeyHandler keyHandler = new KeyHandler(new Core.Abstractions.Console2(), _history, AutoCompletionHandler);
+            string text = GetText(keyHandler);
+            if (String.IsNullOrWhiteSpace(text) && !String.IsNullOrWhiteSpace(@default))
+            {
+                text = @default;
+            }
+            if (!string.IsNullOrWhiteSpace(text) && !string.IsNullOrEmpty(text))
+            {
+                text = text.Replace("\b", "");
+                text = text.Replace("\0", "");
+                text = text.Replace("\t", "");
+                text = text.Replace("\r", "");
+                text = text.Replace("\n", "");
+                text = text.Replace("\u0018", "");
+                _history.Add(text);
+            }
+            return text;
+        }
+
+        /// <summary>
+        /// Get text from input key.
+        /// </summary>
+        /// <param name="keyHandler"></param>
+        /// <returns></returns>
+        private static string GetText(KeyHandler keyHandler)
+        {
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            while (keyInfo.Key != ConsoleKey.Enter)
+            {
+                keyHandler.Handle(keyInfo);
+                keyInfo = Console.ReadKey(true);
+            }
+            Console.WriteLine();
+            return keyHandler.Text;
+        }
+
 
         // We set the name of the current user logged in and machine on console.
         private static void SetConsoleUserConnected(string currentLocation, string accountName, string computerName, string uiSettings, string uiCD)
@@ -473,42 +482,59 @@ namespace Shell
         /// <param name="currentDir"></param>
         private static void SetUser(string accountName, string computerName, string currentLocation, bool currentDir)
         {
+            GlobalVariables.lengthPS1 = 0;
             if (currentDir == false)
             {
                 if (s_userEnabled == 1)
                 {
                     if (s_userColor != "green")
                     {
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName}@{computerName}:");
+
+                        var ps = $"{accountName}@{computerName}:";
+                        GlobalVariables.lengthPS1 += ps.Length;
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), ps);
+
                     }
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName}@{computerName}:");
+                        var ps = $"{accountName}@{computerName}:";
+                        GlobalVariables.lengthPS1 += ps.Length;
+                        FileSystem.ColorConsoleText(ConsoleColor.Green, ps);
                     }
                 }
 
                 if (s_cdColor != "cyan")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"~");
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), ps);
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, ps);
                 }
                 if (!string.IsNullOrEmpty(s_indicator))
                 {
                     if (s_indicatorColor != "white")
                     {
-                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
+                        var ps = $" {s_indicator} ";
+                        GlobalVariables.lengthPS1 += ps.Length;
+                        FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), ps);
                     }
                     else
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
+                        var ps = $" {s_indicator} ";
+                        GlobalVariables.lengthPS1 += ps.Length;
+                        FileSystem.ColorConsoleText(ConsoleColor.White, ps);
                     }
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
+                    var ps = " $ ";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.White, ps);
                 }
                 return;
             }
@@ -516,43 +542,70 @@ namespace Shell
             {
                 if (s_userColor != "green")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), $"{accountName}@{computerName}:");
+                    var ps = $"{accountName}@{computerName}:";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_userColor), ps);
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.Green, $"{accountName}@{computerName}:");
+                    var ps = $"{accountName}@{computerName}:";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, ps);
                 }
             }
             if (s_cdColor != "cyan")
             {
                 if (s_isCDVisible)
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"{currentLocation}~");
+                {
+                    var ps = $"{currentLocation}~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), ps);
+                }
                 else
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), $"~");
+                {
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_cdColor), ps);
+                }
             }
             else
             {
                 if (s_isCDVisible)
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"{currentLocation}~");
+                {
+                    var ps = $"{currentLocation}~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, ps);
+                }
                 else
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, $"~");
+                {
+                    var ps = $"~";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, ps);
+                }
             }
             if (!string.IsNullOrEmpty(s_indicator))
             {
                 if (s_indicatorColor != "white")
                 {
-                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), $" {s_indicator} ");
+                    var ps = $" {s_indicator} ";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(SetConsoleColor.SetConsoleColor(s_indicatorColor), ps);
                 }
                 else
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_indicator} ");
+                    var ps = $" {s_indicator} ";
+                    GlobalVariables.lengthPS1 += ps.Length;
+                    FileSystem.ColorConsoleText(ConsoleColor.White, ps);
                 }
             }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.White, " $ ");
+                var ps = " $ ";
+                GlobalVariables.lengthPS1 += ps.Length;
+                FileSystem.ColorConsoleText(ConsoleColor.White, ps);
             }
         }
+
         private static void UISettingsParse(string settings, string uiCD)
         {
             var parseSettings = settings.Split('|');

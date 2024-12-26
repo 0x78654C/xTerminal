@@ -3,43 +3,36 @@
 </p>
 
 # xTerminal
-A Linux like shell for windows with some extras.
+A Linux like shell for windows with some extras. The goal was to have a almost like exprience how the bash shell works on linux, a bit modified, but with same simplicity. And works perfect as a layer over Powershell and CMD. Every Powershell and CMD command can be run from xTerminal by prefixing it:.
+ ```
+ ~> cmd whoami
+ ```
+Runs whoami command from CMD.
+ ```
+ ~> ps get-disk
+ ```
+Runs get-disk command from Powershell.
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 
 ## Requirements:
 
-.NET 8 Runtime
-
- For Roslyn C# code runner use NuGet command in Commands project:
- ```
- Install-Package Microsoft.CodeAnalysis.CSharp -pre
- ```
-
- For Password Manager use NuGet command in Commands project:
- ```
- Install-Package Konscious.Security.Cryptography.Argon2
- ```
-
- For DiffPlex use NuGet command in Commands project:
-  ```
- Install-Package DiffPlex -Version 1.7.1
- ```
+.NET 8 SDK
 
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
-cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, start, cp, del, ccs, sort
+cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, start, cp, del, ccs, sort, ln, exif
 
 Example:
  ```
  ~> cd win
  ```
- Double press CTRL key and will suggest you all the directories that starts with the letters 'win' from current location.
+ Double press TAB key and will suggest you all the directories that starts with the letters 'win' from current location.
 
   ```
- ~> start ap
+ ~> ./ ap
  ```
- Double press 'CTRL' key and will suggest you all the files that starts with the letters 'ap' from current location.
+ Double press TAB key and will suggest you all the files that starts with the letters 'ap' from current location.
 
  ## Commands
 This is the full list of commands that can be used in xTerminal:
