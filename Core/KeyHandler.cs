@@ -409,13 +409,13 @@ namespace Core
                 //}
             };
 
-            _keyActions["ShiftTab"] = () =>
-            {
-                if (IsInAutoCompleteMode())
-                {
-                    PreviousAutoComplete();
-                }
-            };
+            //_keyActions["ShiftTab"] = () =>
+            //{
+            //    if (IsInAutoCompleteMode())
+            //    {
+            //        PreviousAutoComplete();
+            //    }
+            //};
         }
 
         public void Handle(ConsoleKeyInfo keyInfo)
