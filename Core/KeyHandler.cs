@@ -311,6 +311,7 @@ namespace Core
                 tabPressCount++;
                 if (tabPressCount == 2)
                 {
+                    MoveCursorEnd();
                     var outCompletion = "";
                     var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                     var candidate = _text.ToString();
