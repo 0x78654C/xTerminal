@@ -163,7 +163,7 @@ namespace Core.SystemTools
             }
             FileSystem.SuccessWriteLine($"Extracting.....");
             ZipFile.ExtractToDirectory(pathFile, Path.GetDirectoryName(pathFile) +$"\\{Path.GetFileNameWithoutExtension(pathFile)}");
-            FileSystem.SuccessWriteLine($"Extracted Zip file: {Path.GetDirectoryName(pathFile)}\\{Path.GetFileNameWithoutExtension(pathFile)}");
+            FileSystem.SuccessWriteLine($"Extracted Zip file: {Path.GetDirectoryName(pathFile)}{Path.GetFileNameWithoutExtension(pathFile)}");
         }
     }
 }
