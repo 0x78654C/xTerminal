@@ -54,6 +54,11 @@ namespace Core
         public static string successColorOutput = "Gray";
         public static CompressionLevel compressionLevel = CompressionLevel.Fastest;
         public static int lengthPS1 = 0;
-        public static bool suggestionBlock =false;
+        public enum TypeSuggestions {
+            File = 1,
+            Directory = 2,
+            All = 3
+        };
+        public static int tabPressCount = 0;
     }
 }
