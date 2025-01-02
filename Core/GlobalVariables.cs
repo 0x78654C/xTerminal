@@ -54,5 +54,6 @@ namespace Core
         public static string successColorOutput = "Gray";
         public static CompressionLevel compressionLevel = CompressionLevel.Fastest;
         public static int lengthPS1 = 0;
+        public static bool suggestionBlock =false;
     }
 }

@@ -32,6 +32,9 @@ namespace Core.SystemTools
             int tabs = 5;
             addedCompletion = "";
             var dirStart = directories.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            if (GlobalVariables.suggestionBlock)
+                return;
+            
             if (dirStart.Count == 1)
             {
                 addedCompletion = new DirectoryInfo(dirStart[0]).Name;
@@ -72,6 +75,7 @@ namespace Core.SystemTools
             if (fileStart.Count == 1)
             {
                 addedCompletion = new DirectoryInfo(fileStart[0]).Name;
+                GlobalVariables.suggestionBlock = true;
                 return;
             }
             Console.WriteLine();

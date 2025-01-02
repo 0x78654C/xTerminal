@@ -338,10 +338,11 @@ namespace Core
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, true, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, true, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, true, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, false, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, true, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "exif", currentDirectory, true, ref outCompletion);
                     var countOut = outCompletion.ToList().Count;
+                    GlobalVariables.suggestionBlock = false;
                     if (countOut > 0)
                     {
                         var getCommandStr = candidate;

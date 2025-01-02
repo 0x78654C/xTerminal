@@ -19,6 +19,7 @@ namespace Core.Commands
         {
             try
             {
+           
                 int commandLenght = command.Length + 1;
                 if (consoleInput == command)
                 {
@@ -30,7 +31,7 @@ namespace Core.Commands
                 }
                 if ((consoleInput.StartsWith(command) && consoleInput.Length > command.Length))
                 {
-                    if (isFile)
+                    if (isFile && !GlobalVariables.suggestionBlock)
                     {
                         consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                         SystemTools.AutoSuggestion.FileCompletion(consoleInput, currentDirectory, ref addedCompletion);
