@@ -296,13 +296,10 @@ namespace Core
             _keyActions["LeftArrow"] = MoveCursorLeft;
             _keyActions["Home"] = MoveCursorHome;
             _keyActions["End"] = MoveCursorEnd;
-            _keyActions["ControlA"] = MoveCursorHome;
-            _keyActions["ControlB"] = MoveCursorLeft;
             _keyActions["RightArrow"] = MoveCursorRight;
             _keyActions["ControlX"] = MoveCursorEnd;
             _keyActions["Backspace"] = Backspace;
             _keyActions["Delete"] = Delete;
-            _keyActions["Escape"] = ClearLine;
             _keyActions["UpArrow"] = PrevHistory;
             _keyActions["DownArrow"] = NextHistory;
            
@@ -356,6 +353,9 @@ namespace Core
                     GlobalVariables.tabPressCount = 0;
                 }
 
+                //_keyActions["ControlA"] = MoveCursorHome;
+                //_keyActions["ControlB"] = MoveCursorLeft;
+                //_keyActions["Escape"] = ClearLine;
                 //_keyActions["ControlP"] = PrevHistory;
                 //_keyActions["ControlD"] = Delete;
                 //_keyActions["ControlH"] = Backspace;
