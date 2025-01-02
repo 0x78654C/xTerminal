@@ -449,6 +449,8 @@ namespace Shell
             {
                 keyHandler.Handle(keyInfo);
                 keyInfo = Console.ReadKey(true);
+                if (keyInfo.Key != ConsoleKey.Tab)
+                    GlobalVariables.tabPressCount = 0;
             }
             Console.WriteLine();
             return keyHandler.Text;
