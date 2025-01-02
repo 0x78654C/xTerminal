@@ -111,6 +111,7 @@ namespace Core
                 MoveCursorRight();
         }
 
+        private void NullVoid() { }
         private void ClearLine()
         {
             MoveCursorEnd();
@@ -302,7 +303,7 @@ namespace Core
             _keyActions["Delete"] = Delete;
             _keyActions["UpArrow"] = PrevHistory;
             _keyActions["DownArrow"] = NextHistory;
-           
+            _keyActions["Escape"] = NullVoid;
             _keyActions["Tab"] = () =>
             {
                 GlobalVariables.tabPressCount++;
