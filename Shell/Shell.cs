@@ -321,8 +321,13 @@ namespace Shell
                 // We se the color and user loged in on console.
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
-                //reading user imput
-                s_input = Read();
+                // Reading user imput.
+                try
+                {
+                    s_input = Read();
+                }
+                catch {}
+        
 
                 //cleaning input
                 s_input = s_input.Trim();
