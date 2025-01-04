@@ -111,6 +111,7 @@ namespace Core
                 MoveCursorRight();
         }
 
+        private void NullVoid() { }
         private void ClearLine()
         {
             MoveCursorEnd();
@@ -296,20 +297,17 @@ namespace Core
             _keyActions["LeftArrow"] = MoveCursorLeft;
             _keyActions["Home"] = MoveCursorHome;
             _keyActions["End"] = MoveCursorEnd;
-            _keyActions["ControlA"] = MoveCursorHome;
-            _keyActions["ControlB"] = MoveCursorLeft;
             _keyActions["RightArrow"] = MoveCursorRight;
             _keyActions["ControlX"] = MoveCursorEnd;
             _keyActions["Backspace"] = Backspace;
             _keyActions["Delete"] = Delete;
-            _keyActions["Escape"] = ClearLine;
             _keyActions["UpArrow"] = PrevHistory;
             _keyActions["DownArrow"] = NextHistory;
-           
+            _keyActions["Escape"] = NullVoid;
             _keyActions["Tab"] = () =>
             {
-                tabPressCount++;
-                if (tabPressCount == 2)
+                GlobalVariables.tabPressCount++;
+                if (GlobalVariables.tabPressCount == 2)
                 {
                     MoveCursorEnd();
                     var outCompletion = "";
@@ -321,45 +319,44 @@ namespace Core
                     candidate = candidate.Trim('\r');
                     candidate = candidate.Trim('\n');
                     candidate = candidate.Trim('\u0018'); 
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, false, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, false, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, false, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "./", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "del", currentDirectory, false, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "del", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", currentDirectory, false, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, true, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, false, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "exif", currentDirectory, true, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "./", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "del", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "exif", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     var countOut = outCompletion.ToList().Count;
                     if (countOut > 0)
                     {
                         var getCommandStr = candidate;
                         var getCommand = getCommandStr.Split(' ')[0];
                         var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
-                        var backSpaceChar = "";
                         foreach (var paramChar in getCommandStr)
-                            backSpaceChar+="\b \b";
+                            Backspace(); 
                         var command = $"{getCommand} {outCompletion}";
                         _cursorPos += command.Length - _text.Length;
                         _text.Clear();
                         _text.Append(command);
-                        Console2.Write($"{backSpaceChar}");
+                        _cursorLimit = _text.Length;
                         Console2.Write(_text.ToString());
                     }
-                    tabPressCount = 0;
+                    GlobalVariables.tabPressCount = 0;
                 }
 
+                //_keyActions["ControlA"] = MoveCursorHome;
+                //_keyActions["ControlB"] = MoveCursorLeft;
+                //_keyActions["Escape"] = ClearLine;
                 //_keyActions["ControlP"] = PrevHistory;
                 //_keyActions["ControlD"] = Delete;
                 //_keyActions["ControlH"] = Backspace;

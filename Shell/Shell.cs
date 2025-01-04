@@ -321,8 +321,16 @@ namespace Shell
                 // We se the color and user loged in on console.
                 SetConsoleUserConnected(s_currentDirectory, s_accountName, s_computerName, s_regUI, s_regUIcd);
 
-                //reading user imput
-                s_input = Read();
+                // Reading user imput.
+                try
+                {
+                    s_input = Read();
+                }
+                catch {
+                    s_input = "";
+                    Console.WriteLine();
+                }
+        
 
                 //cleaning input
                 s_input = s_input.Trim();
@@ -449,6 +457,8 @@ namespace Shell
             {
                 keyHandler.Handle(keyInfo);
                 keyInfo = Console.ReadKey(true);
+                if (keyInfo.Key != ConsoleKey.Tab)
+                    GlobalVariables.tabPressCount = 0;
             }
             Console.WriteLine();
             return keyHandler.Text;
