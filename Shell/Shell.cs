@@ -326,7 +326,10 @@ namespace Shell
                 {
                     s_input = Read();
                 }
-                catch {}
+                catch {
+                    s_input = "";
+                    Console.WriteLine();
+                }
         
 
                 //cleaning input
