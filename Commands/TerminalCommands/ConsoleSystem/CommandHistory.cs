@@ -133,7 +133,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (dateDisplay)
                     command = $"{date} {splitedCommand}";
                 else
-                    command  = splitedCommand;
+                    command  = splitedCommand.Trim();
 
                 s_countCommands++;
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
