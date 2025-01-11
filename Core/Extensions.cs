@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Core
 {
-    internal static class Extensions
+    public static class Extensions
     {
         internal static int CountLines(this string input)
         {
@@ -16,7 +16,7 @@ namespace Core
             return count;
         }
 
-        internal static string SplitByText(this string input, string parameter, int index)
+        public static string SplitByText(this string input, string parameter, int index)
         {
             // return Regex.Split(input, parameter)[index];
             try
