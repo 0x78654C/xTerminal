@@ -74,7 +74,7 @@ This is the full list of commands that can be used in xTerminal:
                          Example1: ./ -u <file_name>
                          Example2: ./ -u <file_name> -param <file_paramters>
                  Both examples can be used with -we parameter.
-    pkill     -- Kills a running process by name or id.
+    kill      -- Kills a running process by name or id.
                  Example1: pkill <process_name>
                  Example2: pkill -i <process_id>
     plist     -- List current running processes and their child processes.

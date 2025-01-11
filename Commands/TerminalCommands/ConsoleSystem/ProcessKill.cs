@@ -11,7 +11,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     [SupportedOSPlatform("Windows")]
     class ProcessKill : ITerminalCommand
     {
-        public string Name => "pkill";
+        public string Name => "kill";
         private string _helpMessage = @"
 Kills a running process by name or id. Usage:
   pkill <process_name>
