@@ -96,7 +96,8 @@ Command can be canceled with CTRL+X key combination.
                 SearchFile(_currentLocation, arg, "", false, action);
                 var totalCount = s_countDirs + s_countFiles;
                 var content = $"\n\n    Search results: Directories({s_countDirs})  Files({s_countFiles})  Total({totalCount})\n";
-                FileSystem.SuccessWriteLine(content);
+                if(!GlobalVariables.isPipeCommand)
+                    FileSystem.SuccessWriteLine(content);
                 if (GlobalVariables.eventCancelKey)
                     FileSystem.SuccessWriteLine("Command stopped!");
                 GlobalVariables.eventCancelKey = false;
@@ -140,7 +141,7 @@ Command can be canceled with CTRL+X key combination.
                         else
                         {
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                GlobalVariables.pipeCmdOutput += $"File: {file}\n";
+                                GlobalVariables.pipeCmdOutput += $"{file}\n";
                             else
                             {
                                 Console.WriteLine($"File: {file}");
