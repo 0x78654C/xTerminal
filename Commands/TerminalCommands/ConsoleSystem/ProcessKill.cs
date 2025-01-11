@@ -14,10 +14,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public string Name => "kill";
         private string _helpMessage = @"
 Kills a running process by name or id. Usage:
-  pkill <process_name>
-  pkill <process_name> -e : Kill entire process tree.
-  pkill -i <process_id>
-  pkill -i <process_id> -e : Kill entire process tree.
+  kill <process_name>
+  kill <process_name> -e : Kill entire process tree.
+  kill -i <process_id>
+  kill -i <process_id> -e : Kill entire process tree.
 ";
         public void Execute(string arg)
         {
