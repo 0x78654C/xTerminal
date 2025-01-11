@@ -4,8 +4,6 @@ using System.Linq;
 using System.IO;
 using Core;
 using System.Runtime.Versioning;
-using System.Windows.Forms;
-using System.Reflection.Metadata;
 
 namespace Commands.TerminalCommands.DirFiles
 {
