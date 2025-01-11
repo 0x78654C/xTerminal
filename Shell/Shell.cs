@@ -663,7 +663,7 @@ namespace Shell
             {
                 if (!string.IsNullOrWhiteSpace(commandInput) && !string.IsNullOrEmpty(commandInput))
                 {
-                    tempList.Add(commandInput);
+                    tempList.Add($"<< {DateTime.UtcNow} >> {commandInput}");
                     int countCommands = tempList.Count;
                     string outCommands = "";
                     for (int i = 0; i < countCommands; i++)
