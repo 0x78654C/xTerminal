@@ -54,10 +54,10 @@ Kills a running process by name or id. Usage:
                 if (arg.ContainsText("-e"))
                 {
                     argClean = arg.Replace("-e", string.Empty).Trim();
-                    KillProcess(argClean.SplitByText("pkill ", 1), false,true);
+                    KillProcess(argClean.SplitByText("kill ", 1), false,true);
                     return;
                 }
-                KillProcess(arg.SplitByText("pkill ", 1), false);
+                KillProcess(arg.SplitByText("kill ", 1), false);
             }
             catch (Exception e)
             {
