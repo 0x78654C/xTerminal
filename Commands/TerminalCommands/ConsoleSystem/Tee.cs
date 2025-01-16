@@ -20,15 +20,15 @@ Tee is used with pipe commands and it saves the output from previous command in 
         {
             try
             {
-                var commandPipeData = GlobalVariables.pipeCmdOutput;
-                var param = arg.Split('|')[0].Substring(4);
-                var currentPath = File.ReadAllText(GlobalVariables.currentDirectory);
-
                 if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
+
+                var commandPipeData = GlobalVariables.pipeCmdOutput;
+                var param = arg.Split('|')[0].Substring(4);
+                var currentPath = File.ReadAllText(GlobalVariables.currentDirectory);
 
                 // Display help message.
                 if (param.Trim() == "-h" && !GlobalVariables.isPipeCommand)
