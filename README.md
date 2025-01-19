@@ -60,7 +60,7 @@ This is the full list of commands that can be used in xTerminal:
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.
-                   -d   : Displays the date when the command was executed.
+                   -d   : Displays the date when the command was executed. Can be used with x(numbers of commands to be displayed) as well.
                    -sz  : Set the limit of commands that can be stored in history. Default set is 2000.
                           Example: ch -sz 1000
                    -rz  : Read the limit of commands that can be stored in history. 
