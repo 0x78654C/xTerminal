@@ -39,9 +39,10 @@ namespace Core.Commands
                 countLines++;
                 if (countLines == number)
                 {
+                    var cmd  = line.SplitByText(">>", 1).Trim();
                     FileSystem.ColorConsoleText(ConsoleColor.White, $" {countLines} -> ");
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
-                    command = line;
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, cmd);
+                    command = cmd;
                 }
             }
             return command;

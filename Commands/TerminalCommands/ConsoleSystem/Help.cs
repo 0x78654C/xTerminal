@@ -29,7 +29,7 @@ This is the full list of commands that can be used in xTerminal:
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional help.
     chistory  -- Clears the current history of commands!
     ./        -- Starts an application. Use -h for additional help.
-    pkill     -- Kills a running process by name or id. Use -h for additional help.
+    kill     -- Kills a running process by name or id. Use -h for additional help.
     plist     -- List current running processes and their child processes. Use -h for additional help.
     clear     -- Clears the console.
     cd        -- Sets the current directory. (cd .. for parent directory, cd ../.. and so on for multi backward directory navigation).
@@ -57,6 +57,7 @@ This is the full list of commands that can be used in xTerminal:
     enc       -- Set input/output encoding for xTerminal. Use -h for additional help.
     ln        -- Create shortcut of a file/folder. Use -h for additional help.
     zip       -- Create Zip archive files. Use -h for additional help.
+    tee       -- Stores previous pipe command stdout to a file. Use -h for additional help. 
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

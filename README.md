@@ -60,6 +60,7 @@ This is the full list of commands that can be used in xTerminal:
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.
+                   -d   : Displays the date when the command was executed. Can be used with x(numbers of commands to be displayed) as well.
                    -sz  : Set the limit of commands that can be stored in history. Default set is 2000.
                           Example: ch -sz 1000
                    -rz  : Read the limit of commands that can be stored in history. 
@@ -73,9 +74,12 @@ This is the full list of commands that can be used in xTerminal:
                          Example1: ./ -u <file_name>
                          Example2: ./ -u <file_name> -param <file_paramters>
                  Both examples can be used with -we parameter.
-    pkill     -- Kills a running process by name or id.
-                 Example1: pkill <process_name>
-                 Example2: pkill -i <process_id>
+    kill      -- Kills a running process by name or id.
+                 Example:
+                      kill <process_name>
+                      kill <process_name> -e : Kill entire process tree.
+                      kill -i <process_id>
+                      kill -i <process_id> -e : Kill entire process tree.
     plist     -- List current running processes and their child processes.
                  Example: 
                  Parent : [Idle] [0]   ---> parent process
@@ -228,6 +232,10 @@ This is the full list of commands that can be used in xTerminal:
                   nc - NoCompression
                   f  - Fastest
                   s  - SmallestSize
+    tee       -- Stores previous pipe command stdout to a file.
+                  tee <file_name>     : Writes previous command output to a file.
+                  tee -a <file_name>  : Appends previous command output to an existing file.
+                  Example: ls | cat -t 10 | tee data.txt | cat -s exe
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

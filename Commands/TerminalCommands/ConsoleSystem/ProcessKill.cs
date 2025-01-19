@@ -11,13 +11,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
     [SupportedOSPlatform("Windows")]
     class ProcessKill : ITerminalCommand
     {
-        public string Name => "pkill";
+        public string Name => "kill";
         private string _helpMessage = @"
 Kills a running process by name or id. Usage:
-  pkill <process_name>
-  pkill <process_name> -e : Kill entire process tree.
-  pkill -i <process_id>
-  pkill -i <process_id> -e : Kill entire process tree.
+  kill <process_name>
+  kill <process_name> -e : Kill entire process tree.
+  kill -i <process_id>
+  kill -i <process_id> -e : Kill entire process tree.
 ";
         public void Execute(string arg)
         {
@@ -54,10 +54,10 @@ Kills a running process by name or id. Usage:
                 if (arg.ContainsText("-e"))
                 {
                     argClean = arg.Replace("-e", string.Empty).Trim();
-                    KillProcess(argClean.SplitByText("pkill ", 1), false,true);
+                    KillProcess(argClean.SplitByText("kill ", 1), false,true);
                     return;
                 }
-                KillProcess(arg.SplitByText("pkill ", 1), false);
+                KillProcess(arg.SplitByText("kill ", 1), false);
             }
             catch (Exception e)
             {

@@ -19,6 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_helpMessage = @"Usage of ch command:
     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
     -h   : Displays this message.
+    -d   : Displays the date when the command was executed. Can be used with x(numbers of commands to be displayed) as well.
     -sz  : Set the limit of commands that can be stored in history. Default set is 2000.
          Example: ch -sz 1000
     -rz  : Read the limit of commands that can be stored in history.
@@ -29,14 +30,22 @@ namespace Commands.TerminalCommands.ConsoleSystem
             try
             {
                 string cmd = "";
-                if (args.Contains(" "))
-                    cmd = args.Split(' ').Skip(1).FirstOrDefault();
-
+                var dateDisplay = false;
                 // Display help message.
-                if (cmd.StartsWith("-h"))
+                if (args.StartsWith($"{Name} -h"))
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
+                }
+
+                if (args.Contains(" "))
+                    cmd = args.SplitByText(Name,1).Trim();
+
+                // Display commands date history.
+                if (cmd.StartsWith("-d"))
+                {
+                    dateDisplay = true;
+                    cmd = cmd.Replace("-d", "").Trim();
                 }
 
                 // Read history file command size from registry.
@@ -64,10 +73,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 // Output commands.
                 if (Int32.TryParse(cmd, out var position))
                 {
-                    OutputHistoryCommands(s_historyFile, position);
+                    OutputHistoryCommands(s_historyFile, position, dateDisplay);
                     return;
                 }
-                OutputHistoryCommands(s_historyFile, 20);
+                OutputHistoryCommands(s_historyFile, 20, dateDisplay);
             }
             catch (Exception e)
             {
@@ -80,7 +89,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         /// </summary>
         /// <param name="historyFileName">Path to history command file.</param>
         /// <param name="linesNumber">Number of commands to be displayed.</param>
-        private static void OutputHistoryCommands(string historyFileName, int linesNumber)
+        private static void OutputHistoryCommands(string historyFileName, int linesNumber, bool dateDisplay)
         {
             if (!HistoryCommands.FileHasContent(historyFileName))
             {
@@ -121,13 +130,21 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             foreach (string line in filteredLines)
             {
+                var date =line.MiddleString("<<",">>");
+                var command = "";
+                var splitedCommand = line.SplitByText(">>",1);
+                if (dateDisplay)
+                    command = $"{date} {splitedCommand}";
+                else
+                    command  = splitedCommand.Trim();
+
                 s_countCommands++;
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                    GlobalVariables.pipeCmdOutput += $"{line}\n";
+                    GlobalVariables.pipeCmdOutput += $"{command}\n";
                 else
                 {
                     FileSystem.ColorConsoleText(ConsoleColor.White, $" {s_countCommands} -> ");
-                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, line);
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Magenta, command);
                 }
             }
         }
