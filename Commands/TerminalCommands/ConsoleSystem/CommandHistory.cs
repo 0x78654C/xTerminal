@@ -19,7 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static string s_helpMessage = @"Usage of ch command:
     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
     -h   : Displays this message.
-    -d   : Displays the date when the command was executed.
+    -d   : Displays the date when the command was executed. Can be used with x(numbers of commands to be displayed) as well.
     -sz  : Set the limit of commands that can be stored in history. Default set is 2000.
          Example: ch -sz 1000
     -rz  : Read the limit of commands that can be stored in history.
@@ -31,19 +31,22 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 string cmd = "";
                 var dateDisplay = false;
-                if (args.Contains(" "))
-                    cmd = args.Split(' ').Skip(1).FirstOrDefault();
-
                 // Display help message.
-                if (cmd.StartsWith("-h"))
+                if (args.StartsWith($"{Name} -h"))
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
 
+                if (args.Contains(" "))
+                    cmd = args.SplitByText(Name,1).Trim();
+
                 // Display commands date history.
                 if (cmd.StartsWith("-d"))
+                {
                     dateDisplay = true;
+                    cmd = cmd.Replace("-d", "").Trim();
+                }
 
                 // Read history file command size from registry.
                 if (cmd.StartsWith("-rz"))
