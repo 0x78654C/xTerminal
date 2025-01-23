@@ -23,7 +23,7 @@ namespace Core
         /// </summary>
         /// <param name="listLines"></param>
         /// <param name="data"></param>
-        public static void ReadStringLine(ref List<string> listLines, string data)
+        public static void ReadStringLine(ref List<string> listLines, string data, bool history = false)
         {
             if (string.IsNullOrEmpty(data))
                 return;
@@ -31,9 +31,18 @@ namespace Core
             {
                 string line;
                 while (null != (line = reader.ReadLine()))
-                    listLines.Add(line);
+                {
+                    if (history)
+                    {
+                        var cmd = line.SplitByText(">>", 1).Trim();
+                        listLines.Add(cmd);
+                    }
+                    else
+                        listLines.Add(line);
+                }
             }
         }
+
 
         /// <summary>
         /// Check if object is a file or directory.
