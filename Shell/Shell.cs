@@ -307,7 +307,7 @@ namespace Shell
             if (File.Exists(s_historyFile))
             {
                 var historyStored = File.ReadAllText(s_historyFile);
-                FileSystem.ReadStringLine(ref _history, historyStored);
+                FileSystem.ReadStringLine(ref _history, historyStored, true);
             }
 
             if (ExecuteParamCommands(args)) { return; };
