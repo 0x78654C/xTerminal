@@ -304,6 +304,7 @@ namespace Core
             _keyActions["UpArrow"] = PrevHistory;
             _keyActions["DownArrow"] = NextHistory;
             _keyActions["Escape"] = NullVoid;
+            _keyActions["Insert"] = NullVoid;
             _keyActions["Tab"] = () =>
             {
                 GlobalVariables.tabPressCount++;
