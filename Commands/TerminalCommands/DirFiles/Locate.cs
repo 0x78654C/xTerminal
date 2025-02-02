@@ -162,7 +162,7 @@ Command can be canceled with CTRL+X key combination.
                         else
                         {
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                GlobalVariables.pipeCmdOutput += $"DIR: {dir}\n";
+                                GlobalVariables.pipeCmdOutput += $"{dir}\n";
                             else
                             {
                                 FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"DIR: {dir}");
