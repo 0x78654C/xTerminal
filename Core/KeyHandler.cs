@@ -30,13 +30,15 @@ Modified by: x_coding
 
 using Core.Abstractions;
 using Core.Commands;
+using Core.SystemTools;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Windows.Forms;
+using Json = Core.SystemTools.JsonManage;
+using AliasC = Core.SystemTools.AliasC;
 
 namespace Core
 {
@@ -285,6 +287,24 @@ namespace Core
             }
         }
 
+        /// <summary>
+        /// Get the alias commands from alias file.
+        /// </summary>
+        /// <param name="aliasFile"></param>
+        /// <returns></returns>
+        private static List<string> AliasCommands(string aliasFile)
+        {
+            var listCommands = new List<string>();
+            if (!File.Exists(aliasFile))
+                return listCommands;
+
+            var data = Json.ReadJsonFromFile<AliasC[]>(aliasFile);
+            foreach (var line in data)
+                listCommands.Add(line.CommandName.Trim());
+            return listCommands;
+        }
+
+
         public KeyHandler(IConsole console, List<string> history, IAutoCompleteHandler autoCompleteHandler)
         {
             Console2 = console;
@@ -319,7 +339,7 @@ namespace Core
                     candidate = candidate.Trim('\0');
                     candidate = candidate.Trim('\r');
                     candidate = candidate.Trim('\n');
-                    candidate = candidate.Trim('\u0018'); 
+                    candidate = candidate.Trim('\u0018');
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
@@ -337,6 +357,13 @@ namespace Core
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "exif", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    var aliasCommands = AliasCommands(GlobalVariables.aliasFile);
+
+                    // Passing alias comamnds in auto suggestion list.
+                    foreach (var aliasCommand in aliasCommands)
+                        if (aliasCommand.Length > 0 && candidate.StartsWith(aliasCommand))
+                            AutoSuggestionCommands.FileDirSuggestion(candidate, aliasCommand, currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+
                     var countOut = outCompletion.ToList().Count;
                     if (countOut > 0)
                     {
@@ -344,7 +371,7 @@ namespace Core
                         var getCommand = getCommandStr.Split(' ')[0];
                         var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
                         foreach (var paramChar in getCommandStr)
-                            Backspace(); 
+                            Backspace();
                         var command = $"{getCommand} {outCompletion}";
                         _cursorPos += command.Length - _text.Length;
                         _text.Clear();
