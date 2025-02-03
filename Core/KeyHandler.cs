@@ -56,10 +56,7 @@ namespace Core
         private int _completionStart;
         private int _completionsIndex;
         private IConsole Console2;
-        private int s_ctrlKey = 1;
-        private int s_xKey = 0;
-        private int tabPressCount = 0;
-
+        private string _multiParam = "";
         private bool IsStartOfLine() => _cursorPos == 0;
 
         private bool IsEndOfLine() => _cursorPos == _cursorLimit;
@@ -340,29 +337,47 @@ namespace Core
                     candidate = candidate.Trim('\r');
                     candidate = candidate.Trim('\n');
                     candidate = candidate.Trim('\u0018');
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cd", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "odir", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ls", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "hex", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "./", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ccs", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "fcopy", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "mv", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "fmove", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "del", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "edit", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cp", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "exif", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "cd", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "odir", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "ls", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "hex", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "./", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "ccs", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "fcopy", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "mv", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "fmove", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "del", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "edit", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "cp", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "md5", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "sort", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "cat", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "ln", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "exif", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     var aliasCommands = AliasCommands(GlobalVariables.aliasFile);
 
                     // Passing alias comamnds in auto suggestion list.
                     foreach (var aliasCommand in aliasCommands)
+                    {
                         if (aliasCommand.Length > 0 && candidate.StartsWith(aliasCommand))
-                            AutoSuggestionCommands.FileDirSuggestion(candidate, aliasCommand, currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                        {
+
+                            var splitCanmdidate = candidate.Split(' ');
+                            var cmd = splitCanmdidate[0];
+                            var countParams = splitCanmdidate.Count();
+                            var lastSuggestion = splitCanmdidate[countParams - 1];
+                            var suggestionPass = $"{cmd} {lastSuggestion}";
+                            var count = 0;
+                            foreach (var param in splitCanmdidate)
+                            {
+                                if (countParams > 2)
+                                    if (count > 0 && count < countParams - 1)
+                                        _multiParam += $"{param} ";
+                                count++;
+                            }
+                            AutoSuggestionCommands.FileDirSuggestion(suggestionPass, _multiParam, aliasCommand, currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                        }
+                    }
 
                     var countOut = outCompletion.ToList().Count;
                     if (countOut > 0)
@@ -372,7 +387,11 @@ namespace Core
                         var paramCommand = getCommandStr.SplitByText($"{getCommand} ", 1);
                         foreach (var paramChar in getCommandStr)
                             Backspace();
-                        var command = $"{getCommand} {outCompletion}";
+                        var command = "";
+                        if (_multiParam.Length > 1)
+                            command = $"{getCommand} {_multiParam.Trim()} {outCompletion}";
+                        else
+                            command = $"{getCommand} {outCompletion}";
                         _cursorPos += command.Length - _text.Length;
                         _text.Clear();
                         _text.Append(command);
