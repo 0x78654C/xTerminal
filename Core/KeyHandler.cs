@@ -366,7 +366,12 @@ namespace Core
                             var cmd = splitCanmdidate[0];
                             var countParams = splitCanmdidate.Count();
                             var lastSuggestion = splitCanmdidate[countParams - 1];
-                            var suggestionPass = $"{cmd} {lastSuggestion}";
+
+                            var suggestionPass = "";
+                            if (lastSuggestion != cmd)
+                                suggestionPass = $"{cmd} {lastSuggestion}";
+                            else
+                                suggestionPass = cmd;
                             var count = 0;
                             _multiParam = "";
                             foreach (var param in splitCanmdidate)
@@ -376,6 +381,8 @@ namespace Core
                                         _multiParam += $"{param} ";
                                 count++;
                             }
+                            
+                            
                             AutoSuggestionCommands.FileDirSuggestion(suggestionPass, _multiParam, aliasCommand, currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                         }
                     }
@@ -393,6 +400,7 @@ namespace Core
                             command = $"{getCommand} {_multiParam.Trim()} {outCompletion}";
                         else
                             command = $"{getCommand} {outCompletion}";
+                        _multiParam = "";
                         _cursorPos += command.Length - _text.Length;
                         _text.Clear();
                         _text.Append(command);
