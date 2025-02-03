@@ -33,7 +33,7 @@ namespace Core.Commands
                     consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                     SystemTools.AutoSuggestion.FileDirCompletion(consoleInput, currentDirectory, typeSuggestions, ref addedCompletion);
                     if (multiParam.Length > 0)
-                        GlobalVariables.commandOut = $"{command} {multiParam} {consoleInput}";
+                        GlobalVariables.commandOut = $"{command} {multiParam.Trim()} {consoleInput}";
                     else
                         GlobalVariables.commandOut = $"{command} {consoleInput}";
 
@@ -41,7 +41,7 @@ namespace Core.Commands
                     {
                         GlobalVariables.autoSuggestion = true;
                         if (multiParam.Length > 0)
-                            SendKeys.SendWait($"{command} {multiParam} {consoleInput}");
+                            SendKeys.SendWait($"{command} {multiParam.Trim()} {consoleInput}");
                         else
                             SendKeys.SendWait($"{command} {consoleInput}");
                     }
