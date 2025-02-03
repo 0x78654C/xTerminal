@@ -368,6 +368,7 @@ namespace Core
                             var lastSuggestion = splitCanmdidate[countParams - 1];
                             var suggestionPass = $"{cmd} {lastSuggestion}";
                             var count = 0;
+                            _multiParam = "";
                             foreach (var param in splitCanmdidate)
                             {
                                 if (countParams > 2)
