@@ -15,7 +15,7 @@ namespace Core.Commands
         /// <param name="command">Command you use.</param>
         /// <param name="currentDirectory">Current directory.</param>
         /// <param name="isFile">If sugestion is for file.</param>
-        public static void FileDirSuggestion(string consoleInput, string command, string currentDirectory, GlobalVariables.TypeSuggestions typeSuggestions, ref string addedCompletion)
+        public static void FileDirSuggestion(string consoleInput, string multiParam, string command, string currentDirectory, GlobalVariables.TypeSuggestions typeSuggestions, ref string addedCompletion)
         {
             try
             {
@@ -31,13 +31,19 @@ namespace Core.Commands
                 if ((consoleInput.StartsWith(command) && consoleInput.Length > command.Length))
                 {
                     consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
-                    SystemTools.AutoSuggestion.FileDirCompletion(consoleInput, currentDirectory,typeSuggestions, ref addedCompletion);
-                    GlobalVariables.commandOut = command + " " + consoleInput;
+                    SystemTools.AutoSuggestion.FileDirCompletion(consoleInput, currentDirectory, typeSuggestions, ref addedCompletion);
+                    if (multiParam.Length > 0)
+                        GlobalVariables.commandOut = $"{command} {multiParam} {consoleInput}";
+                    else
+                        GlobalVariables.commandOut = $"{command} {consoleInput}";
 
                     if (string.IsNullOrEmpty(addedCompletion))
                     {
                         GlobalVariables.autoSuggestion = true;
-                        SendKeys.SendWait(command + " " + consoleInput);
+                        if (multiParam.Length > 0)
+                            SendKeys.SendWait($"{command} {multiParam} {consoleInput}");
+                        else
+                            SendKeys.SendWait($"{command} {consoleInput}");
                     }
                 }
             }
