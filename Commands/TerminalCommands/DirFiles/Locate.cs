@@ -219,5 +219,16 @@ Command can be canceled with CTRL+X key combination.
             EndsWith,
             Equal
         }
+
+
+        /// <summary>
+        /// Search type categories.
+        /// </summary>
+        enum Types
+        {
+            Files,
+            Directories,
+            All
+        }
     }
 }
