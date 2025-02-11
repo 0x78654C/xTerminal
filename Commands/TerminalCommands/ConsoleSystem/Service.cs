@@ -28,7 +28,7 @@ Remote:
     -start <service_name> -r <machine_name/IP> : Starts a specific service.
     -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
 
-Note: Requires administrator privileges.
+Note: Requires administrator privileges. (-list works with privileges as wel)
 ";
         public void Execute(string arg)
         {
