@@ -30,8 +30,8 @@ namespace Commands.TerminalCommands.DirFiles
      -eq : Displays searched files/directories from the current directory and subdirectories that equals a specific text.
             Example 1: locate -eq <text>
             Example 2: locate -eq <text> -o <save_to_file>
-     --d : Filter only directories. Parameter should be added to end of command.
-     --e : Filter only files. Parameter should be added to end of command.
+     -d  : Filter only directories. (Parameter should be added to end of command)
+     -f  : Filter only files. (Parameter should be added to end of command)
   
 Command can be canceled with CTRL+X key combination.
 ";
@@ -54,16 +54,16 @@ Command can be canceled with CTRL+X key combination.
 
                 arg = arg.Replace($"{Name} ", string.Empty);
 
-                if (arg.EndsWith(" --d"))
+                if (arg.EndsWith(" -d"))
                 {
                     types = Types.Directories;
-                    arg = arg.Replace(" --d", string.Empty);
+                    arg = arg[..^3];
                 }
 
-                if (arg.EndsWith(" --e"))
+                if (arg.EndsWith(" -e"))
                 {
                     types = Types.Files;
-                    arg = arg.Replace(" --e", string.Empty);
+                    arg = arg[..^3];
                 }
 
                 if (arg.StartsWith("-h") && arg.Length == 2)
