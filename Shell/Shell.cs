@@ -164,16 +164,39 @@ namespace Shell
                         {
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
-
                             c.Execute(cmdExecute);
-
                             count++;
                             GlobalVariables.pipeCmdCount--;
                         }
                         GlobalVariables.isPipeCommand = false;
                     }
+                    // Run multiple commands if previous one succeed.
+                    else if (command.Contains("&&"))
+                    {
+                        var commandSplit = command.Split("&&");
+                        foreach (var cmd in commandSplit)
+                        {
+                            var cmdExecute = cmd.Trim();
+                            c = Commands.CommandRepository.GetCommand(cmdExecute);
+                            c.Execute(cmdExecute);
+                        }
+                    }
+
+                    // Run multiple commands.
+                    else if (command.Contains(";"))
+                    {
+                        var commandSplit = command.Split(";");
+                        foreach (var cmd in commandSplit)
+                        {
+                            var cmdExecute = cmd.Trim();
+                            c = Commands.CommandRepository.GetCommand(cmdExecute);
+                            c.Execute(cmdExecute);
+                        }
+                    }
                     else
                         c.Execute(command);
+
+                    // Reset alias parameters.
                     GlobalVariables.aliasParameters = string.Empty;
                     GlobalVariables.aliasRunFlag = false;
                     GlobalVariables.aliasInParameter.Clear();
