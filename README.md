@@ -317,6 +317,8 @@ This is the full list of commands that can be used in xTerminal:
                      -eq : Displays searched files/directories from the current directory and subdirectories that equals a specific text.
                             Example 1: locate -eq <text>
                             Example 2: locate -eq <text> -o <save_to_file>
+                     -d  : Filter only directories. (Parameter should be added to end of command)
+                     -f  : Filter only files. (Parameter should be added to end of command)
     echo      -- Write/append data to a file.
                      echo <text> :  Displays in console the <text> data.
                      >   : Write data to a file.

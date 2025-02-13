@@ -57,7 +57,7 @@ Protocols code:
 47     : GRE
 58     : ICMPv6
 
-Note: Requires administrator privileges.
+Note: Requires administrator privileges. (-list works with privileges as wel)
 ";
         public void Execute(string arg)
         {

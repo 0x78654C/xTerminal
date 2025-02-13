@@ -30,6 +30,8 @@ namespace Commands.TerminalCommands.DirFiles
      -eq : Displays searched files/directories from the current directory and subdirectories that equals a specific text.
             Example 1: locate -eq <text>
             Example 2: locate -eq <text> -o <save_to_file>
+     -d  : Filter only directories. (Parameter should be added to end of command)
+     -f  : Filter only files. (Parameter should be added to end of command)
   
 Command can be canceled with CTRL+X key combination.
 ";
@@ -38,9 +40,12 @@ Command can be canceled with CTRL+X key combination.
         {
             try
             {
-                var action=ActionFind.Contains;
+                var action = ActionFind.Contains;
+                var types = Types.All;
+
                 GlobalVariables.eventCancelKey = false;
                 _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
+
                 if (arg == Name)
                 {
                     FileSystem.ErrorWriteLine("You need to provide a text for search!");
@@ -49,13 +54,25 @@ Command can be canceled with CTRL+X key combination.
 
                 arg = arg.Replace($"{Name} ", string.Empty);
 
+                if (arg.EndsWith(" -d"))
+                {
+                    types = Types.Directories;
+                    arg = arg[..^3];
+                }
+
+                if (arg.EndsWith(" -e"))
+                {
+                    types = Types.Files;
+                    arg = arg[..^3];
+                }
+
                 if (arg.StartsWith("-h") && arg.Length == 2)
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
 
-                if(arg.Contains("-s "))
+                if (arg.Contains("-s "))
                 {
                     arg = arg.Replace("-s ", string.Empty);
                     action = ActionFind.StartsWith;
@@ -81,20 +98,20 @@ Command can be canceled with CTRL+X key combination.
                     string param = arg.SplitByText(" -o ", 0);
                     FileSystem.SuccessWriteLine($"Searching for: {param}" + Environment.NewLine);
                     GlobalVariables.eventKeyFlagX = true;
-                    SearchFile(_currentLocation, param, outputFile, true, action);
+                    SearchFile(_currentLocation, param, outputFile, true, action, types);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                     GlobalVariables.eventCancelKey = false;
                     FileSystem.SuccessWriteLine($"Data saved in {outputFile}");
                     return;
                 }
-                if(!GlobalVariables.isPipeCommand)
+                if (!GlobalVariables.isPipeCommand)
                     FileSystem.SuccessWriteLine($"Searching for: {arg}" + Environment.NewLine);
                 GlobalVariables.eventKeyFlagX = true;
-                SearchFile(_currentLocation, arg, "", false, action);
+                SearchFile(_currentLocation, arg, "", false, action, types);
                 var totalCount = s_countDirs + s_countFiles;
                 var content = $"\n\n    Search results: Directories({s_countDirs})  Files({s_countFiles})  Total({totalCount})\n";
-                if(!GlobalVariables.isPipeCommand)
+                if (!GlobalVariables.isPipeCommand)
                     FileSystem.SuccessWriteLine(content);
                 if (GlobalVariables.eventCancelKey)
                     FileSystem.SuccessWriteLine("Command stopped!");
@@ -116,7 +133,7 @@ Command can be canceled with CTRL+X key combination.
         /// <param name="fileName"></param>
         /// <param name="outputFile"></param>
         /// <param name="saveToFile"></param>
-        private void SearchFile(string currentDirectory, string fileName, string outputFile, bool saveToFile, ActionFind actionFind)
+        private void SearchFile(string currentDirectory, string fileName, string outputFile, bool saveToFile, ActionFind actionFind, Types types)
         {
 
             try
@@ -126,52 +143,60 @@ Command can be canceled with CTRL+X key combination.
                 bool action = false;
                 Directory.GetDirectories(currentDirectory).ToList().ForEach(d => dirsList.Add(d));
                 Directory.GetFiles(currentDirectory).ToList().ForEach(f => filesList.Add(f));
+
                 foreach (var file in filesList)
                 {
                     FileInfo fileInfo = new FileInfo(file);
                     action = ShowFilesDir(fileInfo.Name, fileName, actionFind);
-                    if (action)
+                    if (types == Types.Files || types == Types.All)
                     {
-                        if (saveToFile)
+                        if (action)
                         {
-                            File.AppendAllText(outputFile, "File: " + file + Environment.NewLine);
-                        }
-                        else
-                        {
-                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                GlobalVariables.pipeCmdOutput += $"{file}\n";
+                            if (saveToFile)
+                            {
+                                File.AppendAllText(outputFile, "File: " + file + Environment.NewLine);
+                            }
                             else
                             {
-                                Console.WriteLine($"File: {file}");
-                                s_countFiles++;
+                                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                    GlobalVariables.pipeCmdOutput += $"{file}\n";
+                                else
+                                {
+                                    Console.WriteLine($"File: {file}");
+                                    s_countFiles++;
+                                }
                             }
                         }
                     }
                 }
 
+
                 foreach (var dir in dirsList)
                 {
                     DirectoryInfo directoryInfo = new DirectoryInfo(dir);
                     action = ShowFilesDir(directoryInfo.Name, fileName, actionFind);
-                    if (action)
+                    if (types == Types.Directories || types == Types.All)
                     {
-                        if (saveToFile)
+                        if (action)
                         {
-                            File.AppendAllText(outputFile, "DIR: " + dir + Environment.NewLine);
-                        }
-                        else
-                        {
-                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                GlobalVariables.pipeCmdOutput += $"{dir}\n";
+                            if (saveToFile)
+                            {
+                                File.AppendAllText(outputFile, "DIR: " + dir + Environment.NewLine);
+                            }
                             else
                             {
-                                FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"DIR: {dir}");
-                                s_countDirs++;
+                                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                                    GlobalVariables.pipeCmdOutput += $"{dir}\n";
+                                else
+                                {
+                                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, $"DIR: {dir}");
+                                    s_countDirs++;
+                                }
                             }
                         }
                     }
                     if (!GlobalVariables.eventCancelKey)
-                        SearchFile(dir, fileName, outputFile, saveToFile, actionFind);
+                        SearchFile(dir, fileName, outputFile, saveToFile, actionFind, types);
                 }
             }
             catch { }
@@ -218,6 +243,16 @@ Command can be canceled with CTRL+X key combination.
             StartsWith,
             EndsWith,
             Equal
+        }
+
+        /// <summary>
+        /// Search type categories.
+        /// </summary>
+        enum Types
+        {
+            Files,
+            Directories,
+            All
         }
     }
 }
