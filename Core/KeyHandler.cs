@@ -381,8 +381,6 @@ namespace Core
                                         _multiParam += $"{param} ";
                                 count++;
                             }
-                            
-                            
                             AutoSuggestionCommands.FileDirSuggestion(suggestionPass, _multiParam, aliasCommand, currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                         }
                     }
@@ -402,7 +400,7 @@ namespace Core
                             command = $"{getCommand} {outCompletion}";
                         _multiParam = "";
                         _cursorPos += command.Length - _text.Length;
-                        _text.Clear();
+                        _text.Clear();  
                         _text.Append(command);
                         _cursorLimit = _text.Length;
                         Console2.Write(_text.ToString());
