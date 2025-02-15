@@ -179,6 +179,12 @@ namespace Shell
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
                             c.Execute(cmdExecute);
+                            if(GlobalVariables.isErrorCommand)
+                            {
+                                GlobalVariables.isErrorCommand = false;
+                                Console.WriteLine(GlobalVariables.isErrorCommand); 
+                                break;
+                            }
                         }
                     }
 
@@ -199,6 +205,7 @@ namespace Shell
                     // Reset alias parameters.
                     GlobalVariables.aliasParameters = string.Empty;
                     GlobalVariables.aliasRunFlag = false;
+                    GlobalVariables.isErrorCommand = false;
                     GlobalVariables.aliasInParameter.Clear();
                 }
             }
@@ -206,6 +213,7 @@ namespace Shell
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
                 GlobalVariables.pipeCmdOutput = string.Empty;
+                GlobalVariables.isErrorCommand = false;
                 GlobalVariables.pipeCmdCount = 0;
                 GlobalVariables.pipeCmdCountTemp = 0;
             }
