@@ -315,11 +315,13 @@ e - Encrypted
             catch (IndexOutOfRangeException)
             {
                 FileSystem.ErrorWriteLine("The command parameters were invalid!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (UnauthorizedAccessException)
             {
                 FileSystem.ErrorWriteLine(
                     "You need administrator rights to run full command in this place! Some directories/files cannot be accessed!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
@@ -327,8 +329,13 @@ e - Encrypted
                 {
                     FileSystem.ErrorWriteLine(e.Message);
                     FileSystem.ErrorWriteLine($"Potential virused fle or unwanted file: {s_virus}");
+                    GlobalVariables.isErrorCommand = true;
                 }
-                FileSystem.ErrorWriteLine(e.Message);
+                else
+                {
+                    FileSystem.ErrorWriteLine(e.Message);
+                    GlobalVariables.isErrorCommand = true;
+                }
             }
         }
 

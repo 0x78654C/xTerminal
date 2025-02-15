@@ -76,6 +76,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message + " Check command!\nUse alias -clear if alias file if is corrupted. File will be recreated by adding new command!");
+                GlobalVariables.isErrorCommand  = true;
             }
         }
 
