@@ -49,6 +49,7 @@ Command can be canceled with CTRL+X key combination.
                 if (arg == Name)
                 {
                     FileSystem.ErrorWriteLine("You need to provide a text for search!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -122,6 +123,7 @@ Command can be canceled with CTRL+X key combination.
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

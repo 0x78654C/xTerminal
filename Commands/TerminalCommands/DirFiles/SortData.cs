@@ -51,6 +51,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -75,6 +76,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     if (!File.Exists(filePath))
                     {
                         FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
                     saveFilePath = FileSystem.SanitizePath(saveFilePath, _currentDirectory);
@@ -92,6 +94,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 if (!File.Exists(filePath))
                 {
                     FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 GlobalVariables.pipeCmdOutput = string.Empty;
@@ -130,6 +133,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                     if (!File.Exists(filePath))
                     {
                         FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
                     saveFilePath = FileSystem.SanitizePath(saveFilePath, _currentDirectory);
@@ -149,6 +153,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
                 if (!File.Exists(filePath))
                 {
                     FileSystem.ErrorWriteLine($"File {filePath} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 GlobalVariables.pipeCmdOutput = string.Empty;

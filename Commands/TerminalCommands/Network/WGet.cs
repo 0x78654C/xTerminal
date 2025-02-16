@@ -81,6 +81,7 @@ namespace Commands.TerminalCommands.Network
                     else
                     {
                         FileSystem.ErrorWriteLine("No internet connection!");
+                        GlobalVariables.isErrorCommand = true;
                     }
                 }
                 else
@@ -175,12 +176,14 @@ namespace Commands.TerminalCommands.Network
             if (!Directory.Exists(s_urlFirst))
             {
                 FileSystem.ErrorWriteLine($"Directory: {s_urlFirst} does not exist!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
             if (!FileSystem.CheckPermission(s_urlFirst, true, CheckType.Directory))
             {
                 FileSystem.ErrorWriteLine($"Access denied to directory: {s_urlFirst}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 

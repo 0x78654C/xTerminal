@@ -42,6 +42,7 @@ namespace Commands.TerminalCommands.Network
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check parameters!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

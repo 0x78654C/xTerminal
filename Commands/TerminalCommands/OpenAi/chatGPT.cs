@@ -47,6 +47,7 @@ namespace Commands.TerminalCommands.OpenAi
                 if (string.IsNullOrEmpty(apiKey))
                 {
                     FileSystem.ErrorWriteLine("No OpenAI API key was found. Use -setKey to store your API key!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 var question = arg.SplitByText(Name, 1);
@@ -54,6 +55,7 @@ namespace Commands.TerminalCommands.OpenAi
                 if (string.IsNullOrWhiteSpace(question))
                 {
                     FileSystem.ErrorWriteLine("You need to provide a question!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 GetOpenAIData(question, apiKey).Wait();
@@ -61,6 +63,7 @@ namespace Commands.TerminalCommands.OpenAi
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

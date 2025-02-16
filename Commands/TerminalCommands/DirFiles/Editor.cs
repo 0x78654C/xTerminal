@@ -62,6 +62,7 @@ Parameters:
                     return;
                 }
                 FileSystem.ErrorWriteLine($"File {set} does not exist!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             catch
@@ -70,6 +71,7 @@ Parameters:
                 if (string.IsNullOrEmpty(file))
                 {
                     FileSystem.ErrorWriteLine("You must type name of the file to be edited!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 ProcessCall(file, File.Exists(cEditor) ? cEditor : "notepad");

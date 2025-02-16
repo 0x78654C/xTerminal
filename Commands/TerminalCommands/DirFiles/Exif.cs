@@ -56,16 +56,21 @@ Attention: Works only with the following extensions: {string.Join(", ", s_imgExt
                     if (s_imgExt.Contains(fileInfo.Extension.ToLower()))
                         ExifLib.GetExifInfo(fileInfo.FullName);
                     else
+                    {
                         FileSystem.ErrorWriteLine($"Format '{fileInfo.Extension}' unsupported! Use -h for check avaible formats.");
+                        GlobalVariables.isErrorCommand = true;
+                    }
                 }
                 else
                 {
                     FileSystem.ErrorWriteLine($"File does not exist: '{pathFile}'");
+                    GlobalVariables.isErrorCommand = true;
                 }
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

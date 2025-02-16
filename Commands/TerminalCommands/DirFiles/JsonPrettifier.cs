@@ -45,6 +45,7 @@ namespace Commands.TerminalCommands.DirFiles
                 if (!File.Exists(jFile))
                 {
                     FileSystem.ErrorWriteLine($"Original file not found: {jFile}");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -89,6 +90,7 @@ namespace Commands.TerminalCommands.DirFiles
             if (!File.Exists(jsonFile))
             {
                 FileSystem.ErrorWriteLine($"File not found: {jsonFile}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 

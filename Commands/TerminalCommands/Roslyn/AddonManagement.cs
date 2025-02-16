@@ -95,6 +95,7 @@ namespace Commands.TerminalCommands.Roslyn
             if (!Directory.Exists(addonDir))
             {
                 FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
+                GlobalVariables.isErrorCommand = true;
             }
             else
             {
@@ -122,6 +123,7 @@ namespace Commands.TerminalCommands.Roslyn
                 if (!Directory.Exists(addonDir))
                 {
                     FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 var files = Directory.GetFiles(addonDir);
@@ -138,6 +140,7 @@ namespace Commands.TerminalCommands.Roslyn
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message + " Check Command!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
         private void SaveAddon(string argument, string addonDir)
@@ -147,6 +150,7 @@ namespace Commands.TerminalCommands.Roslyn
                 if (!Directory.Exists(addonDir))
                 {
                     FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 string dirFirst = argument.SplitByText("-add ", 1);
@@ -156,6 +160,7 @@ namespace Commands.TerminalCommands.Roslyn
                 if (!File.Exists(file))
                 {
                     FileSystem.ErrorWriteLine($"File {file} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -164,11 +169,13 @@ namespace Commands.TerminalCommands.Roslyn
                 if(command.Length < 2)
                 {
                     FileSystem.ErrorWriteLine("Command name should be at least 2 characters long!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 if(command.Length > 14)
                 {
-                    FileSystem.ErrorWriteLine($"Command name should be maxim 14 characters!");
+                    FileSystem.ErrorWriteLine($"Command name should be maxim 14 characters!");.
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 int countSpace = Regex.Matches(argument, " ").Count;
@@ -185,6 +192,7 @@ namespace Commands.TerminalCommands.Roslyn
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message + " Check Command!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -204,6 +212,7 @@ namespace Commands.TerminalCommands.Roslyn
                 if (_commandCheck)
                 {
                     FileSystem.ErrorWriteLine($"The following Add-on does not exist: {command}");
+                    GlobalVariables.isErrorCommand = true;
                     _commandCheck = false;
                     return;
                 }
@@ -248,6 +257,7 @@ namespace Commands.TerminalCommands.Roslyn
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -259,6 +269,7 @@ namespace Commands.TerminalCommands.Roslyn
                 if (!Directory.Exists(addonDir))
                 {
                     FileSystem.ErrorWriteLine($"Directory {addonDir} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -279,6 +290,7 @@ namespace Commands.TerminalCommands.Roslyn
                         if (!File.Exists(fileName))
                         {
                             FileSystem.ErrorWriteLine($"File {fileName} does not exist!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
                         _codeToRun = File.ReadAllText(fileName);
@@ -288,8 +300,8 @@ namespace Commands.TerminalCommands.Roslyn
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
-
     }
 }

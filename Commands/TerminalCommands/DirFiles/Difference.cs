@@ -166,10 +166,12 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
                 FileSystem.ErrorWriteLine("Only two files can be compared!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

@@ -27,6 +27,7 @@ namespace Commands.TerminalCommands.Network
             else
             {
                 FileSystem.ErrorWriteLine("No internet connection!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

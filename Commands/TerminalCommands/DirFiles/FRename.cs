@@ -50,10 +50,12 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
                 FileSystem.ErrorWriteLine("File/directory " + fileName + " does not exist!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch(Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

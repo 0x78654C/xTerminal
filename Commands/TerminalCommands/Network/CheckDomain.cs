@@ -43,6 +43,7 @@ Example: icheck google.com
             catch
             {
                 FileSystem.ErrorWriteLine("You must specify a domain or an IP address to check. Eg.: icheck google.com");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

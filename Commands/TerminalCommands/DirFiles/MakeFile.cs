@@ -44,6 +44,7 @@ namespace Commands.TerminalCommands.DirFiles
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

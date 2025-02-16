@@ -55,6 +55,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                         if (!Directory.Exists(dirPath))
                         {
                             FileSystem.ErrorWriteLine($"Directory {dirPath} does not exist!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
                         string fileSaved = FileSystem.SanitizePath(dParam.SplitByText(" -o ", 1), s_currentDirectory);
@@ -68,6 +69,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
                     if (!Directory.Exists(dirName))
                     {
                         FileSystem.ErrorWriteLine($"Directory {dirName} does not exist!");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
                     if(!GlobalVariables.isPipeCommand)
@@ -90,6 +92,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.ToString());
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -171,6 +174,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
             }
             catch (Exception e)
             {
+                GlobalVariables.isErrorCommand = true;
                 return $"{e.Message}. Have you typed the file name?";
             }
         }

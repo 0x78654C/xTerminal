@@ -83,6 +83,7 @@ Ping with -t can be canceled with CTRL+X key combination.
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

@@ -176,10 +176,12 @@ namespace Commands.TerminalCommands.UI
             catch (ArgumentOutOfRangeException)
             {
                 FileSystem.ErrorWriteLine($"Color or indicator is not supported. Check command please!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.ToString());
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

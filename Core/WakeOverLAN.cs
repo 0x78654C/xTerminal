@@ -37,6 +37,7 @@ namespace Core
             if (string.IsNullOrEmpty(IP) || string.IsNullOrEmpty(MAC) || Port == 0)
             {
                 Log.ErrorWriteLine("Parameters should not be empty!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             
@@ -48,6 +49,7 @@ namespace Core
             if (countSymbolIP != 3)
             {
                 Log.ErrorWriteLine("IP address format is incorrect!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -55,6 +57,7 @@ namespace Core
             if (MAC.Length != 17 || countSymbolMAC != 5)
             {
                 Log.ErrorWriteLine("MAC address format is incorrect!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -89,11 +92,13 @@ namespace Core
                 else
                 {
                     Log.ErrorWriteLine("Remote client could not be set in broadcast mode. Please check the settings!");
+                    GlobalVariables.isErrorCommand = true;
                 }
             }
             catch (Exception e)
             {
                 Log.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

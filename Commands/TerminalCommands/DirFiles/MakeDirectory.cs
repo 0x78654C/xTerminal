@@ -38,6 +38,7 @@ Sub directoriers must be between '{' '}' and splited by ','
             catch (Exception)
             {
                 FileSystem.ErrorWriteLine("Something went wrong. Check path maybe!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

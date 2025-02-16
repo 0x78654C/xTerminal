@@ -110,6 +110,7 @@ namespace Commands.TerminalCommands.Network
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

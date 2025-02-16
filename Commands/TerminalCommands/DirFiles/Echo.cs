@@ -94,6 +94,7 @@ namespace Commands.TerminalCommands.DirFiles
                     if (!arg.Contains(";"))
                     {
                         FileSystem.ErrorWriteLine("You need to provide minim two files for concatenate!. Use -h for more information");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
 
@@ -111,6 +112,7 @@ namespace Commands.TerminalCommands.DirFiles
                     if (string.IsNullOrEmpty(path))
                     {
                         FileSystem.ErrorWriteLine("You need to provide an output file!. Use -h for more information");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
                     var store = FileSystem.SaveFileOutput(path, _currentLocation, outputData);
@@ -131,6 +133,7 @@ namespace Commands.TerminalCommands.DirFiles
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

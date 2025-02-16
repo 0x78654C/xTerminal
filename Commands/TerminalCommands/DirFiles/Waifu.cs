@@ -152,9 +152,11 @@ All restriction and privacy policy information can be found here https://waifuva
                 if (ex.Message.Contains("Unknown token"))
                 {
                     FileSystem.ErrorWriteLine("Bucket/File token was already removed! Use -h for more information!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
 
         }
