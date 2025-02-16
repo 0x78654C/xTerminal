@@ -174,7 +174,7 @@ namespace Commands.TerminalCommands.Roslyn
                 }
                 if(command.Length > 14)
                 {
-                    FileSystem.ErrorWriteLine($"Command name should be maxim 14 characters!");.
+                    FileSystem.ErrorWriteLine($"Command name should be maxim 14 characters!");
                     GlobalVariables.isErrorCommand = true;
                     return;
                 }
