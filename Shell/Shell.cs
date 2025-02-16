@@ -178,13 +178,12 @@ namespace Shell
                         {
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            c.Execute(cmdExecute);
                             if(GlobalVariables.isErrorCommand)
                             {
                                 GlobalVariables.isErrorCommand = false;
-                                Console.WriteLine(GlobalVariables.isErrorCommand); 
                                 break;
                             }
+                            c.Execute(cmdExecute);
                         }
                     }
 
