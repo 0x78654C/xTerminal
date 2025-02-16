@@ -68,13 +68,17 @@ Note: Requires administrator privileges. (-list works with privileges as wel)
                         if (!isMachineUp)
                         {
                             FileSystem.ErrorWriteLine($"Could not connect to {machine}. Seems down!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
 
                         if (!string.IsNullOrEmpty(machine))
                             serviceC.MachineName = machine;
                         else
+                        {
                             FileSystem.ErrorWriteLine("You need to provide the machine Name/IP after -r parameter!");
+                            GlobalVariables.isErrorCommand = true;
+                        }
                         serviceC.Run(ServiceC.ActionService.List);
                         return;
                     }
@@ -121,6 +125,7 @@ Note: Requires administrator privileges. (-list works with privileges as wel)
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -158,6 +163,7 @@ Note: Requires administrator privileges. (-list works with privileges as wel)
             if (!isMachineUp)
             {
                 FileSystem.ErrorWriteLine($"Could not connect to {machine}. Seems down!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -168,7 +174,10 @@ Note: Requires administrator privileges. (-list works with privileges as wel)
                 serviceC.ServiceName = serviceName;
             }
             else
+            {
                 FileSystem.ErrorWriteLine("You need to provide the machine Name/IP after -r parameter!");
+                GlobalVariables.isErrorCommand = true;
+            }
             serviceC.Run(actionService);
         }
     }

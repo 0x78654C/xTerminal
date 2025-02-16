@@ -26,6 +26,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             if (!File.Exists(GlobalVariables.currentDirectory))
             {
                 FileSystem.ErrorWriteLine("Current directory file does not exist! Restart xTermianl.");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);

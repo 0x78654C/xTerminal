@@ -110,6 +110,7 @@ s  - SmallestSize
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

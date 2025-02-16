@@ -230,10 +230,12 @@ Note: Requires administrator privileges. (-list works with privileges as wel)
             catch (UnauthorizedAccessException ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Requires administrator privileges. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

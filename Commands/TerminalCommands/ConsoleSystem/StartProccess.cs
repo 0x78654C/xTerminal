@@ -3,7 +3,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -87,6 +86,7 @@ Both examples can be used with -we parameter.
             catch (Exception e)
             { 
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -111,6 +111,7 @@ Both examples can be used with -we parameter.
                 if (!File.Exists(inputCommand))
                 {
                     FileSystem.ErrorWriteLine($"File {inputCommand} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -125,6 +126,7 @@ Both examples can be used with -we parameter.
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

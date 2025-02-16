@@ -53,12 +53,14 @@ namespace Core.SystemTools
             if (!Directory.Exists(pathShortcut) && !SaveDesktop)
             {
                 FileSystem.ErrorWriteLine($"Directory does not exist: {pathShortcut}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
             if (!FileSystem.IsFileOrDirectoryPresent(path))
             {
                 FileSystem.ErrorWriteLine($"File or directory does not exist for creating the shortcut: {path}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             

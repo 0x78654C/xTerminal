@@ -38,6 +38,7 @@ namespace Core.SystemTools
             if (!Directory.Exists(pathDir))
             {
                 FileSystem.ErrorWriteLine($"Directory does not exist: {pathDir}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             var count = pathDir.Split('\\').Length;
@@ -137,6 +138,7 @@ namespace Core.SystemTools
             if (!File.Exists(pathFile))
             {
                 FileSystem.ErrorWriteLine($"Archive does not exist: {pathFile}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -159,6 +161,7 @@ namespace Core.SystemTools
             if (!File.Exists(pathFile))
             {
                 FileSystem.ErrorWriteLine($"Zip file does not exist: {pathFile}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             FileSystem.SuccessWriteLine($"Extracting.....");

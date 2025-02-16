@@ -26,6 +26,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (!ping.PingHost(pc))
                     {
                         FileSystem.ErrorWriteLine($"{pc} is offline!");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
                     string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\" + pc + @"\root\cimv2");

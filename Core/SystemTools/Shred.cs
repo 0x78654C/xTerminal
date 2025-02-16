@@ -72,10 +72,12 @@ namespace Core.SystemTools
             catch (UnauthorizedAccessException)
             {
                 FileSystem.ErrorWriteLine("Access denied. Try run this as administrator!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine(ex.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

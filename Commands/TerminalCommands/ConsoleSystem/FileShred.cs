@@ -61,6 +61,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}\nUse -h param for {{Name}} command usage!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
