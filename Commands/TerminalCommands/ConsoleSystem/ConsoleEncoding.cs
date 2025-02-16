@@ -76,6 +76,7 @@ Default input/output encoding for xTerminal is UTF-8.
                 return;
             }
             FileSystem.ErrorWriteLine("The encode type is not part of the lis. Use -h for more information!");
+            GlobalVariables.isErrorCommand = true;
         }
     }
 }

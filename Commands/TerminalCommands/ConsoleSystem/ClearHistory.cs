@@ -26,6 +26,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 catch
                 {
                     FileSystem.ErrorWriteLine("Clearing command history log failed!");
+                    GlobalVariables.isErrorCommand = true;
                 }
                 return;
             }

@@ -228,6 +228,7 @@ e - Encrypted
                     string.IsNullOrWhiteSpace(highlightSearchText))
                 {
                     FileSystem.ErrorWriteLine("Check command. You must provide a text to highlight!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -585,6 +586,7 @@ e - Encrypted
             if (!Directory.Exists(s_currentDirectory))
             {
                 FileSystem.ErrorWriteLine($"Directory '{s_currentDirectory}' does not exist!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 

@@ -66,7 +66,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         FileSystem.SuccessWriteLine($"History command limit size set to: {size}");
                     }
                     else
+                    {
                         FileSystem.ErrorWriteLine("You need to se size for history command limit store!");
+                        GlobalVariables.isErrorCommand = true;
+                    }
                     return;
                 }
 
@@ -81,6 +84,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -99,6 +103,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             if (linesNumber < 0)
             {
                 FileSystem.ErrorWriteLine("Check command again. You cannot use negative numbers!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -110,6 +115,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch
             {
                 FileSystem.ErrorWriteLine("Reading history file failed!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 

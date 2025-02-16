@@ -33,6 +33,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. You must type the file/directory name!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
