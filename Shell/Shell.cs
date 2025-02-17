@@ -10,6 +10,7 @@ using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
+using System.Threading.Tasks;
 
 namespace Shell
 {
@@ -151,9 +152,9 @@ namespace Shell
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
-
+                    var commandsRuned = 0;
                     // Pipe line command execution.
-                    if (command.Contains("|") && !command.Contains("alias"))
+                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias"))
                     {
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
@@ -170,6 +171,7 @@ namespace Shell
                         }
                         GlobalVariables.isPipeCommand = false;
                     }
+
                     // Run multiple commands if previous one succeed.
                     else if (command.Contains("&&"))
                     {
@@ -178,12 +180,28 @@ namespace Shell
                         {
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            if(GlobalVariables.isErrorCommand)
+                            if (GlobalVariables.isErrorCommand)
                             {
                                 GlobalVariables.isErrorCommand = false;
                                 break;
                             }
                             c.Execute(cmdExecute);
+                        }
+                    }
+
+                    // Run multiple commands if previous one failed.
+                    else if (command.Contains("||"))
+                    {
+                        var commandSplit = command.Split("||");
+                        foreach (var cmd in commandSplit)
+                        {
+                            var cmdExecute = cmd.Trim();
+                            c = Commands.CommandRepository.GetCommand(cmdExecute);
+                            if (GlobalVariables.isErrorCommand)
+                                c.Execute(cmdExecute);
+                            if (commandsRuned ==0)
+                                c.Execute(cmdExecute);
+                            commandsRuned++;
                         }
                     }
 
@@ -197,6 +215,15 @@ namespace Shell
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
                             c.Execute(cmdExecute);
                         }
+                    }
+
+                    // Run command in background.
+                    else if (command.EndsWith("&"))
+                    {
+                        var commandSplit = command.Split("&")[0];
+                        var cmdExecute = commandSplit.Trim();
+                        c = Commands.CommandRepository.GetCommand(cmdExecute);
+                        Task.Run(() => c.Execute(cmdExecute));
                     }
                     else
                         c.Execute(command);
@@ -356,11 +383,12 @@ namespace Shell
                 {
                     s_input = Read();
                 }
-                catch {
+                catch
+                {
                     s_input = "";
                     Console.WriteLine();
                 }
-        
+
 
                 //cleaning input
                 s_input = s_input.Trim();
