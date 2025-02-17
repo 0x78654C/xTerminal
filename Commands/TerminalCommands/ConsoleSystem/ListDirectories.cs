@@ -95,6 +95,7 @@ e - Encrypted
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
                 bool found = true;
+                GlobalVariables.isErrorCommand = false;
                 foreach (var param in s_listParams)
                 {
                     bool paramt = arg.ContainsParameter(param);

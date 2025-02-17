@@ -20,6 +20,7 @@ Parameters:
 ";
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             string file = string.Empty;
             string set= string.Empty;
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory);

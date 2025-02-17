@@ -18,6 +18,7 @@ namespace Commands.TerminalCommands.Network
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);

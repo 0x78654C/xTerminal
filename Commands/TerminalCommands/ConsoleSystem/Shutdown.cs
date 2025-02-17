@@ -27,6 +27,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == "shutdown")
                 {
                     SystemCommands.ShutDownCmd(false);

@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.OpenAi
             try
             {
                 var apiKey = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
-
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");

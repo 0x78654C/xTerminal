@@ -26,6 +26,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == "reboot")
                 {
                     SystemCommands.RebootCmd(false);

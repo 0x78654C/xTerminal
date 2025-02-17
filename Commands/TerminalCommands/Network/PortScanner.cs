@@ -29,6 +29,7 @@ namespace Commands.TerminalCommands.Network
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 GlobalVariables.eventCancelKey = false;
                 string cTimeOut = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regCportTimeOut);
                 if (FileSystem.IsNumberAllowed(cTimeOut) && !string.IsNullOrEmpty(cTimeOut))

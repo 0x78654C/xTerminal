@@ -34,6 +34,7 @@ namespace Commands.TerminalCommands.Roslyn
 
         public void Execute(string args)
         {
+            GlobalVariables.isErrorCommand = false;
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
             string param = string.Empty;

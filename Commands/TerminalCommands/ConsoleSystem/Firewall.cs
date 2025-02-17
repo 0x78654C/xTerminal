@@ -63,6 +63,7 @@ Note: Requires administrator privileges. (-list works with privileges as wel)
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 // No parameter.
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {

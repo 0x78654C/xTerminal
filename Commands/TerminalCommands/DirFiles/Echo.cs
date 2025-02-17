@@ -27,6 +27,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
                 if (arg == Name)
                 {

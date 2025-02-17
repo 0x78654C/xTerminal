@@ -27,6 +27,7 @@ Both examples can be used with -we parameter.
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 // Set directory, to be used in other functions
                 s_currentDirectory =
                                 File.ReadAllText(GlobalVariables.currentDirectory);

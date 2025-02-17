@@ -22,6 +22,7 @@ namespace Commands.TerminalCommands.DirFiles
 ";
         public void Execute(string args)
         {
+            GlobalVariables.isErrorCommand = false;
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
 
             if (args == Name)

@@ -52,6 +52,7 @@ Commands can be canceled with CTRL+X key combination.
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 GlobalVariables.eventCancelKey = false;
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 arg = arg.Replace("cat ", "");

@@ -26,6 +26,7 @@ Command running without saving to file can be canceled with CTRL+X key combinati
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 GlobalVariables.eventCancelKey = false;
                 if (arg == $"{Name} -h")
                 {

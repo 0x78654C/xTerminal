@@ -14,6 +14,7 @@ namespace Commands.TerminalCommands.Network
 
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             Console.WriteLine("*******************************************");
             Console.WriteLine("**** Check internet speed with Google *****");
             Console.WriteLine("*******************************************");

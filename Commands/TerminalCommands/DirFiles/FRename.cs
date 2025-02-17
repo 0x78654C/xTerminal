@@ -17,6 +17,7 @@ namespace Commands.TerminalCommands.DirFiles
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 arg = arg.Replace("mv ", "");
 
                 // Reading current location(for test no, after i make dynamic)

@@ -24,6 +24,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string file = "";
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
 

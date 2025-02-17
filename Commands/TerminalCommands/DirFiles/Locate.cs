@@ -40,6 +40,7 @@ Command can be canceled with CTRL+X key combination.
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 var action = ActionFind.Contains;
                 var types = Types.All;
 

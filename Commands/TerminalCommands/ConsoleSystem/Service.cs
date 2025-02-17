@@ -34,6 +34,7 @@ Note: Requires administrator privileges. (-list works with privileges as wel)
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine("Use -h for more information!");

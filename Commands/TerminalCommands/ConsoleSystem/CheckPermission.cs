@@ -19,7 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string input;
             try
             {
-
+                GlobalVariables.isErrorCommand = false;
                 string tabs = "\t";
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                     input = GlobalVariables.pipeCmdOutput.Trim() ;

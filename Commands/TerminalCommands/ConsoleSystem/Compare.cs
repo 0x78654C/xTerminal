@@ -18,6 +18,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (args == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);

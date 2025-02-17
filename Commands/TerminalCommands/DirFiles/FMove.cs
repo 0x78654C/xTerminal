@@ -43,6 +43,7 @@ namespace Commands.TerminalCommands.DirFiles
         /// <param name="arg"></param>
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             try
             {
                 FMoveRun(arg);

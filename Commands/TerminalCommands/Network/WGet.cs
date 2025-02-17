@@ -41,6 +41,7 @@ namespace Commands.TerminalCommands.Network
 ";
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             if (arg == $"{Name} -h")
             {
                 Console.WriteLine(s_helpMessage);

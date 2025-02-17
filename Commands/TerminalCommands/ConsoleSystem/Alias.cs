@@ -58,6 +58,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.SuccessWriteLine("This parameter does not exist! Use -h for help.");
                     return;
                 }
+                
+                GlobalVariables.isErrorCommand = false;
+
                 if (args.StartsWith("-add"))
                     AddCommand(args, s_aliasFile);
 

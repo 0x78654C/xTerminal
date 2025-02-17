@@ -31,6 +31,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             {
                 string cmd = "";
                 var dateDisplay = false;
+                GlobalVariables.isErrorCommand = false;
                 // Display help message.
                 if (args.StartsWith($"{Name} -h"))
                 {

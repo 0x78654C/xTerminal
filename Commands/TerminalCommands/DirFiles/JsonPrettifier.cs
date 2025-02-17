@@ -17,6 +17,7 @@ namespace Commands.TerminalCommands.DirFiles
 ";
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             if (arg == $"{Name} -h" && !GlobalVariables.isPipeCommand)
             {
                 Console.WriteLine(s_helpMessage);

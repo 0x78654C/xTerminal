@@ -32,9 +32,9 @@ Usage of Password Manager commands:
 
         public void Execute(string arg)
         {
-
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");

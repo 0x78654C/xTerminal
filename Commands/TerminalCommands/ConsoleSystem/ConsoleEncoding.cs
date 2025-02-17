@@ -25,7 +25,7 @@ Default input/output encoding for xTerminal is UTF-8.
                 FileSystem.SuccessWriteLine("Use -h for more information!");
                 return;
             }
-
+            GlobalVariables.isErrorCommand = false;
             arg = arg.Substring(3).Trim().ToLower();
 
             // Display help message.

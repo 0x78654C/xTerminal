@@ -41,6 +41,7 @@ All restriction and privacy policy information can be found here https://waifuva
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 // Check if site is up.
                 if (!NetWork.PingHost("waifuvault.moe"))
                 {

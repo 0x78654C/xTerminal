@@ -23,6 +23,7 @@ Kills a running process by name or id. Usage:
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");

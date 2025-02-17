@@ -27,6 +27,7 @@ Command md5 -d can be canceled with CTRL+X key combination.
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 GlobalVariables.eventCancelKey = false;
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
 

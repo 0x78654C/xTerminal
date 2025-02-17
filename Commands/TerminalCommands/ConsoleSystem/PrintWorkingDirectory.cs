@@ -17,6 +17,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 ";
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             if (arg == $"{Name} -h")
             {
                 Console.WriteLine(s_helpMessage);

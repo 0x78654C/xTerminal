@@ -27,6 +27,7 @@ Example:
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (args == $"{Name} -h")
                 {
                     Console.WriteLine(_helpMessage);

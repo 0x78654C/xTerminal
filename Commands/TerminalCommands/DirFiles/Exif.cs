@@ -31,6 +31,7 @@ Attention: Works only with the following extensions: {string.Join(", ", s_imgExt
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (args == $"{Name} -h" && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine(s_helpMessage);

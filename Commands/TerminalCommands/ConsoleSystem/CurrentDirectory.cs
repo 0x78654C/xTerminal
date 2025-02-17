@@ -21,6 +21,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 int newPathLength = arg.Length - 3;
                 if (GlobalVariables.isPipeCommand)
                     s_newLocation = GlobalVariables.pipeCmdOutput.Trim();

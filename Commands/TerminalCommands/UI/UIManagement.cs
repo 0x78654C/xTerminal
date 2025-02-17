@@ -35,6 +35,7 @@ namespace Commands.TerminalCommands.UI
         public string Name => "ui";
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             if (arg == Name)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");

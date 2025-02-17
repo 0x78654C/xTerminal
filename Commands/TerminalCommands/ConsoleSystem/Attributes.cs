@@ -42,6 +42,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
+                
+                GlobalVariables.isErrorCommand = false;
 
                 // Set attribute
                 if (arg.Contains("-s "))
