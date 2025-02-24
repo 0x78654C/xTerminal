@@ -236,6 +236,7 @@ This is the full list of commands that can be used in xTerminal:
                   tee <file_name>     : Writes previous command output to a file.
                   tee -a <file_name>  : Appends previous command output to an existing file.
                   Example: ls | cat -t 10 | tee data.txt | cat -s exe
+    bc        -- Display running background commands.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
