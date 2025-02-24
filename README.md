@@ -449,6 +449,12 @@ This is the full list of commands that can be used in xTerminal:
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
     snake     -- Play Snake game in console!(Created by https://github.com/mkbmain)
 
+    ------------- Multiple commands run legend --------------
+    A; B      -- Run A and then B, regardless of success of A
+    A && B    -- Run B if and only if A succeeded
+    A || B    -- Run B if and only if A failed
+    A &       -- Run A in background.
+
 All xTerminal commands can be used from other terminals as <b>Command Line Arguments</b>. Example: 
  ```
  C:\work\xTerminal\xTerminal.exe extip
