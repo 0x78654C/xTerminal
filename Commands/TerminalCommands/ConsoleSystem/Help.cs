@@ -58,6 +58,7 @@ This is the full list of commands that can be used in xTerminal:
     ln        -- Create shortcut of a file/folder. Use -h for additional help.
     zip       -- Create Zip archive files. Use -h for additional help.
     tee       -- Stores previous pipe command stdout to a file. Use -h for additional help. 
+    bc        -- Display running background commands. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
