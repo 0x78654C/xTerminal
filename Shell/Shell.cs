@@ -10,7 +10,7 @@ using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Shell
 {
@@ -26,6 +26,7 @@ namespace Shell
         private static int s_ctrlCount = 0;
         private static string s_historyFilePath = GlobalVariables.terminalWorkDirectory;
         private static string s_passwordManagerDirectory = GlobalVariables.passwordManagerDirectory;
+        private static string s_backgroundCommandsPidList = GlobalVariables.bgProcessListFile;
         private static List<string> s_listReg = new List<string>() { "UI" };
         private static string s_historyFile = GlobalVariables.historyFile;
         private static string s_addonDir = GlobalVariables.addonDirectory;
@@ -72,6 +73,11 @@ namespace Shell
             // Creating the Password Manager directory for storing the encrypted files.
             if (!Directory.Exists(s_passwordManagerDirectory))
                 Directory.CreateDirectory(s_passwordManagerDirectory);
+
+            // Creating the background command process list file.
+            if (!File.Exists(s_backgroundCommandsPidList))
+                File.WriteAllText(s_backgroundCommandsPidList, string.Empty);
+
 
             // Store current directory with current process id.
             StoreCurrentDirectory();
@@ -154,7 +160,7 @@ namespace Shell
                         command = GlobalVariables.aliasParameters;
                     var commandsRuned = 0;
                     // Pipe line command execution.
-                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias"))
+                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
                     {
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
@@ -199,7 +205,7 @@ namespace Shell
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
                             if (GlobalVariables.isErrorCommand)
                                 c.Execute(cmdExecute);
-                            if (commandsRuned ==0)
+                            if (commandsRuned == 0)
                                 c.Execute(cmdExecute);
                             commandsRuned++;
                         }
@@ -223,7 +229,9 @@ namespace Shell
                         var commandSplit = command.Split("&")[0];
                         var cmdExecute = commandSplit.Trim();
                         c = Commands.CommandRepository.GetCommand(cmdExecute);
-                        Task.Run(() => c.Execute(cmdExecute));
+                        var bgCommands = new BGCommands();
+                        bgCommands.Command = cmdExecute;
+                        bgCommands.ExecuteCommand();
                     }
                     else
                         c.Execute(command);
@@ -347,6 +355,32 @@ namespace Shell
             }
         }
 
+        /// <summary>
+        /// Function for clear running background command processes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Shell_Close(object sender, EventArgs e)
+        {
+            if (File.Exists(s_backgroundCommandsPidList))
+            {
+                var listBgRemain = "";
+                var readBGList = File.ReadAllLines(s_backgroundCommandsPidList);
+                File.WriteAllText(s_backgroundCommandsPidList, string.Empty);
+                if (readBGList.Length == 0)
+                    return;
+                foreach (var line in readBGList)
+                {
+                    var splitPid = Int32.Parse(line.Split("PID: ")[1]);
+                    Process.GetProcessById(splitPid).Kill();
+                    var isActive = Process.GetProcesses().Any(p => p.Id == splitPid);
+                    if (!isActive)
+                        listBgRemain += line + Environment.NewLine;
+                }
+                File.WriteAllText(s_backgroundCommandsPidList, listBgRemain);
+            }
+        }
+
         //Entry point of shell
         public void Run(string[] args)
         {
@@ -359,6 +393,9 @@ namespace Shell
 
             // Setting up the title.
             Console.Title = s_terminalTitle;
+
+            // Start xTerminal close event.
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(Shell_Close);
 
             // Read commands history
             if (File.Exists(s_historyFile))
