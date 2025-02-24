@@ -19,7 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private string _backgroundCommandsPidList = GlobalVariables.bgProcessListFile;
         private static string s_helpMessage = @"Usage of bc command parameters:
 
-    bc : Displays running background commands.
+    bc : Display running background commands.
  
 Note: Background commands are killed when xTerminal is closed!
 ";
