@@ -116,7 +116,17 @@ This is the full list of commands that can be used in xTerminal:
     flappy    -- Play Flappy Birds in console!
     snake     -- Play Snake game in console!
 
-    ------------------------Support -------------------------
+
+
+    ------------- Multiple commands run legend --------------
+    A; B      -- Run A and then B, regardless of success of A
+    A && B    -- Run B if and only if A succeeded
+    A || B    -- Run B if and only if A failed
+    A &       -- Run A in background.
+
+
+
+    [-----------------------Support ------------------------]
     If you like this application and want to support the project just buy your self a coffee and have a nice day ;).
 
                         ";
