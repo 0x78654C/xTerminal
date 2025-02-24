@@ -239,15 +239,38 @@ namespace Core.SystemTools
         /// <returns></returns>
         public static StreamReader ExecuteAppWithOutput(string app, string arguments = "")
         {
-            var processStartInfo = new ProcessStartInfo();
-            processStartInfo.UseShellExecute = false;
-            processStartInfo.Arguments = arguments;
-            processStartInfo.RedirectStandardOutput = true;
-            processStartInfo.FileName = app;
-            processStartInfo.CreateNoWindow = true;
+            var processStartInfo = new ProcessStartInfo()
+            {
+                UseShellExecute = false,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                FileName = app,
+                CreateNoWindow = true
+            };
             var process = Process.Start(processStartInfo);
             process.WaitForExit();
             return process.StandardOutput;
+        }
+
+        /// <summary>
+        /// Execute apps and return pid.
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="arguments"></param>
+        /// <returns></returns>
+        public static string ExecuteWithPidOutput(string app, string arguments = "", bool waitForExit = false)
+        {
+            var processStartInfo = new ProcessStartInfo(app)
+            {
+                UseShellExecute = false,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
+            var process = Process.Start(processStartInfo);
+            if(waitForExit)
+                process.WaitForExit();
+            return process.Id.ToString();
         }
     }
 }
