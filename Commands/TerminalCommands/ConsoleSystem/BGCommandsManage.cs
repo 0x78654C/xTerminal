@@ -35,6 +35,8 @@ Note: Background commands are killed when xTerminal is closed!
                     File.WriteAllText(_backgroundCommandsPidList, string.Empty);
                     if (readBGList.Length == 0)
                         return;
+                    FileSystem.SuccessWriteLine("List of running background commands:");
+                    FileSystem.SuccessWriteLine("------------------------------------");
                     foreach (var line in readBGList)
                     {
                         var splitPid = Int32.Parse(line.Split("PID: ")[1]);
@@ -47,6 +49,7 @@ Note: Background commands are killed when xTerminal is closed!
                             FileSystem.SuccessWriteLine(line);
                         listBgRemain += line+Environment.NewLine;
                     }
+                    FileSystem.SuccessWriteLine("------------------------------------");
                     File.WriteAllText(_backgroundCommandsPidList, listBgRemain);
                 }
                 else
