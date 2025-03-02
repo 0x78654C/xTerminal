@@ -30,7 +30,7 @@ Display onboard Network Interface Cards configuration (Ethernet and Wireless)
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput = NetWork.ShowNicConfiguragion();
             else
-                Console.WriteLine(NetWork.ShowNicConfiguragion());
+                FileSystem.SuccessWriteLine(NetWork.ShowNicConfiguragion());
         }
     }
 }
