@@ -83,13 +83,13 @@ This is the full list of commands that can be used in xTerminal:
     waifu     -- Host temporary files on https://waifuvault.moe/. Use -h for additional help.
                 
     ---------------------- Networking ----------------------
-    ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
+    ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless). Use -h for additional parameters.
     ispeed    -- Checks the internet speed with Google.
     icheck    -- Checks if a Domain or IP address is online.
     extip     -- Displays the current external IP address.
     wget      -- Download files from a specific website. Use -h for additional help.
     ping      -- Pings a IP/Hostname. Use -h for additional parameters.
-    cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
+    cport     -- Checks if a specific port is open/closed on a Hostname/IP. Use -h for additional parameters.
     wol       -- Sends Wake over LAN packet to a machine.  Use -h for additional parameters.
     dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
 
