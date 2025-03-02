@@ -12,7 +12,7 @@ namespace Commands.TerminalCommands.DirFiles
          File/directory rename.
          */
         public string Name => "mv";
-        private static string s_helpMessage = @"Usage of mv locate command:
+        private static string s_helpMessage = @"Usage of mv command:
 
     Renames a file or directory:
 
