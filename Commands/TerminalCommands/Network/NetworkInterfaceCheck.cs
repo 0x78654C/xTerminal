@@ -11,9 +11,21 @@ namespace Commands.TerminalCommands.Network
          Display NIC's configuration. 
          */
         public string Name => "ifconfig";
+        private static string s_helpMessage = @"Usage of ifconfig command:
+
+Displayes installed network interface cards (NIC's) information.
+";
+
 
         public void Execute(string args)
         {
+            args = args.Replace("mv ", "");
+
+            if (args.StartsWith("-h") && args.Length == 2)
+            {
+                Console.WriteLine(s_helpMessage);
+                return;
+            }
             GlobalVariables.isErrorCommand = false;
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput = NetWork.ShowNicConfiguragion();
