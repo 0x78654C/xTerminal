@@ -64,8 +64,8 @@ This is the full list of commands that can be used in xTerminal:
     cat       -- Displays the content of a file. Use -h for additional parameters.
     mkdir     -- Creates a directory in the current place.
     mkfile    -- Creates a file in the current place.
-    fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
-    mv        -- Renames a file or directory in a specific directory(s).
+    fcopy     -- Copies a file with CRC checksum control. Use -h for additional parameters.
+    mv        -- Renames a file or directory in a specific directory(s). Use -h for additional parameters.
                  Example: mv <old_file/dir_name> -o <new_file/dir_name>
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
     edit      -- Sets a text editor for open files(default is notpead). Use -h for additional help.
