@@ -19,9 +19,9 @@ Display onboard Network Interface Cards configuration (Ethernet and Wireless)
 
         public void Execute(string args)
         {
-            args = args.Replace("mv ", "");
+            args = args.Replace("ifconfig", "");
 
-            if (args.StartsWith("-h") && args.Length == 2)
+            if (args.Contains("-h") && args.Length == 2)
             {
                 Console.WriteLine(s_helpMessage);
                 return;
