@@ -13,7 +13,7 @@ namespace Commands.TerminalCommands.Network
         public string Name => "ifconfig";
         private static string s_helpMessage = @"Usage of ifconfig command:
 
-Displayes installed network interface cards (NIC's) information.
+Display onboard Network Interface Cards configuration (Ethernet and Wireless)
 ";
 
 
