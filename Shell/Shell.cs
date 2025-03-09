@@ -37,6 +37,7 @@ namespace Shell
         private static string s_indicatorColor = "white";
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
+        private static int s_commandsRuned = 0;
         private static string s_cdColor = "cyan";
         private static string s_historyLimitSize = "2000";
         private static int s_ctrlKey = 1;
@@ -154,11 +155,11 @@ namespace Shell
                 var c = Commands.CommandRepository.GetCommand(command);
                 CheckAliasCommandRun(GlobalVariables.aliasParameters);
 
+                s_commandsRuned = 0;
                 if (c != null || !string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
-                    var commandsRuned = 0;
                     // Pipe line command execution.
                     if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
                     {
@@ -182,45 +183,21 @@ namespace Shell
                     else if (command.Contains("&&"))
                     {
                         var commandSplit = command.Split("&&");
-                        foreach (var cmd in commandSplit)
-                        {
-                            var cmdExecute = cmd.Trim();
-                            c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            if (GlobalVariables.isErrorCommand)
-                            {
-                                GlobalVariables.isErrorCommand = false;
-                                break;
-                            }
-                            c.Execute(cmdExecute);
-                        }
+                        RunDoubleAndCommands(commandSplit);
                     }
 
                     // Run multiple commands if previous one failed.
                     else if (command.Contains("||"))
                     {
                         var commandSplit = command.Split("||");
-                        foreach (var cmd in commandSplit)
-                        {
-                            var cmdExecute = cmd.Trim();
-                            c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            if (GlobalVariables.isErrorCommand)
-                                c.Execute(cmdExecute);
-                            if (commandsRuned == 0)
-                                c.Execute(cmdExecute);
-                            commandsRuned++;
-                        }
+                        RunParalelCommands(commandSplit);
                     }
 
                     // Run multiple commands.
                     else if (command.Contains(";"))
                     {
                         var commandSplit = command.Split(";");
-                        foreach (var cmd in commandSplit)
-                        {
-                            var cmdExecute = cmd.Trim();
-                            c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            c.Execute(cmdExecute);
-                        }
+                        RunContinousCommands(commandSplit);
                     }
 
                     // Run command in background.
@@ -265,6 +242,59 @@ namespace Shell
                 GlobalVariables.aliasRunFlag = false;
             }
         }
+
+        /// <summary>
+        /// Run || commands
+        /// </summary>
+        /// <param name="commands"></param>
+        private void RunParalelCommands(string[] commands)
+        {
+            foreach (var cmd in commands)
+            {
+                var cmdExecute = cmd.Trim();
+                var c = Commands.CommandRepository.GetCommand(cmdExecute);
+                if (GlobalVariables.isErrorCommand)
+                    c.Execute(cmdExecute);
+                if (s_commandsRuned == 0)
+                    c.Execute(cmdExecute);
+                s_commandsRuned++;
+            }
+        }
+
+
+        /// <summary>
+        /// Run && commands
+        /// </summary>
+        /// <param name="commands"></param>
+        private void RunDoubleAndCommands(string[] commands)
+        {
+            foreach (var cmd in commands)
+            {
+                var cmdExecute = cmd.Trim();
+                var c = Commands.CommandRepository.GetCommand(cmdExecute);
+                if (GlobalVariables.isErrorCommand)
+                {
+                    GlobalVariables.isErrorCommand = false;
+                    break;
+                }
+                c.Execute(cmdExecute);
+            }
+        }
+
+        /// <summary>
+        /// Run ; commands
+        /// </summary>
+        /// <param name="commands"></param>
+        private void RunContinousCommands(string[] commands)
+        {
+            foreach (var cmd in commands)
+            {
+                var cmdExecute = cmd.Trim();
+                var c = Commands.CommandRepository.GetCommand(cmdExecute);
+                c.Execute(cmdExecute);
+            }
+        }
+
 
         /// <summary>
         /// Arguments handler for parameter usage.
