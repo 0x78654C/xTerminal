@@ -11,6 +11,7 @@ using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace Shell
 {
@@ -161,6 +162,7 @@ namespace Shell
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
                     // Pipe line command execution.
+
                     if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
                     {
                         GlobalVariables.isPipeCommand = true;
@@ -178,7 +180,7 @@ namespace Shell
                         }
                         GlobalVariables.isPipeCommand = false;
                     }
-
+                    /*
                     // Run multiple commands if previous one succeed.
                     else if (command.Contains("&&"))
                     {
@@ -199,6 +201,7 @@ namespace Shell
                         var commandSplit = command.Split(";");
                         RunContinousCommands(commandSplit);
                     }
+                    */
 
                     // Run command in background.
                     else if (command.EndsWith("&"))
@@ -211,7 +214,8 @@ namespace Shell
                         bgCommands.ExecuteCommand();
                     }
                     else
-                        c.Execute(command);
+                        // c.Execute(command);
+                        ParseMultiCommand(command);
 
                     // Reset alias parameters.
                     GlobalVariables.aliasParameters = string.Empty;
@@ -247,18 +251,18 @@ namespace Shell
         /// Run || commands
         /// </summary>
         /// <param name="commands"></param>
-        private void RunParalelCommands(string[] commands)
+        private void RunParalelCommands(string cmd)
         {
-            foreach (var cmd in commands)
-            {
-                var cmdExecute = cmd.Trim();
-                var c = Commands.CommandRepository.GetCommand(cmdExecute);
-                if (GlobalVariables.isErrorCommand)
-                    c.Execute(cmdExecute);
-                if (s_commandsRuned == 0)
-                    c.Execute(cmdExecute);
-                s_commandsRuned++;
-            }
+            // foreach (var cmd in commands)
+            //{
+            var cmdExecute = cmd.Trim();
+            var c = Commands.CommandRepository.GetCommand(cmdExecute);
+            if (GlobalVariables.isErrorCommand)
+                c.Execute(cmdExecute);
+            if (s_commandsRuned == 0)
+                c.Execute(cmdExecute);
+            s_commandsRuned++;
+            // }
         }
 
 
@@ -266,33 +270,103 @@ namespace Shell
         /// Run && commands
         /// </summary>
         /// <param name="commands"></param>
-        private void RunDoubleAndCommands(string[] commands)
+        private void RunDoubleAndCommands(string cmd)
         {
-            foreach (var cmd in commands)
+            //foreach (var cmd in commands)
+            //{
+            var cmdExecute = cmd.Trim();
+            var c = Commands.CommandRepository.GetCommand(cmdExecute);
+            if (GlobalVariables.isErrorCommand)
             {
-                var cmdExecute = cmd.Trim();
-                var c = Commands.CommandRepository.GetCommand(cmdExecute);
-                if (GlobalVariables.isErrorCommand)
-                {
-                    GlobalVariables.isErrorCommand = false;
-                    break;
-                }
-                c.Execute(cmdExecute);
+                GlobalVariables.isErrorCommand = false;
+                //break;
             }
+            c.Execute(cmdExecute);
+            // }
+        }
+
+        /// <summary>
+        /// Parse multiple coomands and run them seprarate based on the sysmbol in front
+        /// </summary>
+        /// <param name="command"></param>
+        private void ParseMultiCommand(string command)
+        {
+            try
+            {
+                // Regex pattern to match &&, ||, and ;
+                string pattern = @"(\&\&|\|\||;)";
+
+                // Split while keeping delimiters
+                var parts = new List<string>();
+                var multiSysmbols = new List<string>();
+                MatchCollection matches = Regex.Matches(command, pattern);
+                var tokens = Regex.Split(command, pattern);
+                int i = 0;
+                foreach (string token in tokens)
+                {
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        parts.Add(token.Trim());
+                    }
+
+                    if (i < matches.Count)
+                        multiSysmbols.Add(matches[i].Value);  // Add delimiter
+                    i++;
+                }
+
+                int j = 0;
+
+                // Output the result
+                foreach (var part in parts)
+                {
+                    var isSymbol = multiSysmbols.Any(s => s == part);
+                    if (!isSymbol)
+                    {
+                        j++;
+                        var x = j - 1;
+                        if (multiSysmbols.Count > x)
+                        {
+                            Console.WriteLine(part);
+                           
+                            var sym = multiSysmbols[x];
+                            //TODO: check type of command and when first executes.
+                            switch (sym)
+                            {
+                                case "&&":
+                                    if (!GlobalVariables.isErrorCommand)
+                                        RunDoubleAndCommands(part.Trim());
+                                    break;
+                                case "||":
+                                    if (GlobalVariables.isErrorCommand)
+                                        RunParalelCommands(part.Trim());
+                                    break;
+                                case ";":
+                                    RunContinousCommands(part.Trim());
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            var c = Commands.CommandRepository.GetCommand(part.Trim());
+                            c.Execute(part.Trim());
+                        }
+                    }
+                }
+            }catch (Exception ex) { Console.WriteLine(ex.ToString()); }
         }
 
         /// <summary>
         /// Run ; commands
         /// </summary>
         /// <param name="commands"></param>
-        private void RunContinousCommands(string[] commands)
+        private void RunContinousCommands(string cmd)
         {
-            foreach (var cmd in commands)
-            {
-                var cmdExecute = cmd.Trim();
-                var c = Commands.CommandRepository.GetCommand(cmdExecute);
-                c.Execute(cmdExecute);
-            }
+            // foreach (var cmd in commands)
+            //{
+            var cmdExecute = cmd.Trim();
+            var c = Commands.CommandRepository.GetCommand(cmdExecute);
+            c.Execute(cmdExecute);
+            //}
         }
 
 
@@ -434,7 +508,8 @@ namespace Shell
                 FileSystem.ReadStringLine(ref _history, historyStored, true);
             }
 
-            if (ExecuteParamCommands(args)) { return; };
+            if (ExecuteParamCommands(args)) { return; }
+            ;
 
             // We loop until exit commands is hit
             do
