@@ -47,6 +47,7 @@ namespace Shell
         private static string s_aliasFile = GlobalVariables.aliasFile;
         private static bool s_isCDVisible = true;
         private static List<string> _history = new List<string>();
+        private static int countMultiCommand = 0;
         public static bool HistoryEnabled { get; set; }
         public static IAutoCompleteHandler AutoCompletionHandler { private get; set; }
         //-------------------------------
@@ -222,6 +223,7 @@ namespace Shell
                     GlobalVariables.aliasRunFlag = false;
                     GlobalVariables.isErrorCommand = false;
                     GlobalVariables.aliasInParameter.Clear();
+                    countMultiCommand = 0;
                 }
             }
             catch (Exception e)
@@ -326,23 +328,25 @@ namespace Shell
                         var x = j - 1;
                         if (multiSysmbols.Count > x)
                         {
-                            Console.WriteLine(part);
-                           
-                            var sym = multiSysmbols[x];
-                            //TODO: check type of command and when first executes.
-                            switch (sym)
+                            if (countMultiCommand > 0)
                             {
-                                case "&&":
-                                    if (!GlobalVariables.isErrorCommand)
-                                        RunDoubleAndCommands(part.Trim());
-                                    break;
-                                case "||":
-                                    if (GlobalVariables.isErrorCommand)
-                                        RunParalelCommands(part.Trim());
-                                    break;
-                                case ";":
-                                    RunContinousCommands(part.Trim());
-                                    break;
+
+                                var sym = multiSysmbols[x];
+                                //TODO: check type of command and when first executes.
+                                switch (sym)
+                                {
+                                    case "&&":
+                                        if (!GlobalVariables.isErrorCommand)
+                                            RunDoubleAndCommands(part.Trim());
+                                        break;
+                                    case "||":
+                                        if (GlobalVariables.isErrorCommand)
+                                            RunParalelCommands(part.Trim());
+                                        break;
+                                    case ";":
+                                        RunContinousCommands(part.Trim());
+                                        break;
+                                }
                             }
                         }
                         else
@@ -350,6 +354,7 @@ namespace Shell
                             var c = Commands.CommandRepository.GetCommand(part.Trim());
                             c.Execute(part.Trim());
                         }
+                        countMultiCommand++;
                     }
                 }
             }catch (Exception ex) { Console.WriteLine(ex.ToString()); }
