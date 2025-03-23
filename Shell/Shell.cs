@@ -178,7 +178,7 @@ namespace Shell
                         }
                         GlobalVariables.isPipeCommand = false;
                     }
-                   
+
                     // Run command in background.
                     else if (command.EndsWith("&"))
                     {
@@ -256,70 +256,65 @@ namespace Shell
         /// <param name="command"></param>
         private void ParseMultiCommand(string command)
         {
-            try
+            // Regex pattern to match &&, ||, and ;
+            string pattern = @"(\&\&|\|\||;)";
+
+            // Split while keeping delimiters
+            var parts = new List<string>();
+            var multiSysmbols = new List<string>();
+            MatchCollection matches = Regex.Matches(command, pattern);
+            var tokens = Regex.Split(command, pattern);
+            int i = 0;
+            foreach (string token in tokens)
             {
-                // Regex pattern to match &&, ||, and ;
-                string pattern = @"(\&\&|\|\||;)";
-
-                // Split while keeping delimiters
-                var parts = new List<string>();
-                var multiSysmbols = new List<string>();
-                MatchCollection matches = Regex.Matches(command, pattern);
-                var tokens = Regex.Split(command, pattern);
-                int i = 0;
-                foreach (string token in tokens)
+                if (!string.IsNullOrWhiteSpace(token))
                 {
-                    if (!string.IsNullOrWhiteSpace(token))
-                    {
-                        parts.Add(token.Trim());
-                    }
-
-                    if (i < matches.Count)
-                        multiSysmbols.Add(matches[i].Value);  // Add delimiter
-                    i++;
+                    parts.Add(token.Trim());
                 }
 
-                int j = 0;
+                if (i < matches.Count)
+                    multiSysmbols.Add(matches[i].Value);  // Add delimiter
+                i++;
+            }
 
-                // Output the result
-                foreach (var part in parts)
+            int j = 0;
+
+            // Output the result
+            foreach (var part in parts)
+            {
+                var isSymbol = multiSysmbols.Any(s => s == part);
+                if (!isSymbol)
                 {
-                    var isSymbol = multiSysmbols.Any(s => s == part);
-                    if (!isSymbol)
+                    if (j == 0)
                     {
-                        if (j == 0)
-                        {
-                            var c = Commands.CommandRepository.GetCommand(part.Trim());
-                            c.Execute(part.Trim());
-                            j++;
-                            continue;
-                        }
+                        var c = Commands.CommandRepository.GetCommand(part.Trim());
+                        c.Execute(part.Trim());
                         j++;
-                        var x = j - 2;
-                        if (multiSysmbols.Count > x)
+                        continue;
+                    }
+                    j++;
+                    var x = j - 2;
+                    if (multiSysmbols.Count > x)
+                    {
+                        var sym = multiSysmbols[x];
+                        switch (sym)
                         {
-
-                            var sym = multiSysmbols[x];
-                            //TODO: check type of command and when first executes.
-                            switch (sym)
-                            {
-                                case "&&":
-                                    if (!GlobalVariables.isErrorCommand)
-                                        RunDoubleAndCommands(part.Trim());
-                                    break;
-                                case "||":
-                                    if (GlobalVariables.isErrorCommand)
-                                        RunParalelCommands(part.Trim());
-                                    break;
-                                case ";":
-                                    RunContinousCommands(part.Trim());
-                                    break;
-                            }
+                            case "&&":
+                                if (!GlobalVariables.isErrorCommand)
+                                    RunDoubleAndCommands(part.Trim());
+                                break;
+                            case "||":
+                                if (GlobalVariables.isErrorCommand)
+                                    RunParalelCommands(part.Trim());
+                                break;
+                            case ";":
+                                RunContinousCommands(part.Trim());
+                                break;
                         }
                     }
                 }
             }
-            catch (Exception ex) { Console.WriteLine(ex.ToString()); }
+        }
         }
 
         /// <summary>
