@@ -315,7 +315,6 @@ namespace Shell
                 }
             }
         }
-        }
 
         /// <summary>
         /// Run ; commands
@@ -323,12 +322,9 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunContinousCommands(string cmd)
         {
-            // foreach (var cmd in commands)
-            //{
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             c.Execute(cmdExecute);
-            //}
         }
 
 
