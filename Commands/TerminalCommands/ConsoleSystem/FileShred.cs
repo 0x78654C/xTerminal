@@ -20,6 +20,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (args == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
@@ -61,6 +62,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}\nUse -h param for {{Name}} command usage!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

@@ -12,14 +12,29 @@ namespace Commands.TerminalCommands.DirFiles
          File/directory rename.
          */
         public string Name => "mv";
+        private static string s_helpMessage = @"Usage of mv command:
+
+    Renames a file or directory:
+
+    Example: mv <old_name_file/dir> -o <new_name_file/dir> 
+
+";
 
         public void Execute(string arg)
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 arg = arg.Replace("mv ", "");
 
-                // Reading current location(for test no, after i make dynamic)
+
+                if (arg.StartsWith("-h") && arg.Length == 2)
+                {
+                    Console.WriteLine(s_helpMessage);
+                    return;
+                }
+
+                // Reading current location(for test no,after i make dynamic)
                 string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
 
                 // We grab the file names for source and destination
@@ -43,17 +58,19 @@ namespace Commands.TerminalCommands.DirFiles
                 }
 
                 // We check if directory exist.
-                if(Directory.Exists(fileName))
+                if (Directory.Exists(fileName))
                 {
                     Directory.Move(fileName, newName);
                     FileSystem.SuccessWriteLine($"Directory renamed from {fileName} to {newName}");
                     return;
                 }
                 FileSystem.ErrorWriteLine("File/directory " + fileName + " does not exist!");
+                GlobalVariables.isErrorCommand = true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

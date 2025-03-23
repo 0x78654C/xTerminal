@@ -34,6 +34,7 @@ namespace Commands.TerminalCommands.Roslyn
 
         public void Execute(string args)
         {
+            GlobalVariables.isErrorCommand = false;
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
             string param = string.Empty;
@@ -117,6 +118,7 @@ namespace Commands.TerminalCommands.Roslyn
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -128,6 +130,7 @@ namespace Commands.TerminalCommands.Roslyn
                 if (!File.Exists(fileName))
                 {
                     FileSystem.ErrorWriteLine($"File {fileName} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 _codeToRun = File.ReadAllText(fileName);
@@ -135,6 +138,7 @@ namespace Commands.TerminalCommands.Roslyn
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

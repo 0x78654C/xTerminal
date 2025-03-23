@@ -113,6 +113,7 @@ namespace Core.SystemTools
             catch (Exception e)
             {
                 outHex = e.Message;
+                GlobalVariables.isErrorCommand = true;
             }
             return outHex;
         }

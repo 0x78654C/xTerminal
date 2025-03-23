@@ -35,6 +35,7 @@ namespace Commands.TerminalCommands.UI
         public string Name => "ui";
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             if (arg == Name)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
@@ -176,10 +177,12 @@ namespace Commands.TerminalCommands.UI
             catch (ArgumentOutOfRangeException)
             {
                 FileSystem.ErrorWriteLine($"Color or indicator is not supported. Check command please!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.ToString());
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

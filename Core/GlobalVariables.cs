@@ -60,5 +60,7 @@ namespace Core
             All = 3
         };
         public static int tabPressCount = 0;
+        public static bool isErrorCommand = false;
+        public static string bgProcessListFile = terminalWorkDirectory + "\\bgPids.db";
     }
 }

@@ -10,6 +10,8 @@ using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
 using Core.SystemTools;
 using Core.Commands;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace Shell
 {
@@ -25,6 +27,7 @@ namespace Shell
         private static int s_ctrlCount = 0;
         private static string s_historyFilePath = GlobalVariables.terminalWorkDirectory;
         private static string s_passwordManagerDirectory = GlobalVariables.passwordManagerDirectory;
+        private static string s_backgroundCommandsPidList = GlobalVariables.bgProcessListFile;
         private static List<string> s_listReg = new List<string>() { "UI" };
         private static string s_historyFile = GlobalVariables.historyFile;
         private static string s_addonDir = GlobalVariables.addonDirectory;
@@ -71,6 +74,11 @@ namespace Shell
             // Creating the Password Manager directory for storing the encrypted files.
             if (!Directory.Exists(s_passwordManagerDirectory))
                 Directory.CreateDirectory(s_passwordManagerDirectory);
+
+            // Creating the background command process list file.
+            if (!File.Exists(s_backgroundCommandsPidList))
+                File.WriteAllText(s_backgroundCommandsPidList, string.Empty);
+
 
             // Store current directory with current process id.
             StoreCurrentDirectory();
@@ -151,9 +159,9 @@ namespace Shell
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
-
                     // Pipe line command execution.
-                    if (command.Contains("|") && !command.Contains("alias"))
+
+                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
                     {
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
@@ -164,18 +172,30 @@ namespace Shell
                         {
                             var cmdExecute = cmd.Trim();
                             c = Commands.CommandRepository.GetCommand(cmdExecute);
-
                             c.Execute(cmdExecute);
-
                             count++;
                             GlobalVariables.pipeCmdCount--;
                         }
                         GlobalVariables.isPipeCommand = false;
                     }
+
+                    // Run command in background.
+                    else if (command.EndsWith("&"))
+                    {
+                        var commandSplit = command.Split("&")[0];
+                        var cmdExecute = commandSplit.Trim();
+                        c = Commands.CommandRepository.GetCommand(cmdExecute);
+                        var bgCommands = new BGCommands();
+                        bgCommands.Command = cmdExecute;
+                        bgCommands.ExecuteCommand();
+                    }
                     else
-                        c.Execute(command);
+                        ParseMultiCommand(command);
+
+                    // Reset alias parameters.
                     GlobalVariables.aliasParameters = string.Empty;
                     GlobalVariables.aliasRunFlag = false;
+                    GlobalVariables.isErrorCommand = false;
                     GlobalVariables.aliasInParameter.Clear();
                 }
             }
@@ -183,6 +203,7 @@ namespace Shell
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check commmand!");
                 GlobalVariables.pipeCmdOutput = string.Empty;
+                GlobalVariables.isErrorCommand = false;
                 GlobalVariables.pipeCmdCount = 0;
                 GlobalVariables.pipeCmdCountTemp = 0;
             }
@@ -200,6 +221,112 @@ namespace Shell
                 GlobalVariables.aliasRunFlag = false;
             }
         }
+
+        /// <summary>
+        /// Run || commands
+        /// </summary>
+        /// <param name="commands"></param>
+        private void RunParalelCommands(string cmd)
+        {
+            var cmdExecute = cmd.Trim();
+            var c = Commands.CommandRepository.GetCommand(cmdExecute);
+            if (GlobalVariables.isErrorCommand)
+                c.Execute(cmdExecute);
+        }
+
+
+        /// <summary>
+        /// Run && commands
+        /// </summary>
+        /// <param name="commands"></param>
+        private void RunDoubleAndCommands(string cmd)
+        {
+            var cmdExecute = cmd.Trim();
+            var c = Commands.CommandRepository.GetCommand(cmdExecute);
+            if (GlobalVariables.isErrorCommand)
+            {
+                GlobalVariables.isErrorCommand = false;
+            }
+            c.Execute(cmdExecute);
+        }
+
+        /// <summary>
+        /// Parse multiple coomands and run them seprarate based on the sysmbol in front
+        /// </summary>
+        /// <param name="command"></param>
+        private void ParseMultiCommand(string command)
+        {
+            // Regex pattern to match &&, ||, and ;
+            string pattern = @"(\&\&|\|\||;)";
+
+            // Split while keeping delimiters
+            var parts = new List<string>();
+            var multiSysmbols = new List<string>();
+            MatchCollection matches = Regex.Matches(command, pattern);
+            var tokens = Regex.Split(command, pattern);
+            int i = 0;
+            foreach (string token in tokens)
+            {
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    parts.Add(token.Trim());
+                }
+
+                if (i < matches.Count)
+                    multiSysmbols.Add(matches[i].Value);  // Add delimiter
+                i++;
+            }
+
+            int j = 0;
+
+            // Output the result
+            foreach (var part in parts)
+            {
+                var isSymbol = multiSysmbols.Any(s => s == part);
+                if (!isSymbol)
+                {
+                    if (j == 0)
+                    {
+                        var c = Commands.CommandRepository.GetCommand(part.Trim());
+                        c.Execute(part.Trim());
+                        j++;
+                        continue;
+                    }
+                    j++;
+                    var x = j - 2;
+                    if (multiSysmbols.Count > x)
+                    {
+                        var sym = multiSysmbols[x];
+                        switch (sym)
+                        {
+                            case "&&":
+                                if (!GlobalVariables.isErrorCommand)
+                                    RunDoubleAndCommands(part.Trim());
+                                break;
+                            case "||":
+                                if (GlobalVariables.isErrorCommand)
+                                    RunParalelCommands(part.Trim());
+                                break;
+                            case ";":
+                                RunContinousCommands(part.Trim());
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Run ; commands
+        /// </summary>
+        /// <param name="commands"></param>
+        private void RunContinousCommands(string cmd)
+        {
+            var cmdExecute = cmd.Trim();
+            var c = Commands.CommandRepository.GetCommand(cmdExecute);
+            c.Execute(cmdExecute);
+        }
+
 
         /// <summary>
         /// Arguments handler for parameter usage.
@@ -290,6 +417,32 @@ namespace Shell
             }
         }
 
+        /// <summary>
+        /// Function for clear running background command processes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Shell_Close(object sender, EventArgs e)
+        {
+            if (File.Exists(s_backgroundCommandsPidList))
+            {
+                var listBgRemain = "";
+                var readBGList = File.ReadAllLines(s_backgroundCommandsPidList);
+                File.WriteAllText(s_backgroundCommandsPidList, string.Empty);
+                if (readBGList.Length == 0)
+                    return;
+                foreach (var line in readBGList)
+                {
+                    var splitPid = Int32.Parse(line.Split("PID: ")[1]);
+                    Process.GetProcessById(splitPid).Kill();
+                    var isActive = Process.GetProcesses().Any(p => p.Id == splitPid);
+                    if (!isActive)
+                        listBgRemain += line + Environment.NewLine;
+                }
+                File.WriteAllText(s_backgroundCommandsPidList, listBgRemain);
+            }
+        }
+
         //Entry point of shell
         public void Run(string[] args)
         {
@@ -303,6 +456,9 @@ namespace Shell
             // Setting up the title.
             Console.Title = s_terminalTitle;
 
+            // Start xTerminal close event.
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(Shell_Close);
+
             // Read commands history
             if (File.Exists(s_historyFile))
             {
@@ -310,7 +466,8 @@ namespace Shell
                 FileSystem.ReadStringLine(ref _history, historyStored, true);
             }
 
-            if (ExecuteParamCommands(args)) { return; };
+            if (ExecuteParamCommands(args)) { return; }
+            ;
 
             // We loop until exit commands is hit
             do
@@ -326,11 +483,12 @@ namespace Shell
                 {
                     s_input = Read();
                 }
-                catch {
+                catch
+                {
                     s_input = "";
                     Console.WriteLine();
                 }
-        
+
 
                 //cleaning input
                 s_input = s_input.Trim();

@@ -24,6 +24,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string file = "";
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 var arg = args.Split(' ');
 
@@ -68,14 +69,17 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (UnauthorizedAccessException)
             {
                 FileSystem.ErrorWriteLine($"You need administrator rights to save file in: {file} ");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (OutOfMemoryException)
             {
                 FileSystem.ErrorWriteLine($"Ran out of memmory!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -93,7 +97,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (saveToFile)
                 {
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount != 0)
+                    {
                         FileSystem.ErrorWriteLine("You cannot save to file when using with pipe command!");
+                        GlobalVariables.isErrorCommand = true;
+                    }
                     else if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
                         FileSystem.SuccessWriteLine(FileSystem.SaveFileOutput(savePath, s_currentDirectory, HexDump.Hex(getBytes, 16), true));
                     else
@@ -110,6 +117,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
             FileSystem.ErrorWriteLine($"File {file} does not exist");
+            GlobalVariables.isErrorCommand = true;
         }
     }
 }

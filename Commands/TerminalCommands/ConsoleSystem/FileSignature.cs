@@ -32,7 +32,7 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
             try
             {
                 var currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
-
+                GlobalVariables.isErrorCommand = false;
                 if (args == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
@@ -48,6 +48,7 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
                 if (!CheckExtFile(_extFile))
                 {
                     FileSystem.ErrorWriteLine("File ext_list.txt is not present with file type signatures. File must be located with the xTerminal executable");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -64,7 +65,10 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
                     if (File.Exists(sanitizedFileExt))
                         CheckFileSignature(_extFile, sanitizedFileExt, true);
                     else
+                    {
                         FileSystem.ErrorWriteLine($"File {sanitizedFileExt} does not exist!");
+                        GlobalVariables.isErrorCommand = true;
+                    }
                     return;
                 }
 
@@ -72,11 +76,15 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
                 if (File.Exists(sanitizedFile))
                     CheckFileSignature(_extFile, sanitizedFile, false);
                 else
+                {
                     FileSystem.ErrorWriteLine($"File {sanitizedFile} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
+                }
             }
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine(ex.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

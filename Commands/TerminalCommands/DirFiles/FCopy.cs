@@ -49,6 +49,7 @@ namespace Commands.TerminalCommands.DirFiles
         /// <param name="arg"></param>
         public void Execute(string arg)
         {
+            GlobalVariables.isErrorCommand = false;
             try
             {
                 FCopyRun(arg);
@@ -56,16 +57,19 @@ namespace Commands.TerminalCommands.DirFiles
             catch (UnauthorizedAccessException u)
             {
                 FileSystem.ErrorWriteLine(u.Message);
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception x)
             {
                 if (x.Message.Contains("is being used by another process"))
                 {
                     FileSystem.ErrorWriteLine(x.Message);
+                    GlobalVariables.isErrorCommand = true;
                 }
                 else
                 {
                     FileSystem.ErrorWriteLine($"{x.Message}\nUse -h param for {Name} command usage!");
+                    GlobalVariables.isErrorCommand = true;
                 }
             }
         }
@@ -140,6 +144,7 @@ namespace Commands.TerminalCommands.DirFiles
             if (!File.Exists(sourceFile))
             {
                 FileSystem.ErrorWriteLine($"Source file '{sourceFile}' does not exist!" + Environment.NewLine);
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 

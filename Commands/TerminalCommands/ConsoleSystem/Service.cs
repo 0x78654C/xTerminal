@@ -28,12 +28,13 @@ Remote:
     -start <service_name> -r <machine_name/IP> : Starts a specific service.
     -restart <service_name> -r <machine_name/IP> : Restarts a specific service.
 
-Note: Requires administrator privileges.
+Note: Requires administrator privileges. (-list works with privileges as wel)
 ";
         public void Execute(string arg)
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine("Use -h for more information!");
@@ -68,13 +69,17 @@ Note: Requires administrator privileges.
                         if (!isMachineUp)
                         {
                             FileSystem.ErrorWriteLine($"Could not connect to {machine}. Seems down!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
 
                         if (!string.IsNullOrEmpty(machine))
                             serviceC.MachineName = machine;
                         else
+                        {
                             FileSystem.ErrorWriteLine("You need to provide the machine Name/IP after -r parameter!");
+                            GlobalVariables.isErrorCommand = true;
+                        }
                         serviceC.Run(ServiceC.ActionService.List);
                         return;
                     }
@@ -121,6 +126,7 @@ Note: Requires administrator privileges.
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -158,6 +164,7 @@ Note: Requires administrator privileges.
             if (!isMachineUp)
             {
                 FileSystem.ErrorWriteLine($"Could not connect to {machine}. Seems down!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -168,7 +175,10 @@ Note: Requires administrator privileges.
                 serviceC.ServiceName = serviceName;
             }
             else
+            {
                 FileSystem.ErrorWriteLine("You need to provide the machine Name/IP after -r parameter!");
+                GlobalVariables.isErrorCommand = true;
+            }
             serviceC.Run(actionService);
         }
     }

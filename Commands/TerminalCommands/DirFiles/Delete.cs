@@ -22,6 +22,7 @@ Example2: del <dir_path1;dir_path2;dir_path3>
 
         public void Execute(string args)
         {
+            GlobalVariables.isErrorCommand = false;
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             if (args == Name && !GlobalVariables.isPipeCommand)
             {
@@ -128,6 +129,7 @@ Example2: del <dir_path1;dir_path2;dir_path3>
             }
             catch (Exception e)
             {
+                GlobalVariables.isErrorCommand = true;
                 FileSystem.ErrorWriteLine(e.Message);
             }
         }

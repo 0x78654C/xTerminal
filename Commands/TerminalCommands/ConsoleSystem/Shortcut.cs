@@ -17,6 +17,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
                     FileSystem.SuccessWriteLine("Use -h for more information!");
@@ -59,6 +60,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

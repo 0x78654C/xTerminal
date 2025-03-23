@@ -22,6 +22,7 @@ namespace Commands.TerminalCommands.DirFiles
 ";
         public void Execute(string args)
         {
+            GlobalVariables.isErrorCommand = false;
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
 
             if (args == Name)
@@ -166,10 +167,12 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
                 FileSystem.ErrorWriteLine("Only two files can be compared!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

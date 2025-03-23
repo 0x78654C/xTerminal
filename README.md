@@ -236,6 +236,7 @@ This is the full list of commands that can be used in xTerminal:
                   tee <file_name>     : Writes previous command output to a file.
                   tee -a <file_name>  : Appends previous command output to an existing file.
                   Example: ls | cat -t 10 | tee data.txt | cat -s exe
+    bc        -- Display running background commands.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -317,6 +318,8 @@ This is the full list of commands that can be used in xTerminal:
                      -eq : Displays searched files/directories from the current directory and subdirectories that equals a specific text.
                             Example 1: locate -eq <text>
                             Example 2: locate -eq <text> -o <save_to_file>
+                     -d  : Filter only directories. (Parameter should be added to end of command)
+                     -f  : Filter only files. (Parameter should be added to end of command)
     echo      -- Write/append data to a file.
                      echo <text> :  Displays in console the <text> data.
                      >   : Write data to a file.
@@ -445,6 +448,12 @@ This is the full list of commands that can be used in xTerminal:
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
     snake     -- Play Snake game in console!(Created by https://github.com/mkbmain)
+
+    ------------- Multiple commands run legend --------------
+    A; B      -- Run A and then B, regardless of success of A
+    A && B    -- Run B if and only if A succeeded
+    A || B    -- Run B if and only if A failed
+    A &       -- Run A in background.
 
 All xTerminal commands can be used from other terminals as <b>Command Line Arguments</b>. Example: 
  ```

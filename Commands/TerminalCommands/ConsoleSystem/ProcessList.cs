@@ -27,6 +27,7 @@ Example:
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (args == $"{Name} -h")
                 {
                     Console.WriteLine(_helpMessage);
@@ -39,6 +40,7 @@ Example:
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

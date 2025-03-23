@@ -23,6 +23,7 @@ Sub directoriers must be between '{' '}' and splited by ','
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 int argLength = arg.Length - 6;
 
                 string input = arg.Substring(6, argLength);
@@ -38,6 +39,7 @@ Sub directoriers must be between '{' '}' and splited by ','
             catch (Exception)
             {
                 FileSystem.ErrorWriteLine("Something went wrong. Check path maybe!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

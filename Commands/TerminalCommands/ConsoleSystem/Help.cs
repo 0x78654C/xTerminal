@@ -58,13 +58,14 @@ This is the full list of commands that can be used in xTerminal:
     ln        -- Create shortcut of a file/folder. Use -h for additional help.
     zip       -- Create Zip archive files. Use -h for additional help.
     tee       -- Stores previous pipe command stdout to a file. Use -h for additional help. 
+    bc        -- Display running background commands. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
     mkdir     -- Creates a directory in the current place.
     mkfile    -- Creates a file in the current place.
-    fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
-    mv        -- Renames a file or directory in a specific directory(s).
+    fcopy     -- Copies a file with CRC checksum control. Use -h for additional parameters.
+    mv        -- Renames a file or directory in a specific directory(s). Use -h for additional parameters.
                  Example: mv <old_file/dir_name> -o <new_file/dir_name>
     fmove     -- Moves a file with CRC checksum control. Use -h for additional parameters.
     edit      -- Sets a text editor for open files(default is notpead). Use -h for additional help.
@@ -82,14 +83,13 @@ This is the full list of commands that can be used in xTerminal:
     waifu     -- Host temporary files on https://waifuvault.moe/. Use -h for additional help.
                 
     ---------------------- Networking ----------------------
-    ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
+    ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless). Use -h for additional parameters.
     ispeed    -- Checks the internet speed with Google.
     icheck    -- Checks if a Domain or IP address is online.
     extip     -- Displays the current external IP address.
     wget      -- Download files from a specific website. Use -h for additional help.
-    email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname. Use -h for additional parameters.
-    cport     -- Checks if a specific port is open/closed on a Hostname/IP.  Use -h for additional parameters.
+    cport     -- Checks if a specific port is open/closed on a Hostname/IP. Use -h for additional parameters.
     wol       -- Sends Wake over LAN packet to a machine.  Use -h for additional parameters.
     dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
 
@@ -116,7 +116,17 @@ This is the full list of commands that can be used in xTerminal:
     flappy    -- Play Flappy Birds in console!
     snake     -- Play Snake game in console!
 
-    ------------------------Support -------------------------
+
+
+    ------------- Multiple commands run legend --------------
+    A; B      -- Run A and then B, regardless of success of A
+    A && B    -- Run B if and only if A succeeded
+    A || B    -- Run B if and only if A failed
+    A &       -- Run A in background.
+
+
+
+    [-----------------------Support ------------------------]
     If you like this application and want to support the project just buy your self a coffee and have a nice day ;).
 
                         ";

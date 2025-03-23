@@ -1,6 +1,5 @@
 ﻿using Core;
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -19,6 +18,7 @@ namespace Commands.TerminalCommands.Network
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == $"{Name} -h")
                 {
                     Console.WriteLine(s_helpMessage);
@@ -34,7 +34,11 @@ namespace Commands.TerminalCommands.Network
                 else
                     FileSystem.SuccessWriteLine("Your external IP address is: " + externalIP);
             }
-            catch { FileSystem.ErrorWriteLine("Cannot verify external IP address. Check your internet connection!"); }
+            catch
+            {
+                FileSystem.ErrorWriteLine("Cannot verify external IP address. Check your internet connection!");
+                GlobalVariables.isErrorCommand = true;
+            }
         }
     }
 }

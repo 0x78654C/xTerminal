@@ -121,6 +121,7 @@ namespace Core.SystemTools
             if (!IsRulePresent(ruleName))
             {
                 FileSystem.ErrorWriteLine($"Firewall rule(s) does not exist: {ruleName}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -336,7 +337,8 @@ namespace Core.SystemTools
             }
             catch (Exception e)
             {
-                Console.WriteLine("[-] ERROR: {0}", e.Message);
+                FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

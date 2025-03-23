@@ -31,7 +31,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     calendar.ShowCalandar();
                     return;
                 }
-
+                GlobalVariables.isErrorCommand = false;
                 var date = arg.Replace($"{Name}", "").Trim().Split('-');
                 var month =int.Parse(date[0]);
                 var year = int.Parse(date[1]);
@@ -42,6 +42,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

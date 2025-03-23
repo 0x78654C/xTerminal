@@ -15,7 +15,8 @@ namespace Commands.TerminalCommands.DirFiles
 ";
         public void Execute(string arg)
         {
-            string currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory); ;
+            GlobalVariables.isErrorCommand = false;
+            string currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             try
             {
                 int argLenght = arg.Length - 7;
@@ -44,6 +45,7 @@ namespace Commands.TerminalCommands.DirFiles
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

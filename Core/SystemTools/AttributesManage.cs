@@ -32,12 +32,14 @@ namespace Core.SystemTools
             if (!FileSystem.IsFileOrDirectoryPresent(Path))
             {
                 FileSystem.ErrorWriteLine($"Directory/File does not exist: {Path}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
             if (ListAttributes.Count == 0)
             {
                 FileSystem.ErrorWriteLine($"You need to specify at least one attribute!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             foreach (var attribute in ListAttributes)
@@ -54,6 +56,7 @@ namespace Core.SystemTools
             if (!FileSystem.IsFileOrDirectoryPresent(path))
             {
                 FileSystem.ErrorWriteLine($"Directory/File does not exist: {path}");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -140,9 +143,15 @@ namespace Core.SystemTools
                     break;
                 default:
                     if (remove)
+                    {
                         FileSystem.ErrorWriteLine($"This attribute cannot be removed: {attribute}");
+                        GlobalVariables.isErrorCommand = true;
+                    }
                     else
+                    {
                         FileSystem.ErrorWriteLine($"This attribute cannot be set: {attribute}");
+                        GlobalVariables.isErrorCommand = true;
+                    }
                     break;
             }
         }

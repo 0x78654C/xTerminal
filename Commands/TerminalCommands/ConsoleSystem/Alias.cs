@@ -58,6 +58,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.SuccessWriteLine("This parameter does not exist! Use -h for help.");
                     return;
                 }
+                
+                GlobalVariables.isErrorCommand = false;
+
                 if (args.StartsWith("-add"))
                     AddCommand(args, s_aliasFile);
 
@@ -76,6 +79,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message + " Check command!\nUse alias -clear if alias file if is corrupted. File will be recreated by adding new command!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -93,25 +97,31 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (commandName.Length < 2)
                 {
                     FileSystem.ErrorWriteLine("Command name should be at least 2 characters long!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
                 if (commandName.Length > 14)
                 {
                     FileSystem.ErrorWriteLine("Command name should be maxim 14 characters!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 string command = ParseAlias(commandAlias);
                 if (File.Exists(aliasJsonFile) && CheckCommandName(s_aliasFile, commandName))
                 {
                     FileSystem.ErrorWriteLine($"{commandName} alias command already exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command });
                 FileSystem.SuccessWriteLine($"Alias command '{commandName}' was added!");
             }
             else
+            {
                 FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
+                GlobalVariables.isErrorCommand = true;
+            }
         }
 
         /// <summary>
@@ -131,12 +141,14 @@ namespace Commands.TerminalCommands.ConsoleSystem
             if (!File.Exists(aliasJsonFile) && updateFlag)
             {
                 FileSystem.ErrorWriteLine("Alias file does not exist! You need to first add a command.");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
             if (!CheckCommandName(aliasJsonFile, delAliasCommand) && updateFlag)
             {
                 FileSystem.ErrorWriteLine($"{delAliasCommand} does not exist!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             Json.DeleteJsonData<AliasC>(s_aliasFile, f => f.Where(t => t.CommandName == delAliasCommand));
@@ -157,22 +169,26 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (!File.Exists(aliasJsonFile))
                 {
                     FileSystem.ErrorWriteLine("Alias file does not exist! You need to first add a command.");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 string commandName = updateAliasCommand.Split().First();
                 var commandLeng = commandName.Length;
-                string command = updateAliasCommand.Substring(commandLeng+1).Trim();
+                string command = updateAliasCommand.Substring(commandLeng + 1).Trim();
                 if (!CheckCommandName(aliasJsonFile, commandName))
                 {
                     FileSystem.SuccessWriteLine($"{commandName} does not exist!");
                     return;
                 }
-                DeleteCommand(commandName,aliasJsonFile, false);
+                DeleteCommand(commandName, aliasJsonFile, false);
                 Json.UpdateJsonFile(aliasJsonFile, new AliasC { CommandName = commandName, Command = command.Substring(1).Trim() });
                 FileSystem.SuccessWriteLine($"Alias command '{commandName}' was updated!");
             }
             else
+            {
+                GlobalVariables.isErrorCommand = true;
                 FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
+            }
         }
 
         /// <summary>
@@ -195,6 +211,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             if (!File.Exists(aliasJsonFile))
             {
                 FileSystem.ErrorWriteLine("There are no alias commands added!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);

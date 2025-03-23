@@ -11,13 +11,26 @@ namespace Commands.TerminalCommands.Network
          Display NIC's configuration. 
          */
         public string Name => "ifconfig";
+        private static string s_helpMessage = @"Usage of ifconfig command:
+
+Display onboard Network Interface Cards configuration (Ethernet and Wireless)
+";
+
 
         public void Execute(string args)
         {
+            args = args.Replace("ifconfig", "");
+
+            if (args.Contains("-h"))
+            {
+                Console.WriteLine(s_helpMessage);
+                return;
+            }
+            GlobalVariables.isErrorCommand = false;
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput = NetWork.ShowNicConfiguragion();
             else
-                Console.WriteLine(NetWork.ShowNicConfiguragion());
+                FileSystem.SuccessWriteLine(NetWork.ShowNicConfiguragion());
         }
     }
 }

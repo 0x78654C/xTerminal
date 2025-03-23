@@ -52,6 +52,7 @@ Commands can be canceled with CTRL+X key combination.
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 GlobalVariables.eventCancelKey = false;
                 s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
                 arg = arg.Replace("cat ", "");
@@ -135,6 +136,7 @@ Commands can be canceled with CTRL+X key combination.
                         if (!FileSystem.IsNumberAllowed(lineCounter))
                         {
                             FileSystem.ErrorWriteLine("Invalid parameter. You need to provide how many lines you want to display!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
                         int lines = Int32.Parse(lineCounter);
@@ -161,6 +163,7 @@ Commands can be canceled with CTRL+X key combination.
                         if (!FileSystem.IsNumberAllowed(lineCounterBottom))
                         {
                             FileSystem.ErrorWriteLine("Invalid parameter. You need to provide how many lines you want to display!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
                         int linesB = Int32.Parse(lineCounterBottom);
@@ -187,6 +190,7 @@ Commands can be canceled with CTRL+X key combination.
                         if (!linesRange.Contains("-"))
                         {
                             FileSystem.ErrorWriteLine("Invalid parameter. You need to provide the range of lines for data display! Example: 10-20");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
@@ -373,6 +377,7 @@ Commands can be canceled with CTRL+X key combination.
                             catch (Exception e)
                             {
                                 FileSystem.ErrorWriteLine(e.Message);
+                                GlobalVariables.isErrorCommand = true;
                             }
                         }
                         break;
@@ -400,6 +405,7 @@ Commands can be canceled with CTRL+X key combination.
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check command!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

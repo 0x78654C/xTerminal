@@ -95,6 +95,7 @@ e - Encrypted
                 // This will be an empty string if there is no highlight text parameter passed
                 string highlightSearchText = arg.ParameterAfter("-hl");
                 bool found = true;
+                GlobalVariables.isErrorCommand = false;
                 foreach (var param in s_listParams)
                 {
                     bool paramt = arg.ContainsParameter(param);
@@ -228,6 +229,7 @@ e - Encrypted
                     string.IsNullOrWhiteSpace(highlightSearchText))
                 {
                     FileSystem.ErrorWriteLine("Check command. You must provide a text to highlight!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
 
@@ -315,11 +317,13 @@ e - Encrypted
             catch (IndexOutOfRangeException)
             {
                 FileSystem.ErrorWriteLine("The command parameters were invalid!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (UnauthorizedAccessException)
             {
                 FileSystem.ErrorWriteLine(
                     "You need administrator rights to run full command in this place! Some directories/files cannot be accessed!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
@@ -327,8 +331,13 @@ e - Encrypted
                 {
                     FileSystem.ErrorWriteLine(e.Message);
                     FileSystem.ErrorWriteLine($"Potential virused fle or unwanted file: {s_virus}");
+                    GlobalVariables.isErrorCommand = true;
                 }
-                FileSystem.ErrorWriteLine(e.Message);
+                else
+                {
+                    FileSystem.ErrorWriteLine(e.Message);
+                    GlobalVariables.isErrorCommand = true;
+                }
             }
         }
 
@@ -578,6 +587,7 @@ e - Encrypted
             if (!Directory.Exists(s_currentDirectory))
             {
                 FileSystem.ErrorWriteLine($"Directory '{s_currentDirectory}' does not exist!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 

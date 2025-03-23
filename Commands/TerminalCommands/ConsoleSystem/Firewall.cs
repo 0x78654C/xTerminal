@@ -57,12 +57,13 @@ Protocols code:
 47     : GRE
 58     : ICMPv6
 
-Note: Requires administrator privileges.
+Note: Requires administrator privileges. (-list works with privileges as wel)
 ";
         public void Execute(string arg)
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 // No parameter.
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
@@ -230,10 +231,12 @@ Note: Requires administrator privileges.
             catch (UnauthorizedAccessException ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Requires administrator privileges. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

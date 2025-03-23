@@ -49,12 +49,14 @@ namespace Core.DirFiles
             if (string.IsNullOrEmpty(fileUrl))
             {
                 FileSystem.ErrorWriteLine("You need to specify the path to file or URL. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
             var isParamPresent = ExpireFormatList.Any(param => expires.EndsWith(param));
             if (!isParamPresent) {
                 FileSystem.ErrorWriteLine("You need to use the expire data format. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
 
@@ -65,6 +67,7 @@ namespace Core.DirFiles
                 if (!File.Exists(fileUrl))
                 {
                     FileSystem.ErrorWriteLine($"File does not exist: {fileUrl}. Use -h for more information!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
             }
@@ -88,6 +91,7 @@ namespace Core.DirFiles
             if (string.IsNullOrEmpty(token))
             {
                 FileSystem.ErrorWriteLine("You need to specify the uploaded file token. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             var deleted = Task.Run(()=>Api.deleteFile(token)).Result;
@@ -106,6 +110,7 @@ namespace Core.DirFiles
             if (string.IsNullOrEmpty(bucketToken))
             {
                 FileSystem.ErrorWriteLine("You need to specify the bucket token. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             var resp = Task.Run(()=> Api.deleteBucket(bucketToken)).Result;
@@ -124,6 +129,7 @@ namespace Core.DirFiles
             if (string.IsNullOrEmpty(fileToken))
             {
                 FileSystem.ErrorWriteLine("You need to specify the uploaded file token. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             var tokenInfo = Task.Run(()=>Api.fileInfo(fileToken, true)).Result;

@@ -96,12 +96,14 @@ namespace Core
             catch (TimeoutException)
             {
                 FileSystem.ErrorWriteLine("Time out is to big");
+                GlobalVariables.isErrorCommand = true;
                 s_failure = 0;
                 s_success = 0;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.ToString());
+                GlobalVariables.isErrorCommand = true;
                 s_failure = 0;
                 s_success = 0;
             }

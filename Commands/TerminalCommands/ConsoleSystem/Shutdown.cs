@@ -27,6 +27,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == "shutdown")
                 {
                     SystemCommands.ShutDownCmd(false);
@@ -40,6 +41,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (split.Length < 3)
                     {
                         FileSystem.ErrorWriteLine($"Remote PC parameter should not be empty. Use -h for more information!");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
 
@@ -61,6 +63,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         if (split.Length < 4)
                         {
                             FileSystem.ErrorWriteLine($"Remote PC parameter should not be empty. Use -h for more information!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
                         var remotePC = split[3].Trim();
@@ -78,6 +81,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

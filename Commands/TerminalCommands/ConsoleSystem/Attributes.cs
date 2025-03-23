@@ -42,6 +42,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
+                
+                GlobalVariables.isErrorCommand = false;
 
                 // Set attribute
                 if (arg.Contains("-s "))
@@ -92,6 +94,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (!FileSystem.IsFileOrDirectoryPresent(fileDir))
                 {
                     FileSystem.ErrorWriteLine($"Directory/File does not exist: {fileDir}");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 var getAttribute = new AttributesManage(new List<string>(), fileDir);
@@ -100,6 +103,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             catch(Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
             }
         }
 

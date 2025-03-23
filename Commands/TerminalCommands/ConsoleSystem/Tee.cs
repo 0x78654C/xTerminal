@@ -20,6 +20,7 @@ Tee is used with pipe commands and it saves the output from previous command in 
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
@@ -53,6 +54,7 @@ Tee is used with pipe commands and it saves the output from previous command in 
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

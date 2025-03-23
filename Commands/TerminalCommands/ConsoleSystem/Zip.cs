@@ -27,6 +27,7 @@ s  - SmallestSize
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 // No parameter.
                 if (arg == Name && !GlobalVariables.isPipeCommand)
                 {
@@ -110,6 +111,7 @@ s  - SmallestSize
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine($"{ex.Message}. Use -h for more information!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

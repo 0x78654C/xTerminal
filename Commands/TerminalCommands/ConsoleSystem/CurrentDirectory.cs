@@ -1,5 +1,4 @@
 ﻿using Core;
-using System;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -22,6 +21,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 int newPathLength = arg.Length - 3;
                 if (GlobalVariables.isPipeCommand)
                     s_newLocation = GlobalVariables.pipeCmdOutput.Trim();
@@ -42,6 +42,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             return;
                         }
                         FileSystem.ErrorWriteLine($"Directory '{s_newLocation}'\\ does not exist!");
+                        GlobalVariables.isErrorCommand = true;
                     }
                     else if (s_newLocation == "..")
                     {
@@ -75,6 +76,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         if(s_newLocation.Contains("/"))
                         {
                             FileSystem.ErrorWriteLine($"Wrong path separator format!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
 
@@ -93,6 +95,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             return;
                         }
                         FileSystem.ErrorWriteLine($"Directory '{pathCombine}' does not exist!");
+                        GlobalVariables.isErrorCommand = true;
                     }
                     return;
                 }

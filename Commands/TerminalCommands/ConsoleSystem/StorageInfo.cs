@@ -19,6 +19,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         {
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg.Split(' ')[1] == "-r")
                 {
                     Console.Write("Type remote PC name or IP: ");
@@ -26,6 +27,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     if (!ping.PingHost(pc))
                     {
                         FileSystem.ErrorWriteLine($"{pc} is offline!");
+                        GlobalVariables.isErrorCommand = true;
                         return;
                     }
                     string wmiDetails = Wmi.GetWMIDetails("SELECT * FROM Win32_DiskDrive", s_itemNames, @"\\" + pc + @"\root\cimv2");
@@ -46,6 +48,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     GlobalVariables.pipeCmdOutput = Wmi.SizeConvert(wmiDetails, false);
                 else
                     Console.WriteLine(Wmi.SizeConvert(wmiDetails, false));
+                GlobalVariables.isErrorCommand = true;
             }
         }
         private static string HelpCommand()

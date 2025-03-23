@@ -16,7 +16,7 @@ namespace Commands.TerminalCommands.Network
         public string Name => "wol";
         public void Execute(string args)
         {
-
+            GlobalVariables.isErrorCommand = false;
             if (args.Trim()  == Name)
             {
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
@@ -42,6 +42,7 @@ namespace Commands.TerminalCommands.Network
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine($"{e.Message}. Check parameters!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }

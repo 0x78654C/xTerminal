@@ -32,9 +32,9 @@ Usage of Password Manager commands:
 
         public void Execute(string arg)
         {
-
             try
             {
+                GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
@@ -60,10 +60,12 @@ Usage of Password Manager commands:
             catch (FileNotFoundException)
             {
                 FileSystem.ErrorWriteLine("Vault was not found. Check command!");
+                GlobalVariables.isErrorCommand = true;
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message + ". Check command!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -102,10 +104,12 @@ Usage of Password Manager commands:
                 if (vaultName.Length < 3)
                 {
                     FileSystem.ErrorWriteLine("Vault name must be at least 3 characters long!");
+                    GlobalVariables.isErrorCommand = true;
                 }
                 else if (string.Join("\n", vaultFiles).Contains($"{vaultName}.x"))
                 {
                     FileSystem.ErrorWriteLine($"Vault {vaultName} already exists!");
+                    GlobalVariables.isErrorCommand = true;
                 }
                 else
                 {
@@ -126,13 +130,17 @@ Usage of Password Manager commands:
                 if (masterPassword1 != masterPassword2)
                 {
                     FileSystem.ErrorWriteLine("Passwords are not the same!");
+                    GlobalVariables.isErrorCommand = true;
                 }
                 else
                 {
                     passValidation = true;
                 }
                 if (!PasswordValidator.ValidatePassword(masterPassword2))
+                {
                     FileSystem.ErrorWriteLine("Password must be at least 12 characters, and must include at least one upper case letter, one lower case letter, one numeric digit, one special character and no space!");
+                    GlobalVariables.isErrorCommand = true;
+                }
                 if (CheckMaxTries())
                     return;
             } while ((masterPassword1 != masterPassword2) || !PasswordValidator.ValidatePassword(masterPassword2));
@@ -147,6 +155,7 @@ Usage of Password Manager commands:
                     return;
                 }
                 FileSystem.ErrorWriteLine(sealVault + ". Check command!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -160,6 +169,7 @@ Usage of Password Manager commands:
             if (string.IsNullOrEmpty(vaultName))
             {
                 FileSystem.ErrorWriteLine($"You must type the vault name!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             vaultName = vaultName.ToLower();
@@ -184,6 +194,7 @@ Usage of Password Manager commands:
                 return;
             }
             FileSystem.ErrorWriteLine($"Vault {vaultName} does not exist anymore!");
+            GlobalVariables.isErrorCommand = true;
         }
 
         /// <summary>
@@ -220,6 +231,7 @@ Usage of Password Manager commands:
             if (filesCount == 0)
             {
                 FileSystem.ErrorWriteLine("There are no vaults created!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             FileSystem.SuccessWriteLine("List of current vaults:");
@@ -269,6 +281,7 @@ Usage of Password Manager commands:
             if (decryptVault.Contains("Error decrypting"))
             {
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             FileSystem.SuccessWriteLine("Enter application name:");
@@ -304,6 +317,7 @@ Usage of Password Manager commands:
                         if (outJson["site/application"] == application && outJson["account"] == account)
                         {
                             FileSystem.ErrorWriteLine($"Vault already contains {account} account in {application} application!");
+                            GlobalVariables.isErrorCommand = true;
                             return;
                         }
                     }
@@ -329,6 +343,7 @@ Usage of Password Manager commands:
             else
             {
                 FileSystem.ErrorWriteLine($"Vault {vault} does not exist!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
@@ -341,11 +356,13 @@ Usage of Password Manager commands:
             if (decryptVault.Contains("Error decrypting"))
             {
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             if (string.IsNullOrEmpty(decryptVault))
             {
                 FileSystem.ErrorWriteLine("There is no data saved in this vault!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             FileSystem.SuccessWriteLine("Enter application name (leave blank for all applications):");
@@ -432,6 +449,7 @@ Usage of Password Manager commands:
             if (decryptVault.Contains("Error decrypting"))
             {
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             FileSystem.SuccessWriteLine("Enter application name:");
@@ -461,6 +479,7 @@ Usage of Password Manager commands:
                 if (CheckMaxTries())
                     return;
                 FileSystem.ErrorWriteLine("Account name should not be empty!");
+                GlobalVariables.isErrorCommand = true;
                 WordColorInLine("Enter account name for ", application, ":", ConsoleColor.Magenta);
                 accountName = Console.ReadLine();
             }
@@ -530,6 +549,7 @@ Usage of Password Manager commands:
             if (decryptVault.Contains("Error decrypting"))
             {
                 FileSystem.ErrorWriteLine("Something went wrong. Check master password or vault name!");
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
             FileSystem.SuccessWriteLine("Enter application name:");
@@ -602,9 +622,11 @@ Usage of Password Manager commands:
                         return;
                     }
                     FileSystem.ErrorWriteLine($"Account {accountName} does not exist!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 FileSystem.ErrorWriteLine($"Vault {vault} does not exist!");
+                GlobalVariables.isErrorCommand = true;
             }
         }
 
