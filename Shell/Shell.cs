@@ -241,17 +241,13 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunDoubleAndCommands(string cmd)
         {
-            //foreach (var cmd in commands)
-            //{
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
             {
                 GlobalVariables.isErrorCommand = false;
-                //break;
             }
             c.Execute(cmdExecute);
-            // }
         }
 
         /// <summary>
