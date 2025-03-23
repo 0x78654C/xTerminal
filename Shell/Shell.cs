@@ -196,6 +196,7 @@ namespace Shell
                     GlobalVariables.aliasParameters = string.Empty;
                     GlobalVariables.aliasRunFlag = false;
                     GlobalVariables.isErrorCommand = false;
+                    GlobalVariables.isPipeCommand = false;
                     GlobalVariables.aliasInParameter.Clear();
                 }
             }
@@ -206,6 +207,7 @@ namespace Shell
                 GlobalVariables.isErrorCommand = false;
                 GlobalVariables.pipeCmdCount = 0;
                 GlobalVariables.pipeCmdCountTemp = 0;
+                GlobalVariables.isPipeCommand = false;
             }
         }
 
