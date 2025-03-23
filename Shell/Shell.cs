@@ -38,7 +38,6 @@ namespace Shell
         private static string s_indicatorColor = "white";
         private static string s_userColor = "green";
         private static int s_userEnabled = 1;
-        private static int s_commandsRuned = 0;
         private static string s_cdColor = "cyan";
         private static string s_historyLimitSize = "2000";
         private static int s_ctrlKey = 1;
@@ -47,7 +46,6 @@ namespace Shell
         private static string s_aliasFile = GlobalVariables.aliasFile;
         private static bool s_isCDVisible = true;
         private static List<string> _history = new List<string>();
-        private static int countMultiCommand = 0;
         public static bool HistoryEnabled { get; set; }
         public static IAutoCompleteHandler AutoCompletionHandler { private get; set; }
         //-------------------------------
@@ -157,7 +155,6 @@ namespace Shell
                 var c = Commands.CommandRepository.GetCommand(command);
                 CheckAliasCommandRun(GlobalVariables.aliasParameters);
 
-                s_commandsRuned = 0;
                 if (c != null || !string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
@@ -181,29 +178,7 @@ namespace Shell
                         }
                         GlobalVariables.isPipeCommand = false;
                     }
-                    /*
-                    // Run multiple commands if previous one succeed.
-                    else if (command.Contains("&&"))
-                    {
-                        var commandSplit = command.Split("&&");
-                        RunDoubleAndCommands(commandSplit);
-                    }
-
-                    // Run multiple commands if previous one failed.
-                    else if (command.Contains("||"))
-                    {
-                        var commandSplit = command.Split("||");
-                        RunParalelCommands(commandSplit);
-                    }
-
-                    // Run multiple commands.
-                    else if (command.Contains(";"))
-                    {
-                        var commandSplit = command.Split(";");
-                        RunContinousCommands(commandSplit);
-                    }
-                    */
-
+                   
                     // Run command in background.
                     else if (command.EndsWith("&"))
                     {
@@ -215,7 +190,6 @@ namespace Shell
                         bgCommands.ExecuteCommand();
                     }
                     else
-                        // c.Execute(command);
                         ParseMultiCommand(command);
 
                     // Reset alias parameters.
@@ -223,7 +197,6 @@ namespace Shell
                     GlobalVariables.aliasRunFlag = false;
                     GlobalVariables.isErrorCommand = false;
                     GlobalVariables.aliasInParameter.Clear();
-                    countMultiCommand = 0;
                 }
             }
             catch (Exception e)
@@ -255,16 +228,10 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunParalelCommands(string cmd)
         {
-            // foreach (var cmd in commands)
-            //{
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
                 c.Execute(cmdExecute);
-            if (s_commandsRuned == 0)
-                c.Execute(cmdExecute);
-            s_commandsRuned++;
-            // }
         }
 
 
@@ -324,40 +291,39 @@ namespace Shell
                     var isSymbol = multiSysmbols.Any(s => s == part);
                     if (!isSymbol)
                     {
-                        j++;
-                        var x = j - 1;
-                        if (multiSysmbols.Count > x)
-                        {
-                            if (countMultiCommand > 0)
-                            {
-
-                                var sym = multiSysmbols[x];
-                                //TODO: check type of command and when first executes.
-                                switch (sym)
-                                {
-                                    case "&&":
-                                        if (!GlobalVariables.isErrorCommand)
-                                            RunDoubleAndCommands(part.Trim());
-                                        break;
-                                    case "||":
-                                        if (GlobalVariables.isErrorCommand)
-                                            RunParalelCommands(part.Trim());
-                                        break;
-                                    case ";":
-                                        RunContinousCommands(part.Trim());
-                                        break;
-                                }
-                            }
-                        }
-                        else
+                        if (j == 0)
                         {
                             var c = Commands.CommandRepository.GetCommand(part.Trim());
                             c.Execute(part.Trim());
+                            j++;
+                            continue;
                         }
-                        countMultiCommand++;
+                        j++;
+                        var x = j - 2;
+                        if (multiSysmbols.Count > x)
+                        {
+
+                            var sym = multiSysmbols[x];
+                            //TODO: check type of command and when first executes.
+                            switch (sym)
+                            {
+                                case "&&":
+                                    if (!GlobalVariables.isErrorCommand)
+                                        RunDoubleAndCommands(part.Trim());
+                                    break;
+                                case "||":
+                                    if (GlobalVariables.isErrorCommand)
+                                        RunParalelCommands(part.Trim());
+                                    break;
+                                case ";":
+                                    RunContinousCommands(part.Trim());
+                                    break;
+                            }
+                        }
                     }
                 }
-            }catch (Exception ex) { Console.WriteLine(ex.ToString()); }
+            }
+            catch (Exception ex) { Console.WriteLine(ex.ToString()); }
         }
 
         /// <summary>
