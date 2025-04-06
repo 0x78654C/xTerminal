@@ -14,7 +14,7 @@
     <OutputPath>..\..\Release\xTerminal\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>xIcon.ico</ApplicationIcon>
+    <ApplicationIcon>xterminal2.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'x64|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -40,7 +40,7 @@
   <ItemGroup>
     <Content Include="logo_t.ico" />
     <Content Include="shell_beta.ico" />
-    <Content Include="xIcon.ico" />
+    <Content Include="xterminal2.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Commands\Commands.csproj" />
