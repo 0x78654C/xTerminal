@@ -25,7 +25,9 @@ namespace Commands.TerminalCommands.OpenAi
             try
             {
                 var apiKey = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
-                var decryptedKey = DPAPI.Decrypt(apiKey);
+                var decryptedKey = "";
+                if (!string.IsNullOrEmpty(apiKey))
+                    decryptedKey = DPAPI.Decrypt(apiKey);
                 GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
@@ -40,10 +42,11 @@ namespace Commands.TerminalCommands.OpenAi
 
                 if (arg.Contains("-setkey"))
                 {
-                    //TODO: addd hash console key when type
-                    var getConsoleKey = arg.SplitByText("-setkey ", 1).Trim();
-                    var encryptKey = DPAPI.Encrypt(getConsoleKey);
+                    FileSystem.SuccessWriteLine("Enter AI API key: ");
+                    var getConsoleKey = FileSystem.GetHiddenConsoleInput();
+                    var encryptKey = DPAPI.Encrypt(getConsoleKey.ConvertSecureStringToString());
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, encryptKey);
+                    Console.WriteLine();
                     FileSystem.SuccessWriteLine("OpenAI API key is stored!");
                     return;
                 }
