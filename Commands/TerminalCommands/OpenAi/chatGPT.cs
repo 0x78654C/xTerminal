@@ -40,6 +40,7 @@ namespace Commands.TerminalCommands.OpenAi
 
                 if (arg.Contains("-setkey"))
                 {
+                    //TODO: addd hash console key when type
                     var getConsoleKey = arg.SplitByText("-setkey ", 1).Trim();
                     var encryptKey = DPAPI.Encrypt(getConsoleKey);
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, encryptKey);
