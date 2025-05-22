@@ -4,6 +4,7 @@ using Core;
 using System.Runtime.Versioning;
 using Core.OpenAI;
 using System.IO;
+using Core.Encryption;
 
 namespace Commands.TerminalCommands.OpenAi
 {
@@ -21,10 +22,10 @@ namespace Commands.TerminalCommands.OpenAi
         OpenAIManage openAI;
         public void Execute(string arg)
         {
-
             try
             {
                 var apiKey = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
+                var decryptedKey = DPAPI.Decrypt(apiKey);
                 GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
@@ -40,11 +41,12 @@ namespace Commands.TerminalCommands.OpenAi
                 if (arg.Contains("-setkey"))
                 {
                     var getConsoleKey = arg.SplitByText("-setkey ", 1).Trim();
-                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, getConsoleKey);
+                    var encryptKey = DPAPI.Encrypt(getConsoleKey);
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, encryptKey);
                     FileSystem.SuccessWriteLine("OpenAI API key is stored!");
                     return;
                 }
-                if (string.IsNullOrEmpty(apiKey))
+                if (string.IsNullOrEmpty(decryptedKey))
                 {
                     FileSystem.ErrorWriteLine("No OpenAI API key was found. Use -setKey to store your API key!");
                     GlobalVariables.isErrorCommand = true;
@@ -58,7 +60,7 @@ namespace Commands.TerminalCommands.OpenAi
                     GlobalVariables.isErrorCommand = true;
                     return;
                 }
-                GetOpenAIData(question, apiKey).Wait();
+                GetOpenAIData(question, decryptedKey).Wait();
             }
             catch (Exception e)
             {
