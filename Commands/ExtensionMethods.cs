@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 
 namespace Commands
 {
@@ -83,5 +84,26 @@ namespace Commands
         /// <param name="param"></param>
         /// <returns></returns>
         internal static string GetParamValue(this string arg, string param) => arg.SplitByText(param, 1).Trim().Split(' ')[0];
+
+        /// <summary>
+        /// Converts the secure string to string.
+        /// </summary>
+        /// <returns>The secure string to string.</returns>
+        /// <param name="data">Data.</param>
+        internal static string ConvertSecureStringToString(this SecureString data)
+           => new System.Net.NetworkCredential(string.Empty, data).Password;
+
+        /// <summary>
+        /// Convert string to secure string.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        internal static SecureString StringToSecureString(this string data)
+        {
+            var secureString = new SecureString();
+            foreach (var c in data)
+                secureString.AppendChar(c);
+            return secureString;
+        }
     }
 }
