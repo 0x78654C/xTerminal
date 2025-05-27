@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
+    <ProjectReference Include="..\OpenRouter\OpenRouter.csproj" />
   </ItemGroup>
 
   <ItemGroup>
