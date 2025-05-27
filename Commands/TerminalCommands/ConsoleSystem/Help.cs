@@ -108,8 +108,8 @@ This is the full list of commands that can be used in xTerminal:
                  Disclaimer: Use it at your OWN risk.
                  Use -h for additional help.
 
-    ------------------------ OpenAI -------------------------
-    cgpt      -- Ask OpenAI(chatGPT) questions and display answer in terminal.
+    -------------------- OpenAI/OpenRouter -------------------
+    cgpt      -- Ask OpenAI(chatGPT)/OpenRouter questions and display answer in terminal.
                  Use -h for additional help.
 
     ------------------------ Games --------------------------
