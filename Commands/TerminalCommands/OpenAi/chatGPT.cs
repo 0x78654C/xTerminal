@@ -5,6 +5,8 @@ using System.Runtime.Versioning;
 using Core.OpenAI;
 using System.IO;
 using Core.Encryption;
+using OpenRouter;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Commands.TerminalCommands.OpenAi
 {
@@ -15,11 +17,12 @@ namespace Commands.TerminalCommands.OpenAi
     {
         public string Name => "cgpt";
         private static string s_helpMessage = @"Usage of cgpt command:
+    Info: This command allows you to interact with OpenAI's chatGPT model or OpenRouter's models directly from the terminal.
 
-    Example 1: cgpt -setkey key_from_openai (Store the API key provided by OpenAI.com)
+    Example 1: cgpt -setkey key_from_openai (Store the API key provided by OpenAI or OpenRouter)
     Example 2: cgpt question_you_want_to_ask (Display the answer for your question)
 ";
-        OpenAIManage openAI;
+
         public void Execute(string arg)
         {
             try
@@ -44,15 +47,19 @@ namespace Commands.TerminalCommands.OpenAi
                 {
                     FileSystem.SuccessWriteLine("Enter AI API key: ");
                     var getConsoleKey = FileSystem.GetHiddenConsoleInput();
+
                     var encryptKey = DPAPI.Encrypt(getConsoleKey.ConvertSecureStringToString());
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, encryptKey);
                     Console.WriteLine();
-                    FileSystem.SuccessWriteLine("OpenAI API key is stored!");
+                    if(getConsoleKey.ConvertSecureStringToString().StartsWith("sk-or"))
+                        FileSystem.SuccessWriteLine("OpenRouter API key is stored!");
+                    else
+                        FileSystem.SuccessWriteLine("OpenAI API key is stored!");
                     return;
                 }
                 if (string.IsNullOrEmpty(decryptedKey))
                 {
-                    FileSystem.ErrorWriteLine("No OpenAI API key was found. Use -setKey to store your API key!");
+                    FileSystem.ErrorWriteLine("No OpenAI/OpenRouter API key was found. Use -setKey to store your API key!");
                     GlobalVariables.isErrorCommand = true;
                     return;
                 }
@@ -80,10 +87,24 @@ namespace Commands.TerminalCommands.OpenAi
         /// <param name="apiKey"></param>
         public async Task GetOpenAIData(string question, string apiKey)
         {
-            if(!GlobalVariables.isPipeCommand)
-                FileSystem.SuccessWriteLine("Loading data from OpenAI:");
-            openAI = new OpenAIManage(apiKey, question.Trim());
-            StringReader reader = new StringReader(await openAI.AskOpenAI());
+            if (!GlobalVariables.isPipeCommand)
+            {
+                if(apiKey.StartsWith("sk-or"))
+                    FileSystem.SuccessWriteLine("Loading data from OpenRouter:");
+                else
+                    FileSystem.SuccessWriteLine("Loading data from OpenAI:");
+            }
+            StringReader reader;
+            if (apiKey.StartsWith("sk-or"))
+            {
+                var openRouterClient = new OpenRouterClient(apiKey);
+                reader = new StringReader(await openRouterClient.SendPromptAsync(question));
+            }
+            else
+            {
+                var openAI = new OpenAIManage(apiKey, question.Trim());
+                reader = new StringReader(await openAI.AskOpenAI());
+            }
             string line = "";
             while ((line = reader.ReadLine()) != null)
             {
