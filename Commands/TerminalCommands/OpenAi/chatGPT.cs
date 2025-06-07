@@ -6,7 +6,6 @@ using Core.OpenAI;
 using System.IO;
 using Core.Encryption;
 using OpenRouter;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Commands.TerminalCommands.OpenAi
 {
@@ -27,10 +26,7 @@ namespace Commands.TerminalCommands.OpenAi
         {
             try
             {
-                var apiKey = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
-                var decryptedKey = "";
-                if (!string.IsNullOrEmpty(apiKey))
-                    decryptedKey = DPAPI.Decrypt(apiKey);
+        
                 GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
@@ -55,6 +51,19 @@ namespace Commands.TerminalCommands.OpenAi
                         FileSystem.SuccessWriteLine("OpenRouter API key is stored!");
                     else
                         FileSystem.SuccessWriteLine("OpenAI API key is stored!");
+                    return;
+                }
+                var apiKey = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
+                var decryptedKey = "";
+                try
+                {
+                    if (!string.IsNullOrEmpty(apiKey))
+                        decryptedKey = DPAPI.Decrypt(apiKey);
+                }
+                catch
+                {
+                    FileSystem.ErrorWriteLine("OpenAI/OpenRouter API key is corrputed, you need to set a new one!");
+                    GlobalVariables.isErrorCommand = true;
                     return;
                 }
                 if (string.IsNullOrEmpty(decryptedKey))
