@@ -539,7 +539,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![image](https://github.com/user-attachments/assets/abae91d0-560b-4c53-8aff-a0653f8981ab)
+![image](https://github.com/user-attachments/assets/192c60a6-c38d-4736-ae27-b9ad4539b296)
 
 
 
