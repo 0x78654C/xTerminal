@@ -35,7 +35,7 @@ Example:
  Double press TAB key and will suggest you all the files that starts with the letters 'ap' from current location.
 
  ## Commands
-This is the full list of commands that can be used in xTerminal:
+ This is the full list of commands that can be used in xTerminal:
 
     ------------------------ System ------------------------
     ls        -- List directories and files on a directory. Use -h for additional parameters.
@@ -389,6 +389,12 @@ This is the full list of commands that can be used in xTerminal:
                  Example 1:  wol -ip IPAddress/HostName -mac MAC_Address                   : sends wake packet for ip/mac.
                  Example 2:  wol -ip IPAddress/HostName -mac MAC_Address -port number_port : sends wake packet for ip/mac and custom WOL port.
     dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
+    trace     -- Traces the route to a specific IP/Hostname. Use -h for additional parameters.
+                 Example 1: trace google.com  (for normal tracerout command)
+                 Example 2: trace google.com -ipv6  (for IPv6 traceroute enabled)
+                 Example 3: trace google.com -hops 50  (for traceroute with 50 hops)
+                 Example 4: trace google.com -timeout 1000  (for traceroute with 1000 ms timeout)
+                 Example 5: trace google.com -hops 50 -timeout 1000 -ipv6  (for traceroute with 50 hops, 1000 ms timeout and IPv6 traceroute enabled)
 
     ---------------- C# Code Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
