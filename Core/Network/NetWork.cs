@@ -10,7 +10,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 
-namespace Core
+namespace Core.Network
 {
     [SupportedOSPlatform("Windows")]
     /*Network class for check Ping and Internet connection.*/
@@ -350,7 +350,7 @@ namespace Core
                 result.Add(line);
             }
 
-            return result.Where(x => !string.IsNullOrEmpty(x) && (x.Contains("dynamic")))
+            return result.Where(x => !string.IsNullOrEmpty(x) && x.Contains("dynamic"))
                 .Select(x =>
                 {
                     string[] parts = x.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);

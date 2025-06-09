@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Network;
+using System;
 using System.Net.Mail;
 using System.Runtime.Versioning;
 using System.Text;

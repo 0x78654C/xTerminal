@@ -4,6 +4,7 @@ using System.Globalization;
 using Log = Core.FileSystem;
 using System.Text.RegularExpressions;
 using System.Runtime.Versioning;
+using Core.Network;
 
 namespace Core
 {

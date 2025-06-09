@@ -1,7 +1,7 @@
 ﻿using Core;
 using System;
 using System.Runtime.Versioning;
-using Ping = Core.NetWork;
+using Ping = Core.Network.NetWork;
 using Wmi = Core.Hardware.WMIDetails;
 
 namespace Commands.TerminalCommands.ConsoleSystem

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.Versioning;
 using Core;
+using Core.Network;
 
 namespace Commands.TerminalCommands.Network
 {

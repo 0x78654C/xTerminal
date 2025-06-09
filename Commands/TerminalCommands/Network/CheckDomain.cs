@@ -1,7 +1,7 @@
 ﻿using Core;
 using System;
 using System.Runtime.Versioning;
-using ping = Core.NetWork;
+using ping = Core.Network.NetWork;
 
 namespace Commands.TerminalCommands.Network
 {
