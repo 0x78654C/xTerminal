@@ -539,61 +539,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-Begin Commands	Middle Commands	End Commands
-cat	cat	cat
-		cat -s
-		cat -l
-		cat -sa
-		cat -t
-		cat -b
-binfo		
-cp	cp	cp
-		cd
-shred		shred
-fsig		fsig
-help		
-hex	hex	hex
-ls	ls	ls
-ls -s	ls -s	ls -s
-ls -d	ls -d	ls -d
-ls -d -e	ls -d -e	ls -d -e
-pcinfo		odir
-sinfo		
-		del
-		echo
-		edit
-		mv
-		locate
-sort	sort	sort
-		md5
-		icheck
-		wget
-ifconfig		
-ping		ping
-plist		plist
-exif	exif	exif
-pjson		pjson
-sc -list	sc -list	sc -list
-sc -des		sc -des
-sc -status		sc -status
-sc -start		sc -start
-sc -stop		sc -stop
-sc -restart		sc -restart
-fw -list		echo >
-		echo >>
-		echo -e
-		ln
-		ln -o
-zip -n		zip -n
-zip -list	zip -list	zip -list
-trace	trace	trace
-trace -ipv6	trace -ipv6	trace -ipv6
-trace -host	trace -host	trace -host
-trace -timeout	trace -timeout	trace -timeout
 ![image](https://github.com/user-attachments/assets/8e80ba4b-2a36-4099-b0c7-b1364263eda9)
-
-
-![image](https://github.com/user-attachments/assets/807086f9-7fa1-4ec9-b940-ed09e2e0e335)
 
 
 Pipe commands cand be added even to alias commands.
