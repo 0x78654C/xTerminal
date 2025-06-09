@@ -539,7 +539,9 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![image](https://github.com/user-attachments/assets/8e80ba4b-2a36-4099-b0c7-b1364263eda9)
+![image](https://github.com/user-attachments/assets/abae91d0-560b-4c53-8aff-a0653f8981ab)
+
+
 
 
 Pipe commands cand be added even to alias commands.
