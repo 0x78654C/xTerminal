@@ -1,4 +1,6 @@
-﻿// Open router api call
+﻿/*
+ Open router api call
+ */
 
 using System.Net.Http.Headers;
 using System.Text;
