@@ -1,11 +1,8 @@
 ﻿/*
-
-Class for performing a traceroute operation using the Ping class. 
- 
+    Class for performing a traceroute operation using the Ping class. 
  */
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -38,10 +35,10 @@ namespace Core.Network
 
             using var ping = new Ping();
 
-            while (ttl < maxHops)
+            while (ttl <= maxHops)
             {
                 var pingOptions = new PingOptions(ttl, true);
-                var reply = (!isIPv6) ? ping.Send(ipv4Address, timeOut, buffer, pingOptions) : ping.Send(address, timeOut, buffer, pingOptions);
+                var reply = (!isIPv6) ? ping.SendPingAsync(ipv4Address, timeOut, buffer, pingOptions).Result : ping.SendPingAsync(address, timeOut, buffer, pingOptions).Result;
                 yield return (ttl, reply);
 
                 if (reply.Status == IPStatus.Success)
