@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using System.Threading;
+using Core.Network;
 
 namespace Commands.TerminalCommands.Network
 {

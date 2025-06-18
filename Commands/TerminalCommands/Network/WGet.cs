@@ -9,6 +9,7 @@ using CheckType = Core.FileSystem.CheckType;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Runtime.Versioning;
+using Core.Network;
 
 namespace Commands.TerminalCommands.Network
 {

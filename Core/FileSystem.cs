@@ -4,6 +4,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
+using System.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
@@ -634,6 +635,36 @@ namespace Core
             var epoh = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + unixTimeStamp;
             dateTime = dateTime.AddMilliseconds(epoh).ToLocalTime();
             return dateTime.ToString("HH:mm:ss dd/MM/yyyy");
+        }
+
+        /// <summary>
+        /// Hidding password imput for strings
+        /// </summary>
+        /// <returns></returns>
+        public static SecureString GetHiddenConsoleInput()
+        {
+            var pwd = new SecureString();
+            while (true)
+            {
+                var i = Console.ReadKey(true);
+                if (i.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+
+                if (i.Key == ConsoleKey.Backspace)
+                {
+                    if (pwd.Length <= 0) continue;
+                    pwd.RemoveAt(pwd.Length - 1);
+                    Console.Write("\b \b");
+                }
+                else if (i.KeyChar != '\u0000')
+                {
+                    pwd.AppendChar(i.KeyChar);
+                    Console.Write("*");
+                }
+            }
+            return pwd;
         }
     }
 }

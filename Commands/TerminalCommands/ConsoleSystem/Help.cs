@@ -92,6 +92,7 @@ This is the full list of commands that can be used in xTerminal:
     cport     -- Checks if a specific port is open/closed on a Hostname/IP. Use -h for additional parameters.
     wol       -- Sends Wake over LAN packet to a machine.  Use -h for additional parameters.
     dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
+    trace     -- Traces the route to a specific IP/Hostname. Use -h for additional parameters.
 
     -----------------C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
@@ -108,8 +109,8 @@ This is the full list of commands that can be used in xTerminal:
                  Disclaimer: Use it at your OWN risk.
                  Use -h for additional help.
 
-    ------------------------ OpenAI -------------------------
-    cgpt      -- Ask OpenAI(chatGPT) questions and display answer in terminal.
+    -------------------- OpenAI/OpenRouter -------------------
+    cgpt      -- Ask OpenAI(chatGPT)/OpenRouter questions and display answer in terminal.
                  Use -h for additional help.
 
     ------------------------ Games --------------------------
