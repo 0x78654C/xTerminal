@@ -108,9 +108,9 @@ Command can be canceled with CTRL+X key combination.
                     var rtt = reply.RoundtripTime;
                     string status = reply.Status.ToString();
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                        GlobalVariables.pipeCmdOutput += $"Hop {sentTtl}: Host: {hostname} ({address}), RoundTrip: {rtt} ms, Status: {status}\n";
+                        GlobalVariables.pipeCmdOutput += $"Hop {sentTtl} - Host: {hostname} ({address}), RoundTrip: {rtt} ms, Status: {status}\n";
                     else
-                        FileSystem.SuccessWriteLine($"Hop {sentTtl}: Host: {hostname} ({address}), RoundTrip: {rtt} ms, Status: {status}");
+                        FileSystem.SuccessWriteLine($"Hop {sentTtl} - Host: {hostname} ({address}), RoundTrip: {rtt} ms, Status: {status}");
 
 
 
