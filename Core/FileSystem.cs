@@ -44,6 +44,20 @@ namespace Core
             }
         }
 
+        /// <summary>
+        /// Determines whether the specified string represents a numeric digit.
+        /// </summary>
+        /// <remarks>A numeric digit is defined as a string that can be successfully parsed into an
+        /// integer. If the input is <see langword="null"/> or an empty string, the method returns <see
+        /// langword="false"/>.</remarks>
+        /// <param name="text">The string to evaluate. This can be null or empty.</param>
+        /// <returns><see langword="true"/> if the string represents a numeric digit; otherwise, <see langword="false"/>.</returns>
+        public static bool IsDigit(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return false;
+            return int.TryParse(text, out _);
+        }
 
         /// <summary>
         /// Check if object is a file or directory.
