@@ -39,24 +39,24 @@ Example:
 
     ------------------------ System ------------------------
     ls        -- List directories and files on a directory. Use -h for additional parameters.
-                   -h  : Displays this message.
-                   -d  : Display duplicate files in a directory and subdirectories.
-                         Example1: ls -d <directory_path>
-                         Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
-                         Example3: ls -d <directory_path> -o <file_to_save>
-                         Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension).
-                         Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)  
-                   -s  : Displays size of files in current directory and subdirectories.
-                   -c  : Counts files and directories and subdirectories from current directory.
-                   -cf : Counts files from current directory and subdirectories with name containing a specific text.
-                         Example: ls -cf <search_text>
-                   -cd : Counts directories from current directory and subdirectories with name containing a specific text.
-                         Example: ls -cd <search_text>
-                   -ct : Display creation date time of files and folders from current directory.
-                   -la : Displays last access date time of files and folders from current directory.
-                   -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
-                   -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-                   -t  : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
+                   -h   : Displays this message.
+                   -dup : Display duplicate files in a directory and subdirectories.
+                          Example1: ls -d <directory_path>
+                          Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
+                          Example3: ls -d <directory_path> -o <file_to_save>
+                          Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension).
+                          Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)  
+                   -s   : Displays size of files in current directory and subdirectories.
+                   -c   : Counts files and directories and subdirectories from current directory.
+                   -cf  : Counts files from current directory and subdirectories with name containing a specific text.
+                          Example: ls -cf <search_text>
+                   -cd  : Counts directories from current directory and subdirectories with name containing a specific text.
+                          Example: ls -cd <search_text>
+                   -ct  : Display creation date time of files and folders from current directory.
+                   -la  : Displays last access date time of files and folders from current directory.
+                   -hl  : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
+                   -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
+                   -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.

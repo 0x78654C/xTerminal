@@ -49,24 +49,24 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
 
         private static string s_helpMessage = @"Usage of ls command:
-    -h  : Displays this message.
-    -d  : Displays duplicate files in a directory and subdirectories.
-          Example1: ls -d <directory_path>
-          Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
-          Example3: ls -d <directory_path> -o <file_to_save>
-          Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
-          Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
-    -s  : Displays size of files in current directory and subdirectories.
-    -c  : Counts files and directories and subdirectories from current directory.
-    -cf : Counts files from current directory and subdirectories with name containing a specific text.
-          Example: ls -cf <search_text>
-    -cd : Counts directories from current directory and subdirectories with name containing a specific text.
-          Example: ls -cd <search_text>
-    -ct : Displays creation date time of files and folders from current directory.
-    -la : Displays last access date time of files and folders from current directory.
-    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
-    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-    -t  : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
+    -h   : Displays this message.
+    -dup : Displays duplicate files in a directory and subdirectories.
+           Example1: ls -d <directory_path>
+           Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
+           Example3: ls -d <directory_path> -o <file_to_save>
+           Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
+           Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
+    -s   : Displays size of files in current directory and subdirectories.
+    -c   : Counts files and directories and subdirectories from current directory.
+    -cf  : Counts files from current directory and subdirectories with name containing a specific text.
+           Example: ls -cf <search_text>
+    -cd  : Counts directories from current directory and subdirectories with name containing a specific text.
+           Example: ls -cd <search_text>
+    -ct  : Displays creation date time of files and folders from current directory.
+    -la  : Displays last access date time of files and folders from current directory.
+    -hl  : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
+    -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
+    -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
 
 Commands can be canceled with CTRL+X key combination.
 
@@ -150,7 +150,7 @@ e - Encrypted
                 }
 
                 // Grab the duplicate files.
-                if (arg.ContainsParameter("-d"))
+                if (arg.ContainsParameter("-dup"))
                 {
 
                     if (arg.ContainsParameter("-length"))
