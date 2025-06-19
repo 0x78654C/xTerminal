@@ -29,6 +29,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countDirectoriesText = 0;
         private static int s_countDirLen = 0;
         private static int s_sm = 0;
+        private static int s_levelTree = 0;
         private Stopwatch s_stopWatch;
         private TimeSpan s_timeSpan;
         private static List<string> s_listFiles = new List<string>();
@@ -274,11 +275,25 @@ e - Encrypted
                     return;
                 }
 
+                // Tree view of directories.
                 if (arg.ContainsParameter("-t"))
                 {
                     GlobalVariables.eventKeyFlagX = true;
                     var currDir = File.ReadAllText(GlobalVariables.currentDirectory);
-                    DisplayTreeDirStructure(currDir);
+                    var level = 0;
+                    if (arg.ContainsParameter("-l"))
+                    {
+                        var levelParam = arg.ParameterAfter("-l").Trim();
+                        if (!FileSystem.IsDigit(levelParam))
+                        {
+                            FileSystem.ErrorWriteLine("The level parameter must be a number!");
+                            GlobalVariables.isErrorCommand = true;
+                            return;
+                        }
+                        level = int.Parse(levelParam);
+                    }
+
+                    DisplayTreeDirStructure(currDir, level);
                     if (arg.ContainsParameter("-o"))
                     {
                         var fileName = args.SplitByText("-o", 1).Trim();
@@ -291,6 +306,7 @@ e - Encrypted
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                     ClearCounters();
+                    s_levelTree = 0;
                     return;
                 }
 
@@ -345,10 +361,14 @@ e - Encrypted
         /// Display structure dirs.
         /// </summary>
         /// <param name="currDir"></param>
-        private void DisplayTreeDirStructure(string currDir, string indent = "", bool isLast = true)
+        private void DisplayTreeDirStructure(string currDir, int level, string indent = "", bool isLast = true)
         {
             try
             {
+                if (level > 1)
+                    if (s_levelTree == level)
+                        return;
+
                 var directories = Directory.GetDirectories(currDir);
                 var dirInfo = new DirectoryInfo(currDir);
                 s_tree += indent + (isLast ? "└─ " : "├─ ") + dirInfo.Name + "\n";
@@ -357,8 +377,10 @@ e - Encrypted
                 {
                     var directory = directories[i];
                     bool isLastDirectory = (i == directories.Length - 1);
-                    DisplayTreeDirStructure(directory, indent, isLastDirectory);
+                    DisplayTreeDirStructure(directory, level, indent, isLastDirectory);
                 }
+                if (level > 1)
+                    s_levelTree++;
             }
             catch
             {
