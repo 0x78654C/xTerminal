@@ -292,8 +292,11 @@ e - Encrypted
                         }
                         level = int.Parse(levelParam);
                     }
+                    if (level == 0)
+                        DisplayTreeDirStructure(currDir);
+                    else
+                        DisplayTreeDirStructureDepth(currDir, level);
 
-                    DisplayTreeDirStructure(currDir, level);
                     if (arg.ContainsParameter("-o"))
                     {
                         var fileName = args.SplitByText("-o", 1).Trim();
@@ -358,10 +361,40 @@ e - Encrypted
         }
 
         /// <summary>
+        /// Display structure dirs with depth.
+        /// </summary>
+        /// <param name="currDir"></param>
+        private void DisplayTreeDirStructureDepth(string currDir, int maxDepth, int currentLevel = 0, string indent = "", bool isLast = true)
+        {
+            if (currentLevel > maxDepth) return;
+
+            try
+            {
+                var directories = Directory.GetDirectories(currDir);
+                var dirInfo = new DirectoryInfo(currDir);
+
+                s_tree += indent + (isLast ? "└─ " : "├─ ") + dirInfo.Name + "\n";
+                indent += isLast ? "   " : "│  ";
+
+                for (int i = 0; i < directories.Length; i++)
+                {
+                    var directory = directories[i];
+                    bool isLastDirectory = (i == directories.Length - 1);
+
+                    DisplayTreeDirStructureDepth(directory, maxDepth, currentLevel + 1, indent, isLastDirectory);
+                }
+            }
+            catch
+            {
+                // Ignore inaccessible directories or other exceptions
+            }
+        }
+
+        /// <summary>
         /// Display structure dirs.
         /// </summary>
         /// <param name="currDir"></param>
-        private void DisplayTreeDirStructure(string currDir, int level, string indent = "", bool isLast = true)
+        private void DisplayTreeDirStructure(string currDir, string indent = "", bool isLast = true)
         {
             try
             {
@@ -373,19 +406,16 @@ e - Encrypted
                 {
                     var directory = directories[i];
                     bool isLastDirectory = (i == directories.Length - 1);
-                    if (level >= 1)
-                        if (s_levelTree >= level)
-                            return;
-                    DisplayTreeDirStructure(directory, level, indent, isLastDirectory);
+                    DisplayTreeDirStructure(directory, indent, isLastDirectory);
                 }
-                if (level >= 1)
-                    s_levelTree++;
+    
             }
             catch
             {
                 // Ignore if no access or any exceptions.
             }
         }
+
 
         private string SeparatorIncrement(int count)
         {
