@@ -365,10 +365,6 @@ e - Encrypted
         {
             try
             {
-                if (level > 1)
-                    if (s_levelTree == level)
-                        return;
-
                 var directories = Directory.GetDirectories(currDir);
                 var dirInfo = new DirectoryInfo(currDir);
                 s_tree += indent + (isLast ? "└─ " : "├─ ") + dirInfo.Name + "\n";
@@ -377,9 +373,12 @@ e - Encrypted
                 {
                     var directory = directories[i];
                     bool isLastDirectory = (i == directories.Length - 1);
+                    if (level >= 1)
+                        if (s_levelTree >= level)
+                            return;
                     DisplayTreeDirStructure(directory, level, indent, isLastDirectory);
                 }
-                if (level > 1)
+                if (level >= 1)
                     s_levelTree++;
             }
             catch
