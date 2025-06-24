@@ -40,6 +40,8 @@ Example:
     ------------------------ System ------------------------
     ls        -- List directories and files on a directory. Use -h for additional parameters.
                    -h   : Displays this message.
+                   -d   : Display only directories.
+                   -f   : Display only files.
                    -dup : Display duplicate files in a directory and subdirectories.
                           Example1: ls -d <directory_path>
                           Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
