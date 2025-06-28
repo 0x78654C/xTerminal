@@ -34,7 +34,7 @@ Example:
                     return;
                 }
 
-                ListProcesses.GetProcessList();
+                ListProcesses.PrintProcessTree();
 
             }
             catch (Exception e)
