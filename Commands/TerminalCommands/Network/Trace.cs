@@ -31,7 +31,7 @@ Command can be canceled with CTRL+X key combination.
         {
             try
             {
-                if (arg == $"{Name} -h")
+                if (arg == $"{Name} -h" && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
