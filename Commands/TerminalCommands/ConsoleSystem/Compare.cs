@@ -66,8 +66,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
 
-            var firstMD5 = Core.Encryption.MD5Hash.GetMD5Hash(firstFile);
-            var secondMD5 = Core.Encryption.MD5Hash.GetMD5Hash(secondFile);
+            var firstMD5 = Core.Encryption.HashAlgo.GetMD5Hash(firstFile);
+            var secondMD5 = Core.Encryption.HashAlgo.GetMD5Hash(secondFile);
             if (firstMD5 == secondMD5)
                 FileSystem.SuccessWriteLine("Files are identical!");
             else
