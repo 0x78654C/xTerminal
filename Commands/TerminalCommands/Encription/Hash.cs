@@ -29,7 +29,7 @@ namespace Commands.TerminalCommands.Encription
                 FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                 return;
             }
-            if (args == $"{Name} -h")
+            if (args == $"{Name} -h" && !GlobalVariables.isPipeCommand)
             {
                 Console.WriteLine(s_helpMessage);
                 return;
@@ -42,7 +42,9 @@ namespace Commands.TerminalCommands.Encription
                 {
 
                     var file =FileSystem.SanitizePath( arg.ParameterAfter("-sha256").Trim(),s_currentDirectory);
-                    if(!File.Exists(file))
+                    if(GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
+                    if (!File.Exists(file))
                     {
                         FileSystem.ErrorWriteLine($"File does not exist: {file}");
                         return;
@@ -50,7 +52,7 @@ namespace Commands.TerminalCommands.Encription
 
                     var hash256 = Core.Encryption.HashAlgo.GetSHA256(file);
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                        GlobalVariables.pipeCmdOutput += hash256;
+                        GlobalVariables.pipeCmdOutput = hash256;
                     else
                         FileSystem.SuccessWriteLine($"SHA256: {hash256}");
                     return ;
@@ -60,6 +62,8 @@ namespace Commands.TerminalCommands.Encription
                 {
 
                     var file = FileSystem.SanitizePath(arg.ParameterAfter("-sha512").Trim(), s_currentDirectory);
+                    if(GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     if (!File.Exists(file))
                     {
                         FileSystem.ErrorWriteLine($"File does not exist: {file}");
@@ -68,13 +72,15 @@ namespace Commands.TerminalCommands.Encription
 
                     var hash512 = Core.Encryption.HashAlgo.GetSHA512(file);
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                        GlobalVariables.pipeCmdOutput += hash512;
+                        GlobalVariables.pipeCmdOutput = hash512;
                     else
                         FileSystem.SuccessWriteLine($"SHA256: {hash512}");
                     return;
                 }
 
                 var filePath = FileSystem.SanitizePath(arg.ParameterAfter("hash").Trim(), s_currentDirectory);
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    filePath = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                 if (!File.Exists(filePath))
                 {
                     FileSystem.ErrorWriteLine($"File does not exist: {filePath}");
@@ -83,7 +89,7 @@ namespace Commands.TerminalCommands.Encription
 
                 var hashMD5 = Core.Encryption.HashAlgo.GetMD5Hash(filePath);
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                    GlobalVariables.pipeCmdOutput += hashMD5;
+                    GlobalVariables.pipeCmdOutput = hashMD5;
                 else
                     FileSystem.SuccessWriteLine($"MD5: {hashMD5}");
                 return;
