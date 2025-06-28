@@ -239,6 +239,10 @@ Example:
                   tee -a <file_name>  : Appends previous command output to an existing file.
                   Example: ls | cat -t 10 | tee data.txt | cat -s exe
     bc        -- Display running background commands.
+    hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
+                  hash <file_path>         : display the MD5 hash for the file.
+                  hash -sha256 <file_path> : display the sha256 hash for the file.
+                  hash -sha512 <file_path> : display the sha512 hash for the file.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
