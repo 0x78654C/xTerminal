@@ -369,7 +369,7 @@ e - Encrypted
                 }
                 else
                 {
-                    FileSystem.ErrorWriteLine(e.ToString());
+                    FileSystem.ErrorWriteLine(e.Message);
                     GlobalVariables.isErrorCommand = true;
                 }
             }
