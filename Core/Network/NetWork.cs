@@ -173,7 +173,7 @@ namespace Core.Network
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}\n";
                 else
-                    Console.WriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
+                    FileSystem.SuccessWriteLine($"Status: {s_pingReply.Status} | Buffer: {s_pingReply.Buffer.Length} | Time: {s_pingReply.RoundtripTime} ms | TTL: {options.Ttl} | Adress: {s_pingReply.Address}");
             }
             else
             {
@@ -181,7 +181,7 @@ namespace Core.Network
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                     GlobalVariables.pipeCmdOutput += $"{address} is down!\n";
                 else
-                    Console.WriteLine($"{address} is down!");
+                    FileSystem.SuccessWriteLine($"{address} is down!");
             }
         }
 
