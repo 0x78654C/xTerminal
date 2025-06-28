@@ -145,10 +145,10 @@ Description:   {description}
                 }
 
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
-                    Console.WriteLine(outMessage);
+                    FileSystem.SuccessWriteLine(outMessage);
 
                 if (!GlobalVariables.isPipeCommand)
-                    Console.WriteLine(outMessage);
+                    FileSystem.SuccessWriteLine(outMessage);
             }
             else if (!_isIterated)
             {
