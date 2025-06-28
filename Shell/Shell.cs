@@ -219,7 +219,7 @@ namespace Shell
         {
             if (string.IsNullOrEmpty(aliasParameter) && GlobalVariables.aliasRunFlag)
             {
-                Console.Error.WriteLine("Check alias command parameter format!");
+                FileSystem.ErrorWriteLine("There is a alias command created with this name. Built in commands has priority on running. Check alias command parameter format! ");
                 GlobalVariables.aliasRunFlag = false;
             }
         }
