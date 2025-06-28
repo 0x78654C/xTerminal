@@ -1,4 +1,19 @@
-﻿using Core;
+﻿/*
+      Description: A Linux like shell for windows with some extras. 
+      The goal was to have a almost like exprience how the bash shell works on linux, a bit modified, but with same simplicity. 
+
+      This app is distributed under the MIT License.
+      Copyright © 2022 - 2025 x_coding. All rights reserved.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+      SOFTWARE.
+*/
+using Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
