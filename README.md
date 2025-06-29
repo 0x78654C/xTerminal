@@ -253,10 +253,16 @@ Example:
                           Example: cat -b 10 <path_of_file_name>
                    -l   : Displays data between two lines.
                           Example: cat -l 10-20 <path_of_file_name>
-                   -s   : Output lines containing a provided text from a file.
-                          Example: cat -s <search_text> <file_search_in>
-                   -so  : Saves the lines containing a provided text from a file.
-                          Example: cat -so <search_text> <file_search_in> -o <file_to_save>
+                   -s   : Outputs lines that contains/starts with/equals/ends with a provided text from a file.
+                          Example1: cat -s <search_text> -f <file_search_in> -- contains text
+                          Example2: cat -s -st <search_text> -f <file_search_in> -- starts with text
+                          Example3: cat -s -eq <search_text> -f <file_search_in> -- equals text
+                          Example4: cat -s -ed <search_text> -f <file_search_in> -- ends with text 
+                   -so  : Saves the lines that contains/starts with/equals/ends with a provided text from a file.
+                          Example1: cat -so <search_text> -f <file_search_in> -o <file_to_save>
+                          Example2: cat -so -st <search_text> -f <file_search_in> -o <file_to_save> -- starts with text
+                          Example3: cat -so -eq <search_text> -f <file_search_in> -o <file_to_save> -- equals text
+                          Example4: cat -so -ed <search_text> -f <file_search_in> -o <file_to_save> -- ends with text
                    -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
                           Example1: cat -sa <search_text>
                           Example2: cat -sa <search_text> <part_of_file_name> 
