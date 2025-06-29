@@ -174,9 +174,12 @@ namespace Shell
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
-                    // Pipe line command execution.
 
-                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
+                    // Check if seach cat command parameters is used.
+                    var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
+
+                    // Pipe line command execution.
+                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&") && !isSearchComand)
                     {
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
