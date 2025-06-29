@@ -263,16 +263,34 @@ Example:
                           Example2: cat -so -st <search_text> -f <file_search_in> -o <file_to_save> -- starts with text
                           Example3: cat -so -eq <search_text> -f <file_search_in> -o <file_to_save> -- equals text
                           Example4: cat -so -ed <search_text> -f <file_search_in> -o <file_to_save> -- ends with text
-                   -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
+                   -sa  : Output lines that contains/starts with/equals/ends with a provided text from all files in current directory and subdirectories.
                           Example1: cat -sa <search_text>
-                          Example2: cat -sa <search_text> <part_of_file_name> 
-                   -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
+                               Example2: cat -sa -st <search_text>  -- starts with text
+                               Example3: cat -sa -eq <search_text>  -- equals text
+                               Example4: cat -sa -ed <search_text>  -- ends with text
+                          Example5: cat -sa <search_text> -f <part_of_file_name> 
+                               Example6: cat -sa -st <search_text> -f <part_of_file_name> -- starts with text
+                               Example7: cat -sa -eq <search_text> -f <part_of_file_name> -- equals text
+                               Example8: cat -sa -ed <search_text> -f <part_of_file_name> -- ends with text
+                   -sao : Saves the lines that contains/starts with/equals/ends with a provided text from all files in current directory and subdirectories.
                           Example1: cat -sao <search_text> -o <file_to_save>
-                          Example2: cat -sao <search_text> <part_of_file_name> -o <file_to_save>
-                   -sm  : Output lines containing a provided text from multiple files in current directory.
-                          Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
-                   -smo : Saves the lines containing a provided text from multiple files in current directory.
-                          Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
+                               Example2: cat -sao -st <search_text> -o <file_to_save> -- starts with text
+                               Example3: cat -sao -eq <search_text> -o <file_to_save> -- equals text
+                               Example4: cat -sao -ed <search_text> -o <file_to_save> -- ends with text
+                          Example2: cat -sao <search_text> -f <part_of_file_name> -o <file_to_save>
+                               Example3: cat -sao -st <search_text> -f <part_of_file_name> -o <file_to_save> -- starts with text
+                               Example4: cat -sao -eq <search_text> -f <part_of_file_name> -o <file_to_save> -- equals text
+                               Example5: cat -sao -ed <search_text> -f <part_of_file_name> -o <file_to_save> -- ends with text
+                   -sm  : Output lines that contains/starts with/equals/ends with a provided text from multiple fies in current directory.
+                          Example1: cat -sm <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> 
+                               Example2: cat -sm -st <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -- starts with text
+                               Example3: cat -sm -eq <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -- equals text
+                               Example4: cat -sm -ed <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -- ends with text
+                   -smo : Saves the lines that contains/starts with/equals/ends with a provided text from multiple files in current directory.
+                          Example1: cat -smo <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
+                               Example2: cat -smo -st <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save> -- starts with text
+                               Example3: cat -smo -eq <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save> -- equals text
+                               Example4: cat -smo -ed <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save> -- ends with text
                    -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
                    -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
                           Example: cat -lfc <file_name_text>

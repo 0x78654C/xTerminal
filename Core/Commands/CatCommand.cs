@@ -168,7 +168,7 @@ namespace Core.Commands
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <param name="searchAll"> Search in all files from current directory. </param>
         /// <returns>string</returns>
-        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile, bool searchAll, string fileName = null)
+        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile, bool searchAll, string fileName = null, SearchType searchType = SearchType.contains)
         {
             try
             {
@@ -190,7 +190,7 @@ namespace Core.Commands
                                     FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
                                     continue;
                                 }
-                                output.AppendLine(LineOutput(file, currentDir, searchString));
+                                output.AppendLine(LineOutput(file, currentDir, searchString,searchType));
                             }
                         }
                     }
@@ -203,7 +203,7 @@ namespace Core.Commands
                                 FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
                                 continue;
                             }
-                            string o = LineOutput(file, currentDir, searchString);
+                            string o = LineOutput(file, currentDir, searchString,searchType);
                             output.AppendLine(o);
                         }
                     }
@@ -214,7 +214,7 @@ namespace Core.Commands
                         string oD = "";
 
                         if (!GlobalVariables.eventCancelKey)
-                            oD = MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName);
+                            oD = MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName,searchType);
 
                         if (!string.IsNullOrWhiteSpace(oD))
                         {
@@ -232,7 +232,7 @@ namespace Core.Commands
                             FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
                             continue;
                         }
-                        output.AppendLine(LineOutput(nFile, currentDir, searchString));
+                        output.AppendLine(LineOutput(nFile, currentDir, searchString, searchType));
                     }
                 }
                 var outData = Regex.Replace(output.ToString(), @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
@@ -247,14 +247,14 @@ namespace Core.Commands
             catch (UnauthorizedAccessException) { return ""; }
         }
 
-        private static string LineOutput(string file, string currentDir, string searchString)
+        private static string LineOutput(string file, string currentDir, string searchString, SearchType searchType = SearchType.contains)
         {
-            string oFile = FileOutput(file, currentDir, searchString);
+            string oFile = FileOutput(file, currentDir, searchString, "", searchType);
             if (oFile.StartsWith("Line"))
             {
                 return $"---------------- {file} ----------------"
                      + Environment.NewLine
-                     + FileOutput(file, currentDir, searchString);
+                     + FileOutput(file, currentDir, searchString,"", searchType);
             }
             return null;
         }
