@@ -294,7 +294,7 @@ namespace Shell
                 i++;
             }
 
-            int j = 0;
+             int j = 0;
 
             // Output the result
             foreach (var part in parts)
@@ -304,8 +304,11 @@ namespace Shell
                 {
                     if (j == 0)
                     {
-                        var c = Commands.CommandRepository.GetCommand(part.Trim());
-                        c.Execute(part.Trim());
+                        var cmdRun = part.Trim();
+                        if (parts.Count() == 2)
+                            cmdRun = string.Join("", parts);
+                        var c = Commands.CommandRepository.GetCommand(cmdRun);
+                        c.Execute(cmdRun);
                         j++;
                         continue;
                     }
