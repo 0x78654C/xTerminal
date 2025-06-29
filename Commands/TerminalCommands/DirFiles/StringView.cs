@@ -24,10 +24,16 @@ namespace Commands.TerminalCommands.DirFiles
            Example: cat -b 10 <path_of_file_name>
   -l   : Displays data between two lines range.
            Example: cat -l 10-20 <path_of_file_name>
-  -s   : Outputs lines containing a provided text from a file. 
-           Example: cat -s <search_text> -f <file_search_in>
-  -so  : Saves the lines containing a provided text from a file.
-           Example: cat -so <search_text> -f <file_search_in> -o <file_to_save>
+  -s   : Outputs lines that contains/starts with/equals/ends with a provided text from a file. 
+           Example1: cat -s <search_text> -f <file_search_in> -- contains text
+           Example2: cat -s -st <search_text> -f <file_search_in> -- starts with text
+           Example3: cat -s -eq <search_text> -f <file_search_in> -- equals text
+           Example4: cat -s -ed <search_text> -f <file_search_in> -- ends with text  
+  -so  : Saves the lines that contains/starts with/equals/ends with a provided text from a file.
+           Example1: cat -so <search_text> -f <file_search_in> -o <file_to_save>
+           Example2: cat -so -st <search_text> -f <file_search_in> -o <file_to_save> -- starts with text
+           Example3: cat -so -eq <search_text> -f <file_search_in> -o <file_to_save> -- equals text
+           Example4: cat -so -ed <search_text> -f <file_search_in> -o <file_to_save> -- ends with text
   -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
            Example1: cat -sa <search_text>
            Example2: cat -sa <search_text> -f <part_of_file_name> 
@@ -212,15 +218,30 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         break;
                     case "-s":
-
+                        Core.Commands.CatCommand.SearchType searchType = Core.Commands.CatCommand.SearchType.contains;
                         if (GlobalVariables.isPipeCommand)
                         {
                             searchString = arg.SplitByText("-s ", 1);
+                            if(searchString.Contains("-st"))
+                            {
+                                searchString = searchString.Replace("-st ", "");
+                                searchType = Core.Commands.CatCommand.SearchType.startsWith;
+                            }
+                            if (searchString.Contains("-eq"))
+                            {
+                                searchString = searchString.Replace("-eq ", "");
+                                searchType = Core.Commands.CatCommand.SearchType.equals;
+                            }
+                            if (searchString.Contains("-ed"))
+                            {
+                                searchString = searchString.Replace("-ed ", "");
+                                searchType = Core.Commands.CatCommand.SearchType.endsWith;
+                            }
                             GlobalVariables.eventKeyFlagX = true;
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                                GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "");
+                                GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "", searchType);
                             else
-                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, ""));
+                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "", searchType));
 
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.SuccessWriteLine("Command stopped!");
@@ -230,8 +251,23 @@ Commands can be canceled with CTRL+X key combination.
                         {
                             fileName = arg.SplitByText("-f ", 1);
                             searchString = arg.MiddleString("-s", "-f");
+                            if (searchString.Contains("-st"))
+                            {
+                                searchString = searchString.Replace("-st ", "");
+                                searchType = Core.Commands.CatCommand.SearchType.startsWith;
+                            }
+                            if (searchString.Contains("-eq"))
+                            {
+                                searchString = searchString.Replace("-eq ", "");
+                                searchType = Core.Commands.CatCommand.SearchType.equals;
+                            }
+                            if (searchString.Contains("-ed"))
+                            {
+                                searchString = searchString.Replace("-ed ", "");
+                                searchType = Core.Commands.CatCommand.SearchType.endsWith;
+                            }
                             GlobalVariables.eventKeyFlagX = true;
-                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, ""));
+                            Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, "", searchType));
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
@@ -313,12 +349,28 @@ Commands can be canceled with CTRL+X key combination.
                         break;
                     case "-so":
                         {
+                            searchType = Core.Commands.CatCommand.SearchType.contains;
                             if (GlobalVariables.isPipeCommand)
                             {
                                 searchString = arg.MiddleString("-so", "-o");
+                                if (searchString.Contains("-st"))
+                                {
+                                    searchString = searchString.Replace("-st ", "");
+                                    searchType = Core.Commands.CatCommand.SearchType.startsWith;
+                                }
+                                if (searchString.Contains("-eq"))
+                                {
+                                    searchString = searchString.Replace("-eq ", "");
+                                    searchType = Core.Commands.CatCommand.SearchType.equals;
+                                }
+                                if (searchString.Contains("-ed"))
+                                {
+                                    searchString = searchString.Replace("-ed ", "");
+                                    searchType = Core.Commands.CatCommand.SearchType.endsWith;
+                                }
                                 saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                                 GlobalVariables.eventKeyFlagX = true;
-                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, saveToFile));
+                                FileSystem.SuccessWriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, saveToFile, searchType));
                                 if (GlobalVariables.eventCancelKey)
                                     FileSystem.SuccessWriteLine("Command stopped!");
                                 GlobalVariables.eventCancelKey = false;
@@ -327,9 +379,24 @@ Commands can be canceled with CTRL+X key combination.
                             {
                                 fileName = arg.MiddleString("-f", "-o");
                                 searchString = arg.MiddleString("-so", "-f");
+                                if (searchString.Contains("-st"))
+                                {
+                                    searchString = searchString.Replace("-st ", "");
+                                    searchType = Core.Commands.CatCommand.SearchType.startsWith;
+                                }
+                                if (searchString.Contains("-eq"))
+                                {
+                                    searchString = searchString.Replace("-eq ", "");
+                                    searchType = Core.Commands.CatCommand.SearchType.equals;
+                                }
+                                if (searchString.Contains("-ed"))
+                                {
+                                    searchString = searchString.Replace("-ed ", "");
+                                    searchType = Core.Commands.CatCommand.SearchType.endsWith;
+                                }
                                 saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
                                 GlobalVariables.eventKeyFlagX = true;
-                                Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile));
+                                Console.WriteLine(Core.Commands.CatCommand.FileOutput(fileName, s_currentDirectory, searchString, saveToFile, searchType));
                                 if (GlobalVariables.eventCancelKey)
                                     FileSystem.SuccessWriteLine("Command stopped!");
                                 GlobalVariables.eventCancelKey = false;
