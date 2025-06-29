@@ -175,7 +175,7 @@ namespace Shell
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
 
-                    // Check if seach cat command parameters is used.
+                    // Check if search cat command parameters is used.
                     var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
 
                     // Pipe line command execution.
