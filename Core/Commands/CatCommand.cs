@@ -23,7 +23,7 @@ namespace Core.Commands
         /// <param name="input"> File name to search in. </param>
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <returns>string</returns>
-        public static string FileOutput(string input, string currentDir, string searchString = null, string savedFile = null)
+        public static string FileOutput(string input, string currentDir, string searchString = null, string savedFile = null, SearchType searchType = SearchType.contains)
         {
             var output = new StringBuilder();
             input = FileSystem.SanitizePath(input, currentDir);
@@ -31,7 +31,7 @@ namespace Core.Commands
 
             if (!File.Exists(input))
             {
-                if(!GlobalVariables.isPipeVar)
+                if (!GlobalVariables.isPipeVar)
                     Console.WriteLine("File " + input + " dose not exist!");
                 GlobalVariables.isPipeVar = false;
                 return output.ToString();
@@ -52,9 +52,24 @@ namespace Core.Commands
                         continue;
                     }
 
-                    if (line.ToLower().Contains(searchString.ToLower()))
+                    switch(searchType)
                     {
-                        output.AppendLine($"Line {lineCount} : {line}");
+                        case SearchType.startsWith:
+                            if (line.StartsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
+                        case SearchType.endsWith:
+                            if (line.EndsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
+                        case SearchType.equals:
+                            if (line.Equals(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
+                        default:
+                            if (line.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
                     }
                 }
             }
@@ -76,7 +91,7 @@ namespace Core.Commands
         /// <param name="currentDir"></param>
         /// <param name="savedFile"></param>
         /// <returns></returns>
-        public static string StringSearchOutput(string input, string currentDir, string searchString, string savedFile = null)
+        public static string StringSearchOutput(string input, string currentDir, string searchString, string savedFile = null, SearchType searchType = SearchType.contains)
         {
             var output = new StringBuilder();
             int lineCount = 0;
@@ -101,9 +116,25 @@ namespace Core.Commands
                         output.AppendLine(line);
                         continue;
                     }
-
-                    if (line.ToLower().Contains(searchString.ToLower()))
-                        output.AppendLine(line);
+                    switch (searchType)
+                    {
+                        case SearchType.startsWith:
+                            if (line.StartsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                        case SearchType.endsWith:
+                            if (line.EndsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                        case SearchType.equals:
+                            if (line.Equals(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                        default:
+                            if (line.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                    }
                 }
             }
 
@@ -116,7 +147,16 @@ namespace Core.Commands
             return output.ToString();
         }
 
-
+        /// <summary>
+        /// Search type for file output.
+        /// </summary>
+        public enum SearchType
+        {
+            startsWith,
+            contains,
+            equals,
+            endsWith
+        }
 
 
         /// <summary>
@@ -321,15 +361,15 @@ namespace Core.Commands
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="linesCount"></param>
-        public static void OutputFirtsLastLines(string fileName, int linesCount, bool isLast=false)
+        public static void OutputFirtsLastLines(string fileName, int linesCount, bool isLast = false)
         {
             if (CheckFileContent(fileName))
             {
                 try
                 {
-                    IEnumerable<string> lines=null;
+                    IEnumerable<string> lines = null;
                     var linesC = File.ReadLines(fileName).Count();
-                    if(isLast)
+                    if (isLast)
                         lines = File.ReadLines(fileName).Skip(linesC - linesCount).Take(linesCount);
                     else
                         lines = File.ReadLines(fileName).Take(linesCount);
