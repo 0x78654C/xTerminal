@@ -17,7 +17,7 @@ namespace Commands.TerminalCommands.DirFiles
     -ad : Deletes all directories in the current directory. 
 
 Example1: del <dir_path>    
-Example2: del <dir_path1;dir_path2;dir_path3>    
+Example2: del <dir_path1:dir_path2:dir_path3>    
 ";
 
         public void Execute(string args)
@@ -57,9 +57,9 @@ Example2: del <dir_path1;dir_path2;dir_path3>
 
 
                 // Multi dir delete
-                if (args.Contains(";"))
+                if (args.Contains(":"))
                 {
-                    var dirs = args.Split(';');
+                    var dirs = args.Split(':');
                     foreach (var dir in dirs)
                     {
                         var sanitizedPath = FileSystem.SanitizePath(dir, _currentLocation);
