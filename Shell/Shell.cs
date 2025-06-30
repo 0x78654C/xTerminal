@@ -276,17 +276,6 @@ namespace Shell
         /// <param name="command"></param>
         private void ParseMultiCommand(string command)
         {
-            //Special handle for ; carater in built in commands.
-            var isSpecialCmd = command.Contains("mkdir") || command.Contains("zip") || command.Contains("cat") || command.Contains("mkfile")|| command.Contains("del")|| command.Contains("echo")|| command.Contains("deiff")
-                || command.Contains("cmp");
-
-            if (isSpecialCmd && command.Contains(";"))
-            {
-                var c = Commands.CommandRepository.GetCommand(command);
-                c.Execute(command);
-                return;
-            }
-
             // Regex pattern to match &&, ||, and ;
             string pattern = @"(\&\&|\|\||;)";
 
