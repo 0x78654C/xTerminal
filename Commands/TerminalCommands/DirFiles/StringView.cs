@@ -473,9 +473,9 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         GlobalVariables.eventKeyFlagX = true;
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput += $"{Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false,"",searchType)}\n";
+                            GlobalVariables.pipeCmdOutput += $"{Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(':'), "", false,"",searchType)}\n";
                         else
-                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), "", false,"",searchType));
+                            FileSystem.SuccessWriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(':'), "", false,"",searchType));
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
@@ -501,7 +501,7 @@ Commands can be canceled with CTRL+X key combination.
                                 searchType = Core.Commands.CatCommand.SearchType.endsWith;
                             }
                             GlobalVariables.eventKeyFlagX = true;
-                            Console.WriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(';'), saveToFile, false,"",searchType));
+                            FileSystem.SuccessWriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split(':'), saveToFile, false,"",searchType));
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;
