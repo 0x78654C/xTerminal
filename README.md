@@ -224,7 +224,7 @@ Example:
                   ln <path_file_folder> -o <path_location_shortcut> : Create shortcut in a specific location.
     zip       -- Create Zip archive files.
                   zip <file_/directory_name> -n <name_of_archive> : Creates zip archive with the file/folder mentioned.
-                  zip <file;dir;dir1;file1> -n <name_of_archive>  : Creates zip archive with the multiple files/folders mentioned.
+                  zip <file:dir:dir1:file1> -n <name_of_archive>  : Creates zip archive with the multiple files/folders mentioned.
                   zip -list <zip_file_path>                       : Lists the content of the Zip archive file.
                   zip -x <zip_file_path>                          : Decompress zip archive.
                   zip -c                                          : Sets the compression level (default is Fastest). Example: zip -c s
@@ -282,29 +282,29 @@ Example:
                                Example4: cat -sao -eq <search_text> -f <part_of_file_name> -o <file_to_save> -- equals text
                                Example5: cat -sao -ed <search_text> -f <part_of_file_name> -o <file_to_save> -- ends with text
                    -sm  : Output lines that contains/starts with/equals/ends with a provided text from multiple fies in current directory.
-                          Example1: cat -sm <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> 
-                               Example2: cat -sm -st <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -- starts with text
-                               Example3: cat -sm -eq <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -- equals text
-                               Example4: cat -sm -ed <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -- ends with text
+                          Example1: cat -sm <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> 
+                               Example2: cat -sm -st <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> -- starts with text
+                               Example3: cat -sm -eq <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> -- equals text
+                               Example4: cat -sm -ed <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> -- ends with text
                    -smo : Saves the lines that contains/starts with/equals/ends with a provided text from multiple files in current directory.
-                          Example1: cat -smo <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
-                               Example2: cat -smo -st <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save> -- starts with text
-                               Example3: cat -smo -eq <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save> -- equals text
-                               Example4: cat -smo -ed <search_text> -f <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save> -- ends with text
+                          Example1: cat -smo <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> -o <file_to_save>
+                               Example2: cat -smo -st <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> -o <file_to_save> -- starts with text
+                               Example3: cat -smo -eq <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> -o <file_to_save> -- equals text
+                               Example4: cat -smo -ed <search_text> -f <file_search_in1:file_search_in2:file_search_in_n> -o <file_to_save> -- ends with text
                    -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
                    -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
                           Example: cat -lfc <file_name_text>
                    -con : Concatenate text files to a single file.
-                          Example: cat -con file1;file2;file3 -o fileOut
+                          Example: cat -con file1:file2:file3 -o fileOut
     mkdir     -- It creates a directory in the current place.
                  mkdir dir_name                        : Create one directory.
-                 mkdir dir_name1;dir_name2;dir_name3   : Create multiple directories.
-                 mkdir new;new2{snew1,snew3{dnew1,dnew3}};new3{rnew1{tne1,tne2},rnew2} : Create directories with nested subdirectories.
-                 Root directories are splitted with ';'
+                 mkdir dir_name1:dir_name2:dir_name3   : Create multiple directories.
+                 mkdir new:new2{snew1,snew3{dnew1,dnew3}}:new3{rnew1{tne1,tne2},rnew2} : Create directories with nested subdirectories.
+                 Root directories are splitted with ':'
                  Sub directoriers must be between '{' '}' and splited by ','
     mkfile    -- It creates a file in the current place.
                  mkfile <file_name>                        : Create one file.
-                 mkfile <file_name1;file_name2;file_name3> : Create multiple files.
+                 mkfile <file_name1:file_name2:file_name3> : Create multiple files.
     fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
                    -h  : displays this message
                    -ca <destination_directory> : copy all files from current directory in a specific directory
@@ -324,7 +324,7 @@ Example:
                    -af : Deletes all files in current directory. 
                    -ad : Deletes all directories in current directory. 
                  Example1: del <dir_path>    
-                 Example2: del <dir_path1;dir_path2;dir_path3>    
+                 Example2: del <dir_path1:dir_path2:dir_path3>    
     cp        -- Check file/folder permissions.
     md5       -- Checks the md5 checksum of a file. Use -h for additional parameters.
                      md5 <file_name> : Display the MD5 CheckSUM of a file.
@@ -357,14 +357,14 @@ Example:
                      >>  : Append data to a file. 
                            Example: echo hello world >> path_to_file
                     -con : Concatenate files data to a single file.
-                           Example: echo -con file1;file2 -o file3
+                           Example: echo -con file1:file2 -o file3
                     -e   : Displays text in console including Unicode escape sequances.
                            Example: echo -e <text> 
     diff      -- Outputs the difference between two files.
-                 Example 1: diff first_file_name;second_file_name                               : Display the difference from second file in comparison to first file.
-                 Example 2: diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
-                 Example 3: diff first_file_name;second_file_name -f save_to_file_name          : Saves to file the difference from second file in comparison to first file.
-                 Example 4: diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
+                 Example 1: diff first_file_name:second_file_name                               : Display the difference from second file in comparison to first file.
+                 Example 2: diff first_file_name:second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
+                 Example 3: diff first_file_name:second_file_name -f save_to_file_name          : Saves to file the difference from second file in comparison to first file.
+                 Example 4: diff first_file_name:second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
     exif      -- Extracts image metadata.
                  Example  : exif <path_to_iamge_file>. 
     pjson     -- Prettify the JSON data.
@@ -374,7 +374,7 @@ Example:
                  Example 1: attr  -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
                  Example 2: attr  -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
     cmp       -- Check if two files are identical by comparing MD5 hash.
-                 Example: cmp <firstFile>;<secondFile>
+                 Example: cmp <firstFile>:<secondFile>
     waifu     -- Host temporary files on https://waifuvault.moe/. 
                      -cb : Create bucket.
                      -u  : Upload file (From path or URL).
