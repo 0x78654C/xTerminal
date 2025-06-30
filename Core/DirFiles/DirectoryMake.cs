@@ -71,8 +71,8 @@ namespace Core.DirFiles
                     index = endBraceIndex + 1; // Move past the closing brace
                 }
 
-                // Move past any delimiter (either ';' or ',')
-                while (index < pathDir.Length && (pathDir[index] == ';' || pathDir[index] == ',')) index++;
+                // Move past any delimiter (either ':' or ',')
+                while (index < pathDir.Length && (pathDir[index] == ':' || pathDir[index] == ',')) index++;
             }
         }
 
@@ -85,7 +85,7 @@ namespace Core.DirFiles
         private string ExtractDirectoryName(string pathDir, ref int index)
         {
             int start = index;
-            while (index < pathDir.Length && pathDir[index] != ';' && pathDir[index] != ',' && pathDir[index] != '{')
+            while (index < pathDir.Length && pathDir[index] != ':' && pathDir[index] != ',' && pathDir[index] != '{')
             {
                 index++;
             }
