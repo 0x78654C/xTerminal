@@ -133,6 +133,7 @@ Command can be canceled with CTRL+X key combination.
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine(ex.Message);
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
         }

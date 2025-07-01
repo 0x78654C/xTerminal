@@ -97,6 +97,7 @@ namespace Commands.TerminalCommands.Encription
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine(ex.ToString());
+                GlobalVariables.isErrorCommand = true;
             }
         }
     }
