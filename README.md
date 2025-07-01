@@ -436,7 +436,7 @@ Example:
                               Example: ! <command_name> -p <parameters>
                     -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
                               current directory with a command name.
-                              Example: ! -add <file_name_with_code> -c <command_name>|<command_description>
+                              Example: ! -add <file_name_with_code> -c <command_name>:<command_description>
                     -del   :  Deletes an Add-on.
                               Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
