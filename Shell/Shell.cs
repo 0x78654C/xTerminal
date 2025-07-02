@@ -174,9 +174,10 @@ namespace Shell
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
-
+                    
+                    // TODO: more tests to be done here.
                     // Check if search cat command parameters is used.
-                    var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
+                     //var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
 
                     // Pipe line command execution.
                     if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
@@ -277,6 +278,7 @@ namespace Shell
         private void ParseMultiCommand(string command)
         {
             // Regex pattern to match &&, ||, and ;
+            
             string pattern = @"(\&\&|\|\||;)";
 
             // Split while keeping delimiters
@@ -288,9 +290,7 @@ namespace Shell
             foreach (string token in tokens)
             {
                 if (!string.IsNullOrWhiteSpace(token))
-                {
                     parts.Add(token.Trim());
-                }
 
                 if (i < matches.Count)
                     multiSysmbols.Add(matches[i].Value);  // Add delimiter
