@@ -96,9 +96,7 @@ This is the full list of commands that can be used in xTerminal:
     trace     -- Traces the route to a specific IP/Hostname. Use -h for additional parameters.
 
     -----------------C# Core Runner and Add-ons -------------
-    ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
-                 Example 1: ccs <file_name> 
-                 Example 2: ccs <file_name> -p <parameter> 
+    ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Use -h for additional help.
     !         -- Run or add custom C# code add-ons as a command. Use -h for additional help.
 
     -------------------- UI Customization -------------------
