@@ -682,7 +682,7 @@ namespace Core
         }
 
         /// <summary>
-        /// Parse command string into parts based on delimiters.
+        /// Parse command string into parts based on delimiters and between quotes.
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
