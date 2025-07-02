@@ -680,5 +680,64 @@ namespace Core
             }
             return pwd;
         }
+
+        /// <summary>
+        /// Parse command string into parts based on delimiters.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public static List<string> CommandParser(string command)
+        {
+            var parts = new List<string>();
+            var currentToken = "";
+            bool inQuotes = false;
+
+            for (int i = 0; i < command.Length; i++)
+            {
+                char c = command[i];
+
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                    currentToken += c;
+                    continue;
+                }
+
+                // Check for multi-char delimiters (&&, ||)
+                if (!inQuotes && i + 1 < command.Length)
+                {
+                    string twoChar = command.Substring(i, 2);
+                    if (Regex.IsMatch(twoChar, @"\&\&|\|\|"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(currentToken))
+                            parts.Add(currentToken.Trim());
+
+                        parts.Add(twoChar);
+                        currentToken = "";
+                        i++; // Skip next char since we processed two
+                        continue;
+                    }
+                }
+
+                // Check for single-char delimiters (; or |)
+                if (!inQuotes && (c == ';' || c == '|'))
+                {
+                    if (!string.IsNullOrWhiteSpace(currentToken))
+                        parts.Add(currentToken.Trim());
+
+                    parts.Add(c.ToString());
+                    currentToken = "";
+                    continue;
+                }
+
+                currentToken += c;
+            }
+
+            if (!string.IsNullOrWhiteSpace(currentToken))
+                parts.Add(currentToken.Trim());
+
+            // Output the parts
+            return parts;
+        }
     }
 }
