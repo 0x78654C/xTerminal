@@ -179,7 +179,7 @@ namespace Shell
                     var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
 
                     // Pipe line command execution.
-                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&") && !isSearchComand)
+                    if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
                     {
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
@@ -297,7 +297,7 @@ namespace Shell
                 i++;
             }
 
-             int j = 0;
+            int j = 0;
 
             // Output the result
             foreach (var part in parts)
