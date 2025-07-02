@@ -681,6 +681,7 @@ namespace Core
             return pwd;
         }
 
+        /* For futurte use
         /// <summary>
         /// Parse command string into parts based on delimiters and between quotes.
         /// </summary>
@@ -706,7 +707,7 @@ namespace Core
                 // Check for multi-char delimiters (&&, ||)
                 if (!inQuotes && i + 1 < command.Length)
                 {
-                    string twoChar = command.Substring(i, 2);
+                    string twoChar = command.Substring(i, 2); 
                     if (Regex.IsMatch(twoChar, @"\&\&|\|\|"))
                     {
                         if (!string.IsNullOrWhiteSpace(currentToken))
@@ -739,5 +740,6 @@ namespace Core
             // Output the parts
             return parts;
         }
+        */
     }
 }
