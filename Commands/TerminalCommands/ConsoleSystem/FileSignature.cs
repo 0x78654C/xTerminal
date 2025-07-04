@@ -10,12 +10,12 @@ namespace Core.SystemTools
     public class FileSignature : ITerminalCommand
     {
         /* File singature (magic numbers) verification class. */
-        public string Name => "fsig";
+        public string Name => "file";
         private bool _isIterated = false;
-        private static readonly string s_helpMessage = @"Usage of file extension tool:
- 	fsig <file_path>      : Display file path, extension, hex signature, and signature description.
- 	fsig <file_path> -ext : Display extension only.
- 	fsig -h               : Display this help message.
+        private static readonly string s_helpMessage = @"Usage of file singatures (magic numbers) detection tool:
+ 	file <file_path>      : Display file path, extension, hex signature, and signature description.
+ 	file <file_path> -ext : Display extension only.
+ 	file -h               : Display this help message.
 
 
 List must be in same place with xTerminal.exe file and named ext_list.txt
@@ -51,17 +51,16 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
                     GlobalVariables.isErrorCommand = true;
                     return;
                 }
-
+                var arg = args.Substring(4).Trim();
                 var file = string.Empty;
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
-                    file = $"{GlobalVariables.pipeCmdOutput.Trim()} {args.Replace("fsig", string.Empty).Trim()}";
+                    file = $"{GlobalVariables.pipeCmdOutput.Trim()} {arg}";
                 else
-                    file = args.Replace("fsig",string.Empty).Trim();
+                    file = arg;
 
                 if (file.Trim().EndsWith(" -ext"))
                 {
-                    var filePath = file.Substring(0, file.Length - 4);
-                    var sanitizedFileExt = FileSystem.SanitizePath(filePath, currentDirectory);
+                    var sanitizedFileExt = FileSystem.SanitizePath(file, currentDirectory);
                     if (File.Exists(sanitizedFileExt))
                         CheckFileSignature(_extFile, sanitizedFileExt, true);
                     else
