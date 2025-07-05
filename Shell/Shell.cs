@@ -190,8 +190,10 @@ namespace Shell
                         foreach (var cmd in commandSplit)
                         {
                             var cmdExecute = cmd.Trim();
-                            c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            c.Execute(cmdExecute);
+                            //c = Commands.CommandRepository.GetCommand(cmdExecute);
+                            //c.Execute(cmdExecute);
+
+                            ParseMultiCommand(cmd);
                             count++;
                             GlobalVariables.pipeCmdCount--;
                         }
