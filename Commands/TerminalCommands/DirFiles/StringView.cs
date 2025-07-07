@@ -243,23 +243,26 @@ Commands can be canceled with CTRL+X key combination.
                             if(searchString.Contains("-st"))
                             {
                                 searchString = searchString.Replace("-st ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.startsWith;
                             }
                             if (searchString.Contains("-eq"))
                             {
                                 searchString = searchString.Replace("-eq ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.equals;
                             }
                             if (searchString.Contains("-ed"))
                             {
                                 searchString = searchString.Replace("-ed ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.endsWith;
                             }
                             GlobalVariables.eventKeyFlagX = true;
                             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                                 GlobalVariables.pipeCmdOutput = Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "", searchType);
                             else
-                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput, s_currentDirectory, searchString, "", searchType));
+                                Console.WriteLine(Core.Commands.CatCommand.StringSearchOutput(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory, searchString, "", searchType));
 
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.SuccessWriteLine("Command stopped!");
@@ -272,16 +275,19 @@ Commands can be canceled with CTRL+X key combination.
                             if (searchString.Contains("-st"))
                             {
                                 searchString = searchString.Replace("-st ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.startsWith;
                             }
                             if (searchString.Contains("-eq"))
                             {
                                 searchString = searchString.Replace("-eq ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.equals;
                             }
                             if (searchString.Contains("-ed"))
                             {
                                 searchString = searchString.Replace("-ed ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.endsWith;
                             }
                             GlobalVariables.eventKeyFlagX = true;
@@ -305,16 +311,19 @@ Commands can be canceled with CTRL+X key combination.
                         if (searchString.Contains("-st"))
                         {
                             searchString = searchString.Replace("-st ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.startsWith;
                         }
                         if (searchString.Contains("-eq"))
                         {
                             searchString = searchString.Replace("-eq ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.equals;
                         }
                         if (searchString.Contains("-ed"))
                         {
                             searchString = searchString.Replace("-ed ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.endsWith;
                         }
 
@@ -357,16 +366,19 @@ Commands can be canceled with CTRL+X key combination.
                         if (searchString.Contains("-st"))
                         {
                             searchString = searchString.Replace("-st ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.startsWith;
                         }
                         if (searchString.Contains("-eq"))
                         {
                             searchString = searchString.Replace("-eq ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.equals;
                         }
                         if (searchString.Contains("-ed"))
                         {
                             searchString = searchString.Replace("-ed ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.endsWith;
                         }
                         if (!string.IsNullOrEmpty(fileSearchIn))
@@ -405,16 +417,19 @@ Commands can be canceled with CTRL+X key combination.
                                 if (searchString.Contains("-st"))
                                 {
                                     searchString = searchString.Replace("-st ", "");
+                                    searchString = searchString.Replace("'", "");
                                     searchType = Core.Commands.CatCommand.SearchType.startsWith;
                                 }
                                 if (searchString.Contains("-eq"))
                                 {
                                     searchString = searchString.Replace("-eq ", "");
+                                    searchString = searchString.Replace("'", "");
                                     searchType = Core.Commands.CatCommand.SearchType.equals;
                                 }
                                 if (searchString.Contains("-ed"))
                                 {
                                     searchString = searchString.Replace("-ed ", "");
+                                    searchString = searchString.Replace("'", "");
                                     searchType = Core.Commands.CatCommand.SearchType.endsWith;
                                 }
                                 saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
@@ -431,16 +446,19 @@ Commands can be canceled with CTRL+X key combination.
                                 if (searchString.Contains("-st"))
                                 {
                                     searchString = searchString.Replace("-st ", "");
+                                    searchString = searchString.Replace("'", "");
                                     searchType = Core.Commands.CatCommand.SearchType.startsWith;
                                 }
                                 if (searchString.Contains("-eq"))
                                 {
                                     searchString = searchString.Replace("-eq ", "");
+                                    searchString = searchString.Replace("'", "");
                                     searchType = Core.Commands.CatCommand.SearchType.equals;
                                 }
                                 if (searchString.Contains("-ed"))
                                 {
                                     searchString = searchString.Replace("-ed ", "");
+                                    searchString = searchString.Replace("'", "");
                                     searchType = Core.Commands.CatCommand.SearchType.endsWith;
                                 }
                                 saveToFile = FileSystem.SanitizePath(arg.SplitByText(" -o ", 1), s_currentDirectory);
@@ -459,16 +477,19 @@ Commands can be canceled with CTRL+X key combination.
                         if (searchString.Contains("-st"))
                         {
                             searchString = searchString.Replace("-st ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.startsWith;
                         }
                         if (searchString.Contains("-eq"))
                         {
                             searchString = searchString.Replace("-eq ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.equals;
                         }
                         if (searchString.Contains("-ed"))
                         {
                             searchString = searchString.Replace("-ed ", "");
+                            searchString = searchString.Replace("'", "");
                             searchType = Core.Commands.CatCommand.SearchType.endsWith;
                         }
                         GlobalVariables.eventKeyFlagX = true;
@@ -488,16 +509,19 @@ Commands can be canceled with CTRL+X key combination.
                             if (searchString.Contains("-st"))
                             {
                                 searchString = searchString.Replace("-st ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.startsWith;
                             }
                             if (searchString.Contains("-eq"))
                             {
                                 searchString = searchString.Replace("-eq ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.equals;
                             }
                             if (searchString.Contains("-ed"))
                             {
                                 searchString = searchString.Replace("-ed ", "");
+                                searchString = searchString.Replace("'", "");
                                 searchType = Core.Commands.CatCommand.SearchType.endsWith;
                             }
                             GlobalVariables.eventKeyFlagX = true;
