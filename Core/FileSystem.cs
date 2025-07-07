@@ -681,7 +681,6 @@ namespace Core
             return pwd;
         }
 
-        /* For futurte use
         /// <summary>
         /// Parse command string into parts based on delimiters and between quotes.
         /// </summary>
@@ -691,23 +690,35 @@ namespace Core
         {
             var parts = new List<string>();
             var currentToken = "";
-            bool inQuotes = false;
+            bool inDoubleQuotes = false;
+            bool inSingleQuotes = false;
 
             for (int i = 0; i < command.Length; i++)
             {
                 char c = command[i];
 
-                if (c == '"')
+                // Toggle double quotes
+                if (c == '"' && !inSingleQuotes)
                 {
-                    inQuotes = !inQuotes;
+                    inDoubleQuotes = !inDoubleQuotes;
                     currentToken += c;
                     continue;
                 }
 
+                // Toggle single quotes
+                if (c == '\'' && !inDoubleQuotes)
+                {
+                    inSingleQuotes = !inSingleQuotes;
+                    currentToken += c;
+                    continue;
+                }
+
+                bool inQuotes = inSingleQuotes || inDoubleQuotes;
+
                 // Check for multi-char delimiters (&&, ||)
                 if (!inQuotes && i + 1 < command.Length)
                 {
-                    string twoChar = command.Substring(i, 2); 
+                    string twoChar = command.Substring(i, 2);
                     if (Regex.IsMatch(twoChar, @"\&\&|\|\|"))
                     {
                         if (!string.IsNullOrWhiteSpace(currentToken))
@@ -715,7 +726,7 @@ namespace Core
 
                         parts.Add(twoChar);
                         currentToken = "";
-                        i++; // Skip next char since we processed two
+                        i++; // Skip next char
                         continue;
                     }
                 }
@@ -737,9 +748,7 @@ namespace Core
             if (!string.IsNullOrWhiteSpace(currentToken))
                 parts.Add(currentToken.Trim());
 
-            // Output the parts
             return parts;
         }
-        */
     }
 }
