@@ -251,6 +251,7 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunParalelCommands(string cmd)
         {
+            GlobalVariables.pipeCmdOutput = "";
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
@@ -264,6 +265,7 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunDoubleAndCommands(string cmd)
         {
+            GlobalVariables.pipeCmdOutput = "";
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
@@ -279,20 +281,23 @@ namespace Shell
         /// <param name="command"></param>
         private void ParseMultiCommand(string command)
         {
+            //TODO: do more cchecks onm the parese for || now.
+
             // Regex pattern to match &&, ||, and ;
             
             string pattern = @"(\&\&|\|\||;)";
 
             // Split while keeping delimiters
-            var parts = new List<string>();
+            //var parts = new List<string>();
+            var parts = FileSystem.CommandParser(command);
             var multiSysmbols = new List<string>();
             MatchCollection matches = Regex.Matches(command, pattern);
             var tokens = Regex.Split(command, pattern);
             int i = 0;
             foreach (string token in tokens)
             {
-                if (!string.IsNullOrWhiteSpace(token))
-                    parts.Add(token.Trim());
+                //if (!string.IsNullOrWhiteSpace(token))
+                //    parts.Add(token.Trim());
 
                 if (i < matches.Count)
                     multiSysmbols.Add(matches[i].Value);  // Add delimiter
@@ -347,6 +352,7 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunContinousCommands(string cmd)
         {
+            GlobalVariables.pipeCmdOutput = "";
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             c.Execute(cmdExecute);
