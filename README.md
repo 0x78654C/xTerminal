@@ -295,7 +295,9 @@ Example:
                    -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
                           Example: cat -lfc <file_name_text>
                    -con : Concatenate text files to a single file.
-                          Example: cat -con file1:file2:file3 -o fileOut
+                               Example: cat -con file1:file2:file3 -o fileOut
+                          Parameters -st, -eq, -ed can be used with text pattern(text between ') like:
+                          Exammaple: cat -s -st 'text;c' -f file.txt to not treat ';' as a coommand separator
     mkdir     -- It creates a directory in the current place.
                  mkdir dir_name                        : Create one directory.
                  mkdir dir_name1:dir_name2:dir_name3   : Create multiple directories.
