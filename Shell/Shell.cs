@@ -219,6 +219,7 @@ namespace Shell
                     GlobalVariables.isErrorCommand = false;
                     GlobalVariables.isPipeCommand = false;
                     GlobalVariables.aliasInParameter.Clear();
+                    GlobalVariables.pipeCmdOutput = string.Empty; //test clear pipe output after command run.
                 }
             }
             catch (Exception e)
