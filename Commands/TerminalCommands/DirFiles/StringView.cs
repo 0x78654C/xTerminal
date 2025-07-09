@@ -68,6 +68,11 @@ namespace Commands.TerminalCommands.DirFiles
   -con : Concatenates text files to a single file.
            Example: cat -con file1:file2:file3 -o fileOut
 
+
+Parameters -st, -eq, -ed can be used with text pattern(text between ') like:
+    Exammaple: cat -s -st 'text;c' -f file.txt to not treat ';' as a coommand separator.
+
+
 Commands can be canceled with CTRL+X key combination.
 ";
 
