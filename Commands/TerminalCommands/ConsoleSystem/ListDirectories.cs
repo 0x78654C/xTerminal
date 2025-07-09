@@ -297,6 +297,8 @@ e - Encrypted
                         }
                         level = int.Parse(levelParam);
                     }
+                    if (GlobalVariables.isPipeCommand && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
+                        currDir = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     DisplayTreeDirStructureDepth(currDir, level);
 
                     if (arg.ContainsParameter("-o"))
@@ -306,7 +308,12 @@ e - Encrypted
                         s_tree = "";
                     }
                     else
-                        FileSystem.SuccessWriteLine(s_tree);
+                    {
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput = s_tree;
+                        else
+                            FileSystem.SuccessWriteLine(s_tree);
+                    }
                     s_tree = "";
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
