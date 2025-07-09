@@ -71,6 +71,12 @@ namespace Core.Commands
                                 output.AppendLine($"Line {lineCount} : {line}");
                             break;
                     }
+                    if (GlobalVariables.eventCancelKey)
+                    {
+                        FileSystem.SuccessWriteLine("Command stopped!");
+                        break;
+                    }
+                    GlobalVariables.eventCancelKey = false;
                 }
             }
 
@@ -135,6 +141,12 @@ namespace Core.Commands
                                 output.AppendLine(line);
                             break;
                     }
+                    if (GlobalVariables.eventCancelKey)
+                    {
+                        FileSystem.SuccessWriteLine("Command stopped!");
+                        break;
+                    }
+                    GlobalVariables.eventCancelKey = false;
                 }
             }
 
@@ -192,6 +204,12 @@ namespace Core.Commands
                                 }
                                 output.AppendLine(LineOutput(file, currentDir, searchString,searchType));
                             }
+                            if (GlobalVariables.eventCancelKey)
+                            {
+                                FileSystem.SuccessWriteLine("Command stopped!");
+                                break;
+                            }
+                            GlobalVariables.eventCancelKey = false;
                         }
                     }
                     else
@@ -205,6 +223,13 @@ namespace Core.Commands
                             }
                             string o = LineOutput(file, currentDir, searchString,searchType);
                             output.AppendLine(o);
+
+                            if (GlobalVariables.eventCancelKey)
+                            {
+                                FileSystem.SuccessWriteLine("Command stopped!");
+                                break;
+                            }
+                            GlobalVariables.eventCancelKey = false;
                         }
                     }
                     var directoryInfo = new DirectoryInfo(currentDir).GetDirectories();
@@ -220,6 +245,13 @@ namespace Core.Commands
                         {
                             output.AppendLine(oD);
                         }
+
+                        if (GlobalVariables.eventCancelKey)
+                        {
+                            FileSystem.SuccessWriteLine("Command stopped!");
+                            break;
+                        }
+                        GlobalVariables.eventCancelKey = false;
                     }
                 }
                 else
@@ -233,6 +265,13 @@ namespace Core.Commands
                             continue;
                         }
                         output.AppendLine(LineOutput(nFile, currentDir, searchString, searchType));
+
+                        if (GlobalVariables.eventCancelKey)
+                        {
+                            FileSystem.SuccessWriteLine("Command stopped!");
+                            break;
+                        }
+                        GlobalVariables.eventCancelKey = false;
                     }
                 }
                 var outData = Regex.Replace(output.ToString(), @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
@@ -241,7 +280,7 @@ namespace Core.Commands
                 {
                     return FileSystem.SaveFileOutput(savedFile, currentDir, outData.ToString());
                 }
-
+    
                 return outData.ToString();
             }
             catch (UnauthorizedAccessException) { return ""; }
