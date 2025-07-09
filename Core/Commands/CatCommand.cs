@@ -284,6 +284,7 @@ namespace Core.Commands
                 return outData.ToString();
             }
             catch (UnauthorizedAccessException) { return ""; }
+            catch(IOException) { return ""; }
         }
 
         private static string LineOutput(string file, string currentDir, string searchString, SearchType searchType = SearchType.contains)
