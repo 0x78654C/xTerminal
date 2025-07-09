@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
-using System.Text;
 
 namespace Core.DirFiles
 {
@@ -72,7 +71,7 @@ namespace Core.DirFiles
                 }
 
                 // Move past any delimiter (either ':' or ',')
-                while (index < pathDir.Length && (pathDir[index] == ':' || pathDir[index] == ',')) index++;
+                while (index < pathDir.Length && (pathDir[index] == '!' || pathDir[index] == ',')) index++;
             }
         }
 
@@ -85,7 +84,7 @@ namespace Core.DirFiles
         private string ExtractDirectoryName(string pathDir, ref int index)
         {
             int start = index;
-            while (index < pathDir.Length && pathDir[index] != ':' && pathDir[index] != ',' && pathDir[index] != '{')
+            while (index < pathDir.Length && pathDir[index] != '!' && pathDir[index] != ',' && pathDir[index] != '{')
             {
                 index++;
             }
