@@ -564,13 +564,13 @@ namespace Core.Commands
         public static void ConcatenateFiles(string argfiles, string outputFIle, string currentDirectory)
         {
             string sFile;
-            if (!argfiles.Contains(":"))
+            if (!argfiles.Contains("!"))
             {
-                Console.WriteLine($"You need more than 1 file to concatenate and needs to be separated with ; character!");
+                Console.WriteLine($"You need more than 1 file to concatenate and needs to be separated with '!' character.");
                 return;
             }
 
-            string[] files = argfiles.Split(':');
+            string[] files = argfiles.Split('!');
             foreach (var file in files)
             {
                 if (GlobalVariables.eventCancelKey)
