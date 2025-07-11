@@ -327,6 +327,8 @@ Example:
                    -ad : Deletes all directories in current directory. 
                  Example1: del <dir_path>    
                  Example2: del <dir_path1!dir_path2!dir_path3>    
+                 Pattern can be used to delete directories with special charaters. Directory name must be between ' character :
+                 Example: del ';cd new2'
     cp        -- Check file/folder permissions.
     md5       -- Checks the md5 checksum of a file. Use -h for additional parameters.
                      md5 <file_name> : Display the MD5 CheckSUM of a file.

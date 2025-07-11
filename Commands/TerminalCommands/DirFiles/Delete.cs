@@ -18,6 +18,9 @@ namespace Commands.TerminalCommands.DirFiles
 
 Example1: del <dir_path>    
 Example2: del <dir_path1!dir_path2!dir_path3>    
+
+Pattern can be used to delete directories with special charaters. Directory name must be between ' character :
+Example: del ';cd new2'
 ";
 
         public void Execute(string args)
@@ -30,6 +33,10 @@ Example2: del <dir_path1!dir_path2!dir_path3>
                 return;
             }
             string param = args.Split(' ').ParameterAfter("del");
+
+            if (param.Contains("\'"))
+                param = param.Trim('\'');
+    
             if (!GlobalVariables.isPipeCommand)
             {
                 int argsLenght = args.Length - 4;
@@ -55,6 +62,9 @@ Example2: del <dir_path1!dir_path2!dir_path3>
             {
                 args = args.Replace("del ", "");
 
+                // Clean patern delimiter.
+                if (args.Contains("\'"))
+                    args = args.Trim('\'');
 
                 // Multi dir delete
                 if (args.Contains("!"))
