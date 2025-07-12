@@ -29,6 +29,7 @@ namespace Core.SystemTools
         PerformanceCounter memAvailableCounter = new("Memory", "Available MBytes");
         string searchQuery = "";
         bool inSearchMode = false;
+        string inputPrompt = "";
 
         // Shared fields updated by SampleCpuLoop
         double latestCpuPercent = 0;
@@ -189,11 +190,13 @@ namespace Core.SystemTools
                         inSearchMode = false;
                         SearchAndScrollToProcess(searchQuery.Trim());
                         searchQuery = "";
+                        inputPrompt = "";
                     }
                     else if (keyInfo.Key == ConsoleKey.Escape)
                     {
                         inSearchMode = false;
                         searchQuery = "";
+                        inputPrompt = "";
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace && searchQuery.Length > 0)
                     {
@@ -271,10 +274,7 @@ namespace Core.SystemTools
         /// The prompt is padded to fill the width of the console window.</remarks>
         void RenderSearchPrompt()
         {
-            Console.SetCursorPosition(0, Console.WindowHeight - 1);
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"/{searchQuery}".PadRight(Console.WindowWidth - 1));
-            Console.ResetColor();
+            inputPrompt = "/" + searchQuery;
         }
 
 
@@ -359,7 +359,8 @@ namespace Core.SystemTools
                 Console.SetCursorPosition(0, 4);
                 Console.Write(new string(' ', Console.WindowWidth)); // clear line 4
                 Console.SetCursorPosition(0, 4);
-                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.BackgroundColor = ConsoleColor.Green;
+                Console.ForegroundColor = ConsoleColor.Black;
                 Console.Write($"{"PID",5} {"Name",-25} {"CPU%",6} {"Mem(MB)",8} {"Threads",8}".PadRight(Console.WindowWidth - 1));
                 Console.ResetColor();
 
@@ -401,6 +402,12 @@ namespace Core.SystemTools
                     Console.SetCursorPosition(0, i + 5);
                     Console.Write(new string(' ', Console.WindowWidth - 1));
                 }
+
+                // --- Draw input prompt at the bottom ---
+                Console.SetCursorPosition(0, Console.WindowHeight - 1);
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write((inputPrompt ?? "").PadRight(Console.WindowWidth - 1));
+                Console.ResetColor();
 
                 Thread.Sleep(100); // refresh rate
             }
