@@ -19,20 +19,22 @@ namespace Core.SystemTools
 
     public class ProcessListingUI
     {
-         int selectedIndex = 0;
-         int windowHeight = Console.WindowHeight - 4;
-         DateTime prevSampleTime = DateTime.UtcNow;
-         volatile bool exitRequested = false;
-         Dictionary<int, double> cpuUsages = new();
-         Dictionary<int, TimeSpan> prevCpuTimes = new();
-         PerformanceCounter cpuCounter = new("Processor", "% Processor Time", "_Total");
-         PerformanceCounter memAvailableCounter = new("Memory", "Available MBytes");
+        int selectedIndex = 0;
+        int windowHeight = Console.WindowHeight - 4;
+        DateTime prevSampleTime = DateTime.UtcNow;
+        volatile bool exitRequested = false;
+        Dictionary<int, double> cpuUsages = new();
+        Dictionary<int, TimeSpan> prevCpuTimes = new();
+        PerformanceCounter cpuCounter = new("Processor", "% Processor Time", "_Total");
+        PerformanceCounter memAvailableCounter = new("Memory", "Available MBytes");
+        string searchQuery = "";
+        bool inSearchMode = false;
 
         // Shared fields updated by SampleCpuLoop
-         double latestCpuPercent = 0;
-         double latestMemPercent = 0;
-         double latestMemUsed = 0;
-         double latestMemTotal = 0;
+        double latestCpuPercent = 0;
+        double latestMemPercent = 0;
+        double latestMemUsed = 0;
+        double latestMemTotal = 0;
 
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
@@ -53,10 +55,10 @@ namespace Core.SystemTools
             }
         }
 
-         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-         static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
 
-         (double usedMb, double totalMb, double percent) GetMemoryUsage()
+        (double usedMb, double totalMb, double percent) GetMemoryUsage()
         {
             MEMORYSTATUSEX memStatus = new();
             if (GlobalMemoryStatusEx(memStatus))
@@ -73,7 +75,7 @@ namespace Core.SystemTools
         /// <summary>
         /// Entry point to run the process listing UI.
         /// </summary>
-        public  void Run()
+        public void Run()
         {
             Console.CursorVisible = false;
 
@@ -101,7 +103,7 @@ namespace Core.SystemTools
         /// is applied. Defaults to 80.0.</param>
         /// <returns>A string representing the usage bar, with the filled portion determined by <paramref name="percent"/>. The
         /// string is padded to match the specified <paramref name="width"/>.</returns>
-         string GetUsageBar(double percent, int width, ConsoleColor colorLow, ConsoleColor colorHigh, double threshold = 80.0)
+        string GetUsageBar(double percent, int width, ConsoleColor colorLow, ConsoleColor colorHigh, double threshold = 80.0)
         {
             int filled = (int)(percent / 100 * width);
             var color = percent >= threshold ? colorHigh : colorLow;
@@ -115,7 +117,7 @@ namespace Core.SystemTools
         /// <summary>
         /// Continuously samples CPU and memory usage, updating the shared fields.
         /// </summary>
-         void SampleCpuLoop()
+        void SampleCpuLoop()
         {
             while (!exitRequested)
             {
@@ -168,19 +170,45 @@ namespace Core.SystemTools
         /// <remarks>This method listens for key presses and performs actions based on the input. It
         /// supports navigation using the arrow keys, process termination with the 'K' key, and application exit with
         /// the 'Q' key. The method runs in a loop until the exit condition is triggered.</remarks>
-         void ReadInput()
+        void ReadInput()
         {
             while (!exitRequested)
             {
                 if (!Console.KeyAvailable)
                 {
-                    Thread.Sleep(10); // No input, wait briefly
+                    Thread.Sleep(10);
                     continue;
                 }
 
-                var key = Console.ReadKey(true).Key;
+                var keyInfo = Console.ReadKey(true);
 
-                switch (key)
+                if (inSearchMode)
+                {
+                    if (keyInfo.Key == ConsoleKey.Enter)
+                    {
+                        inSearchMode = false;
+                        SearchAndScrollToProcess(searchQuery.Trim());
+                        searchQuery = "";
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Escape)
+                    {
+                        inSearchMode = false;
+                        searchQuery = "";
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Backspace && searchQuery.Length > 0)
+                    {
+                        searchQuery = searchQuery[..^1];
+                    }
+                    else if (keyInfo.KeyChar != '\u0000')
+                    {
+                        searchQuery += keyInfo.KeyChar;
+                    }
+
+                    RenderSearchPrompt();
+                    continue;
+                }
+
+                switch (keyInfo.Key)
                 {
                     case ConsoleKey.UpArrow:
                         if (selectedIndex > 0) selectedIndex--;
@@ -188,15 +216,65 @@ namespace Core.SystemTools
                     case ConsoleKey.DownArrow:
                         selectedIndex++;
                         break;
-                    case ConsoleKey.K:  // Kill selected process
+                    case ConsoleKey.K:
                         KillSelectedProcess();
                         break;
                     case ConsoleKey.Q:
                         exitRequested = true;
                         Console.Clear();
                         break;
+                    case ConsoleKey.Oem2: // '/' key
+                        inSearchMode = true;
+                        searchQuery = "";
+                        RenderSearchPrompt();
+                        break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Searches for a process by name and scrolls to its position in the list.
+        /// </summary>
+        /// <remarks>If a matching process is found, its index is selected. If no match is found,  a
+        /// message is displayed in the console indicating that no process matches the query.</remarks>
+        /// <param name="query">The case-insensitive substring to search for in process names.</param>
+        void SearchAndScrollToProcess(string query)
+        {
+            var processes = Process.GetProcesses()
+                .OrderBy(p => p.ProcessName)
+                .ToArray();
+
+            for (int i = 0; i < processes.Length; i++)
+            {
+                try
+                {
+                    if (processes[i].ProcessName.StartsWith(query, StringComparison.OrdinalIgnoreCase))
+                    {
+                        selectedIndex = i;
+                        return;
+                    }
+                }
+                catch { }
+            }
+
+            // If not found, optionally display message
+            Console.SetCursorPosition(0, Console.WindowHeight - 1);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Write($"No process found matching \"{query}\"".PadRight(Console.WindowWidth - 1));
+            Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Renders a search prompt at the bottom of the console window.
+        /// </summary>
+        /// <remarks>The search prompt is displayed in yellow text and includes the current search query.
+        /// The prompt is padded to fill the width of the console window.</remarks>
+        void RenderSearchPrompt()
+        {
+            Console.SetCursorPosition(0, Console.WindowHeight - 1);
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write($"/{searchQuery}".PadRight(Console.WindowWidth - 1));
+            Console.ResetColor();
         }
 
 
@@ -206,7 +284,7 @@ namespace Core.SystemTools
         /// <remarks>This method retrieves all currently running processes, orders them by name, and
         /// attempts to terminate  the process at the specified index. If the process is successfully terminated, the
         /// method waits for  up to 2 seconds for the process to exit.</remarks>
-         void KillSelectedProcess()
+        void KillSelectedProcess()
         {
             try
             {
@@ -230,7 +308,7 @@ namespace Core.SystemTools
         /// <summary>
         /// Continuously renders the process list and system resource usage in the console. 
         /// </summary>
-         void RenderLoop()
+        void RenderLoop()
         {
             while (!exitRequested)
             {
@@ -250,7 +328,7 @@ namespace Core.SystemTools
                 Console.Write(new string(' ', Console.WindowWidth)); // clear line 0
                 Console.SetCursorPosition(0, 0);
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write("WTop - ↑/↓ navigate | 'Q' quit | 'K' kill selected process".PadRight(Console.WindowWidth - 1));
+                Console.Write("WTop - ↑/↓ navigate | 'Q' quit | 'K' kill selected process | '/' search".PadRight(Console.WindowWidth - 1));
                 Console.ResetColor();
 
                 // --- Draw CPU Bar ---
@@ -335,7 +413,7 @@ namespace Core.SystemTools
         /// <param name="maxLength">The maximum allowed length of the resulting string. Must be greater than 3.</param>
         /// <returns>The original string if its length is less than or equal to <paramref name="maxLength"/>;  otherwise, a
         /// truncated version of the string with "..." appended.</returns>
-         string Truncate(string value, int maxLength)
+        string Truncate(string value, int maxLength)
         {
             return value.Length <= maxLength ? value : value.Substring(0, maxLength - 3) + "...";
         }
