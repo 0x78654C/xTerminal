@@ -18,7 +18,7 @@ namespace Commands.TerminalCommands.DirFiles
     >>  : Append data to a file. 
           Example: echo hello world >> path_to_file
     -con: Concatenate files data to a single file.
-          Example: echo -con file1!file2 -o file3
+          Example: echo -con file1*file2 -o file3
     -e  : Displays text in console including Unicode escape sequances.
           Example: echo -e <text>  
 ";
@@ -90,9 +90,9 @@ namespace Commands.TerminalCommands.DirFiles
                 // Concatenate files
                 if (arg.Contains("-con"))
                 {
-                    var inputData = arg.MiddleString("-con", "-o").Split('!');
+                    var inputData = arg.MiddleString("-con", "-o").Split('*');
                     var outputData = string.Empty;
-                    if (!arg.Contains("!"))
+                    if (!arg.Contains("*"))
                     {
                         FileSystem.ErrorWriteLine("You need to provide minim two files for concatenate!. Use -h for more information");
                         GlobalVariables.isErrorCommand = true;

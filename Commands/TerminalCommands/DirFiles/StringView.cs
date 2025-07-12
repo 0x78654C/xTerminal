@@ -53,20 +53,20 @@ namespace Commands.TerminalCommands.DirFiles
              Example4: cat -sao -eq <search_text> -f <part_of_file_name> -o <file_to_save> -- equals text
              Example5: cat -sao -ed <search_text> -f <part_of_file_name> -o <file_to_save> -- ends with text
   -sm  : Output lines that contains/starts with/equals/ends with a provided text from multiple fies in current directory.
-           Example1: cat -sm <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> 
-             Example2: cat -sm -st <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> -- starts with text
-             Example3: cat -sm -eq <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> -- equals text
-             Example4: cat -sm -ed <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> -- ends with text
+           Example1: cat -sm <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> 
+             Example2: cat -sm -st <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -- starts with text
+             Example3: cat -sm -eq <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -- equals text
+             Example4: cat -sm -ed <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -- ends with text
   -smo : Saves the lines that contains/starts with/equals/ends with a provided text from multiple files in current directory.
-           Example1: cat -smo <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> -o <file_to_save>
-             Example2: cat -smo -st <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> -o <file_to_save> -- starts with text
-             Example3: cat -smo -eq <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> -o <file_to_save> -- equals text
-             Example4: cat -smo -ed <search_text> -f <file_search_in1!file_search_in2!file_search_in_n> -o <file_to_save> -- ends with text
+           Example1: cat -smo <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save>
+             Example2: cat -smo -st <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save> -- starts with text
+             Example3: cat -smo -eq <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save> -- equals text
+             Example4: cat -smo -ed <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save> -- ends with text
   -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
   -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
            Example: cat -lfc <file_name_text>
   -con : Concatenates text files to a single file.
-           Example: cat -con file1!file2!file3 -o fileOut
+           Example: cat -con file1*file2*file3 -o fileOut
 
 
 Parameters -st, -eq, -ed can be used with text pattern(text between ') like:
@@ -491,9 +491,9 @@ Commands can be canceled with CTRL+X key combination.
                         }
                         GlobalVariables.eventKeyFlagX = true;
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput += $"{Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split('!'), "", false,"",searchType)}\n";
+                            GlobalVariables.pipeCmdOutput += $"{Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split('*'), "", false,"",searchType)}\n";
                         else
-                            FileSystem.SuccessWriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split('!'), "", false,"",searchType));
+                            FileSystem.SuccessWriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split('*'), "", false,"",searchType));
                         if (GlobalVariables.eventCancelKey)
                             FileSystem.SuccessWriteLine("Command stopped!");
                         GlobalVariables.eventCancelKey = false;
@@ -521,7 +521,7 @@ Commands can be canceled with CTRL+X key combination.
                                 searchType = Core.Commands.CatCommand.SearchType.endsWith;
                             }
                             GlobalVariables.eventKeyFlagX = true;
-                            FileSystem.SuccessWriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split('!'), saveToFile, false,"",searchType));
+                            FileSystem.SuccessWriteLine(Core.Commands.CatCommand.MultiFileOutput(searchString, s_currentDirectory, fileName.Split('*'), saveToFile, false,"",searchType));
                             if (GlobalVariables.eventCancelKey)
                                 FileSystem.SuccessWriteLine("Command stopped!");
                             GlobalVariables.eventCancelKey = false;

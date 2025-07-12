@@ -17,7 +17,7 @@ namespace Commands.TerminalCommands.DirFiles
     -ad : Deletes all directories in the current directory. 
 
 Example1: del <dir_path>    
-Example2: del <dir_path1!dir_path2!dir_path3>    
+Example2: del <dir_path1*dir_path2*dir_path3>    
 
 Pattern can be used to delete directories with special charaters. Directory name must be between ' character :
 Example: del ';cd new2'
@@ -67,9 +67,9 @@ Example: del ';cd new2'
                     args = args.Trim('\'');
 
                 // Multi dir delete
-                if (args.Contains("!"))
+                if (args.Contains("*"))
                 {
-                    var dirs = args.Split('!');
+                    var dirs = args.Split('*');
                     foreach (var dir in dirs)
                     {
                         var sanitizedPath = FileSystem.SanitizePath(dir, _currentLocation);
