@@ -14,7 +14,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
  -h: Display this help message.
 
 Inside the wtop command:
-    q: Quit the wtop interface.
+    q   : Quit the wtop interface.
+    ↑/↓ : To navigate through the process list.
+    k   : Kill the selected process.
 
 ";
 
