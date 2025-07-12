@@ -27,11 +27,7 @@ Inside the wtop command:
                     Console.WriteLine(s_helpMessage);
                     return;
                 }
-                if (arg.Length == 5)
-                {
-                    FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
-                    return;
-                }
+
                 var wtop = new ProcessListingUI();
                 wtop.Run();
             }
