@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Core.Commands
+namespace Core.DirFiles
 {
     [SupportedOSPlatform("Windows")]
     public static class CatCommand
@@ -498,8 +498,8 @@ namespace Core.Commands
                 FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
                 return;
             }
-            int first = Int32.Parse(firstLine);
-            int second = Int32.Parse(secondLine);
+            int first = int.Parse(firstLine);
+            int second = int.Parse(secondLine);
             GlobalVariables.pipeCmdOutput = string.Empty;
             if (GlobalVariables.isPipeCommand)
             {
