@@ -249,6 +249,7 @@ Example:
                     q   : Quit the wtop interface.
                     ↑/↓ : To navigate through the process list.
                     k   : Kill the selected process.
+                    /   : Search for a process by name.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

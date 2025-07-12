@@ -17,6 +17,7 @@ Inside the wtop command:
     q   : Quit the wtop interface.
     ↑/↓ : To navigate through the process list.
     k   : Kill the selected process.
+    /   : Search for a process by name.
 
 ";
 
