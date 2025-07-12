@@ -164,6 +164,28 @@ namespace Core.SystemTools
             }
         }
 
+        void ClearSeach()
+        {
+            inSearchMode = false;
+            searchQuery = "";
+            inputPrompt = "";
+            var processes = Process.GetProcesses()
+.OrderBy(p => p.ProcessName)
+.ToArray();
+
+            int maxDisplay = Console.WindowHeight - 6; // Reserve lines for title + bars + header
+            int visibleCount = Math.Min(maxDisplay, processes.Length);
+            // --- Clear any leftover lines below the list ---
+            for (int i = visibleCount; i < maxDisplay; i++)
+            {
+                Console.SetCursorPosition(0, i + 5);
+                Console.Write(new string(' ', Console.WindowWidth - 1));
+            }
+
+            // --- Clear the bottom line (search prompt area) ---
+            Console.SetCursorPosition(0, Console.WindowHeight - 1);
+            Console.Write(new string(' ', Console.WindowWidth - 1));
+        }
 
         /// <summary>
         /// Continuously reads user input from the console and processes it to control application behavior.
@@ -187,16 +209,12 @@ namespace Core.SystemTools
                 {
                     if (keyInfo.Key == ConsoleKey.Enter)
                     {
-                        inSearchMode = false;
                         SearchAndScrollToProcess(searchQuery.Trim());
-                        searchQuery = "";
-                        inputPrompt = "";
+                        ClearSeach();
                     }
                     else if (keyInfo.Key == ConsoleKey.Escape)
                     {
-                        inSearchMode = false;
-                        searchQuery = "";
-                        inputPrompt = "";
+                        ClearSeach();
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace && searchQuery.Length > 0)
                     {
@@ -230,6 +248,10 @@ namespace Core.SystemTools
                         inSearchMode = true;
                         searchQuery = "";
                         RenderSearchPrompt();
+
+                        Console.SetCursorPosition(0, Console.WindowHeight - 1);
+                        Console.Write((inputPrompt ?? "").PadRight(Console.WindowWidth - 1));
+                        Console.ResetColor();
                         break;
                 }
             }
@@ -259,12 +281,6 @@ namespace Core.SystemTools
                 }
                 catch { }
             }
-
-            // If not found, optionally display message
-            Console.SetCursorPosition(0, Console.WindowHeight - 1);
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Write($"No process found matching \"{query}\"".PadRight(Console.WindowWidth - 1));
-            Console.ResetColor();
         }
 
         /// <summary>
@@ -274,7 +290,7 @@ namespace Core.SystemTools
         /// The prompt is padded to fill the width of the console window.</remarks>
         void RenderSearchPrompt()
         {
-            inputPrompt = "/" + searchQuery;
+            inputPrompt = inSearchMode ? "/" + searchQuery : "";
         }
 
 
@@ -328,7 +344,7 @@ namespace Core.SystemTools
                 Console.Write(new string(' ', Console.WindowWidth)); // clear line 0
                 Console.SetCursorPosition(0, 0);
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write("WTop - ↑/↓ navigate | 'Q' quit | 'K' kill selected process | '/' search".PadRight(Console.WindowWidth - 1));
+                Console.Write("WTop - ↑/↓ navigate | 'Q' quit | 'K' kill selected process | '/' search process by name".PadRight(Console.WindowWidth - 1));
                 Console.ResetColor();
 
                 // --- Draw CPU Bar ---
@@ -396,20 +412,13 @@ namespace Core.SystemTools
                     }
                 }
 
-                // --- Clear any leftover lines below the list ---
-                for (int i = visibleCount; i < maxDisplay; i++)
-                {
-                    Console.SetCursorPosition(0, i + 5);
-                    Console.Write(new string(' ', Console.WindowWidth - 1));
-                }
-
-                // --- Draw input prompt at the bottom ---
+                // --- Draw the search text ---
                 Console.SetCursorPosition(0, Console.WindowHeight - 1);
-                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.Write((inputPrompt ?? "").PadRight(Console.WindowWidth - 1));
                 Console.ResetColor();
 
-                Thread.Sleep(100); // refresh rate
+                // --- Refresh rate ---
+                Thread.Sleep(100); 
             }
         }
 
