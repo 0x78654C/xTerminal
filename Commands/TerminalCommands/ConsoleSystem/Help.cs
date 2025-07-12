@@ -60,6 +60,7 @@ This is the full list of commands that can be used in xTerminal:
     tee       -- Stores previous pipe command stdout to a file. Use -h for additional help. 
     bc        -- Display running background commands. Use -h for additional help.
     hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
+    wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

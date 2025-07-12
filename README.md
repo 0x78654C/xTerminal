@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="https://github.com/0x78654C/xTerminal/blob/main/media/xTerminal.png">
 </p>
 
@@ -243,6 +243,12 @@ Example:
                   hash <file_path>         : display the MD5 hash for the file.
                   hash -sha256 <file_path> : display the sha256 hash for the file.
                   hash -sha512 <file_path> : display the sha512 hash for the file.
+    wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
+                 -h: Display this help message.
+                 Inside the wtop command:
+                    q   : Quit the wtop interface.
+                    ↑/↓ : To navigate through the process list.
+                    k   : Kill the selected process.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
