@@ -70,7 +70,7 @@ namespace Core.DirFiles
                     index = endBraceIndex + 1; // Move past the closing brace
                 }
 
-                // Move past any delimiter (either '!' or ',')
+                // Move past any delimiter (either '*' or ',')
                 while (index < pathDir.Length && (pathDir[index] == '*' || pathDir[index] == ',')) index++;
             }
         }
