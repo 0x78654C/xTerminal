@@ -5,12 +5,14 @@
  */
 
 
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Security.Principal;
 using System.Threading;
 
 namespace Core.SystemTools
@@ -59,6 +61,19 @@ namespace Core.SystemTools
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
 
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool GetTokenInformation(IntPtr TokenHandle, int TokenInformationClass, IntPtr TokenInformation, int TokenInformationLength, out int ReturnLength);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool CloseHandle(IntPtr hObject);
+
+        const int TOKEN_QUERY = 0x0008;
+        const int TokenUser = 1;
+
+
         (double usedMb, double totalMb, double percent) GetMemoryUsage()
         {
             MEMORYSTATUSEX memStatus = new();
@@ -87,6 +102,45 @@ namespace Core.SystemTools
             while (!exitRequested)
                 Thread.Sleep(50); // keep main alive
         }
+
+
+        string GetProcessUser(Process process)
+        {
+            IntPtr tokenHandle = IntPtr.Zero;
+
+            try
+            {
+                if (!OpenProcessToken(process.Handle, TOKEN_QUERY, out tokenHandle))
+                    return "-";
+
+                int tokenInfoLength = 0;
+                GetTokenInformation(tokenHandle, TokenUser, IntPtr.Zero, 0, out tokenInfoLength);
+                IntPtr tokenInfo = Marshal.AllocHGlobal(tokenInfoLength);
+
+                if (!GetTokenInformation(tokenHandle, TokenUser, tokenInfo, tokenInfoLength, out _))
+                    return "-";
+
+                var sid = Marshal.ReadIntPtr(tokenInfo);
+                var account = new SecurityIdentifier(sid);
+                string fullName = account.Translate(typeof(NTAccount)).ToString();
+
+                Marshal.FreeHGlobal(tokenInfo);
+
+                // Strip domain or machine name
+                int slashIndex = fullName.IndexOf('\\');
+                return slashIndex >= 0 ? fullName[(slashIndex + 1)..] : fullName;
+            }
+            catch
+            {
+                return "-";
+            }
+            finally
+            {
+                if (tokenHandle != IntPtr.Zero)
+                    CloseHandle(tokenHandle);
+            }
+        }
+
 
         /// <summary>
         /// Generates a visual usage bar as a string representation, with customizable width, color, and threshold.
@@ -377,7 +431,7 @@ namespace Core.SystemTools
                 Console.SetCursorPosition(0, 4);
                 Console.BackgroundColor = ConsoleColor.Green;
                 Console.ForegroundColor = ConsoleColor.Black;
-                Console.Write($"{"PID",5} {"Name",-25} {"CPU%",6} {"Mem(MB)",8} {"Threads",8}".PadRight(Console.WindowWidth - 1));
+                Console.Write($"{"PID",5} {"Name",-25} {"CPU%",6} {"Mem(MB)",8} {"Threads",8} {"User",-15}".PadRight(Console.WindowWidth - 1));
                 Console.ResetColor();
 
                 // --- Draw process list ---
@@ -391,7 +445,9 @@ namespace Core.SystemTools
                     {
                         var cpu = cpuUsages.TryGetValue(proc.Id, out var value) ? value : 0.0;
                         var mem = proc.PrivateMemorySize64 / 1024.0 / 1024.0;
-                        line = $"{proc.Id,5} {Truncate(proc.ProcessName, 25),-25} {cpu,6:0.0} {mem,8:0.0} {proc.Threads.Count,8}";
+                        string title = string.IsNullOrWhiteSpace(proc.MainWindowTitle) ? "-" : Truncate(proc.MainWindowTitle, 25);
+                        string user = Truncate(GetProcessUser(proc), 15);
+                        line = $"{proc.Id,5} {Truncate(proc.ProcessName, 25),-25} {cpu,6:0.0} {mem,8:0.0} {proc.Threads.Count,8} {user,-15}";
                     }
                     catch
                     {
@@ -418,7 +474,7 @@ namespace Core.SystemTools
                 Console.ResetColor();
 
                 // --- Refresh rate ---
-                Thread.Sleep(200); 
+                Thread.Sleep(150);
             }
         }
 
