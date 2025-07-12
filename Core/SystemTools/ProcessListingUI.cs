@@ -445,7 +445,7 @@ namespace Core.SystemTools
                     {
                         var cpu = cpuUsages.TryGetValue(proc.Id, out var value) ? value : 0.0;
                         var mem = proc.PrivateMemorySize64 / 1024.0 / 1024.0;
-                        string title = string.IsNullOrWhiteSpace(proc.MainWindowTitle) ? "-" : Truncate(proc.MainWindowTitle, 25);
+                        //string title = string.IsNullOrWhiteSpace(proc.MainWindowTitle) ? "-" : Truncate(proc.MainWindowTitle, 25);
                         string user = Truncate(GetProcessUser(proc), 15);
                         line = $"{proc.Id,5} {Truncate(proc.ProcessName, 25),-25} {cpu,6:0.0} {mem,8:0.0} {proc.Threads.Count,8} {user,-15}";
                     }
