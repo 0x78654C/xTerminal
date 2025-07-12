@@ -315,7 +315,7 @@ namespace Core.SystemTools
                     proc.WaitForExit(2000); // wait max 2 seconds for process to exit
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 // Optional: display an error somewhere or ignore if access denied
             }
@@ -418,7 +418,7 @@ namespace Core.SystemTools
                 Console.ResetColor();
 
                 // --- Refresh rate ---
-                Thread.Sleep(100); 
+                Thread.Sleep(200); 
             }
         }
 
