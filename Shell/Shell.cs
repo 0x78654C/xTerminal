@@ -1,4 +1,19 @@
-﻿using Core;
+﻿/*
+      Description: A Linux like shell for windows with some extras. 
+      The goal was to have a almost like exprience how the bash shell works on linux, a bit modified, but with same simplicity. 
+
+      This app is distributed under the MIT License.
+      Copyright © 2022 - 2025 x_coding. All rights reserved.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+      SOFTWARE.
+*/
+using Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -159,8 +174,12 @@ namespace Shell
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
-                    // Pipe line command execution.
+                    
+                    // TODO: more tests to be done here.
+                    // Check if search cat command parameters is used.
+                     //var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
 
+                    // Pipe line command execution.
                     if (command.Contains("|") && !command.Contains("||") && !command.Contains("alias") && !command.EndsWith("&"))
                     {
                         GlobalVariables.isPipeCommand = true;
@@ -171,8 +190,10 @@ namespace Shell
                         foreach (var cmd in commandSplit)
                         {
                             var cmdExecute = cmd.Trim();
-                            c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            c.Execute(cmdExecute);
+                            //c = Commands.CommandRepository.GetCommand(cmdExecute);
+                            //c.Execute(cmdExecute);
+
+                            ParseMultiCommand(cmd);
                             count++;
                             GlobalVariables.pipeCmdCount--;
                         }
@@ -198,6 +219,7 @@ namespace Shell
                     GlobalVariables.isErrorCommand = false;
                     GlobalVariables.isPipeCommand = false;
                     GlobalVariables.aliasInParameter.Clear();
+                    GlobalVariables.pipeCmdOutput = string.Empty; //test clear pipe output after command run.
                 }
             }
             catch (Exception e)
@@ -219,7 +241,7 @@ namespace Shell
         {
             if (string.IsNullOrEmpty(aliasParameter) && GlobalVariables.aliasRunFlag)
             {
-                Console.Error.WriteLine("Check alias command parameter format!");
+                FileSystem.ErrorWriteLine("There is a alias command created with this name. Built in commands has priority on running. Check alias command parameter format! ");
                 GlobalVariables.aliasRunFlag = false;
             }
         }
@@ -230,6 +252,7 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunParalelCommands(string cmd)
         {
+            GlobalVariables.pipeCmdOutput = "";
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
@@ -243,6 +266,7 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunDoubleAndCommands(string cmd)
         {
+            GlobalVariables.pipeCmdOutput = "";
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
@@ -258,21 +282,23 @@ namespace Shell
         /// <param name="command"></param>
         private void ParseMultiCommand(string command)
         {
+            //TODO: do more cchecks onm the parese for || now.
+
             // Regex pattern to match &&, ||, and ;
+            
             string pattern = @"(\&\&|\|\||;)";
 
             // Split while keeping delimiters
-            var parts = new List<string>();
+            //var parts = new List<string>();
+            var parts = FileSystem.CommandParser(command);
             var multiSysmbols = new List<string>();
             MatchCollection matches = Regex.Matches(command, pattern);
             var tokens = Regex.Split(command, pattern);
             int i = 0;
             foreach (string token in tokens)
             {
-                if (!string.IsNullOrWhiteSpace(token))
-                {
-                    parts.Add(token.Trim());
-                }
+                //if (!string.IsNullOrWhiteSpace(token))
+                //    parts.Add(token.Trim());
 
                 if (i < matches.Count)
                     multiSysmbols.Add(matches[i].Value);  // Add delimiter
@@ -289,8 +315,11 @@ namespace Shell
                 {
                     if (j == 0)
                     {
-                        var c = Commands.CommandRepository.GetCommand(part.Trim());
-                        c.Execute(part.Trim());
+                        var cmdRun = part.Trim();
+                        if (parts.Count() == 2)
+                            cmdRun = string.Join("", parts);
+                        var c = Commands.CommandRepository.GetCommand(cmdRun);
+                        c.Execute(cmdRun);
                         j++;
                         continue;
                     }
@@ -324,6 +353,7 @@ namespace Shell
         /// <param name="commands"></param>
         private void RunContinousCommands(string cmd)
         {
+            GlobalVariables.pipeCmdOutput = "";
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             c.Execute(cmdExecute);

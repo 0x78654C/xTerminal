@@ -29,6 +29,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static int s_countDirectoriesText = 0;
         private static int s_countDirLen = 0;
         private static int s_sm = 0;
+        private static int s_levelTree = 0;
         private Stopwatch s_stopWatch;
         private TimeSpan s_timeSpan;
         private static List<string> s_listFiles = new List<string>();
@@ -37,7 +38,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
         private static string s_tree;
-        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la" };
+        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-f", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la", "-dup" };
         private static string s_Header = "";
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
    .GroupBy(t => t.Md5)
@@ -49,24 +50,27 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
 
         private static string s_helpMessage = @"Usage of ls command:
-    -h  : Displays this message.
-    -d  : Displays duplicate files in a directory and subdirectories.
-          Example1: ls -d <directory_path>
-          Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
-          Example3: ls -d <directory_path> -o <file_to_save>
-          Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
-          Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
-    -s  : Displays size of files in current directory and subdirectories.
-    -c  : Counts files and directories and subdirectories from current directory.
-    -cf : Counts files from current directory and subdirectories with name containing a specific text.
-          Example: ls -cf <search_text>
-    -cd : Counts directories from current directory and subdirectories with name containing a specific text.
-          Example: ls -cd <search_text>
-    -ct : Displays creation date time of files and folders from current directory.
-    -la : Displays last access date time of files and folders from current directory.
-    -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
-    -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-    -t  : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
+    -h   : Displays this message.
+    -d   : Display only directories.
+    -f   : Display only files.
+    -dup : Displays duplicate files in a directory and subdirectories.
+           Example1: ls -d <directory_path>
+           Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
+           Example3: ls -d <directory_path> -o <file_to_save>
+           Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
+           Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
+    -s   : Displays size of files in current directory and subdirectories.
+    -c   : Counts files and directories and subdirectories from current directory.
+    -cf  : Counts files from current directory and subdirectories with name containing a specific text.
+           Example: ls -cf <search_text>
+    -cd  : Counts directories from current directory and subdirectories with name containing a specific text.
+           Example: ls -cd <search_text>
+    -ct  : Displays creation date time of files and folders from current directory.
+    -la  : Displays last access date time of files and folders from current directory.
+    -hl  : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
+    -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
+    -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
+           Use -l to set the depth of the tree structure. Ex.: ls -t -l 2
 
 Commands can be canceled with CTRL+X key combination.
 
@@ -85,6 +89,9 @@ e - Encrypted
         {
             try
             {
+                bool isDisplayFile = true;
+                bool isDisplayFolder = true;
+
                 // Set directory, to be used in other functions
                 s_currentDirectory =
                                 File.ReadAllText(GlobalVariables.currentDirectory);
@@ -150,7 +157,7 @@ e - Encrypted
                 }
 
                 // Grab the duplicate files.
-                if (arg.ContainsParameter("-d"))
+                if (arg.ContainsParameter("-dup"))
                 {
 
                     if (arg.ContainsParameter("-length"))
@@ -274,11 +281,27 @@ e - Encrypted
                     return;
                 }
 
+                // Tree view of directories.
                 if (arg.ContainsParameter("-t"))
                 {
                     GlobalVariables.eventKeyFlagX = true;
                     var currDir = File.ReadAllText(GlobalVariables.currentDirectory);
-                    DisplayTreeDirStructure(currDir);
+                    var level = 0;
+                    if (arg.ContainsParameter("-l"))
+                    {
+                        var levelParam = arg.ParameterAfter("-l").Trim();
+                        if (!FileSystem.IsDigit(levelParam))
+                        {
+                            FileSystem.ErrorWriteLine("The level parameter must be a number!");
+                            GlobalVariables.isErrorCommand = true;
+                            return;
+                        }
+                        level = int.Parse(levelParam);
+                    }
+                    if (GlobalVariables.isPipeCommand && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
+                        currDir = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
+                    DisplayTreeDirStructureDepth(currDir, level);
+
                     if (arg.ContainsParameter("-o"))
                     {
                         var fileName = args.SplitByText("-o", 1).Trim();
@@ -286,19 +309,38 @@ e - Encrypted
                         s_tree = "";
                     }
                     else
-                        FileSystem.SuccessWriteLine(s_tree);
+                    {
+                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                            GlobalVariables.pipeCmdOutput = s_tree;
+                        else
+                            FileSystem.SuccessWriteLine(s_tree);
+                    }
                     s_tree = "";
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                     ClearCounters();
+                    s_levelTree = 0;
                     return;
                 }
 
+                // Display only directories.
+                if (arg.ContainsParameter("-d"))
+                {
+                    isDisplayFolder = true;
+                    isDisplayFile = false;
+                }
+
+                // Display only files.
+                if (arg.ContainsParameter("-f"))
+                {
+                    isDisplayFolder = false;
+                    isDisplayFile = true;
+                }
 
                 // Save ls output to a file
                 if (arg.ContainsParameter("-o"))
                 {
-                    SaveLSOutput(FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory));
+                    SaveLSOutput(FileSystem.SanitizePath(args.SplitByText(" -o ", 1), s_currentDirectory), isDisplayFile, isDisplayFolder);
                     return;
                 }
                 else
@@ -308,7 +350,7 @@ e - Encrypted
                     GlobalVariables.eventKeyFlagX = true;
 
                     // Display directory and file information
-                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false);
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false, false, isDisplayFile, isDisplayFolder);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                 }
@@ -342,29 +384,35 @@ e - Encrypted
         }
 
         /// <summary>
-        /// Display structure dirs.
+        /// Display structure dirs with depth.
         /// </summary>
         /// <param name="currDir"></param>
-        private void DisplayTreeDirStructure(string currDir, string indent = "", bool isLast = true)
+        private void DisplayTreeDirStructureDepth(string currDir, int maxDepth, int currentLevel = 0, string indent = "", bool isLast = true)
         {
+            if (maxDepth > 0)
+                if (currentLevel > maxDepth) return;
+
             try
             {
                 var directories = Directory.GetDirectories(currDir);
                 var dirInfo = new DirectoryInfo(currDir);
+
                 s_tree += indent + (isLast ? "└─ " : "├─ ") + dirInfo.Name + "\n";
                 indent += isLast ? "   " : "│  ";
+
                 for (int i = 0; i < directories.Length; i++)
                 {
                     var directory = directories[i];
                     bool isLastDirectory = (i == directories.Length - 1);
-                    DisplayTreeDirStructure(directory, indent, isLastDirectory);
+                    DisplayTreeDirStructureDepth(directory, maxDepth, currentLevel + 1, indent, isLastDirectory);
                 }
             }
             catch
             {
-                // Ignore if no access or any exceptions.
+                // Ignore inaccessible directories or other exceptions
             }
         }
+
 
         private string SeparatorIncrement(int count)
         {
@@ -511,9 +559,9 @@ e - Encrypted
         /// Save to file the ls ouput.
         /// </summary>
         /// <param name="path">Path to file</param>
-        private static void SaveLSOutput(string path)
+        private static void SaveLSOutput(string path, bool isDisplayFiles, bool isDisplayDiectories)
         {
-            DisplayCurrentDirectoryFiles(false, "", true, false);
+            DisplayCurrentDirectoryFiles(false, "", true, false, false, isDisplayFiles, isDisplayDiectories);
             SetHeader(TypeHeader.LastWrite, true);
             string dirList = "-----Directories-----" + Environment.NewLine;
             dirList += string.Join(Environment.NewLine, s_listDirs);
@@ -579,7 +627,7 @@ e - Encrypted
         /// <param name="highlightSearchText">Thext to be highlighted in files or directories names.</param>
         /// <param name="saveToFile">Save output to a file.</param>
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile,
-            bool isCreationTime = false, bool isLastAccessTime = false)
+            bool isCreationTime = false, bool isLastAccessTime = false, bool displayFiles = true, bool displayDirectories = true)
         {
             if (GlobalVariables.isPipeCommand)
                 GlobalVariables.pipeCmdOutput = string.Empty;
@@ -601,8 +649,10 @@ e - Encrypted
 
             if (saveToFile)
             {
-                DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
-                DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime);
+                if (displayDirectories)
+                    DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
+                if (displayFiles)
+                    DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime);
             }
             else
             {
@@ -614,8 +664,10 @@ e - Encrypted
                 else if (!isPipe)
                     SetHeader(TypeHeader.LastWrite);
 
-                DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
-                DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime);
+                if (displayDirectories)
+                    DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
+                if (displayFiles)
+                    DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime);
             }
 
 
@@ -624,8 +676,10 @@ e - Encrypted
             else
             {
                 Console.WriteLine("\n-----------Current Directory Count------------\n");
-                Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
-                Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
+                if (displayDirectories)
+                    Console.WriteLine($"Total directories: {Directory.GetDirectories(s_currentDirectory).Length}");
+                if (displayFiles)
+                    Console.WriteLine($"Total files: {Directory.GetFiles(s_currentDirectory).Length}");
             }
         }
 

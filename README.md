@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="https://github.com/0x78654C/xTerminal/blob/main/media/xTerminal.png">
 </p>
 
@@ -39,24 +39,27 @@ Example:
 
     ------------------------ System ------------------------
     ls        -- List directories and files on a directory. Use -h for additional parameters.
-                   -h  : Displays this message.
-                   -d  : Display duplicate files in a directory and subdirectories.
-                         Example1: ls -d <directory_path>
-                         Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
-                         Example3: ls -d <directory_path> -o <file_to_save>
-                         Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension).
-                         Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)  
-                   -s  : Displays size of files in current directory and subdirectories.
-                   -c  : Counts files and directories and subdirectories from current directory.
-                   -cf : Counts files from current directory and subdirectories with name containing a specific text.
-                         Example: ls -cf <search_text>
-                   -cd : Counts directories from current directory and subdirectories with name containing a specific text.
-                         Example: ls -cd <search_text>
-                   -ct : Display creation date time of files and folders from current directory.
-                   -la : Displays last access date time of files and folders from current directory.
-                   -hl : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
-                   -o  : Saves the output to a file. Ex.: ls -o <file_to_save>
-                   -t  : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
+                   -h   : Displays this message.
+                   -d   : Display only directories.
+                   -f   : Display only files.
+                   -dup : Display duplicate files in a directory and subdirectories.
+                          Example1: ls -d <directory_path>
+                          Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
+                          Example3: ls -d <directory_path> -o <file_to_save>
+                          Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension).
+                          Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)  
+                   -s   : Displays size of files in current directory and subdirectories.
+                   -c   : Counts files and directories and subdirectories from current directory.
+                   -cf  : Counts files from current directory and subdirectories with name containing a specific text.
+                          Example: ls -cf <search_text>
+                   -cd  : Counts directories from current directory and subdirectories with name containing a specific text.
+                          Example: ls -cd <search_text>
+                   -ct  : Display creation date time of files and folders from current directory.
+                   -la  : Displays last access date time of files and folders from current directory.
+                   -hl  : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
+                   -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
+                   -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
+                          Use -l to set the depth of the tree structure. Ex.: ls -t -l 2
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.
@@ -136,10 +139,10 @@ Example:
                    Example: shred <file_path> :   Will shred the file with the default of 3 passes.
                    -i     :  Will shred the file with the specified number!
                              Example: shred <file_path> -i <number_of_passes>
-    fsig      -- Check file type singatures (magic numbers). Use -h for additional help.
-     	           fsig <file_path>      : Display file path, extension, hex signature, and signature description.
- 	               fsig <file_path> -ext : Display extension only.
- 	               fsig -h               : Display this help message.
+    file      -- Check file type singatures (magic numbers). Use -h for additional help.
+     	           file <file_path>      : Display file path, extension, hex signature, and signature description.
+ 	               file <file_path> -ext : Display extension only.
+ 	               file -h               : Display this help message.
               Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signatures
     pwd       -- Prints current working directory.
     cal       -- Display current date calendar.
@@ -222,7 +225,7 @@ Example:
                   ln <path_file_folder> -o <path_location_shortcut> : Create shortcut in a specific location.
     zip       -- Create Zip archive files.
                   zip <file_/directory_name> -n <name_of_archive> : Creates zip archive with the file/folder mentioned.
-                  zip <file;dir;dir1;file1> -n <name_of_archive>  : Creates zip archive with the multiple files/folders mentioned.
+                  zip <file*dir*dir1*file1> -n <name_of_archive>  : Creates zip archive with the multiple files/folders mentioned.
                   zip -list <zip_file_path>                       : Lists the content of the Zip archive file.
                   zip -x <zip_file_path>                          : Decompress zip archive.
                   zip -c                                          : Sets the compression level (default is Fastest). Example: zip -c s
@@ -237,6 +240,17 @@ Example:
                   tee -a <file_name>  : Appends previous command output to an existing file.
                   Example: ls | cat -t 10 | tee data.txt | cat -s exe
     bc        -- Display running background commands.
+    hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
+                  hash <file_path>         : display the MD5 hash for the file.
+                  hash -sha256 <file_path> : display the sha256 hash for the file.
+                  hash -sha512 <file_path> : display the sha512 hash for the file.
+    wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
+                 -h: Display this help message.
+                 Inside the wtop command:
+                    q   : Quit the wtop interface.
+                    ↑/↓ : To navigate through the process list.
+                    k   : Kill the selected process.
+                    /   : Search for a process by name.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -247,34 +261,60 @@ Example:
                           Example: cat -b 10 <path_of_file_name>
                    -l   : Displays data between two lines.
                           Example: cat -l 10-20 <path_of_file_name>
-                   -s   : Output lines containing a provided text from a file.
-                          Example: cat -s <search_text> <file_search_in>
-                   -so  : Saves the lines containing a provided text from a file.
-                          Example: cat -so <search_text> <file_search_in> -o <file_to_save>
-                   -sa  : Output lines containing a provided text from all files in current directory and subdirectories.
+                   -s   : Outputs lines that contains/starts with/equals/ends with a provided text from a file.
+                          Example1: cat -s <search_text> -f <file_search_in> -- contains text
+                          Example2: cat -s -st <search_text> -f <file_search_in> -- starts with text
+                          Example3: cat -s -eq <search_text> -f <file_search_in> -- equals text
+                          Example4: cat -s -ed <search_text> -f <file_search_in> -- ends with text 
+                   -so  : Saves the lines that contains/starts with/equals/ends with a provided text from a file.
+                          Example1: cat -so <search_text> -f <file_search_in> -o <file_to_save>
+                          Example2: cat -so -st <search_text> -f <file_search_in> -o <file_to_save> -- starts with text
+                          Example3: cat -so -eq <search_text> -f <file_search_in> -o <file_to_save> -- equals text
+                          Example4: cat -so -ed <search_text> -f <file_search_in> -o <file_to_save> -- ends with text
+                   -sa  : Output lines that contains/starts with/equals/ends with a provided text from all files in current directory and subdirectories.
                           Example1: cat -sa <search_text>
-                          Example2: cat -sa <search_text> <part_of_file_name> 
-                   -sao : Saves the lines containing a provided text from all files in current directory and subdirectories.
+                               Example2: cat -sa -st <search_text>  -- starts with text
+                               Example3: cat -sa -eq <search_text>  -- equals text
+                               Example4: cat -sa -ed <search_text>  -- ends with text
+                          Example5: cat -sa <search_text> -f <part_of_file_name> 
+                               Example6: cat -sa -st <search_text> -f <part_of_file_name> -- starts with text
+                               Example7: cat -sa -eq <search_text> -f <part_of_file_name> -- equals text
+                               Example8: cat -sa -ed <search_text> -f <part_of_file_name> -- ends with text
+                   -sao : Saves the lines that contains/starts with/equals/ends with a provided text from all files in current directory and subdirectories.
                           Example1: cat -sao <search_text> -o <file_to_save>
-                          Example2: cat -sao <search_text> <part_of_file_name> -o <file_to_save>
-                   -sm  : Output lines containing a provided text from multiple files in current directory.
-                          Example: cat -sm <search_text> <file_search_in1;file_search_in2;file_search_in_n> 
-                   -smo : Saves the lines containing a provided text from multiple files in current directory.
-                          Example: cat -smo <search_text> <file_search_in1;file_search_in2;file_search_in_n> -o <file_to_save>
+                               Example2: cat -sao -st <search_text> -o <file_to_save> -- starts with text
+                               Example3: cat -sao -eq <search_text> -o <file_to_save> -- equals text
+                               Example4: cat -sao -ed <search_text> -o <file_to_save> -- ends with text
+                          Example2: cat -sao <search_text> -f <part_of_file_name> -o <file_to_save>
+                               Example3: cat -sao -st <search_text> -f <part_of_file_name> -o <file_to_save> -- starts with text
+                               Example4: cat -sao -eq <search_text> -f <part_of_file_name> -o <file_to_save> -- equals text
+                               Example5: cat -sao -ed <search_text> -f <part_of_file_name> -o <file_to_save> -- ends with text
+                   -sm  : Output lines that contains/starts with/equals/ends with a provided text from multiple fies in current directory.
+                          Example1: cat -sm <search_text> -f <file_search_in1**file_search_in2*file_search_in_n> 
+                               Example2: cat -sm -st <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -- starts with text
+                               Example3: cat -sm -eq <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -- equals text
+                               Example4: cat -sm -ed <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -- ends with text
+                   -smo : Saves the lines that contains/starts with/equals/ends with a provided text from multiple files in current directory.
+                          Example1: cat -smo <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save>
+                               Example2: cat -smo -st <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save> -- starts with text
+                               Example3: cat -smo -eq <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save> -- equals text
+                               Example4: cat -smo -ed <search_text> -f <file_search_in1*file_search_in2*file_search_in_n> -o <file_to_save> -- ends with text
                    -lc  : Counts all the lines(without empty lines) in all files on current directory and subdirectories.
                    -lfc : Counts all the lines(without empty lines) that contains a specific text in file name in current directory and subdirectories.
                           Example: cat -lfc <file_name_text>
                    -con : Concatenate text files to a single file.
-                          Example: cat -con file1;file2;file3 -o fileOut
+                               Example: cat -con file1*file2*file3 -o fileOut
+                          Parameters -st, -eq, -ed can be used with text pattern(text between ') like:
+                          Exammaple: cat -s -st 'text;c' -f file.txt to not treat ';' as a coommand separator
     mkdir     -- It creates a directory in the current place.
                  mkdir dir_name                        : Create one directory.
-                 mkdir dir_name1;dir_name2;dir_name3   : Create multiple directories.
-                 mkdir new;new2{snew1,snew3{dnew1,dnew3}};new3{rnew1{tne1,tne2},rnew2} : Create directories with nested subdirectories.
-                 Root directories are splitted with ';'
+                 mkdir dir_name1*dir_name2*dir_name3   : Create multiple directories.
+                 mkdir new*new2{snew1,snew3{dnew1,dnew3}}*new3{rnew1{tne1,tne2},rnew2} : Create directories with nested subdirectories.
+                 Root directories are splitted with '*'
                  Sub directoriers must be between '{' '}' and splited by ','
     mkfile    -- It creates a file in the current place.
                  mkfile <file_name>                        : Create one file.
-                 mkfile <file_name1;file_name2;file_name3> : Create multiple files.
+                 mkfile <file_name1*file_name2*file_name3> : Create multiple files.
     fcopy     -- Copies a file with CRC checksum control.  Use -h for additional parameters.
                    -h  : displays this message
                    -ca <destination_directory> : copy all files from current directory in a specific directory
@@ -294,7 +334,9 @@ Example:
                    -af : Deletes all files in current directory. 
                    -ad : Deletes all directories in current directory. 
                  Example1: del <dir_path>    
-                 Example2: del <dir_path1;dir_path2;dir_path3>    
+                 Example2: del <dir_path1*dir_path2*dir_path3>    
+                 Pattern can be used to delete directories with special charaters. Directory name must be between ' character :
+                 Example: del ';cd new2'
     cp        -- Check file/folder permissions.
     md5       -- Checks the md5 checksum of a file. Use -h for additional parameters.
                      md5 <file_name> : Display the MD5 CheckSUM of a file.
@@ -327,14 +369,14 @@ Example:
                      >>  : Append data to a file. 
                            Example: echo hello world >> path_to_file
                     -con : Concatenate files data to a single file.
-                           Example: echo -con file1;file2 -o file3
+                           Example: echo -con file1*file2 -o file3
                     -e   : Displays text in console including Unicode escape sequances.
                            Example: echo -e <text> 
     diff      -- Outputs the difference between two files.
-                 Example 1: diff first_file_name;second_file_name                               : Display the difference from second file in comparison to first file.
-                 Example 2: diff first_file_name;second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
-                 Example 3: diff first_file_name;second_file_name -f save_to_file_name          : Saves to file the difference from second file in comparison to first file.
-                 Example 4: diff first_file_name;second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
+                 Example 1: diff first_file_name*second_file_name                               : Display the difference from second file in comparison to first file.
+                 Example 2: diff first_file_name*second_file_name -verbose                      : Display the entire second file with the difference in comparison to first file.
+                 Example 3: diff first_file_name*second_file_name -f save_to_file_name          : Saves to file the difference from second file in comparison to first file.
+                 Example 4: diff first_file_name*second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
     exif      -- Extracts image metadata.
                  Example  : exif <path_to_iamge_file>. 
     pjson     -- Prettify the JSON data.
@@ -344,7 +386,7 @@ Example:
                  Example 1: attr  -s <attribute list>  : Sets the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
                  Example 2: attr  -r <attribute list>  : Remove the attribute/attributes to a file or directory. Attributes needs to be splited by ';' if more then 1 are added.
     cmp       -- Check if two files are identical by comparing MD5 hash.
-                 Example: cmp <firstFile>;<secondFile>
+                 Example: cmp <firstFile>*<secondFile>
     waifu     -- Host temporary files on https://waifuvault.moe/. 
                      -cb : Create bucket.
                      -u  : Upload file (From path or URL).
@@ -406,7 +448,7 @@ Example:
                               Example: ! <command_name> -p <parameters>
                     -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
                               current directory with a command name.
-                              Example: ! -add <file_name_with_code> -c <command_name>|<command_description>
+                              Example: ! -add <file_name_with_code> -c <command_name>:<command_description>
                     -del   :  Deletes an Add-on.
                               Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
@@ -539,9 +581,7 @@ For that we use following command:
 
 Here is the list of commands that work as with pipe too and which position:
 
-![image](https://github.com/user-attachments/assets/192c60a6-c38d-4736-ae27-b9ad4539b296)
-
-
+![image](https://github.com/user-attachments/assets/21a1e0b7-a64c-4c24-a4f4-8718539aaae7)
 
 
 Pipe commands cand be added even to alias commands.

@@ -48,7 +48,7 @@ This is the full list of commands that can be used in xTerminal:
     nt        -- Starts new xTerminal console. Use -h for additional parameters.
     alias     -- Create alias commands for built in xTerminal commands. Use -h for additional parameters.
     shred     -- Overwrites and deletes a file that will be difficult to recover after. Use -h for additional help.
-    fsig      -- Check file type singatures (magic numbers). Use -h for additional help.
+    file      -- Check file type singatures (magic numbers). Use -h for additional help.
     pwd       -- Prints current working directory. Use -h for additional help.
     cal       -- Display current date calendar. Use -h for additional help.
     time      -- Display current time.
@@ -59,6 +59,8 @@ This is the full list of commands that can be used in xTerminal:
     zip       -- Create Zip archive files. Use -h for additional help.
     tee       -- Stores previous pipe command stdout to a file. Use -h for additional help. 
     bc        -- Display running background commands. Use -h for additional help.
+    hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
+    wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -95,9 +97,7 @@ This is the full list of commands that can be used in xTerminal:
     trace     -- Traces the route to a specific IP/Hostname. Use -h for additional parameters.
 
     -----------------C# Core Runner and Add-ons -------------
-    ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
-                 Example 1: ccs <file_name> 
-                 Example 2: ccs <file_name> -p <parameter> 
+    ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Use -h for additional help.
     !         -- Run or add custom C# code add-ons as a command. Use -h for additional help.
 
     -------------------- UI Customization -------------------

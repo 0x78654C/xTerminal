@@ -26,7 +26,7 @@ namespace Core
         public static int historyLimitSize { get; set; } = 2000;
         public static string commandOut { get; set; }
         public static string version { get; set; }
-        public static string aliasParameters = string.Empty;
+        public static string aliasParameters { get; set; } = string.Empty;
         public static readonly string accountName = Environment.UserName;
         public static string rootPath = $"{Path.GetPathRoot(Environment.SystemDirectory)}Users\\{accountName}\\";
         public static readonly string computerName = Environment.MachineName;
@@ -36,7 +36,7 @@ namespace Core
         public static string currentDirectory = terminalWorkDirectory + $"\\{process}cDir.t";
         public static string uiSettings = terminalWorkDirectory + $"\\{process}ui.t";
         public static string historyFile = terminalWorkDirectory + "\\History.db";
-        public static string addonDirectory = Application.StartupPath + "\\Add-ons";
+        public static string addonDirectory = Application.StartupPath + "Add-ons";
         public static List<string> excludeDirectories = new List<string>() { "System Volume Information", "$Recycle.Bin" };
         public static List<string> excludeFiles = new List<string>() { "pagefile.sys" };
         public static bool eventCancelKey = false;

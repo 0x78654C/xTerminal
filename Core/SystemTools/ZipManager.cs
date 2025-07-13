@@ -57,9 +57,9 @@ namespace Core.SystemTools
         {
             bool isTempCreated = false;
             var tempDir = "";
-            if (ZipDir.Contains(";"))
+            if (ZipDir.Contains("*"))
             {
-                var splitFiles = ZipDir.Split(";");
+                var splitFiles = ZipDir.Split("*");
                 var pathFile = "";
                 foreach (var file in splitFiles)
                 {

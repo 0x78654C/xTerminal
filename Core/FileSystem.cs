@@ -44,6 +44,20 @@ namespace Core
             }
         }
 
+        /// <summary>
+        /// Determines whether the specified string represents a numeric digit.
+        /// </summary>
+        /// <remarks>A numeric digit is defined as a string that can be successfully parsed into an
+        /// integer. If the input is <see langword="null"/> or an empty string, the method returns <see
+        /// langword="false"/>.</remarks>
+        /// <param name="text">The string to evaluate. This can be null or empty.</param>
+        /// <returns><see langword="true"/> if the string represents a numeric digit; otherwise, <see langword="false"/>.</returns>
+        public static bool IsDigit(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return false;
+            return int.TryParse(text, out _);
+        }
 
         /// <summary>
         /// Check if object is a file or directory.
@@ -665,6 +679,76 @@ namespace Core
                 }
             }
             return pwd;
+        }
+
+        /// <summary>
+        /// Parse command string into parts based on delimiters and between quotes.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public static List<string> CommandParser(string command)
+        {
+            var parts = new List<string>();
+            var currentToken = "";
+            bool inDoubleQuotes = false;
+            bool inSingleQuotes = false;
+
+            for (int i = 0; i < command.Length; i++)
+            {
+                char c = command[i];
+
+                // Toggle double quotes
+                if (c == '"' && !inSingleQuotes)
+                {
+                    inDoubleQuotes = !inDoubleQuotes;
+                    currentToken += c;
+                    continue;
+                }
+
+                // Toggle single quotes
+                if (c == '\'' && !inDoubleQuotes)
+                {
+                    inSingleQuotes = !inSingleQuotes;
+                    currentToken += c;
+                    continue;
+                }
+
+                bool inQuotes = inSingleQuotes || inDoubleQuotes;
+
+                // Check for multi-char delimiters (&&, ||)
+                if (!inQuotes && i + 1 < command.Length)
+                {
+                    string twoChar = command.Substring(i, 2);
+                    if (Regex.IsMatch(twoChar, @"\&\&|\|\|"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(currentToken))
+                            parts.Add(currentToken.Trim());
+
+                        parts.Add(twoChar);
+                        currentToken = "";
+                        i++; // Skip next char
+                        continue;
+                    }
+                }
+
+                // Check for single-char delimiters (; or |)
+                if (!inQuotes && (c == ';' || c == '|'))
+                {
+                    if (!string.IsNullOrWhiteSpace(currentToken))
+                        parts.Add(currentToken.Trim());
+
+                    parts.Add(c.ToString());
+                    currentToken = "";
+                    continue;
+                }
+
+                currentToken += c;
+            }
+
+            if (!string.IsNullOrWhiteSpace(currentToken))
+                parts.Add(currentToken.Trim());
+
+            return parts;
         }
     }
 }

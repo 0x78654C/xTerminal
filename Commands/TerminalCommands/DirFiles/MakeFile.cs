@@ -11,7 +11,7 @@ namespace Commands.TerminalCommands.DirFiles
         public string Name => "mkfile";
         private string s_helpMessage = @"Usage of mkfile command:
     mkfile <file_name>                        : Create one file.
-    mkfile <file_name1;file_name2;file_name3> : Create multiple files.
+    mkfile <file_name1*file_name2*file_name3> : Create multiple files.
 ";
         public void Execute(string arg)
         {
@@ -27,9 +27,9 @@ namespace Commands.TerminalCommands.DirFiles
                     return;
                 }
 
-                if (param.Contains(";"))
+                if (param.Contains("*"))
                 {
-                    var files = param.Split(';');
+                    var files = param.Split('*');
                     foreach (var fileIn in files)
                     {
                         var sanitizedPath = FileSystem.SanitizePath(fileIn, currentDirectory);

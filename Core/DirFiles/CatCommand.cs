@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Core.Commands
+namespace Core.DirFiles
 {
     [SupportedOSPlatform("Windows")]
     public static class CatCommand
@@ -23,7 +23,7 @@ namespace Core.Commands
         /// <param name="input"> File name to search in. </param>
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <returns>string</returns>
-        public static string FileOutput(string input, string currentDir, string searchString = null, string savedFile = null)
+        public static string FileOutput(string input, string currentDir, string searchString = null, string savedFile = null, SearchType searchType = SearchType.contains)
         {
             var output = new StringBuilder();
             input = FileSystem.SanitizePath(input, currentDir);
@@ -31,7 +31,7 @@ namespace Core.Commands
 
             if (!File.Exists(input))
             {
-                if(!GlobalVariables.isPipeVar)
+                if (!GlobalVariables.isPipeVar)
                     Console.WriteLine("File " + input + " dose not exist!");
                 GlobalVariables.isPipeVar = false;
                 return output.ToString();
@@ -52,10 +52,31 @@ namespace Core.Commands
                         continue;
                     }
 
-                    if (line.ToLower().Contains(searchString.ToLower()))
+                    switch(searchType)
                     {
-                        output.AppendLine($"Line {lineCount} : {line}");
+                        case SearchType.startsWith:
+                            if (line.StartsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
+                        case SearchType.endsWith:
+                            if (line.EndsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
+                        case SearchType.equals:
+                            if (line.Equals(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
+                        default:
+                            if (line.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine($"Line {lineCount} : {line}");
+                            break;
                     }
+                    if (GlobalVariables.eventCancelKey)
+                    {
+                        FileSystem.SuccessWriteLine("Command stopped!");
+                        break;
+                    }
+                    GlobalVariables.eventCancelKey = false;
                 }
             }
 
@@ -76,7 +97,7 @@ namespace Core.Commands
         /// <param name="currentDir"></param>
         /// <param name="savedFile"></param>
         /// <returns></returns>
-        public static string StringSearchOutput(string input, string currentDir, string searchString, string savedFile = null)
+        public static string StringSearchOutput(string input, string currentDir, string searchString, string savedFile = null, SearchType searchType = SearchType.contains)
         {
             var output = new StringBuilder();
             int lineCount = 0;
@@ -101,9 +122,31 @@ namespace Core.Commands
                         output.AppendLine(line);
                         continue;
                     }
-
-                    if (line.ToLower().Contains(searchString.ToLower()))
-                        output.AppendLine(line);
+                    switch (searchType)
+                    {
+                        case SearchType.startsWith:
+                            if (line.StartsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                        case SearchType.endsWith:
+                            if (line.EndsWith(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                        case SearchType.equals:
+                            if (line.Equals(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                        default:
+                            if (line.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                                output.AppendLine(line);
+                            break;
+                    }
+                    if (GlobalVariables.eventCancelKey)
+                    {
+                        FileSystem.SuccessWriteLine("Command stopped!");
+                        break;
+                    }
+                    GlobalVariables.eventCancelKey = false;
                 }
             }
 
@@ -116,7 +159,16 @@ namespace Core.Commands
             return output.ToString();
         }
 
-
+        /// <summary>
+        /// Search type for file output.
+        /// </summary>
+        public enum SearchType
+        {
+            startsWith,
+            contains,
+            equals,
+            endsWith
+        }
 
 
         /// <summary>
@@ -128,7 +180,7 @@ namespace Core.Commands
         /// <param name="savedFile"> File name where to store the result data. </param>
         /// <param name="searchAll"> Search in all files from current directory. </param>
         /// <returns>string</returns>
-        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile, bool searchAll, string fileName = null)
+        public static string MultiFileOutput(string searchString, string currentDir, IEnumerable<string> paths, string savedFile, bool searchAll, string fileName = null, SearchType searchType = SearchType.contains)
         {
             try
             {
@@ -150,8 +202,14 @@ namespace Core.Commands
                                     FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
                                     continue;
                                 }
-                                output.AppendLine(LineOutput(file, currentDir, searchString));
+                                output.AppendLine(LineOutput(file, currentDir, searchString,searchType));
                             }
+                            if (GlobalVariables.eventCancelKey)
+                            {
+                                FileSystem.SuccessWriteLine("Command stopped!");
+                                break;
+                            }
+                            GlobalVariables.eventCancelKey = false;
                         }
                     }
                     else
@@ -163,8 +221,15 @@ namespace Core.Commands
                                 FileSystem.ErrorWriteLine("File " + file + " dose not exist!");
                                 continue;
                             }
-                            string o = LineOutput(file, currentDir, searchString);
+                            string o = LineOutput(file, currentDir, searchString,searchType);
                             output.AppendLine(o);
+
+                            if (GlobalVariables.eventCancelKey)
+                            {
+                                FileSystem.SuccessWriteLine("Command stopped!");
+                                break;
+                            }
+                            GlobalVariables.eventCancelKey = false;
                         }
                     }
                     var directoryInfo = new DirectoryInfo(currentDir).GetDirectories();
@@ -174,12 +239,19 @@ namespace Core.Commands
                         string oD = "";
 
                         if (!GlobalVariables.eventCancelKey)
-                            oD = MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName);
+                            oD = MultiFileOutput(searchString, dir.FullName, p.Split(' '), savedFile, true, fileName,searchType);
 
                         if (!string.IsNullOrWhiteSpace(oD))
                         {
                             output.AppendLine(oD);
                         }
+
+                        if (GlobalVariables.eventCancelKey)
+                        {
+                            FileSystem.SuccessWriteLine("Command stopped!");
+                            break;
+                        }
+                        GlobalVariables.eventCancelKey = false;
                     }
                 }
                 else
@@ -192,7 +264,14 @@ namespace Core.Commands
                             FileSystem.ErrorWriteLine("File " + nFile + " dose not exist!");
                             continue;
                         }
-                        output.AppendLine(LineOutput(nFile, currentDir, searchString));
+                        output.AppendLine(LineOutput(nFile, currentDir, searchString, searchType));
+
+                        if (GlobalVariables.eventCancelKey)
+                        {
+                            FileSystem.SuccessWriteLine("Command stopped!");
+                            break;
+                        }
+                        GlobalVariables.eventCancelKey = false;
                     }
                 }
                 var outData = Regex.Replace(output.ToString(), @"^\s+$[\r\n]*", string.Empty, RegexOptions.Multiline);
@@ -201,20 +280,21 @@ namespace Core.Commands
                 {
                     return FileSystem.SaveFileOutput(savedFile, currentDir, outData.ToString());
                 }
-
+    
                 return outData.ToString();
             }
             catch (UnauthorizedAccessException) { return ""; }
+            catch(IOException) { return ""; }
         }
 
-        private static string LineOutput(string file, string currentDir, string searchString)
+        private static string LineOutput(string file, string currentDir, string searchString, SearchType searchType = SearchType.contains)
         {
-            string oFile = FileOutput(file, currentDir, searchString);
+            string oFile = FileOutput(file, currentDir, searchString, "", searchType);
             if (oFile.StartsWith("Line"))
             {
                 return $"---------------- {file} ----------------"
                      + Environment.NewLine
-                     + FileOutput(file, currentDir, searchString);
+                     + FileOutput(file, currentDir, searchString,"", searchType);
             }
             return null;
         }
@@ -321,15 +401,15 @@ namespace Core.Commands
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="linesCount"></param>
-        public static void OutputFirtsLastLines(string fileName, int linesCount, bool isLast=false)
+        public static void OutputFirtsLastLines(string fileName, int linesCount, bool isLast = false)
         {
             if (CheckFileContent(fileName))
             {
                 try
                 {
-                    IEnumerable<string> lines=null;
+                    IEnumerable<string> lines = null;
                     var linesC = File.ReadLines(fileName).Count();
-                    if(isLast)
+                    if (isLast)
                         lines = File.ReadLines(fileName).Skip(linesC - linesCount).Take(linesCount);
                     else
                         lines = File.ReadLines(fileName).Take(linesCount);
@@ -418,8 +498,8 @@ namespace Core.Commands
                 FileSystem.ErrorWriteLine("Parameter invalid: You need to provide the range of lines for data display! Example: 10-20");
                 return;
             }
-            int first = Int32.Parse(firstLine);
-            int second = Int32.Parse(secondLine);
+            int first = int.Parse(firstLine);
+            int second = int.Parse(secondLine);
             GlobalVariables.pipeCmdOutput = string.Empty;
             if (GlobalVariables.isPipeCommand)
             {
@@ -484,13 +564,13 @@ namespace Core.Commands
         public static void ConcatenateFiles(string argfiles, string outputFIle, string currentDirectory)
         {
             string sFile;
-            if (!argfiles.Contains(";"))
+            if (!argfiles.Contains("*"))
             {
-                Console.WriteLine($"You need more than 1 file to concatenate and needs to be separated with ; character!");
+                Console.WriteLine($"You need more than 1 file to concatenate and needs to be separated with '*' character.");
                 return;
             }
 
-            string[] files = argfiles.Split(';');
+            string[] files = argfiles.Split('*');
             foreach (var file in files)
             {
                 if (GlobalVariables.eventCancelKey)

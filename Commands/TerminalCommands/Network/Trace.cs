@@ -31,7 +31,7 @@ Command can be canceled with CTRL+X key combination.
         {
             try
             {
-                if (arg == $"{Name} -h")
+                if (arg == $"{Name} -h" && !GlobalVariables.isPipeCommand)
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
@@ -41,14 +41,16 @@ Command can be canceled with CTRL+X key combination.
                     FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!");
                     return;
                 }
-
                 GlobalVariables.eventCancelKey = false;
                 GlobalVariables.eventKeyFlagX = true;
                 arg = arg.Replace(Name, "").Trim();
                 var ip = arg.Split(' ')[0].Trim();
 
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                {
                     ip = GlobalVariables.pipeCmdOutput.Trim();
+                    GlobalVariables.pipeCmdOutput = "";
+                }
 
                 if (string.IsNullOrEmpty(ip))
                     throw new ArgumentException("Address cannot be null or empty!");
@@ -131,6 +133,7 @@ Command can be canceled with CTRL+X key combination.
             catch (Exception ex)
             {
                 FileSystem.ErrorWriteLine(ex.Message);
+                GlobalVariables.isErrorCommand = true;
                 return;
             }
         }

@@ -26,6 +26,13 @@ Note: Background commands are killed when xTerminal is closed!
         public void Execute(string arg)
         {
             GlobalVariables.isErrorCommand = false;
+            // Display help message.
+            if (arg.Replace(Name,"").Trim() == "-h" && !GlobalVariables.isPipeCommand)
+            {
+                Console.WriteLine(s_helpMessage);
+                return;
+            }
+
             if (arg == Name)
             {
                 if (File.Exists(_backgroundCommandsPidList))
@@ -54,13 +61,6 @@ Note: Background commands are killed when xTerminal is closed!
                 }
                 else
                     FileSystem.ErrorWriteLine("Somewith went wrong on reading the background commands list!");
-                return;
-            }
-
-            // Display help message.
-            if (arg.Trim() == "-h" && !GlobalVariables.isPipeCommand)
-            {
-                Console.WriteLine(s_helpMessage);
                 return;
             }
         }

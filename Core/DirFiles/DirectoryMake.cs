@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
-using System.Text;
 
 namespace Core.DirFiles
 {
@@ -67,12 +66,12 @@ namespace Core.DirFiles
 
                     // Extract nested directories and recursively create them
                     string nestedDirs = pathDir.Substring(index + 1, endBraceIndex - index - 1);
-                    CreateDirectories(nestedDirs, Path.Combine(currentPath, dirName), listDirs, $"{indent}   |-- ");
+                    CreateDirectories(nestedDirs, Path.Combine(currentPath, dirName), listDirs, $"{indent}   ├─ ");
                     index = endBraceIndex + 1; // Move past the closing brace
                 }
 
-                // Move past any delimiter (either ';' or ',')
-                while (index < pathDir.Length && (pathDir[index] == ';' || pathDir[index] == ',')) index++;
+                // Move past any delimiter (either '*' or ',')
+                while (index < pathDir.Length && (pathDir[index] == '*' || pathDir[index] == ',')) index++;
             }
         }
 
@@ -85,7 +84,7 @@ namespace Core.DirFiles
         private string ExtractDirectoryName(string pathDir, ref int index)
         {
             int start = index;
-            while (index < pathDir.Length && pathDir[index] != ';' && pathDir[index] != ',' && pathDir[index] != '{')
+            while (index < pathDir.Length && pathDir[index] != '*' && pathDir[index] != ',' && pathDir[index] != '{')
             {
                 index++;
             }

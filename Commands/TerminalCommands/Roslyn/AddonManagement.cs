@@ -39,7 +39,7 @@ namespace Commands.TerminalCommands.Roslyn
                 Example: ! <command_name> -p <parameters>
    -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
              current directory with a command name.
-                Example: ! -add <file_name_with_code> -c <command_name>|<command_description>
+                Example: ! -add <file_name_with_code> -c <command_name>:<command_description>
    -del   :  Deletes an Add-on.
                 Example: ! -del <command_name>
    -list  :  Displays the list of the saved add-ons with description.
@@ -167,7 +167,7 @@ namespace Commands.TerminalCommands.Roslyn
                 }
 
                 string argParse = dirFirst.SplitByText(" -c ", 1);
-                string command = argParse.Split('|')[0].Trim();
+                string command = argParse.Split(':')[0].Trim();
                 if(command.Length < 2)
                 {
                     FileSystem.ErrorWriteLine("Command name should be at least 2 characters long!");
@@ -181,7 +181,7 @@ namespace Commands.TerminalCommands.Roslyn
                     return;
                 }
                 int countSpace = Regex.Matches(argument, " ").Count;
-                string description = argument.Split('|')[1].Trim();
+                string description = argument.Split(':')[1].Trim();
 
                 using (StreamReader stringReader = new StreamReader(file))
                 {
