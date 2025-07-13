@@ -296,6 +296,7 @@ namespace Core.SystemTools
                     case ConsoleKey.Q:
                         exitRequested = true;
                         Console.Clear();
+                        Console.CursorVisible = true;
                         break;
                     case ConsoleKey.M:
                         currentSortMode = SortMode.Memory;
