@@ -70,6 +70,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -hl  : Highlights specific files/directories with by a specific text. Ex.: ls -hl <higlighted_text>
     -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
     -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
+           Use -l to set the depth of the tree structure. Ex.: ls -t -l 2
 
 Commands can be canceled with CTRL+X key combination.
 
