@@ -30,6 +30,7 @@ namespace Core.SystemTools
         string searchQuery = "";
         bool inSearchMode = false;
         string inputPrompt = "";
+        SortMode currentSortMode = SortMode.Name;
 
         // Shared fields updated by SampleCpuLoop
         double latestCpuPercent = 0;
@@ -296,10 +297,20 @@ namespace Core.SystemTools
                         exitRequested = true;
                         Console.Clear();
                         break;
+                    case ConsoleKey.M:
+                        currentSortMode = SortMode.Memory;
+                        break;
+                    case ConsoleKey.C:
+                        currentSortMode = SortMode.CPU;
+                        break;
+                    case ConsoleKey.N: // Sort by Name
+                        currentSortMode = SortMode.Name;
+                        break;
                     case ConsoleKey.Oem2: // '/' key
                         inSearchMode = true;
                         searchQuery = "";
                         RenderSearchPrompt();
+
 
                         Console.SetCursorPosition(0, Console.WindowHeight - 1);
                         Console.Write((inputPrompt ?? "").PadRight(Console.WindowWidth - 1));
@@ -317,9 +328,7 @@ namespace Core.SystemTools
         /// <param name="query">The case-insensitive substring to search for in process names.</param>
         void SearchAndScrollToProcess(string query)
         {
-            var processes = Process.GetProcesses()
-                .OrderBy(p => p.ProcessName)
-                .ToArray();
+            var processes = GetSortedProcesses();
 
             for (int i = 0; i < processes.Length; i++)
             {
@@ -356,9 +365,7 @@ namespace Core.SystemTools
         {
             try
             {
-                var processes = Process.GetProcesses()
-                    .OrderBy(p => p.ProcessName)
-                    .ToArray();
+                var processes = GetSortedProcesses();
 
                 if (selectedIndex >= 0 && selectedIndex < processes.Length)
                 {
@@ -380,9 +387,26 @@ namespace Core.SystemTools
         {
             while (!exitRequested)
             {
-                var processes = Process.GetProcesses()
-                    .OrderBy(p => p.ProcessName)
-                    .ToArray();
+                var processes = Process.GetProcesses();
+
+                switch (currentSortMode)
+                {
+                    case SortMode.CPU:
+                        processes = processes.OrderByDescending(p => cpuUsages.TryGetValue(p.Id, out var cpu) ? cpu : 0).ToArray();
+                        break;
+                    case SortMode.Memory:
+                        processes = processes.OrderByDescending(p =>
+                        {
+                            try { return p.PrivateMemorySize64; }
+                            catch { return 0L; }
+                        }).ToArray();
+                        break;
+                    default:
+                        processes = processes.OrderBy(p => p.ProcessName).ToArray();
+                        break;
+                }
+
+                var processArray = processes.ToArray();
 
                 int maxDisplay = Console.WindowHeight - 6; // Reserve lines for title + bars + header
                 int visibleCount = Math.Min(maxDisplay, processes.Length);
@@ -396,7 +420,7 @@ namespace Core.SystemTools
                 Console.Write(new string(' ', Console.WindowWidth)); // clear line 0
                 Console.SetCursorPosition(0, 0);
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write("WTop - ↑/↓ navigate | 'Q' quit | 'K' kill selected process | '/' search process by name".PadRight(Console.WindowWidth - 1));
+                Console.Write($"WTop - ↑/↓ navigate | 'Q' quit | 'K' kill | '/' search | 'C'=CPU 'M'=Mem 'N'=Name | Sort: {currentSortMode}".PadRight(Console.WindowWidth - 1));
                 Console.ResetColor();
 
                 // --- Draw CPU Bar ---
@@ -476,6 +500,12 @@ namespace Core.SystemTools
             }
         }
 
+        double SafeGetMemory(Process p)
+        {
+            try { return p.PrivateMemorySize64; }
+            catch { return 0; }
+        }
+
         /// <summary>
         /// Truncates the specified string to a maximum length, appending "..." if truncation occurs.
         /// </summary>
@@ -486,6 +516,29 @@ namespace Core.SystemTools
         string Truncate(string value, int maxLength)
         {
             return value.Length <= maxLength ? value : value.Substring(0, maxLength - 3) + "...";
+        }
+
+        enum SortMode
+        {
+            Name,
+            Memory,
+            CPU
+        }
+
+        Process[] GetSortedProcesses()
+        {
+            var processes = Process.GetProcesses();
+
+            return currentSortMode switch
+            {
+                SortMode.CPU => processes.OrderByDescending(p => cpuUsages.TryGetValue(p.Id, out var cpu) ? cpu : 0).ToArray(),
+                SortMode.Memory => processes.OrderByDescending(p =>
+                {
+                    try { return p.PrivateMemorySize64; }
+                    catch { return 0L; }
+                }).ToArray(),
+                _ => processes.OrderBy(p => p.ProcessName).ToArray()
+            };
         }
     }
 }

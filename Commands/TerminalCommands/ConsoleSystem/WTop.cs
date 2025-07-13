@@ -18,6 +18,9 @@ Inside the wtop command:
     ↑/↓ : To navigate through the process list.
     k   : Kill the selected process.
     /   : Search for a process by name.
+    C   : Sort processes by CPU usage.
+    M   : Sort processes by memory usage.
+    N   : Sort processes by name.
 
 Run with administrator privileges to see all users.
 ";
