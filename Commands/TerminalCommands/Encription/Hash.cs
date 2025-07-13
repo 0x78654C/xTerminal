@@ -20,9 +20,10 @@ namespace Commands.TerminalCommands.Encription
     hash -sha512 <file_path> : display the sha512 hash for the file.
 ";
         public string Name => "hash";
-        private static string s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
         public void Execute(string args)
         {
+            var s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
+
             GlobalVariables.isErrorCommand = false;
             if (args.Trim() == Name && !GlobalVariables.isPipeCommand)
             {
@@ -41,8 +42,8 @@ namespace Commands.TerminalCommands.Encription
                 if (arg.ContainsParameter("-sha256"))
                 {
 
-                    var file =FileSystem.SanitizePath( arg.ParameterAfter("-sha256").Trim(),s_currentDirectory);
-                    if(GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    var file = FileSystem.SanitizePath(arg.ParameterAfter("-sha256").Trim(), s_currentDirectory);
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     if (!File.Exists(file))
                     {
@@ -55,14 +56,14 @@ namespace Commands.TerminalCommands.Encription
                         GlobalVariables.pipeCmdOutput = hash256;
                     else
                         FileSystem.SuccessWriteLine($"SHA256: {hash256}");
-                    return ;
+                    return;
                 }
 
                 if (arg.ContainsParameter("-sha512"))
                 {
 
                     var file = FileSystem.SanitizePath(arg.ParameterAfter("-sha512").Trim(), s_currentDirectory);
-                    if(GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         file = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     if (!File.Exists(file))
                     {
