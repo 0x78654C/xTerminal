@@ -19,6 +19,7 @@ Inside the wtop command:
     k   : Kill the selected process.
     /   : Search for a process by name.
 
+Run with administrator privileges to see all users.
 ";
 
         public void Execute(string arg)
