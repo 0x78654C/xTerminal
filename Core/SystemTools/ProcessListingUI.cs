@@ -4,8 +4,6 @@
     * The first tool that is fully generated with AI and is designed to be simple and efficient.
  */
 
-
-using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
