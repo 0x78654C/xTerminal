@@ -597,6 +597,10 @@ https://github.com/0x78654C/xTerminal/assets/13780514/00e0d55a-0ce3-446d-bd33-7c
 
 ## More Samples
 
+* WTop process manager:
+  
+![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/wtop.png?raw=true)
+
 * Using the Password Manager: 
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/4.png?raw=true)
