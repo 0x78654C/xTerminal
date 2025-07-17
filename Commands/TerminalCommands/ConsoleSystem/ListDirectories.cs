@@ -54,11 +54,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -d   : Display only directories.
     -f   : Display only files.
     -dup : Displays duplicate files in a directory and subdirectories.
-           Example1: ls -d <directory_path>
-           Example2: ls -d -e <directory_path> (scans for duplicate files with same extension)
-           Example3: ls -d <directory_path> -o <file_to_save>
-           Example4: ls -d -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
-           Example5: ls -d -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
+           Example1: ls -dup <directory_path>
+           Example2: ls -dup -e <directory_path> (scans for duplicate files with same extension)
+           Example3: ls -dup <directory_path> -o <file_to_save>
+           Example4: ls -dup -e <directory_path> -o <file_to_save>  (scans for duplicate files with same extension)
+           Example5: ls -dup -length (sets the length of bytes from where will be the MD5 hash extracted. If is set to 0 or less than will scan the entire file.)   
     -s   : Displays size of files in current directory and subdirectories.
     -c   : Counts files and directories and subdirectories from current directory.
     -cf  : Counts files from current directory and subdirectories with name containing a specific text.
