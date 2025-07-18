@@ -107,9 +107,19 @@ namespace Core.SystemTools
 
         private static void DirCompletion(string startChar, string currentDirectory, ref string addedCompletion)
         {
+            if (startChar.Contains("\\"))
+            {
+                var splitStart = startChar.Split('\\').ToList();
+                var endChars = splitStart[splitStart.Count - 1];
+                splitStart.RemoveAt(splitStart.Count - 1);
+                var continuePath  = string.Join("\\", splitStart);
+                currentDirectory = currentDirectory+continuePath+"\\";
+            }
+            
             var directories = Directory.GetDirectories(currentDirectory);
             int tabs = 5;
             addedCompletion = "";
+            
             var dirStart = directories.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
 
             if (dirStart.Count == 1)
