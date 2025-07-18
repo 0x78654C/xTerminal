@@ -301,7 +301,8 @@ e - Encrypted
                     if (GlobalVariables.isPipeCommand && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
                         currDir = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     DisplayTreeDirStructureDepth(currDir, level);
-
+                    if (GlobalVariables.eventCancelKey)
+                        s_tree += "\nCommand stopped!\n";
                     if (arg.ContainsParameter("-o"))
                     {
                         var fileName = args.SplitByText("-o", 1).Trim();
@@ -316,8 +317,7 @@ e - Encrypted
                             FileSystem.SuccessWriteLine(s_tree);
                     }
                     s_tree = "";
-                    if (GlobalVariables.eventCancelKey)
-                        FileSystem.SuccessWriteLine("Command stopped!");
+                    GlobalVariables.eventKeyFlagX = false;
                     ClearCounters();
                     s_levelTree = 0;
                     return;
@@ -404,6 +404,8 @@ e - Encrypted
                 {
                     var directory = directories[i];
                     bool isLastDirectory = (i == directories.Length - 1);
+                    if (GlobalVariables.eventCancelKey)
+                        break;
                     DisplayTreeDirStructureDepth(directory, maxDepth, currentLevel + 1, indent, isLastDirectory);
                 }
             }
