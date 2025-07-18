@@ -83,13 +83,14 @@ Example:
                       kill <process_name> -e : Kill entire process tree.
                       kill -i <process_id>
                       kill -i <process_id> -e : Kill entire process tree.
-    plist     -- List current running processes and their child processes.
-                 Example: 
-                 Parent : [Idle] [0]   ---> parent process
-                     [Idle] [0]        ---> child process
-                     [System] [4]      ---> child process
-                 Parent (1) : [System] ---> parent process(was child process for parent process '[Idle] [0]')
-                     [Registry] [132]  ---> child process
+    plist     -- List current running processes and their child processes in a tree views.
+                    Example: 
+                    C:\Users\MrX\Projects\~ $ plist
+                    ├─ csrss.exe (936)
+                    └─ wininit.exe (848)
+                        ├─ services.exe (1140)
+                        │  ├─ svchost.exe (1348)
+                        │  │  ├─ WmiPrvSE.exe (4588)
     clear     -- Clears the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory).
     odir      -- Open current directory or other directory path provided with Windows Explorer.

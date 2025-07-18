@@ -12,13 +12,27 @@ namespace Commands.TerminalCommands.ConsoleSystem
         */
 
         public string Name => "plist";
-        private string _helpMessage = @"List current running processes and their child processes.
-Example: 
-    Parent : [Idle] [0]   ---> parent process
-        [Idle] [0]        ---> child process
-        [System] [4]      ---> child process
-    Parent (1) : [System] ---> parent process(was child process for parent process '[Idle] [0]')
-        [Registry] [132]  ---> child process
+        private string _helpMessage = @"List current running processes and their child processes in a tree view.
+    -h : Display this message.
+    Example:
+    C:\Users\MrX\Projects\~ $ plist
+    ├─ csrss.exe (936)
+    └─ wininit.exe (848)
+       ├─ services.exe (1140)
+       │  ├─ svchost.exe (1348)
+       │  │  ├─ WmiPrvSE.exe (4588)
+       │  │  ├─ StartMenuExperienceHost.exe (9052)
+       │  │  ├─ SearchHost.exe (4192)
+       │  │  │  └─ msedgewebview2.exe (12856)
+       │  │  │     ├─ msedgewebview2.exe (13108)
+       │  │  │     ├─ msedgewebview2.exe (12628)
+       │  │  │     ├─ msedgewebview2.exe (12852)
+       │  │  │     ├─ msedgewebview2.exe (12876)
+       │  │  │     └─ msedgewebview2.exe (8128)
+       │  │  ├─ UserOOBEBroker.exe (11412)
+       │  │  ├─ RuntimeBroker.exe (11496)
+       │  │  ├─ Widgets.exe (11660)
+       │  │  ├─ RuntimeBroker.exe (11776)
 
 ";
 
