@@ -301,8 +301,10 @@ e - Encrypted
                     if (GlobalVariables.isPipeCommand && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
                         currDir = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     DisplayTreeDirStructureDepth(currDir, level);
+                    
                     if (GlobalVariables.eventCancelKey)
                         s_tree += "\nCommand stopped!\n";
+                    
                     if (arg.ContainsParameter("-o"))
                     {
                         var fileName = args.SplitByText("-o", 1).Trim();
