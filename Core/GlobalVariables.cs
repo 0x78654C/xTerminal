@@ -22,6 +22,7 @@ namespace Core
         public static string regUIsc = "UISC";
         public static string regCportTimeOut = "cportTimeOut";
         public static string regOpenAI_APIKey = "OpenAI_APIKey";
+        public static string regOllama_Model = "Ollama_Model";
         public static string regHistoryLimitSize = "historyLimitSize";
         public static int historyLimitSize { get; set; } = 2000;
         public static string commandOut { get; set; }

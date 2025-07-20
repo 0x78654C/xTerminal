@@ -1,32 +1,40 @@
-﻿using System;
-using System.Threading.Tasks;
-using Core;
-using System.Runtime.Versioning;
-using Core.OpenAI;
-using System.IO;
+﻿using Core;
 using Core.Encryption;
+using Core.OpenAI;
+using OllamaInt;
 using OpenRouter;
+using System;
+using System.IO;
+using System.Reflection;
+using System.Runtime.Versioning;
+using System.Threading.Tasks;
 
 namespace Commands.TerminalCommands.OpenAi
 {
     [SupportedOSPlatform("windows")]
 
-    /* Command for run chatGPT from OpenAI in terminal */
+    /* Command for run chatGPT from OpenAI, OpenRouter and Ollama in terminal */
     public class chatGPT : ITerminalCommand
     {
         public string Name => "cgpt";
         private static string s_helpMessage = @"Usage of cgpt command:
-    Info: This command allows you to interact with OpenAI's chatGPT model or OpenRouter's models directly from the terminal.
+    Info: This command allows you to interact with OpenAI's chatGPT, OpenRouter or Ollama models directly from the terminal.
 
-    Example 1: cgpt -setkey key_from_openai (Store the API key provided by OpenAI or OpenRouter)
-    Example 2: cgpt question_you_want_to_ask (Display the answer for your question)
+    cgpt -setkey key_from_openai       : Store the API key provided by OpenAI or OpenRouter
+    cgpt <question_you_want_to_ask>    : Display the answer for your question.
+    
+    Ollama parameters:
+    cgpt -l                            : Will list the Ollama models.
+    cgpt -m <model_name>               : Set mode to use with Ollama.
+    cgpt -sm <model_name>              : Set a specific model to use for Ollama.
+    cgpt -cm                           : Display current used Ollama model.
+    cgpt -o <question_you_want_to_ask> : Display the answer for your question with Ollama.
 ";
 
         public void Execute(string arg)
         {
             try
             {
-        
                 GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
@@ -39,6 +47,45 @@ namespace Commands.TerminalCommands.OpenAi
                     return;
                 }
 
+                if (arg.Contains("-l"))
+                {
+                    var ollama = new OllamaLLM();
+                    var list = string.Join("\n", ollama.LocalModels());
+                    FileSystem.SuccessWriteLine($"Installed Ollama models:");
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        GlobalVariables.pipeCmdOutput = list;
+                    else
+                        Console.WriteLine(list);
+                    return;
+                }
+
+                if (arg.Contains("-sm"))
+                {
+                    var model = arg.SplitByText("-sm", 1).Trim();
+                    if (string.IsNullOrEmpty(model))
+                    {
+                        FileSystem.ErrorWriteLine($"You must enter the Ollama model name!");
+                        return;
+                    }
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, model);
+                    FileSystem.SuccessWriteLine($"Ollama model '{model}' is set!");
+                    return;
+                }
+
+
+                if (arg.Contains("-sm"))
+                {
+             
+                    var currentModel =  RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
+                    if (string.IsNullOrEmpty(currentModel))
+                    {
+                        FileSystem.ErrorWriteLine($"You must enter the Ollama model name!");
+                        return;
+                    }
+                    FileSystem.SuccessWriteLine($"Ollama model '{model}' is set!");
+                    return;
+                }
+
                 if (arg.Contains("-setkey"))
                 {
                     FileSystem.SuccessWriteLine("Enter AI API key: ");
@@ -47,7 +94,7 @@ namespace Commands.TerminalCommands.OpenAi
                     var encryptKey = DPAPI.Encrypt(getConsoleKey.ConvertSecureStringToString());
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, encryptKey);
                     Console.WriteLine();
-                    if(getConsoleKey.ConvertSecureStringToString().StartsWith("sk-or"))
+                    if (getConsoleKey.ConvertSecureStringToString().StartsWith("sk-or"))
                         FileSystem.SuccessWriteLine("OpenRouter API key is stored!");
                     else
                         FileSystem.SuccessWriteLine("OpenAI API key is stored!");
@@ -98,7 +145,7 @@ namespace Commands.TerminalCommands.OpenAi
         {
             if (!GlobalVariables.isPipeCommand)
             {
-                if(apiKey.StartsWith("sk-or"))
+                if (apiKey.StartsWith("sk-or"))
                     FileSystem.SuccessWriteLine("Loading data from OpenRouter:");
                 else
                     FileSystem.SuccessWriteLine("Loading data from OpenAI:");

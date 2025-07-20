@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
+    <ProjectReference Include="..\OllamaInt\OllamaInt.csproj" />
     <ProjectReference Include="..\OpenRouter\OpenRouter.csproj" />
   </ItemGroup>
 
