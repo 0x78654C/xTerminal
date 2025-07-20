@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -107,12 +108,13 @@ namespace Core.SystemTools
 
         private static void DirCompletion(string startChar, string currentDirectory, ref string addedCompletion)
         {
+            var continuePath = "";
             if (startChar.Contains("\\"))
             {
                 var splitStart = startChar.Split('\\').ToList();
                 var endChars = splitStart[splitStart.Count - 1];
                 splitStart.RemoveAt(splitStart.Count - 1);
-                var continuePath  = string.Join("\\", splitStart);
+                continuePath  = string.Join("\\", splitStart);
                 currentDirectory = currentDirectory+continuePath+"\\";
                 startChar = endChars;
             }
@@ -121,11 +123,15 @@ namespace Core.SystemTools
             int tabs = 5;
             addedCompletion = "";
             
+            
             var dirStart = directories.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
 
             if (dirStart.Count == 1)
             {
-                addedCompletion = new DirectoryInfo(dirStart[0]).Name;
+                if (!string.IsNullOrEmpty(continuePath))
+                    addedCompletion = $"{continuePath}\\{new DirectoryInfo(dirStart[0]).Name}";
+                else
+                    addedCompletion = new DirectoryInfo(dirStart[0]).Name;
                 return;
             }
 
