@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Runtime.Versioning;
 using System.Windows.Forms;
-using static Core.GlobalVariables;
 
 namespace Core.SystemTools
 {
@@ -48,6 +45,18 @@ namespace Core.SystemTools
 
         private static void AllCompletion(string startChar, string currentDirectory, ref string addedCompletion)
         {
+            var continuePath = "";
+            if (startChar.Contains("\\"))
+            {
+                var splitStart = startChar.Split('\\').ToList();
+                var endChars = splitStart[splitStart.Count - 1];
+                splitStart.RemoveAt(splitStart.Count - 1);
+                continuePath = string.Join("\\", splitStart);
+                currentDirectory = currentDirectory + continuePath + "\\";
+                startChar = endChars;
+            }
+
+
             int tabs = 5;
             addedCompletion = "";
             var directories = Directory.GetDirectories(currentDirectory);
@@ -55,7 +64,10 @@ namespace Core.SystemTools
 
             if (dirStart.Count == 1)
             {
-                addedCompletion = new DirectoryInfo(dirStart[0]).Name;
+                if (!string.IsNullOrEmpty(continuePath))
+                    addedCompletion = $"{continuePath}\\{new DirectoryInfo(dirStart[0]).Name}";
+                else
+                    addedCompletion = new DirectoryInfo(dirStart[0]).Name;
                 return;
             }
 
@@ -63,7 +75,10 @@ namespace Core.SystemTools
             var fileStart = files.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
             if (fileStart.Count == 1)
             {
-                addedCompletion = new DirectoryInfo(fileStart[0]).Name;
+                if (!string.IsNullOrEmpty(continuePath))
+                    addedCompletion = $"{continuePath}\\{new DirectoryInfo(fileStart[0]).Name}";
+                else
+                    addedCompletion = new DirectoryInfo(fileStart[0]).Name;
                 return;
             }
 
@@ -122,8 +137,6 @@ namespace Core.SystemTools
             var directories = Directory.GetDirectories(currentDirectory);
             int tabs = 5;
             addedCompletion = "";
-            
-            
             var dirStart = directories.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
 
             if (dirStart.Count == 1)
@@ -163,13 +176,29 @@ namespace Core.SystemTools
         /// <param name="currentDirectory">Current directory path.</param>
         private static void FileCompletion(string startChar, string currentDirectory, ref string addedCompletion)
         {
+
+            var continuePath = "";
+            if (startChar.Contains("\\"))
+            {
+                var splitStart = startChar.Split('\\').ToList();
+                var endChars = splitStart[splitStart.Count - 1];
+                splitStart.RemoveAt(splitStart.Count - 1);
+                continuePath = string.Join("\\", splitStart);
+                currentDirectory = currentDirectory + continuePath + "\\";
+                startChar = endChars;
+            }
+
             var files = Directory.GetFiles(currentDirectory);
             int tabs = 5;
             var fileStart = files.Where(d => new DirectoryInfo(d).Name.StartsWith(startChar, StringComparison.InvariantCultureIgnoreCase)).ToList();
             addedCompletion = "";
+
             if (fileStart.Count == 1)
             {
-                addedCompletion = new DirectoryInfo(fileStart[0]).Name;
+                if (!string.IsNullOrEmpty(continuePath))
+                    addedCompletion = $"{continuePath}\\{new DirectoryInfo(fileStart[0]).Name}";
+                else
+                    addedCompletion = new DirectoryInfo(fileStart[0]).Name;
                 return;
             }
             Console.WriteLine();
