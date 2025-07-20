@@ -114,6 +114,7 @@ namespace Core.SystemTools
                 splitStart.RemoveAt(splitStart.Count - 1);
                 var continuePath  = string.Join("\\", splitStart);
                 currentDirectory = currentDirectory+continuePath+"\\";
+                startChar = endChars;
             }
             
             var directories = Directory.GetDirectories(currentDirectory);
