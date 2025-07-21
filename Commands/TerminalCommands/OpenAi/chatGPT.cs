@@ -67,22 +67,21 @@ namespace Commands.TerminalCommands.OpenAi
                         FileSystem.ErrorWriteLine($"You must enter the Ollama model name!");
                         return;
                     }
-                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, model);
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model, model);
                     FileSystem.SuccessWriteLine($"Ollama model '{model}' is set!");
                     return;
                 }
 
-
-                if (arg.Contains("-sm"))
+                if (arg.Contains("-cm"))
                 {
              
-                    var currentModel =  RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
+                    var currentModel =  RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model);
                     if (string.IsNullOrEmpty(currentModel))
                     {
-                        FileSystem.ErrorWriteLine($"You must enter the Ollama model name!");
+                        FileSystem.ErrorWriteLine($"There is no Ollama model set!");
                         return;
                     }
-                    FileSystem.SuccessWriteLine($"Ollama model '{model}' is set!");
+                    FileSystem.SuccessWriteLine($"Current Ollama model in use: '{currentModel}'");
                     return;
                 }
 
