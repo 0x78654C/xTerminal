@@ -50,6 +50,11 @@ namespace Commands.TerminalCommands.OpenAi
                 if (arg.Contains("-l"))
                 {
                     var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
                     var list = string.Join("\n", ollama.LocalModels());
                     FileSystem.SuccessWriteLine($"Installed Ollama models:");
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
@@ -61,6 +66,12 @@ namespace Commands.TerminalCommands.OpenAi
 
                 if (arg.Contains("-sm"))
                 {
+                    var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
                     var model = arg.SplitByText("-sm", 1).Trim();
                     if (string.IsNullOrEmpty(model))
                     {
@@ -74,7 +85,12 @@ namespace Commands.TerminalCommands.OpenAi
 
                 if (arg.Contains("-cm"))
                 {
-
+                    var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
                     var currentModel = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model);
                     if (string.IsNullOrEmpty(currentModel))
                     {
@@ -85,9 +101,14 @@ namespace Commands.TerminalCommands.OpenAi
                     return;
                 }
 
-
                 if (arg.Contains("-o"))
                 {
+                    var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
                     var oQuestion = arg.SplitByText("-o", 1).Trim();
                     if (string.IsNullOrEmpty(oQuestion))
                     {
@@ -191,6 +212,13 @@ namespace Commands.TerminalCommands.OpenAi
             }
             Console.WriteLine();
         }
+
+        /// <summary>
+        /// Ollama AI call.
+        /// </summary>
+        /// <param name="question"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
 
         public async Task GetOllamaAIData(string question, string model)
         {
