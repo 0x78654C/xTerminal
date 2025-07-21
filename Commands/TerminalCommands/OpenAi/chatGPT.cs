@@ -5,7 +5,6 @@ using OllamaInt;
 using OpenRouter;
 using System;
 using System.IO;
-using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
@@ -47,6 +46,7 @@ namespace Commands.TerminalCommands.OpenAi
                     return;
                 }
 
+                // ---- Ollama parameters ----
                 if (arg.Contains("-l"))
                 {
                     var ollama = new OllamaLLM();
@@ -64,7 +64,7 @@ namespace Commands.TerminalCommands.OpenAi
                     var model = arg.SplitByText("-sm", 1).Trim();
                     if (string.IsNullOrEmpty(model))
                     {
-                        FileSystem.ErrorWriteLine($"You must enter the Ollama model name!");
+                        FileSystem.ErrorWriteLine("You must enter the Ollama model name!");
                         return;
                     }
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model, model);
@@ -74,8 +74,8 @@ namespace Commands.TerminalCommands.OpenAi
 
                 if (arg.Contains("-cm"))
                 {
-             
-                    var currentModel =  RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model);
+
+                    var currentModel = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model);
                     if (string.IsNullOrEmpty(currentModel))
                     {
                         FileSystem.ErrorWriteLine($"There is no Ollama model set!");
@@ -84,6 +84,26 @@ namespace Commands.TerminalCommands.OpenAi
                     FileSystem.SuccessWriteLine($"Current Ollama model in use: '{currentModel}'");
                     return;
                 }
+
+
+                if (arg.Contains("-o"))
+                {
+                    var oQuestion = arg.SplitByText("-o", 1).Trim();
+                    if (string.IsNullOrEmpty(oQuestion))
+                    {
+                        FileSystem.ErrorWriteLine("You need to provide a question!");
+                        return;
+                    }
+                    var model = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model);
+                    if (string.IsNullOrEmpty(model))
+                    {
+                        FileSystem.ErrorWriteLine($"There is no Ollama model set!");
+                        return;
+                    }
+                    GetOllamaAIData(oQuestion, model).Wait();
+                    return;
+                }
+                // --------------------
 
                 if (arg.Contains("-setkey"))
                 {
@@ -170,6 +190,20 @@ namespace Commands.TerminalCommands.OpenAi
                 await Task.Delay(200);
             }
             Console.WriteLine();
+        }
+
+        public async Task GetOllamaAIData(string question, string model)
+        {
+            OllamaLLM ollamaClient = new OllamaLLM();
+            ollamaClient.Model = model;
+            ollamaClient.Promt = question;
+            ollamaClient.Uri = GlobalVariables.ollamaUri;
+            ollamaClient.ChatHistory = GlobalVariables.chatHistory;
+            var response = await Task.Run(ollamaClient.AskOllama);
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                GlobalVariables.pipeCmdOutput = response;
+            else
+                Console.WriteLine(response);
         }
     }
 }
