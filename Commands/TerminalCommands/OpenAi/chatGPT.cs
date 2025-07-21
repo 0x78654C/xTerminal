@@ -19,7 +19,9 @@ namespace Commands.TerminalCommands.OpenAi
         private static string s_helpMessage = @"Usage of cgpt command:
     Info: This command allows you to interact with OpenAI's chatGPT, OpenRouter or Ollama models directly from the terminal.
 
-    cgpt -setkey key_from_openai       : Store the API key provided by OpenAI or OpenRouter
+    cgpt -setkey                       : Store the API key provided by OpenAI or OpenRouter
+    cgpt -setmodel                     : Set model to use with OpenAI or OpenRouter.
+    cgpt -currm                        : Display current used OpenAI or OpenRouter model.
     cgpt <question_you_want_to_ask>    : Display the answer for your question.
     
     Ollama parameters:
@@ -140,6 +142,33 @@ namespace Commands.TerminalCommands.OpenAi
                         FileSystem.SuccessWriteLine("OpenAI API key is stored!");
                     return;
                 }
+
+                if (arg.Contains("-setmodel"))
+                {
+                    var model = arg.SplitByText("-setmodel", 1).Trim();
+                    if (string.IsNullOrEmpty(model))
+                    {
+                        FileSystem.ErrorWriteLine("You must enter the OpenAI/OpenRouter model name!");
+                        return;
+                    }
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_Model, model);
+                    FileSystem.SuccessWriteLine($"OpenAI/OpenRouter '{model}' is set!");
+                    return;
+                }
+
+
+                if (arg.Contains("-currm"))
+                {
+                    var currentModel = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_Model);
+                    if (string.IsNullOrEmpty(currentModel))
+                    {
+                        FileSystem.ErrorWriteLine($"There is no OpenAI/OpenRouter model set!");
+                        return;
+                    }
+                    FileSystem.SuccessWriteLine($"Current OpenAI/OpenRouter model in use: '{currentModel}'");
+                    return;
+                }
+
                 var apiKey = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
                 var decryptedKey = "";
                 try
@@ -167,7 +196,12 @@ namespace Commands.TerminalCommands.OpenAi
                     GlobalVariables.isErrorCommand = true;
                     return;
                 }
-                GetOpenAIData(question, decryptedKey).Wait();
+
+
+                var nodelGPT = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_Model).Trim();
+                if (string.IsNullOrEmpty(nodelGPT))
+                    FileSystem.SuccessWriteLine($"There is no OpenAI/OpenRouter model set. It will use the default one!");
+                GetOpenAIData(question, decryptedKey, nodelGPT).Wait();
             }
             catch (Exception e)
             {
@@ -181,7 +215,7 @@ namespace Commands.TerminalCommands.OpenAi
         /// </summary>
         /// <param name="question"></param>
         /// <param name="apiKey"></param>
-        public async Task GetOpenAIData(string question, string apiKey)
+        public async Task GetOpenAIData(string question, string apiKey,string model)
         {
             if (!GlobalVariables.isPipeCommand)
             {
@@ -193,12 +227,14 @@ namespace Commands.TerminalCommands.OpenAi
             StringReader reader;
             if (apiKey.StartsWith("sk-or"))
             {
+                model = string.IsNullOrEmpty(model) ? "openai/gpt-3.5-turbo" : model;
                 var openRouterClient = new OpenRouterClient(apiKey);
-                reader = new StringReader(await openRouterClient.SendPromptAsync(question));
+                reader = new StringReader(await openRouterClient.SendPromptAsync(question, model));
             }
             else
             {
-                var openAI = new OpenAIManage(apiKey, question.Trim());
+                model = string.IsNullOrEmpty(model)? "text-davinci-003": model;
+                var openAI = new OpenAIManage(apiKey, question.Trim(), model);
                 reader = new StringReader(await openAI.AskOpenAI());
             }
             string line = "";
