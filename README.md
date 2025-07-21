@@ -494,7 +494,9 @@ Example:
 
     -------------------- OpenAI/OpenRouter -------------------
     cgpt      -- Ask OpenAI(chatGPT), OpenRouter and Ollama questions and display answer in terminal.
-                 cgpt -setkey key_from_openai       : Store the API key provided by OpenAI or OpenRouter
+                 cgpt -setkey                       : Store the API key provided by OpenAI or OpenRouter
+                 cgpt -setmodel                     : Set model to use with OpenAI or OpenRouter.
+                 cgpt -currm                        : Display current used OpenAI or OpenRouter model.
                  cgpt <question_you_want_to_ask>    : Display the answer for your question.
     
                  Ollama parameters:
