@@ -499,7 +499,7 @@ Example:
     
                  Ollama parameters:
                  cgpt -l                            : Will list the Ollama models.
-                 cgpt -m <model_name>               : Set mode to use with Ollama.
+                 cgpt -m <model_name>               : Set model to use with Ollama.
                  cgpt -sm <model_name>              : Set a specific model to use for Ollama.
                  cgpt -cm                           : Display current used Ollama model.
                  cgpt -o <question_you_want_to_ask> : Display the answer for your question with Ollama.
