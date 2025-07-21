@@ -493,9 +493,16 @@ Example:
                      -lista   : Displays the existing applications in a vault.
 
     -------------------- OpenAI/OpenRouter -------------------
-    cgpt      -- Ask OpenAI(chatGPT)/OpenRouter questions and display answer in terminal.
-                 Example 1: cgpt -setkey key_from_openai (Store the API key provided by OpenAI.com)
-                 Example 2: cgpt question_you_want_to_ask (Display the answer for your question)
+    cgpt      -- Ask OpenAI(chatGPT), OpenRouter and Ollama questions and display answer in terminal.
+                 cgpt -setkey key_from_openai       : Store the API key provided by OpenAI or OpenRouter
+                 cgpt <question_you_want_to_ask>    : Display the answer for your question.
+    
+                 Ollama parameters:
+                 cgpt -l                            : Will list the Ollama models.
+                 cgpt -m <model_name>               : Set mode to use with Ollama.
+                 cgpt -sm <model_name>              : Set a specific model to use for Ollama.
+                 cgpt -cm                           : Display current used Ollama model.
+                 cgpt -o <question_you_want_to_ask> : Display the answer for your question with Ollama.
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)
