@@ -110,8 +110,7 @@ This is the full list of commands that can be used in xTerminal:
                  Use -h for additional help.
 
     -------------------- OpenAI/OpenRouter -------------------
-    cgpt      -- Ask OpenAI(chatGPT)/OpenRouter questions and display answer in terminal.
-                 Use -h for additional help.
+    cgpt      -- Ask OpenAI(chatGPT), OpenRouter and Ollama questions and display answer in terminal. Use -h for additional help.
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!

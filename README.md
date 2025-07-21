@@ -83,13 +83,14 @@ Example:
                       kill <process_name> -e : Kill entire process tree.
                       kill -i <process_id>
                       kill -i <process_id> -e : Kill entire process tree.
-    plist     -- List current running processes and their child processes.
-                 Example: 
-                 Parent : [Idle] [0]   ---> parent process
-                     [Idle] [0]        ---> child process
-                     [System] [4]      ---> child process
-                 Parent (1) : [System] ---> parent process(was child process for parent process '[Idle] [0]')
-                     [Registry] [132]  ---> child process
+    plist     -- List current running processes and their child processes in a tree views.
+                    Example: 
+                    C:\Users\MrX\Projects\~ $ plist
+                    ├─ csrss.exe (936)
+                    └─ wininit.exe (848)
+                        ├─ services.exe (1140)
+                        │  ├─ svchost.exe (1348)
+                        │  │  ├─ WmiPrvSE.exe (4588)
     clear     -- Clears the console.
     cd        -- Sets the currnet directory. (cd .. for parent directory).
     odir      -- Open current directory or other directory path provided with Windows Explorer.
@@ -492,9 +493,18 @@ Example:
                      -lista   : Displays the existing applications in a vault.
 
     -------------------- OpenAI/OpenRouter -------------------
-    cgpt      -- Ask OpenAI(chatGPT)/OpenRouter questions and display answer in terminal.
-                 Example 1: cgpt -setkey key_from_openai (Store the API key provided by OpenAI.com)
-                 Example 2: cgpt question_you_want_to_ask (Display the answer for your question)
+    cgpt      -- Ask OpenAI(chatGPT), OpenRouter and Ollama questions and display answer in terminal.
+                 cgpt -setkey                       : Store the API key provided by OpenAI or OpenRouter
+                 cgpt -setmodel                     : Set model to use with OpenAI or OpenRouter.
+                 cgpt -currm                        : Display current used OpenAI or OpenRouter model.
+                 cgpt <question_you_want_to_ask>    : Display the answer for your question.
+    
+                 Ollama parameters:
+                 cgpt -l                            : Will list the Ollama models.
+                 cgpt -m <model_name>               : Set model to use with Ollama.
+                 cgpt -sm <model_name>              : Set a specific model to use for Ollama.
+                 cgpt -cm                           : Display current used Ollama model.
+                 cgpt -o <question_you_want_to_ask> : Display the answer for your question with Ollama.
 
     ------------------------ Games --------------------------
     flappy    -- Play Flappy Birds in console!(Created by Phan Phu Hao https://github.com/haophancs/cs-flappybird-game)

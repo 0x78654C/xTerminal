@@ -11,12 +11,14 @@ namespace Core.OpenAI
     {
         private string _apiKey = string.Empty;
         private string _question = string.Empty;
+        private string _model = string.Empty;
         private static HttpClient _httpClient= new HttpClient();
 
-        public OpenAIManage(string apiKey, string question)
+        public OpenAIManage(string apiKey, string question, string model)
         {
             _apiKey = apiKey;
             _question = question;
+            _model = model;
         }
 
         public async Task<string> AskOpenAI()
@@ -33,8 +35,8 @@ namespace Core.OpenAI
             {
                 MaxTokens = 999,
                 Temperature = 0.8m,
-                Model = "text-davinci-003",
-                Prompt=_question
+                Model = _model,
+                Prompt =_question
             });
             return result.Choices.First().Text; 
         }

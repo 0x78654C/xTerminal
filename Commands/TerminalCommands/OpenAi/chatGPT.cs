@@ -1,32 +1,41 @@
-﻿using System;
-using System.Threading.Tasks;
-using Core;
-using System.Runtime.Versioning;
-using Core.OpenAI;
-using System.IO;
+﻿using Core;
 using Core.Encryption;
+using Core.OpenAI;
+using OllamaInt;
 using OpenRouter;
+using System;
+using System.IO;
+using System.Runtime.Versioning;
+using System.Threading.Tasks;
 
 namespace Commands.TerminalCommands.OpenAi
 {
     [SupportedOSPlatform("windows")]
 
-    /* Command for run chatGPT from OpenAI in terminal */
+    /* Command for run chatGPT from OpenAI, OpenRouter and Ollama in terminal */
     public class chatGPT : ITerminalCommand
     {
         public string Name => "cgpt";
         private static string s_helpMessage = @"Usage of cgpt command:
-    Info: This command allows you to interact with OpenAI's chatGPT model or OpenRouter's models directly from the terminal.
+    Info: This command allows you to interact with OpenAI's chatGPT, OpenRouter or Ollama models directly from the terminal.
 
-    Example 1: cgpt -setkey key_from_openai (Store the API key provided by OpenAI or OpenRouter)
-    Example 2: cgpt question_you_want_to_ask (Display the answer for your question)
+    cgpt -setkey                       : Store the API key provided by OpenAI or OpenRouter
+    cgpt -setmodel                     : Set model to use with OpenAI or OpenRouter.
+    cgpt -currm                        : Display current used OpenAI or OpenRouter model.
+    cgpt <question_you_want_to_ask>    : Display the answer for your question.
+    
+    Ollama parameters:
+    cgpt -l                            : Will list the Ollama models.
+    cgpt -m <model_name>               : Set model to use with Ollama.
+    cgpt -sm <model_name>              : Set a specific model to use for Ollama.
+    cgpt -cm                           : Display current used Ollama model.
+    cgpt -o <question_you_want_to_ask> : Display the answer for your question with Ollama.
 ";
 
         public void Execute(string arg)
         {
             try
             {
-        
                 GlobalVariables.isErrorCommand = false;
                 if (arg == Name)
                 {
@@ -39,6 +48,86 @@ namespace Commands.TerminalCommands.OpenAi
                     return;
                 }
 
+                // ---- Ollama parameters ----
+                if (arg.Contains("-l"))
+                {
+                    var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
+                    var list = string.Join("\n", ollama.LocalModels());
+                    FileSystem.SuccessWriteLine($"Installed Ollama models:");
+                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                        GlobalVariables.pipeCmdOutput = list;
+                    else
+                        Console.WriteLine(list);
+                    return;
+                }
+
+                if (arg.Contains("-sm"))
+                {
+                    var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
+                    var model = arg.SplitByText("-sm", 1).Trim();
+                    if (string.IsNullOrEmpty(model))
+                    {
+                        FileSystem.ErrorWriteLine("You must enter the Ollama model name!");
+                        return;
+                    }
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model, model);
+                    FileSystem.SuccessWriteLine($"Ollama model '{model}' is set!");
+                    return;
+                }
+
+                if (arg.Contains("-cm"))
+                {
+                    var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
+                    var currentModel = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model);
+                    if (string.IsNullOrEmpty(currentModel))
+                    {
+                        FileSystem.ErrorWriteLine($"There is no Ollama model set!");
+                        return;
+                    }
+                    FileSystem.SuccessWriteLine($"Current Ollama model in use: '{currentModel}'");
+                    return;
+                }
+
+                if (arg.Contains("-o"))
+                {
+                    var ollama = new OllamaLLM();
+                    if (!ollama.IsOllamaInstalled())
+                    {
+                        FileSystem.ErrorWriteLine("Ollama is not installed on this machine!");
+                        return;
+                    }
+                    var oQuestion = arg.SplitByText("-o", 1).Trim();
+                    if (string.IsNullOrEmpty(oQuestion))
+                    {
+                        FileSystem.ErrorWriteLine("You need to provide a question!");
+                        return;
+                    }
+                    var model = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOllama_Model);
+                    if (string.IsNullOrEmpty(model))
+                    {
+                        FileSystem.ErrorWriteLine($"There is no Ollama model set!");
+                        return;
+                    }
+                    GetOllamaAIData(oQuestion, model).Wait();
+                    return;
+                }
+                // --------------------
+
                 if (arg.Contains("-setkey"))
                 {
                     FileSystem.SuccessWriteLine("Enter AI API key: ");
@@ -47,12 +136,39 @@ namespace Commands.TerminalCommands.OpenAi
                     var encryptKey = DPAPI.Encrypt(getConsoleKey.ConvertSecureStringToString());
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey, encryptKey);
                     Console.WriteLine();
-                    if(getConsoleKey.ConvertSecureStringToString().StartsWith("sk-or"))
+                    if (getConsoleKey.ConvertSecureStringToString().StartsWith("sk-or"))
                         FileSystem.SuccessWriteLine("OpenRouter API key is stored!");
                     else
                         FileSystem.SuccessWriteLine("OpenAI API key is stored!");
                     return;
                 }
+
+                if (arg.Contains("-setmodel"))
+                {
+                    var model = arg.SplitByText("-setmodel", 1).Trim();
+                    if (string.IsNullOrEmpty(model))
+                    {
+                        FileSystem.ErrorWriteLine("You must enter the OpenAI/OpenRouter model name!");
+                        return;
+                    }
+                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_Model, model);
+                    FileSystem.SuccessWriteLine($"OpenAI/OpenRouter '{model}' is set!");
+                    return;
+                }
+
+
+                if (arg.Contains("-currm"))
+                {
+                    var currentModel = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_Model);
+                    if (string.IsNullOrEmpty(currentModel))
+                    {
+                        FileSystem.ErrorWriteLine($"There is no OpenAI/OpenRouter model set!");
+                        return;
+                    }
+                    FileSystem.SuccessWriteLine($"Current OpenAI/OpenRouter model in use: '{currentModel}'");
+                    return;
+                }
+
                 var apiKey = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_APIKey);
                 var decryptedKey = "";
                 try
@@ -80,7 +196,12 @@ namespace Commands.TerminalCommands.OpenAi
                     GlobalVariables.isErrorCommand = true;
                     return;
                 }
-                GetOpenAIData(question, decryptedKey).Wait();
+
+
+                var nodelGPT = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regOpenAI_Model).Trim();
+                if (string.IsNullOrEmpty(nodelGPT))
+                    FileSystem.SuccessWriteLine($"There is no OpenAI/OpenRouter model set. It will use the default one!");
+                GetOpenAIData(question, decryptedKey, nodelGPT).Wait();
             }
             catch (Exception e)
             {
@@ -94,11 +215,11 @@ namespace Commands.TerminalCommands.OpenAi
         /// </summary>
         /// <param name="question"></param>
         /// <param name="apiKey"></param>
-        public async Task GetOpenAIData(string question, string apiKey)
+        public async Task GetOpenAIData(string question, string apiKey,string model)
         {
             if (!GlobalVariables.isPipeCommand)
             {
-                if(apiKey.StartsWith("sk-or"))
+                if (apiKey.StartsWith("sk-or"))
                     FileSystem.SuccessWriteLine("Loading data from OpenRouter:");
                 else
                     FileSystem.SuccessWriteLine("Loading data from OpenAI:");
@@ -106,12 +227,14 @@ namespace Commands.TerminalCommands.OpenAi
             StringReader reader;
             if (apiKey.StartsWith("sk-or"))
             {
+                model = string.IsNullOrEmpty(model) ? "openai/gpt-3.5-turbo" : model;
                 var openRouterClient = new OpenRouterClient(apiKey);
-                reader = new StringReader(await openRouterClient.SendPromptAsync(question));
+                reader = new StringReader(await openRouterClient.SendPromptAsync(question, model));
             }
             else
             {
-                var openAI = new OpenAIManage(apiKey, question.Trim());
+                model = string.IsNullOrEmpty(model)? "text-davinci-003": model;
+                var openAI = new OpenAIManage(apiKey, question.Trim(), model);
                 reader = new StringReader(await openAI.AskOpenAI());
             }
             string line = "";
@@ -124,6 +247,27 @@ namespace Commands.TerminalCommands.OpenAi
                 await Task.Delay(200);
             }
             Console.WriteLine();
+        }
+
+        /// <summary>
+        /// Ollama AI call.
+        /// </summary>
+        /// <param name="question"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
+
+        public async Task GetOllamaAIData(string question, string model)
+        {
+            OllamaLLM ollamaClient = new OllamaLLM();
+            ollamaClient.Model = model;
+            ollamaClient.Promt = question;
+            ollamaClient.Uri = GlobalVariables.ollamaUri;
+            ollamaClient.ChatHistory = GlobalVariables.chatHistory;
+            var response = await Task.Run(ollamaClient.AskOllama);
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
+                GlobalVariables.pipeCmdOutput = response;
+            else
+                Console.WriteLine(response);
         }
     }
 }
