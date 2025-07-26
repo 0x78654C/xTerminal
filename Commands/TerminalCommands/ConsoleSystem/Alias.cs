@@ -217,7 +217,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
             Console.WriteLine("List alias commands:\n");
             foreach (var ac in aliasCommands)
-                Console.WriteLine($"{ac.CommandName} * {ac.Command}");
+                Console.WriteLine($"{ac.CommandName} | {ac.Command}");
         }
 
         /// <summary>
