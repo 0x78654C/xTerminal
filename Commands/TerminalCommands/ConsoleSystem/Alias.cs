@@ -19,19 +19,19 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_paramList = new List<string> { "-del", "-add", "-list", "-clear", "-update" };
         private static string s_helpMessage = @"Usage of alias commands:
 
- -add   :  Creates a alias command with parammeters (alias <commandName>|<parameters>).
-           Example: alias -add lz|ls -s (Creates a command lz that will run parameter ls -s)
+ -add   :  Creates a alias command with parammeters (alias <commandName>*<parameters>).
+           Example: alias -add lz*ls -s (Creates a command lz that will run parameter ls -s)
  -del   :  Deletes a alias command.
            Example: alias -del lz (Deletes lz command and parameters for it.)
  -update:  Update a alias command.
-           Example: alias -update lz|ls -ct (Updates command lz with new parameters. Works if command already exist!)
+           Example: alias -update lz*ls -ct (Updates command lz with new parameters. Works if command already exist!)
  -list  :  List all alias commands.
 
  -clear :  Clears all alias commands.
 
  Alias commands can use internal parameters with % character. % will take the input and pass to internal command. 
  Example:
- ~ $ alias -add np | cmd start %
+ ~ $ alias -add np * cmd start %
  ~ $ np notepad 
  Attention: Alias commands cannot overwrite terminal commands!
 ";
@@ -91,9 +91,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static void AddCommand(string arg, string aliasJsonFile)
         {
             string commandAlias = arg.SplitByText("-add ", 1);
-            if (commandAlias.Contains("|"))
+            if (commandAlias.Contains("*"))
             {
-                string commandName = commandAlias.Split('|')[0].Trim();
+                string commandName = commandAlias.Split('*')[0].Trim();
                 if (commandName.Length < 2)
                 {
                     FileSystem.ErrorWriteLine("Command name should be at least 2 characters long!");
@@ -119,7 +119,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
             else
             {
-                FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
+                FileSystem.ErrorWriteLine("Name should be separated from command with * , example: name*command to use");
                 GlobalVariables.isErrorCommand = true;
             }
         }
@@ -164,7 +164,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static void UpdateCommands(string arg, string aliasJsonFile)
         {
             string updateAliasCommand = arg.SplitByText("-update ", 1);
-            if (updateAliasCommand.Contains("|"))
+            if (updateAliasCommand.Contains("*"))
             {
                 if (!File.Exists(aliasJsonFile))
                 {
@@ -187,7 +187,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             else
             {
                 GlobalVariables.isErrorCommand = true;
-                FileSystem.ErrorWriteLine("Name should be separated from command with | , example: name|command to use");
+                FileSystem.ErrorWriteLine("Name should be separated from command with * , example: name*command to use");
             }
         }
 
@@ -198,8 +198,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
         /// <returns></returns>
         private static string ParseAlias(string alias)
         {
-            var command = alias.Split('|')[0];
-            return alias.SplitByText($"{command}|", 1);
+            var command = alias.Split('*')[0];
+            return alias.SplitByText($"{command}*", 1);
         }
 
         /// <summary>
@@ -217,7 +217,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
             Console.WriteLine("List alias commands:\n");
             foreach (var ac in aliasCommands)
-                Console.WriteLine($"{ac.CommandName} | {ac.Command}");
+                Console.WriteLine($"{ac.CommandName} * {ac.Command}");
         }
 
         /// <summary>
