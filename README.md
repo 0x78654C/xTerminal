@@ -123,17 +123,17 @@ Example:
     nt        -- Starts new xTerminal console.
                    -u : Starts new xTerminal console with other user option.
     alias     -- Create alias commands for built in xTerminal commands.
-                   -add   :  Creates a alias command with parammeters (alias <commandName>|<parameters>).
-                             Example: alias -add lz|ls -s (Creates a command lz that will run parameter ls -s)
+                   -add   :  Creates a alias command with parammeters (alias <commandName>*<parameters>).
+                             Example: alias -add lz*ls -s (Creates a command lz that will run parameter ls -s)
                    -del   :  Deletes a alias command.
                              Example: alias -del lz (Deletes lz command and parameters for it.)
                    -update:  Update a alias command.
-                             Example: alias -update lz|ls -ct (Updates command lz with new parameters. Works if command already exist!)
+                             Example: alias -update lz*ls -ct (Updates command lz with new parameters. Works if command already exist!)
                    -list  :  List all alias commands.
                    -clear :  Clears all alias commands.
                     Alias commands can use internal parameters with % character. % will take the input and pass to internal command. 
                     Example:
-                    ~ $ alias -add np | cmd start %
+                    ~ $ alias -add np * cmd start %
                     ~ $ np notepad 
                  Attention: Alias commands cannot overwrite terminal commands!
     shred     -- Overwrites and deletes a file that will be difficult to recover after. Use -h for additional help.
@@ -452,7 +452,7 @@ Example:
                               Example: ! <command_name> -p <parameters>
                     -add   :  Adds new code from a file and stores in Add-ons directory under xTerminal.exe
                               current directory with a command name.
-                              Example: ! -add <file_name_with_code> -c <command_name>:<command_description>
+                              Example: ! -add <file_name_with_code> -c <command_name>*<command_description>
                     -del   :  Deletes an Add-on.
                               Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
@@ -471,7 +471,7 @@ Example:
                            Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
                            Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
                     -cd : Changes current directory with a predefined color from list:
-                           Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+                           Example1: ui -cd <color> -- sets a predefined color from list to current directory path. (Resets the disable show current working directory when used)
                            Example2: ui -cd :e -- enable display current working directory in console.
                            Example3: ui -cd :d -- disable display current working directory in console.
                     -r  : Reset console foreground and background color to default.

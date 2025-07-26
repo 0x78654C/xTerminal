@@ -25,7 +25,7 @@ namespace Commands.TerminalCommands.UI
         Example1: ui -i -c <color> -s <indicator>  -- sets a custom indicator from predefined list with a predefined color from list. 
         Example2: ui -i -c <color> -s  -- sets default indicator($) with a predefined color from list. 
  -cd : Changes current directory with a predefined color from list:
-        Example1: ui -cd <color> -- sets a predefined color from list to current directory path.
+        Example1: ui -cd <color> -- sets a predefined color from list to current directory path. (Resets the disable show current working directory when used)
         Example2: ui -cd :e -- enable display current working directory in console.
         Example3: ui -cd :d -- disable display current working directory in console.
  -r  : Reset console foreground and background color to default.
@@ -103,13 +103,13 @@ namespace Commands.TerminalCommands.UI
             if (arg.ContainsText("-p"))
             {
                 var color = arg.SplitByText("-p", 1).Trim();
-                if(string.IsNullOrEmpty(color))
+                if (string.IsNullOrEmpty(color))
                     throw new Exception("You need to type a color name. Use -h for more information!");
 
                 var isColorPresent = Enum.TryParse(typeof(ConsoleColor), color, true, out _);
                 if (!isColorPresent)
                     throw new Exception("This color does not exist. Check -h param for color list.");
-                
+
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIsc, color);
                 GlobalVariables.successColorOutput = color;
                 FileSystem.SuccessWriteLine($"Output success console color set to: {color}");
@@ -158,20 +158,21 @@ namespace Commands.TerminalCommands.UI
                     if (!isCDvisable)
                     {
                         RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, isCDvisable.ToString());
-                        return;
                     }
 
                     // Enable display current directory from registry.
                     if (isCDvisable)
                     {
                         RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUIcd, isCDvisable.ToString());
-                        return;
                     }
 
                     int indexColor = _colors.FindIndex(c => c == color.ToLower());
-                    string outColor = _colors[indexColor];
-                    colorSetting = $"{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.UserInfo)}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.Indicator)}|{outColor}";
-                    RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, colorSetting);
+                    if (indexColor >= 0)
+                    {
+                        string outColor = _colors[indexColor];
+                        colorSetting = $"{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.UserInfo)}|{Core.SystemTools.UI.SanitizeSettings(settings, Core.SystemTools.UI.Setting.Indicator)}|{outColor}";
+                        RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regUI, colorSetting);
+                    }
                 }
             }
             catch (ArgumentOutOfRangeException)
