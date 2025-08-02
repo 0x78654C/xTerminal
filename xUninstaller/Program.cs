@@ -2,7 +2,7 @@
  
 xTerminal uninstaller.
  
- */
+*/
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 namespace xUninstaller
@@ -17,6 +17,7 @@ namespace xUninstaller
         private static string s_installPath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Programs\xTerminal";
         private static string s_profilePath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\xTerminal";
 
+
         static void Main(string[] args)
         {
             try
@@ -25,7 +26,7 @@ namespace xUninstaller
                 if (result == 1)
                 {
                     // Kill xTerminal process.
-                    var processKiller = new ProcessKiller();
+                    var processKiller = new ProcessManager();
                     processKiller.KillProcess("xTerminal");
 
                     // Delete directory
