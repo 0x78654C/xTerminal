@@ -11,10 +11,19 @@ namespace xUninstaller
         /// </summary>
         /// <param name="keyName">Main key name.</param>
         /// <param name="subKeyName">Sub key name.</param>
-        public static void regKey_Delete(string keyName, string subKeyName)
+        public static void regKey_Delete(string keyName, string subKeyName, bool isSubKey = false)
         {
-            using (var key = Registry.CurrentUser.OpenSubKey(keyName, true))
-                key?.DeleteSubKeyTree(subKeyName);
+            try
+            {
+                if (isSubKey)
+                    Registry.CurrentUser.DeleteSubKeyTree(subKeyName);
+                else
+                {
+                    using (var key = Registry.CurrentUser.OpenSubKey(keyName, true))
+                        key?.DeleteSubKeyTree(subKeyName);
+                }
+            }
+            catch { }
         }
     }
 }
