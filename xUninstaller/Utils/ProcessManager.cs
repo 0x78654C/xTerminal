@@ -4,6 +4,7 @@ namespace xUninstaller
 {
     internal class ProcessManager
     {
+
         /// <summary>
         /// CTor for process kill.
         /// </summary>
@@ -23,6 +24,21 @@ namespace xUninstaller
                 return;
             }
             return;
+        }
+
+        /// <summary>
+        /// Delete after process ended.
+        /// </summary>
+        /// <param name="path"></param>
+        public void Delete(string path)
+        {
+            Process.Start(new ProcessStartInfo()
+            {
+                Arguments = $"/C choice /C Y /N /D Y /T & rmdir /S /Q {path}",
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+                FileName ="cmd.exe"
+            });
         }
     }
 }
