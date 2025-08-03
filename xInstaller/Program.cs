@@ -196,6 +196,8 @@ namespace xInstaller
                 var result = MessageBox(IntPtr.Zero, "xTerminal is allready installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
                 if (result != 6)
                     return;
+                else
+                    s_statusPrint = "";
             }
 
             // Write unsintall registry.
