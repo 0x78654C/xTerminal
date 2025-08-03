@@ -13,14 +13,15 @@
       SOFTWARE.
 */
 
-using Raylib_cs;
-using System.Numerics;
-using System.Diagnostics;
 using Microsoft.Win32;
-using System.Security.Principal;
+using Raylib_cs;
+using System;
+using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
-using IWSh = IWshRuntimeLibrary;
 using System.Runtime.Versioning;
+using System.Security.Principal;
+using IWSh = IWshRuntimeLibrary;
 
 namespace xInstaller
 {
@@ -205,43 +206,48 @@ namespace xInstaller
 
             var sdirLen = new DirectoryInfo(sourceDir).GetFiles("*", SearchOption.AllDirectories).Length;
             var desLen = new DirectoryInfo(destDir).GetFiles("*", SearchOption.AllDirectories).Length;
+            Version fileVersion;
+            Version destVersion = new Version("1.0");
+            var versionCompare = 0;
+            if (Environment.Is64BitOperatingSystem)
+                fileVersion = GetFileVersion($"{_sourceDirX64}xTerminal.exe");
+            else
+                fileVersion = GetFileVersion($"{_sourceDirX86}xTerminal.exe");
 
-            if (sdirLen == desLen)
+            var destFile = $"{s_destDirectory}\\xTerminal.exe";
+            if (File.Exists(destFile))
             {
-                Version fileVersion;
-                if (Environment.Is64BitOperatingSystem)
-                    fileVersion = GetFileVersion($"{_sourceDirX64}xTerminal.exe");
-                else
-                    fileVersion = GetFileVersion($"{_sourceDirX86}xTerminal.exe");
+                destVersion = GetFileVersion(destFile);
+                versionCompare = fileVersion.CompareTo(destVersion);
+            }
 
-                var destVersion = GetFileVersion($"{s_destDirectory}\\xTerminal.exe");
-
-                var versionCompare = fileVersion.CompareTo(destVersion);
-
+            // If installed version si higher.
+            if (File.Exists(destFile) && versionCompare < 0)
+            {
+                MessageBox(IntPtr.Zero, $"You already have the newest version for xTerminal!", "xTerminal-Installer", 0x00000000 | 0x00000030);
                 s_statusPrint = "xTerminal is allready installed!";
+                return;
+            }
 
-                if (File.Exists($"{s_destDirectory}\\xTerminal.exe") && versionCompare < 0)
-                {
-                    MessageBox(IntPtr.Zero, $"You already have the newest version for xTerminal?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+            // If same version (already installed).
+            if (File.Exists(destFile) && versionCompare == 0)
+            {
+                s_statusPrint = "xTerminal is allready installed!";
+                var result = MessageBox(IntPtr.Zero, "xTerminal is allready installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                if (result != 6)
                     return;
-                }
-
-                if (File.Exists($"{s_destDirectory}\\xTerminal.exe") && versionCompare > 0)
-                {
-                    var resultUpdate = MessageBox(IntPtr.Zero, $"You current xTerminal version is {destVersion.ToString()}. Do you want to update it at version {fileVersion.ToString()}?", "xTerminal-Installer", 0x00000004 | 0x00000020);
-                    if (resultUpdate != 6)
-                        return;
-                    else
-                        s_statusPrint = "";
-                }
                 else
-                {
-                    var result = MessageBox(IntPtr.Zero, "xTerminal is allready installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
-                    if (result != 6)
-                        return;
-                    else
-                        s_statusPrint = "";
-                }
+                    s_statusPrint = "";
+            }
+
+            // If installed version is lower (update).
+            if (File.Exists(destFile) && versionCompare > 0)
+            {
+                var resultUpdate = MessageBox(IntPtr.Zero, $"You current xTerminal version is {destVersion.ToString()}. Do you want to update it at version {fileVersion.ToString()}?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                if (resultUpdate != 6)
+                    return;
+                else
+                    s_statusPrint = "";
             }
 
             // Write unsintall registry.
