@@ -121,7 +121,6 @@ namespace xInstaller
                 Raylib.DrawRectangle(barX, barY, barWidth, barHeigth, Color.LightGray);
 
                 // Start progress bar only if clicked install button.
-
                 if (s_isCopyingDone && !s_statusPrint.Contains("installed"))
                 {
                     Raylib.DrawText($"Done!", 22, 460, 13, Color.DarkGray);
@@ -133,10 +132,16 @@ namespace xInstaller
                             var pathX = $"{s_destDirectory}\\xTerminal.exe";
                             if (File.Exists(pathX))
                                 CreateShortcut(pathX);
-                            s_isShortAsked = true;
                         }
-                        else
-                            s_isShortAsked = true;
+
+                        var resultStartMenu = MessageBox(IntPtr.Zero, "Do you want to add xTerminal to Start Menu?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                        if (resultStartMenu == 6)
+                        {
+                            var pathX = $"{s_destDirectory}\\xTerminal.exe";
+                            if (File.Exists(pathX))
+                                CreateShortcut(pathX, true);
+                        }
+                        s_isShortAsked = true;
                     }
                 }
                 else
@@ -311,11 +316,16 @@ namespace xInstaller
         ///  Create shortcut function.
         /// </summary>
         /// <param name="filePath"></param>
-        private static void CreateShortcut(string filePath)
+        private static void CreateShortcut(string filePath, bool inStartMenu = false)
         {
             var desktopFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             var fileWithoutExtPath = Path.GetFileNameWithoutExtension(filePath);
-            var finalPath = Path.Combine(desktopFolder, $"{fileWithoutExtPath}.lnk");
+            string startMenuPath = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
+            var finalPath = "";
+            if (inStartMenu)
+                finalPath = Path.Combine(startMenuPath, "Programs", $"{fileWithoutExtPath}.lnk");
+            else
+                finalPath = Path.Combine(desktopFolder, $"{fileWithoutExtPath}.lnk");
             IWSh.IWshShortcut shortcut;
             if (Environment.Is64BitOperatingSystem)
             {
