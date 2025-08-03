@@ -636,3 +636,7 @@ https://user-images.githubusercontent.com/13780514/224794373-5fbab892-9a52-425f-
 https://github.com/0x78654C/xTerminal/assets/13780514/7046358b-fb91-40d1-9b9d-4516ea6194bf
 
 
+﻿<p align="center">
+  <img src="https://github.com/0x78654C/xTerminal/blob/main/media/banner.png" style="width: 50%; max-width: 300px; height: auto;">
+</p>
+
