@@ -34,6 +34,7 @@ namespace xUninstaller
                     // Delete directory
                     if (Directory.Exists(s_installPath))
                         Directory.Delete(s_installPath, true);
+
                     // Delete shortcut
                     if (File.Exists(s_shortcuDesktop))
                         File.Delete(s_shortcuDesktop);

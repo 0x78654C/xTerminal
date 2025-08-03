@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaInt", "OllamaInt\Olla
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xUninstaller", "xUninstaller\xUninstaller.csproj", "{7B98D3CC-11DE-4968-AB10-4C719F58CE81}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xInstaller", "xInstaller\xInstaller.csproj", "{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -116,6 +118,18 @@ Global
 		{7B98D3CC-11DE-4968-AB10-4C719F58CE81}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7B98D3CC-11DE-4968-AB10-4C719F58CE81}.Release|x64.ActiveCfg = Release|Any CPU
 		{7B98D3CC-11DE-4968-AB10-4C719F58CE81}.Release|x64.Build.0 = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Debug|x64.Build.0 = Debug|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release x64|Any CPU.ActiveCfg = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release x64|Any CPU.Build.0 = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release x64|x64.ActiveCfg = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release x64|x64.Build.0 = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release|x64.ActiveCfg = Release|Any CPU
+		{0A327FA1-D5EE-4AB0-B659-5A77DCB8CC32}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
