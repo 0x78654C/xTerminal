@@ -15,7 +15,6 @@
 
 using Microsoft.Win32;
 using Raylib_cs;
-using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
