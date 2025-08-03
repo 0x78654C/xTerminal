@@ -1,4 +1,19 @@
-﻿using Raylib_cs;
+﻿/*
+      Description: xTerminal installer
+
+      This app is distributed under the MIT License.
+      Copyright © 2022 - 2025 x_coding. All rights reserved.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+      SOFTWARE.
+*/
+
+using Raylib_cs;
 using System.Numerics;
 using System.Diagnostics;
 using Microsoft.Win32;
@@ -17,14 +32,14 @@ namespace xInstaller
         static bool s_isCopyingDone = false;
         static string s_statusPrint = "";
         static bool s_isShortAsked = false;
-        const string _bgPath1 = @"resources\bg1.png";
-        const string _bgPath2 = @"resources\bg2.png";
-        const string _bgPath3 = @"resources\bg3.png";
+        const string _bgPath1 = @"resources\banner.png";
+        const string _bgPath2 = @"resources\bg1.png";
+        const string _bgPath3 = @"resources\bg2.png";
+        const string _bgPath4 = @"resources\bg3.png";
         const string _iconPath = @"resources\xTerminal.png";
         const string _sourceDirX64 = @"data\x64\";
         const string _sourceDirX86 = @"data\x86\";
-        const string _unintallerX64 = @"data\Uninstaller\x64\xUninstaller.exe";
-        const string _unintallerX86 = @"data\Uninstaller\x86\xUninstaller.exe";
+        const string _uninstaller = @"data\Uninstaller\xUninstaller.exe";
         static string s_destDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Programs\xTerminal";
         static string s_profilePath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\xTerminal";
         static bool s_isAdmin = IsLoggedUserAdmin();
@@ -60,10 +75,11 @@ namespace xInstaller
             Raylib.SetWindowIcon(icon);
             Raylib.UnloadImage(icon);
 
-            Texture2D[] backgrounds = new Texture2D[3]{
+            Texture2D[] backgrounds = new Texture2D[4]{
                 Raylib.LoadTexture(_bgPath1),
                 Raylib.LoadTexture(_bgPath2),
-                Raylib.LoadTexture(_bgPath3)
+                Raylib.LoadTexture(_bgPath3),
+                Raylib.LoadTexture(_bgPath4)
              };
 
             while (!Raylib.WindowShouldClose())
@@ -104,16 +120,10 @@ namespace xInstaller
                     s_isShortAsked = false;
                     CopyFiles(sourceDir, s_destDirectory);
                     if (!s_statusPrint.Contains("installed"))
-                    {
-                        if (Environment.Is64BitOperatingSystem)
-                            CopyUninstaller(_unintallerX64, s_profilePath);
-                        else
-                            CopyUninstaller(_unintallerX86, s_profilePath);
-                    }
+                        CopyUninstaller(_uninstaller, s_profilePath);
                 }
 
                 // Progress bar variables.     		
-                progress = s_totalBytes > 0 ? (float)s_copiedBytes / s_totalBytes : 0f;
                 var barX = 20;
                 var barY = 424;
                 var barWidth = 643;
@@ -146,9 +156,10 @@ namespace xInstaller
                 }
                 else
                 {
-                    if (isButtonClicked && !s_statusPrint.Contains("installed"))
+                    if (isButtonClicked && !s_statusPrint.Contains("installed") && !s_isCopyingDone)
                     {
                         Raylib.DrawText($"Copying files ....", 22, 460, 13, Color.DarkGray);
+                        progress = s_totalBytes > 0 ? (float)s_copiedBytes / s_totalBytes : 0f;
                         var filledWidth = (int)(barWidth * (progress));
                         Raylib.DrawRectangle(barX, barY, filledWidth, barHeigth, Color.Green);
                         InstallButton(new Rectangle(690, 420, 82, 40), "Install", Color.Gray);
@@ -195,18 +206,18 @@ namespace xInstaller
             var sdirLen = new DirectoryInfo(sourceDir).GetFiles("*", SearchOption.AllDirectories).Length;
             var desLen = new DirectoryInfo(destDir).GetFiles("*", SearchOption.AllDirectories).Length;
 
-            Version fileVersion;
-            if (Environment.Is64BitOperatingSystem)
-                fileVersion = GetFileVersion($"{_sourceDirX64}xTerminal.exe");
-            else
-                fileVersion = GetFileVersion($"{_sourceDirX86}xTerminal.exe");
-
-            var destVersion = GetFileVersion($"{s_destDirectory}\\xTerminal.exe");
-
-            var versionCompare = fileVersion.CompareTo(destVersion);
-
             if (sdirLen == desLen)
             {
+                Version fileVersion;
+                if (Environment.Is64BitOperatingSystem)
+                    fileVersion = GetFileVersion($"{_sourceDirX64}xTerminal.exe");
+                else
+                    fileVersion = GetFileVersion($"{_sourceDirX86}xTerminal.exe");
+
+                var destVersion = GetFileVersion($"{s_destDirectory}\\xTerminal.exe");
+
+                var versionCompare = fileVersion.CompareTo(destVersion);
+
                 s_statusPrint = "xTerminal is allready installed!";
 
                 if (File.Exists($"{s_destDirectory}\\xTerminal.exe") && versionCompare < 0)
@@ -284,10 +295,7 @@ namespace xInstaller
                     byte[] buffer = new byte[81920]; // 80 KB buffer
                     int bytesRead;
                     while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
-                    {
                         dest.Write(buffer, 0, bytesRead);
-                        s_copiedBytes += bytesRead;
-                    }
                 }
             });
             copyThread.Start();
