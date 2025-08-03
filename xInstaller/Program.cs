@@ -195,14 +195,42 @@ namespace xInstaller
             var sdirLen = new DirectoryInfo(sourceDir).GetFiles("*", SearchOption.AllDirectories).Length;
             var desLen = new DirectoryInfo(destDir).GetFiles("*", SearchOption.AllDirectories).Length;
 
+            Version fileVersion;
+            if (Environment.Is64BitOperatingSystem)
+                fileVersion = GetFileVersion($"{_sourceDirX64}xTerminal.exe");
+            else
+                fileVersion = GetFileVersion($"{_sourceDirX86}xTerminal.exe");
+
+            var destVersion = GetFileVersion($"{s_destDirectory}\\xTerminal.exe");
+
+            var versionCompare = fileVersion.CompareTo(destVersion);
+
             if (sdirLen == desLen)
             {
                 s_statusPrint = "xTerminal is allready installed!";
-                var result = MessageBox(IntPtr.Zero, "xTerminal is allready installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
-                if (result != 6)
+
+                if (File.Exists($"{s_destDirectory}\\xTerminal.exe") && versionCompare < 0)
+                {
+                    MessageBox(IntPtr.Zero, $"You already have the newest version for xTerminal?", "xTerminal-Installer", 0x00000004 | 0x00000020);
                     return;
+                }
+
+                if (File.Exists($"{s_destDirectory}\\xTerminal.exe") && versionCompare > 0)
+                {
+                    var resultUpdate = MessageBox(IntPtr.Zero, $"You current xTerminal version is {destVersion.ToString()}. Do you want to update it at version {fileVersion.ToString()}?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                    if (resultUpdate != 6)
+                        return;
+                    else
+                        s_statusPrint = "";
+                }
                 else
-                    s_statusPrint = "";
+                {
+                    var result = MessageBox(IntPtr.Zero, "xTerminal is allready installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                    if (result != 6)
+                        return;
+                    else
+                        s_statusPrint = "";
+                }
             }
 
             // Write unsintall registry.
@@ -241,7 +269,7 @@ namespace xInstaller
         /// </summary>
         /// <param name="sourceFile"></param>
         /// <param name="destDir"></param>
-        public static void CopyUninstaller(string sourceFile, string destDir)
+        private static void CopyUninstaller(string sourceFile, string destDir)
         {
             if (!Directory.Exists(destDir))
                 Directory.CreateDirectory(destDir);
@@ -263,6 +291,17 @@ namespace xInstaller
                 }
             });
             copyThread.Start();
+        }
+
+        /// <summary>
+        /// Get file version from file.
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        private static Version GetFileVersion(string filePath)
+        {
+            var versionInfo = FileVersionInfo.GetVersionInfo(filePath);
+            return new Version(versionInfo.FileVersion);
         }
 
 
