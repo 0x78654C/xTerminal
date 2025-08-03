@@ -18,6 +18,7 @@ namespace xUninstaller
         private static string s_profilePath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\xTerminal";
         private static string s_desktopFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         private static string s_shortcuDesktop = Path.Combine(s_desktopFolder, "xTerminal.lnk");
+        private static string s_shortcutStartMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", $"xTerminal.lnk");
 
 
         static void Main(string[] args)
@@ -35,9 +36,13 @@ namespace xUninstaller
                     if (Directory.Exists(s_installPath))
                         Directory.Delete(s_installPath, true);
 
-                    // Delete shortcut
+                    // Delete shortcut from desktop.
                     if (File.Exists(s_shortcuDesktop))
                         File.Delete(s_shortcuDesktop);
+
+                    // Delete shortcut from start menu.
+                    if (File.Exists(s_shortcutStartMenu))
+                        File.Delete(s_shortcutStartMenu);
 
                     // Delete from registry. (remove from installed apps)
                     const string uninstallRegPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
