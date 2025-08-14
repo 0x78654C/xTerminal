@@ -17,6 +17,7 @@ using Microsoft.Win32;
 using Raylib_cs;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.Principal;
@@ -226,7 +227,7 @@ namespace xInstaller
             {
                 var result = MessageBox(IntPtr.Zero, "xTerminal is runing. Do you want to close it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
                 if (result != 6)
-                    return;
+                    Environment.Exit(0);
                 else
                     processKiller.KillProcess("xTerminal");
             }
@@ -236,7 +237,7 @@ namespace xInstaller
             {
                 MessageBox(IntPtr.Zero, $"You already have the newest version for xTerminal!", "xTerminal-Installer", 0x00000000 | 0x00000030);
                 s_statusPrint = "xTerminal is allready installed!";
-                return;
+                Environment.Exit(0);
             }
 
             // If same version (already installed).
@@ -245,7 +246,7 @@ namespace xInstaller
                 s_statusPrint = "xTerminal is allready installed!";
                 var result = MessageBox(IntPtr.Zero, "xTerminal is allready installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
                 if (result != 6)
-                    return;
+                    Environment.Exit(0);
                 else
                     s_statusPrint = "";
             }
@@ -255,7 +256,7 @@ namespace xInstaller
             {
                 var resultUpdate = MessageBox(IntPtr.Zero, $"You current xTerminal version is {destVersion.ToString()}. Do you want to update it at version {fileVersion.ToString()}?", "xTerminal-Installer", 0x00000004 | 0x00000020);
                 if (resultUpdate != 6)
-                    return;
+                    Environment.Exit(0);
                 else
                     s_statusPrint = "";
             }
