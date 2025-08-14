@@ -220,6 +220,17 @@ namespace xInstaller
                 versionCompare = fileVersion.CompareTo(destVersion);
             }
 
+            // Kill xTerminal process.
+            var processKiller = new ProcessManager();
+            if (processKiller.IsProcess("xTerminal"))
+            {
+                var result = MessageBox(IntPtr.Zero, "xTerminal is runing. Do you want to close it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                if (result != 6)
+                    return;
+                else
+                    processKiller.KillProcess("xTerminal");
+            }
+
             // If installed version si higher.
             if (File.Exists(destFile) && versionCompare < 0)
             {
