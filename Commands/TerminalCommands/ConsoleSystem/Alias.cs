@@ -58,7 +58,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                     FileSystem.SuccessWriteLine("This parameter does not exist! Use -h for help.");
                     return;
                 }
-                
+
                 GlobalVariables.isErrorCommand = false;
 
                 if (args.StartsWith("-add"))
@@ -217,7 +217,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
             Console.WriteLine("List alias commands:\n");
             foreach (var ac in aliasCommands)
-                Console.WriteLine($"{ac.CommandName} | {ac.Command}");
+            {
+                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                    GlobalVariables.pipeCmdOutput += $"{ac.CommandName} | {ac.Command}";
+                else
+                    Console.WriteLine($"{ac.CommandName} | {ac.Command}");
+            }
         }
 
         /// <summary>
