@@ -215,13 +215,17 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 return;
             }
             var aliasCommands = Json.ReadJsonFromFile<AliasC[]>(aliasJsonFile);
-            Console.WriteLine("List alias commands:\n");
+            
+            var listCommands = "";
             foreach (var ac in aliasCommands)
+                listCommands += $"{ac.CommandName} | {ac.Command}\n";
+
+            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
+                GlobalVariables.pipeCmdOutput = listCommands;
+            else
             {
-                if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                    GlobalVariables.pipeCmdOutput += $"{ac.CommandName} | {ac.Command}";
-                else
-                    Console.WriteLine($"{ac.CommandName} | {ac.Command}");
+                Console.WriteLine("List alias commands:\n");
+                Console.WriteLine(listCommands);
             }
         }
 
