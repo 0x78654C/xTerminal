@@ -184,7 +184,7 @@ e - Encrypted
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount == 0)
                             dirSearchIn = GlobalVariables.pipeCmdOutput.Trim();
                         else
-                            dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -d -e", "") : dirSearchIn.Replace("ls -d", "");
+                            dirSearchIn = arg.ContainsParameter("-e") ? dirSearchIn.Replace("ls -dup -e", "") : dirSearchIn.Replace("ls -dup", "");
                         string fileToSave = args.SplitByText("-o ", 1);
                         GlobalVariables.eventKeyFlagX = true;
                         GetDuplicateFiles(FileSystem.SanitizePath(dirSearchIn.Trim(), s_currentDirectory), extensions, fileToSave);
@@ -199,7 +199,7 @@ e - Encrypted
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                         nullDir = GlobalVariables.pipeCmdOutput;
                     else
-                        nullDir = arg.ContainsParameter("-e") ? args.Replace("ls -d -e", "") : args.Replace("ls -d", "");
+                        nullDir = arg.ContainsParameter("-e") ? args.Replace("ls -dup -e", "") : args.Replace("ls -dup", "");
                     if (!string.IsNullOrEmpty(nullDir))
                     {
                         if (arg.ContainsParameter("-e"))
@@ -208,7 +208,7 @@ e - Encrypted
                         if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 || GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                             searchDir = GlobalVariables.pipeCmdOutput.Trim();
                         else
-                            searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-d ", 1);
+                            searchDir = arg.ContainsParameter("-e") ? args.SplitByText("-e ", 1) : args.SplitByText("-dup ", 1);
                         if (string.IsNullOrEmpty(searchDir))
                             searchDir = s_currentDirectory;
                         GlobalVariables.eventKeyFlagX = true;
