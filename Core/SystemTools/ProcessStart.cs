@@ -26,10 +26,7 @@ namespace Core.SystemTools
             try
             {
                 var process = new Process();
-
-              
                 bool exe = input.Trim().EndsWith(".exe") || input.Trim().EndsWith(".msi");
-
 
                 if (asAdmin)
                 {
@@ -45,7 +42,6 @@ namespace Core.SystemTools
                     process.StartInfo = new ProcessStartInfo();
                     process.StartInfo.FileName = _cmdPath;
                     process.StartInfo.Verb = "runas";
-                    var secureString = new System.Security.SecureString();
                     if (!exe)
                         process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
                     process.StartInfo.Arguments = arguments.Trim();
