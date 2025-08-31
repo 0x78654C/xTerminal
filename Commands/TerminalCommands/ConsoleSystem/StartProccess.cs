@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -42,11 +43,12 @@ Both examples can be used with -we parameter.
                 string param = args.Split(' ').First();
                 string paramApp = string.Empty;
                 bool waitForExit = false;
+                bool isWindow = false;  
 
-                if(args.Contains("-wi"))
+                if (args.Contains("-wi"))
                 {
                     args = args.Replace(" -wi".Trim(), string.Empty);
-                    waitForExit = true;
+                    isWindow = true;
                 }
 
                 if (args.Contains("-we"))
@@ -72,12 +74,12 @@ Both examples can be used with -we parameter.
                         args = args.Replace("-u ", "");
                         args = FileSystem.SanitizePath(args, s_currentDirectory);
 
-                        StartApplication(args, paramApp, true, !waitForExit);
+                        StartApplication(args, paramApp, true, !waitForExit, isWindow);
                         return;
                     }
 
                     args = FileSystem.SanitizePath(args, s_currentDirectory);
-                    StartApplication(args, paramApp, false, !waitForExit);
+                    StartApplication(args, paramApp, false, !waitForExit, isWindow);
                     return;
                 }
                 args = FileSystem.SanitizePath(args, s_currentDirectory);
@@ -85,11 +87,11 @@ Both examples can be used with -we parameter.
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    StartApplication(args, paramApp, true, !waitForExit);
+                    StartApplication(args, paramApp, true, !waitForExit, isWindow);
                     return;
                 }
 
-                StartApplication(args, paramApp, false, !waitForExit);
+                StartApplication(args, paramApp, false, !waitForExit, isWindow);
             }
             catch (Exception e)
             { 
@@ -104,7 +106,7 @@ Both examples can be used with -we parameter.
         /// <param name="inputCommand">Path to procces required to be started.</param>
         /// <param name="arg">Arguments</param>
         /// <param name="admin">Use other user for run procces.</param>
-        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit)
+        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit, bool isWindow)
         {
             try
             {
@@ -125,10 +127,10 @@ Both examples can be used with -we parameter.
 
                 if (admin)
                 {
-                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit, bool isWindow);
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit, isWindow);
                     return;
                 }
-                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit);
+                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit, isWindow);
                 return;
             }
             catch (Exception e)

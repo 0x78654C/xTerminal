@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis.Operations;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace Core.SystemTools
         /// <param name="fileCheck"></param>
         /// <param name="asAdmin"></param>
         /// <param name="waitForExit"></param>
-        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
+        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit, bool isWindow)
         {
             try
             {
@@ -51,9 +52,15 @@ namespace Core.SystemTools
                     process.StartInfo.UseShellExecute = false;
                     if (!waitForExit)
                     {
-                        process.StartInfo.RedirectStandardInput = true;
-                        process.StartInfo.RedirectStandardError = true;
-                        process.StartInfo.RedirectStandardOutput = true;
+                        if (isWindow) {
+                            process.StartInfo.UseShellExecute = true;
+                        }
+                        else
+                        {
+                            process.StartInfo.RedirectStandardInput = true;
+                            process.StartInfo.RedirectStandardError = true;
+                            process.StartInfo.RedirectStandardOutput = true;
+                        }
                     }
                 }
                 else
@@ -87,9 +94,16 @@ namespace Core.SystemTools
                     process.StartInfo.Arguments = arguments;
                     if (!waitForExit)
                     {
-                        process.StartInfo.RedirectStandardInput = true;
-                        process.StartInfo.RedirectStandardError = true;
-                        process.StartInfo.RedirectStandardOutput = true;
+                        if (isWindow)
+                        {
+                            process.StartInfo.UseShellExecute = true;
+                        }
+                        else
+                        {
+                            process.StartInfo.RedirectStandardInput = true;
+                            process.StartInfo.RedirectStandardError = true;
+                            process.StartInfo.RedirectStandardOutput = true;
+                        }
                     }
                 }
 
