@@ -198,9 +198,6 @@ namespace Shell
                         foreach (var cmd in commandSplit)
                         {
                             var cmdExecute = cmd.Trim();
-                            //c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            //c.Execute(cmdExecute);
-
                             ParseMultiCommand(cmd);
                             count++;
                             GlobalVariables.pipeCmdCount--;
@@ -287,9 +284,7 @@ namespace Shell
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
-            {
                 GlobalVariables.isErrorCommand = false;
-            }
             c.Execute(cmdExecute);
         }
 
