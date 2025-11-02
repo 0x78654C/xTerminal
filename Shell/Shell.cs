@@ -174,10 +174,18 @@ namespace Shell
                 {
                     if (!string.IsNullOrWhiteSpace(GlobalVariables.aliasParameters))
                         command = GlobalVariables.aliasParameters;
-                    
+
                     // TODO: more tests to be done here.
                     // Check if search cat command parameters is used.
-                     //var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
+                    //var isSearchComand = (command.Contains("-st ") || command.Contains("-eq ") || command.Contains("-ed")) && command.Contains("cat");
+
+                    // Filter alias add and update commands to avoid pipe line execution.
+                    if (command.StartsWith("alias -add") || command.StartsWith("alias -update"))
+                    {
+                        c.Execute(command);
+                        ClearParametersAtFinish();
+                        return;
+                    }
 
                     // Pipe line command execution.
                     if (command.Contains("|") && !command.Contains("||") && !command.EndsWith("&") )
@@ -190,9 +198,6 @@ namespace Shell
                         foreach (var cmd in commandSplit)
                         {
                             var cmdExecute = cmd.Trim();
-                            //c = Commands.CommandRepository.GetCommand(cmdExecute);
-                            //c.Execute(cmdExecute);
-
                             ParseMultiCommand(cmd);
                             count++;
                             GlobalVariables.pipeCmdCount--;
@@ -214,12 +219,7 @@ namespace Shell
                         ParseMultiCommand(command);
 
                     // Reset alias parameters.
-                    GlobalVariables.aliasParameters = string.Empty;
-                    GlobalVariables.aliasRunFlag = false;
-                    GlobalVariables.isErrorCommand = false;
-                    GlobalVariables.isPipeCommand = false;
-                    GlobalVariables.aliasInParameter.Clear();
-                    GlobalVariables.pipeCmdOutput = string.Empty; //test clear pipe output after command run.
+                    ClearParametersAtFinish();
                 }
             }
             catch (Exception e)
@@ -232,6 +232,20 @@ namespace Shell
                 GlobalVariables.isPipeCommand = false;
             }
         }
+
+        /// <summary>
+        /// Clear alias parameters after command execution.
+        /// </summary>
+        private void ClearParametersAtFinish()
+        {
+            GlobalVariables.aliasParameters = string.Empty;
+            GlobalVariables.aliasRunFlag = false;
+            GlobalVariables.isErrorCommand = false;
+            GlobalVariables.isPipeCommand = false;
+            GlobalVariables.aliasInParameter.Clear();
+            GlobalVariables.pipeCmdOutput = string.Empty; //test clear pipe output after command run.
+        }
+
 
         /// <summary>
         /// Return info message if alias command parameter is wrong xterminal commmand.
@@ -270,9 +284,7 @@ namespace Shell
             var cmdExecute = cmd.Trim();
             var c = Commands.CommandRepository.GetCommand(cmdExecute);
             if (GlobalVariables.isErrorCommand)
-            {
                 GlobalVariables.isErrorCommand = false;
-            }
             c.Execute(cmdExecute);
         }
 
@@ -282,7 +294,7 @@ namespace Shell
         /// <param name="command"></param>
         private void ParseMultiCommand(string command)
         {
-            //TODO: do more cchecks onm the parese for || now.
+            //TODO: do more checks onm the parese for || now.
 
             // Regex pattern to match &&, ||, and ;
             

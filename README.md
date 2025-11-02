@@ -73,6 +73,7 @@ Example:
                    -h    : Displays this message.
                    -u    : Can run process with different user.
                    -we   : Disable wait for process to exit.
+                   -wi   : Show new process window.
                    -param: ./ process with specified parameters.
                          Example1: ./ -u <file_name>
                          Example2: ./ -u <file_name> -param <file_paramters>

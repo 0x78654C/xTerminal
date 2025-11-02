@@ -20,15 +20,13 @@ namespace Core.SystemTools
         /// <param name="fileCheck"></param>
         /// <param name="asAdmin"></param>
         /// <param name="waitForExit"></param>
-        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit)
+        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit, bool isWindow)
         {
             try
             {
                 var process = new Process();
-
-              
+                process.StartInfo = new ProcessStartInfo();
                 bool exe = input.Trim().EndsWith(".exe") || input.Trim().EndsWith(".msi");
-
 
                 if (asAdmin)
                 {
@@ -41,20 +39,7 @@ namespace Core.SystemTools
                     }
                     else
                         arguments = "/c " + "\"" + input + "\"" + $" {arg}";
-                    process.StartInfo = new ProcessStartInfo();
-                    process.StartInfo.FileName = _cmdPath;
-                    process.StartInfo.Verb = "runas";
-                    var secureString = new System.Security.SecureString();
-                    if (!exe)
-                        process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
-                    process.StartInfo.Arguments = arguments.Trim();
-                    process.StartInfo.UseShellExecute = false;
-                    if (!waitForExit)
-                    {
-                        process.StartInfo.RedirectStandardInput = true;
-                        process.StartInfo.RedirectStandardError = true;
-                        process.StartInfo.RedirectStandardOutput = true;
-                    }
+                    process.StartInfo  =  SetProccesStartInfo(process, input, _cmdPath, exe, arguments, waitForExit, isWindow, asAdmin);      
                 }
                 else
                 {
@@ -81,16 +66,7 @@ namespace Core.SystemTools
                         }
                         fileName = _cmdPath;
                     }
-                    process.StartInfo.FileName = fileName;
-                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.Arguments = arguments;
-                    if (!waitForExit)
-                    {
-                        process.StartInfo.RedirectStandardInput = true;
-                        process.StartInfo.RedirectStandardError = true;
-                        process.StartInfo.RedirectStandardOutput = true;
-                    }
+                    process.StartInfo = SetProccesStartInfo(process, input, fileName, exe, arguments, waitForExit, isWindow, asAdmin);
                 }
 
                 // Runing non executable files.
@@ -129,6 +105,44 @@ namespace Core.SystemTools
             {
                 FileSystem.ErrorWriteLine(e.Message);
             }
+        }
+
+        /// <summary>
+        /// Process start info settings.
+        /// </summary>
+        /// <param name="process"></param>
+        /// <param name="input"></param>
+        /// <param name="filename"></param>
+        /// <param name="exe"></param>
+        /// <param name="arguments"></param>
+        /// <param name="waitForExit"></param>
+        /// <param name="isWindow"></param>
+        /// <param name="isAdmin"></param>
+        /// <returns></returns>
+
+        private static ProcessStartInfo SetProccesStartInfo(Process process,string input, string filename , bool exe, string arguments, bool waitForExit , bool isWindow, bool isAdmin)
+        {
+            process.StartInfo.FileName = filename;
+            if(isAdmin)
+             process.StartInfo.Verb = "runas";
+            if (!exe)
+                process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
+            process.StartInfo.Arguments = arguments.Trim();
+            process.StartInfo.UseShellExecute = false;
+            if (!waitForExit)
+            {
+                if (isWindow)
+                {
+                    process.StartInfo.UseShellExecute = true;
+                }
+                else
+                {
+                    process.StartInfo.RedirectStandardInput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.StartInfo.RedirectStandardOutput = true;
+                }
+            }
+            return process.StartInfo;
         }
 
         /// <summary>
