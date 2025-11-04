@@ -188,7 +188,7 @@ namespace Shell
                     }
 
                     // Pipe line command execution.
-                    if (command.Contains("|") && !command.Contains("||") && !command.EndsWith("&") )
+                    if (command.Contains("|") && !command.Contains("||") && !command.EndsWith("&"))
                     {
                         GlobalVariables.isPipeCommand = true;
                         var commandSplit = command.Split('|');
@@ -297,7 +297,7 @@ namespace Shell
             //TODO: do more checks onm the parese for || now.
 
             // Regex pattern to match &&, ||, and ;
-            
+
             string pattern = @"(\&\&|\|\||;)";
 
             // Split while keeping delimiters
