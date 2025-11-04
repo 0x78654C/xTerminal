@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Commands.TerminalCommands.ConsoleSystem
 {
@@ -47,13 +46,13 @@ Both examples can be used with -we parameter.
 
                 if (args.Contains("-wi"))
                 {
-                    args = args.Replace(" -wi".Trim(), string.Empty);
+                    args = args.Replace(" -wi", string.Empty);
                     isWindow = true;
                 }
 
                 if (args.Contains("-we"))
                 {
-                    args = args.Replace(" -we".Trim(), string.Empty);
+                    args = args.Replace(" -we", string.Empty);
                     waitForExit = true;
                 }
 
@@ -74,12 +73,12 @@ Both examples can be used with -we parameter.
                         args = args.Replace("-u ", "");
                         args = FileSystem.SanitizePath(args, s_currentDirectory);
 
-                        StartApplication(args, paramApp, true, !waitForExit, isWindow);
+                        StartApplication(args.Trim(), paramApp, true, !waitForExit, isWindow);
                         return;
                     }
 
                     args = FileSystem.SanitizePath(args, s_currentDirectory);
-                    StartApplication(args, paramApp, false, !waitForExit, isWindow);
+                    StartApplication(args.Trim(), paramApp, false, !waitForExit, isWindow);
                     return;
                 }
                 args = FileSystem.SanitizePath(args, s_currentDirectory);
@@ -87,11 +86,11 @@ Both examples can be used with -we parameter.
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    StartApplication(args, paramApp, true, !waitForExit, isWindow);
+                    StartApplication(args.Trim(), paramApp, true, !waitForExit, isWindow);
                     return;
                 }
 
-                StartApplication(args, paramApp, false, !waitForExit, isWindow);
+                StartApplication(args.Trim(), paramApp, false, !waitForExit, isWindow);
             }
             catch (Exception e)
             { 
