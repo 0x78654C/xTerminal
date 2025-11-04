@@ -15,6 +15,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class SSH : ITerminalCommand
     {
         public string Name => "ssh";
+        private static string s_helpMessage = "(This is a wrapper for SSH built in command)";
         public void Execute(string arg)
         {
             try
@@ -28,6 +29,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 }
                 if (arg == $"{Name} -h")
                 {
+                    FileSystem.ColorConsoleTextLine(ConsoleColor.Green, s_helpMessage);
                     SystemCmd.SSHCmd(string.Empty);
                     return;
                 }
