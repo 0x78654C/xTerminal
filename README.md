@@ -256,6 +256,7 @@ Example:
                     C   : Sort processes by CPU usage.
                     M   : Sort processes by memory usage.
                     N   : Sort processes by name.
+    ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
