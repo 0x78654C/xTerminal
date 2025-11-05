@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.AI;
 using System.Diagnostics;
+
 namespace OllamaInt
 {
     public class OllamaLLM
@@ -33,6 +34,7 @@ namespace OllamaInt
             {
                 response += item.Text;
             }
+
             ChatHistory.Add(new ChatMessage(ChatRole.Assistant, response));
             return response;
         }
@@ -44,13 +46,15 @@ namespace OllamaInt
         /// <returns></returns>
         public bool IsOllamaInstalled()
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo("cmd");
-            startInfo.Arguments = "/c ollama -h";
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            Process process = new Process();
+            var startInfo = new ProcessStartInfo("cmd")
+            {
+                Arguments = "/c ollama -h",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+            using var process = new Process();
             process.StartInfo = startInfo;
             process.Start();
             process.WaitForExit();
@@ -64,33 +68,30 @@ namespace OllamaInt
         /// <returns></returns>
         public List<string> LocalModels()
         {
-            List<string> modelList = new List<string>();
-            ProcessStartInfo startInfo = new ProcessStartInfo("cmd");
-            startInfo.UseShellExecute = false;
-            startInfo.Arguments = "/c ollama list";
-            startInfo.CreateNoWindow = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            Process process = new Process();
+            var modelList = new List<string>();
+            var startInfo = new ProcessStartInfo("cmd")
+            {
+                UseShellExecute = false,
+                Arguments = "/c ollama list",
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+            using var process = new Process();
             process.StartInfo = startInfo;
             process.Start();
             process.WaitForExit();
             var outData = process.StandardOutput.ReadToEnd();
-            using (var reader = new StringReader(outData))
+            using var reader = new StringReader(outData);
+            string line;
+            while (null != (line = reader.ReadLine()))
             {
-                string line;
-                while (null != (line = reader.ReadLine()))
-                {
-                    if (!line.StartsWith("NAME"))
-                    {
-                        var model = line.Split(' ')[0].Trim();
-                        if (!string.IsNullOrEmpty(model))
-                        {
-                            modelList.Add(model);
-                        }
-                    }
-                }
+                if (line.StartsWith("NAME")) continue;
+                var model = line.Split(' ')[0].Trim();
+                if (string.IsNullOrEmpty(model)) continue;
+                modelList.Add(model);
             }
+
             return modelList;
         }
     }

@@ -39,7 +39,7 @@ namespace OpenRouter
         public OpenRouterClient(string apiKey)
         {
             _apiKey = apiKey;
-            _httpClient = new HttpClient();
+            _httpClient = new HttpClient(); // Should look at injecting this in and using the HttpClientFactory https://stackoverflow.com/questions/58427764/httpclient-and-socket-exhaustion-clarification 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             _httpClient.DefaultRequestHeaders.Add("X-Title", "xTerminal");
         }
@@ -49,10 +49,7 @@ namespace OpenRouter
             var requestBody = new RequestBody
             {
                 model = model,
-                messages = new List<Message>
-                {
-                    new Message { role = "user", content = prompt }
-                }
+                messages = [new Message { role = "user", content = prompt }]
             };
 
             var json = JsonConvert.SerializeObject(requestBody);
