@@ -256,13 +256,15 @@ namespace Core.SystemTools
         /// <returns></returns>
         public static StreamReader ExecuteAppWithOutput(string app, string arguments = "")
         {
+            s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             var processStartInfo = new ProcessStartInfo()
             {
                 UseShellExecute = false,
                 Arguments = arguments,
                 RedirectStandardOutput = true,
                 FileName = app,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = s_currentDirectory
             };
             var process = Process.Start(processStartInfo);
             process.WaitForExit();
@@ -277,12 +279,14 @@ namespace Core.SystemTools
         /// <returns></returns>
         public static string ExecuteWithPidOutput(string app, string arguments = "", bool waitForExit = false)
         {
+            s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             var processStartInfo = new ProcessStartInfo(app)
             {
                 UseShellExecute = false,
                 Arguments = arguments,
                 RedirectStandardOutput = true,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = s_currentDirectory
             };
             var process = Process.Start(processStartInfo);
             if(waitForExit)
