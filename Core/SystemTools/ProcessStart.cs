@@ -122,6 +122,7 @@ namespace Core.SystemTools
 
         private static ProcessStartInfo SetProccesStartInfo(Process process,string input, string filename , bool exe, string arguments, bool waitForExit , bool isWindow, bool isAdmin)
         {
+            s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             process.StartInfo.FileName = filename;
             if(isAdmin)
              process.StartInfo.Verb = "runas";
@@ -129,6 +130,7 @@ namespace Core.SystemTools
                 process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
             process.StartInfo.Arguments = arguments.Trim();
             process.StartInfo.UseShellExecute = false;
+            process.StartInfo.WorkingDirectory = s_currentDirectory;
             if (!waitForExit)
             {
                 if (isWindow)
@@ -233,6 +235,7 @@ namespace Core.SystemTools
 
         private static void ExecutApp(string processName, string arg, bool waitForExit)
         {
+            s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(processName)
             {
