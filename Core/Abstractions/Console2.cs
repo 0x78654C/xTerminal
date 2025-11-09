@@ -28,9 +28,11 @@ Modified by: x_coding
  */
 
 using System;
+using System.Runtime.Versioning;
 
 namespace Core.Abstractions
 {
+    [SupportedOSPlatform("Windows")]
     public class Console2 : IConsole
     {
         public int CursorLeft => Console.CursorLeft;
