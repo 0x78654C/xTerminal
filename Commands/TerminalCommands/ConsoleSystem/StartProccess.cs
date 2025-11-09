@@ -18,6 +18,8 @@ Can be used with the following parameters:
     -u    : Can run process with different user.
     -we   : Disable wait for process to exit.
     -wi   : Show new process window.
+    -swd  : Set working directory for the process.
+    -wd   : Check current working directory for the process.
     -param: Start process with specified parameters.
          Example1: ./ -u <file_name>
          Example2: ./ -u <file_name> -param <file_paramters>
@@ -42,7 +44,24 @@ Both examples can be used with -we parameter.
                 string param = args.Split(' ').First();
                 string paramApp = string.Empty;
                 bool waitForExit = false;
-                bool isWindow = false;  
+                bool isWindow = false;
+
+                if (args.Contains("-wd"))
+                {
+                    if (string.IsNullOrEmpty(GlobalVariables.workingDirectory))
+                        FileSystem.SuccessWriteLine($"Current working directory : running application location");
+                    else
+                        FileSystem.SuccessWriteLine($"Current working directory : {GlobalVariables.workingDirectory}");
+                    return;
+                }
+
+                if (args.Contains("-swd"))
+                {
+                    var cwd = args.SplitByText("-swd ", 1);
+                    GlobalVariables.workingDirectory = cwd.Trim();
+                    FileSystem.SuccessWriteLine($"Working directory was set to: {GlobalVariables.workingDirectory}");
+                    return;
+                }
 
                 if (args.Contains("-wi"))
                 {
@@ -73,12 +92,12 @@ Both examples can be used with -we parameter.
                         args = args.Replace("-u ", "");
                         args = FileSystem.SanitizePath(args, s_currentDirectory);
 
-                        StartApplication(args.Trim(), paramApp, true, !waitForExit, isWindow);
+                        StartApplication(args.Trim(), paramApp, true, !waitForExit, isWindow, GlobalVariables.workingDirectory);
                         return;
                     }
 
                     args = FileSystem.SanitizePath(args, s_currentDirectory);
-                    StartApplication(args.Trim(), paramApp, false, !waitForExit, isWindow);
+                    StartApplication(args.Trim(), paramApp, false, !waitForExit, isWindow, GlobalVariables.workingDirectory);
                     return;
                 }
                 args = FileSystem.SanitizePath(args, s_currentDirectory);
@@ -86,14 +105,14 @@ Both examples can be used with -we parameter.
                 if (param == "-u")
                 {
                     args = args.Replace("-u ", "");
-                    StartApplication(args.Trim(), paramApp, true, !waitForExit, isWindow);
+                    StartApplication(args.Trim(), paramApp, true, !waitForExit, isWindow, GlobalVariables.workingDirectory);
                     return;
                 }
 
-                StartApplication(args.Trim(), paramApp, false, !waitForExit, isWindow);
+                StartApplication(args.Trim(), paramApp, false, !waitForExit, isWindow, GlobalVariables.workingDirectory);
             }
             catch (Exception e)
-            { 
+            {
                 FileSystem.ErrorWriteLine(e.Message);
                 GlobalVariables.isErrorCommand = true;
             }
@@ -105,7 +124,7 @@ Both examples can be used with -we parameter.
         /// <param name="inputCommand">Path to procces required to be started.</param>
         /// <param name="arg">Arguments</param>
         /// <param name="admin">Use other user for run procces.</param>
-        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit, bool isWindow)
+        private void StartApplication(string inputCommand, string arg, bool admin, bool waitForExit, bool isWindow, string workingDirectory)
         {
             try
             {
@@ -126,10 +145,10 @@ Both examples can be used with -we parameter.
 
                 if (admin)
                 {
-                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit, isWindow);
+                    Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, true, waitForExit, isWindow, workingDirectory);
                     return;
                 }
-                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit, isWindow);
+                Core.SystemTools.ProcessStart.ProcessExecute(inputCommand, arg, true, false, waitForExit, isWindow, workingDirectory);
                 return;
             }
             catch (Exception e)
