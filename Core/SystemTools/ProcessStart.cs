@@ -20,7 +20,7 @@ namespace Core.SystemTools
         /// <param name="fileCheck"></param>
         /// <param name="asAdmin"></param>
         /// <param name="waitForExit"></param>
-        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit, bool isWindow)
+        public static void ProcessExecute(string input, string arguments, bool fileCheck, bool asAdmin, bool waitForExit, bool isWindow, string workingDirectory)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace Core.SystemTools
                     }
                     else
                         arguments = "/c " + "\"" + input + "\"" + $" {arg}";
-                    process.StartInfo  =  SetProccesStartInfo(process, input, _cmdPath, exe, arguments, waitForExit, isWindow, asAdmin);      
+                    process.StartInfo  =  SetProccesStartInfo(process, input, _cmdPath, exe, arguments, waitForExit, isWindow, asAdmin, workingDirectory);      
                 }
                 else
                 {
@@ -66,7 +66,7 @@ namespace Core.SystemTools
                         }
                         fileName = _cmdPath;
                     }
-                    process.StartInfo = SetProccesStartInfo(process, input, fileName, exe, arguments, waitForExit, isWindow, asAdmin);
+                    process.StartInfo = SetProccesStartInfo(process, input, fileName, exe, arguments, waitForExit, isWindow, asAdmin, workingDirectory);
                 }
 
                 // Runing non executable files.
@@ -120,9 +120,10 @@ namespace Core.SystemTools
         /// <param name="isAdmin"></param>
         /// <returns></returns>
 
-        private static ProcessStartInfo SetProccesStartInfo(Process process,string input, string filename , bool exe, string arguments, bool waitForExit , bool isWindow, bool isAdmin)
+        private static ProcessStartInfo SetProccesStartInfo(Process process,string input, string filename , bool exe, string arguments, bool waitForExit , bool isWindow, bool isAdmin, string workingDirectory)
         {
-            s_currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
+            if(string.IsNullOrEmpty(workingDirectory))
+                workingDirectory = Path.GetDirectoryName(input);
             process.StartInfo.FileName = filename;
             if(isAdmin)
              process.StartInfo.Verb = "runas";
@@ -130,7 +131,7 @@ namespace Core.SystemTools
                 process.StartInfo.WorkingDirectory = Path.GetDirectoryName(input);
             process.StartInfo.Arguments = arguments.Trim();
             process.StartInfo.UseShellExecute = false;
-            process.StartInfo.WorkingDirectory = s_currentDirectory;
+            process.StartInfo.WorkingDirectory = workingDirectory;
             if (!waitForExit)
             {
                 if (isWindow)
@@ -232,6 +233,12 @@ namespace Core.SystemTools
             }
         }
 
+        /// <summary>
+        /// Function for execute cmd and powershell commands.
+        /// </summary>
+        /// <param name="processName"></param>
+        /// <param name="arg"></param>
+        /// <param name="waitForExit"></param>
 
         private static void ExecutApp(string processName, string arg, bool waitForExit)
         {
