@@ -37,8 +37,16 @@ namespace Core.DirFiles
             public bool IsDirectory { get; set; }
         }
 
+        // History entry: remember path + selection + scroll for Backspace
+        private class HistoryEntry
+        {
+            public string Path { get; set; }
+            public int SelectedIndex { get; set; }
+            public int ScrollOffset { get; set; }
+        }
+
         private string _currentRoot;
-        private readonly Stack<string> _historyBack = new Stack<string>();
+        private readonly Stack<HistoryEntry> _historyBack = new Stack<HistoryEntry>();
         private bool _suppressHistory = false;
 
         // main list state (left pane)
@@ -279,9 +287,8 @@ namespace Core.DirFiles
                     return true;
 
                 case ConsoleKey.Backspace:
+                    // Go back and restore last selection in that folder
                     GoBack();
-                    _selectedIndex = 0;
-                    _scrollOffset = 0;
                     return true;
 
                 case ConsoleKey.PageUp:
@@ -607,8 +614,6 @@ namespace Core.DirFiles
 
                 case ConsoleKey.Backspace:
                     GoBack();
-                    _selectedIndex = 0;
-                    _scrollOffset = 0;
                     _searchMode = false;
                     return true;
 
@@ -730,7 +735,14 @@ namespace Core.DirFiles
                     return;
 
                 if (!_suppressHistory && _currentRoot != null)
-                    _historyBack.Push(_currentRoot);
+                {
+                    _historyBack.Push(new HistoryEntry
+                    {
+                        Path = _currentRoot,
+                        SelectedIndex = _selectedIndex,
+                        ScrollOffset = _scrollOffset
+                    });
+                }
 
                 _currentRoot = newRoot;
             }
@@ -742,10 +754,15 @@ namespace Core.DirFiles
             if (_historyBack.Count == 0)
                 return;
 
-            string target = _historyBack.Pop();
+            var entry = _historyBack.Pop();
+
             _suppressHistory = true;
-            NavigateTo(target);
+            NavigateTo(entry.Path);
             _suppressHistory = false;
+
+            // restore selection and scroll for that folder
+            _selectedIndex = entry.SelectedIndex;
+            _scrollOffset = entry.ScrollOffset;
         }
 
         private void GoUp()
