@@ -68,20 +68,18 @@ namespace xInstaller
                 sourceDir = _sourceDirX86;
 
             Image icon = Raylib.LoadImage(_iconPath);
-            if (s_isAdmin)
-                Raylib.InitWindow(800, 480, "xTerminal Installer : Administrator");
-            else
-                Raylib.InitWindow(800, 480, "xTerminal Installer");
+            Raylib.InitWindow(800, 480, s_isAdmin ? "xTerminal Installer : Administrator" : "xTerminal Installer");
             Raylib.SetTargetFPS(60);
             Raylib.SetWindowIcon(icon);
             Raylib.UnloadImage(icon);
 
-            Texture2D[] backgrounds = new Texture2D[4]{
+            Texture2D[] backgrounds =
+            [
                 Raylib.LoadTexture(_bgPath1),
                 Raylib.LoadTexture(_bgPath2),
                 Raylib.LoadTexture(_bgPath3),
                 Raylib.LoadTexture(_bgPath4)
-             };
+            ];
 
             while (!Raylib.WindowShouldClose())
             {
@@ -125,10 +123,10 @@ namespace xInstaller
                 }
 
                 // Progress bar variables.     		
-                var barX = 20;
-                var barY = 424;
-                var barWidth = 643;
-                var barHeigth = 30;
+                const int barX = 20;
+                const int barY = 424;
+                const int barWidth = 643;
+                const int barHeigth = 30;
                 Raylib.DrawRectangle(barX, barY, barWidth, barHeigth, Color.LightGray);
 
                 // Start progress bar only if clicked install button.
@@ -152,20 +150,19 @@ namespace xInstaller
                             if (File.Exists(pathX))
                                 CreateShortcut(pathX, true);
                         }
+
                         s_isShortAsked = true;
                     }
                 }
-                else
+                else if (isButtonClicked && !s_statusPrint.Contains("installed") && !s_isCopyingDone)
                 {
-                    if (isButtonClicked && !s_statusPrint.Contains("installed") && !s_isCopyingDone)
-                    {
-                        Raylib.DrawText($"Copying files ....", 22, 460, 13, Color.DarkGray);
-                        progress = s_totalBytes > 0 ? (float)s_copiedBytes / s_totalBytes : 0f;
-                        var filledWidth = (int)(barWidth * (progress));
-                        Raylib.DrawRectangle(barX, barY, filledWidth, barHeigth, Color.Green);
-                        InstallButton(new Rectangle(690, 420, 82, 40), "Install", Color.Gray);
-                    }
+                    Raylib.DrawText($"Copying files ....", 22, 460, 13, Color.DarkGray);
+                    progress = s_totalBytes > 0 ? (float)s_copiedBytes / s_totalBytes : 0f;
+                    var filledWidth = (int)(barWidth * (progress));
+                    Raylib.DrawRectangle(barX, barY, filledWidth, barHeigth, Color.Green);
+                    InstallButton(new Rectangle(690, 420, 82, 40), "Install", Color.Gray);
                 }
+
                 if (s_statusPrint.Contains("installed") && isButtonClicked)
                     Raylib.DrawText($"xTerminal is already installed!", 22, 460, 15, Color.DarkGray);
                 Raylib.EndDrawing();
@@ -186,7 +183,7 @@ namespace xInstaller
         /// <param name="text"></param>
         /// <param name="color"></param>
         /// <returns></returns>
-        public static bool InstallButton(Rectangle bounds, string text, Color color)
+        private static bool InstallButton(Rectangle bounds, string text, Color color)
         {
             Raylib.DrawRectangleRec(bounds, color);
             Raylib.DrawRectangleLinesEx(bounds, 2, Color.Black);
@@ -199,7 +196,7 @@ namespace xInstaller
         /// </summary>
         /// <param name="sourceDir"></param>
         /// <param name="destDir"></param>
-        public static void CopyFiles(string sourceDir, string destDir)
+        private static void CopyFiles(string sourceDir, string destDir)
         {
             if (!Directory.Exists(destDir))
                 Directory.CreateDirectory(destDir);
@@ -209,10 +206,7 @@ namespace xInstaller
             Version fileVersion;
             Version destVersion = new Version("1.0");
             var versionCompare = 0;
-            if (Environment.Is64BitOperatingSystem)
-                fileVersion = GetFileVersion($"{_sourceDirX64}xTerminal.exe");
-            else
-                fileVersion = GetFileVersion($"{_sourceDirX86}xTerminal.exe");
+            fileVersion = GetFileVersion($"{(Environment.Is64BitOperatingSystem ? _sourceDirX64 : _sourceDirX86)}xTerminal.exe");
 
             var destFile = $"{s_destDirectory}\\xTerminal.exe";
             if (File.Exists(destFile))
@@ -225,7 +219,7 @@ namespace xInstaller
             var processKiller = new ProcessManager();
             if (processKiller.IsProcess("xTerminal"))
             {
-                var result = MessageBox(IntPtr.Zero, "xTerminal is runing. Do you want to close it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                var result = MessageBox(IntPtr.Zero, "xTerminal is running. Do you want to close it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
                 if (result != 6)
                     Environment.Exit(0);
                 else
@@ -254,7 +248,9 @@ namespace xInstaller
             // If installed version is lower (update).
             if (File.Exists(destFile) && versionCompare > 0)
             {
-                var resultUpdate = MessageBox(IntPtr.Zero, $"You current xTerminal version is {destVersion.ToString()}. Do you want to update it at version {fileVersion.ToString()}?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                var resultUpdate = MessageBox(IntPtr.Zero,
+                    $"You current xTerminal version is {destVersion.ToString()}. Do you want to update it at version {fileVersion.ToString()}?", "xTerminal-Installer",
+                    0x00000004 | 0x00000020);
                 if (resultUpdate != 6)
                     Environment.Exit(0);
                 else
@@ -287,6 +283,7 @@ namespace xInstaller
                         }
                     }
                 }
+
                 s_isCopyingDone = true;
             });
             copyThread.Start();
@@ -341,21 +338,17 @@ namespace xInstaller
                 var userProfile = $@"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}";
                 var date = DateTime.Now.ToString("yyyyMMdd");
                 var fileVersion = "1.0";
-                if (Environment.Is64BitOperatingSystem)
-                    fileVersion = FileVersionInfo.GetVersionInfo($"{_sourceDirX64}xTerminal.exe").FileVersion;
-                else
-                    fileVersion = FileVersionInfo.GetVersionInfo($"{_sourceDirX86}xTerminal.exe").FileVersion;
+                var path = Environment.Is64BitOperatingSystem ? _sourceDirX64 : _sourceDirX86;
+                fileVersion = FileVersionInfo.GetVersionInfo($"{path}xTerminal.exe").FileVersion;
 
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(pathReg))
-                {
-                    key.SetValue("DisplayName", "xTerminal");
-                    key.SetValue("DisplayVersion", fileVersion);
-                    key.SetValue("InstallLocation", $@"{userProfile}\AppData\Local\Programs\xTerminal");
-                    key.SetValue("DisplayIcon", $@"{userProfile}\AppData\Local\Programs\xTerminal\icon.ico");
-                    key.SetValue("InstallDate", date);
-                    key.SetValue("UninstallString", $@"{userProfile}\AppData\Local\xTerminal\xUninstaller.exe");
-                    key.SetValue("Publisher", "x_Coding");
-                }
+                using RegistryKey key = Registry.CurrentUser.CreateSubKey(pathReg);
+                key.SetValue("DisplayName", "xTerminal");
+                key.SetValue("DisplayVersion", fileVersion);
+                key.SetValue("InstallLocation", $@"{userProfile}\AppData\Local\Programs\xTerminal");
+                key.SetValue("DisplayIcon", $@"{userProfile}\AppData\Local\Programs\xTerminal\icon.ico");
+                key.SetValue("InstallDate", date);
+                key.SetValue("UninstallString", $@"{userProfile}\AppData\Local\xTerminal\xUninstaller.exe");
+                key.SetValue("Publisher", "x_Coding");
             }
             catch (Exception ex)
             {
@@ -369,11 +362,9 @@ namespace xInstaller
         /// <returns></returns>
         private static bool IsLoggedUserAdmin()
         {
-            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
-            {
-                var principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
-            }
+            using var identity = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
         /// <summary>
@@ -385,11 +376,7 @@ namespace xInstaller
             var desktopFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             var fileWithoutExtPath = Path.GetFileNameWithoutExtension(filePath);
             string startMenuPath = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
-            var finalPath = "";
-            if (inStartMenu)
-                finalPath = Path.Combine(startMenuPath, "Programs", $"{fileWithoutExtPath}.lnk");
-            else
-                finalPath = Path.Combine(desktopFolder, $"{fileWithoutExtPath}.lnk");
+            var finalPath = inStartMenu ? Path.Combine(startMenuPath, "Programs", $"{fileWithoutExtPath}.lnk") : Path.Combine(desktopFolder, $"{fileWithoutExtPath}.lnk");
             IWSh.IWshShortcut shortcut;
             if (Environment.Is64BitOperatingSystem)
             {
@@ -401,6 +388,7 @@ namespace xInstaller
                 IWSh.WshShellClass wshShell = new IWSh.WshShellClass();
                 shortcut = (IWSh.IWshShortcut)wshShell.CreateShortcut(finalPath);
             }
+
             shortcut.TargetPath = filePath;
             shortcut.WorkingDirectory = s_destDirectory;
             shortcut.IconLocation = filePath;

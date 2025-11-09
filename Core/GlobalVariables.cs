@@ -38,7 +38,7 @@ namespace Core
         public static string terminalWorkDirectory = $"{Path.GetPathRoot(Environment.SystemDirectory)}Users\\{accountName}\\AppData\\Local\\xTerminal";
         public static string passwordManagerDirectory = $"{terminalWorkDirectory}\\Pwm\\";
         public static string aliasFile = $"{terminalWorkDirectory}\\alias.json";
-        public static string currentDirectory = terminalWorkDirectory + $"\\{process}cDir.t";
+        public static string currentDirectory { get; set; } = terminalWorkDirectory + $"\\{process}cDir.t";
         public static string uiSettings = terminalWorkDirectory + $"\\{process}ui.t";
         public static string historyFile = terminalWorkDirectory + "\\History.db";
         public static string addonDirectory = Application.StartupPath + "Add-ons";
@@ -67,5 +67,6 @@ namespace Core
         public static int tabPressCount = 0;
         public static bool isErrorCommand = false;
         public static string bgProcessListFile = terminalWorkDirectory + "\\bgPids.db";
+        public static string workingDirectory { get; set; }
     }
 }

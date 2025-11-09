@@ -94,6 +94,21 @@ namespace Core.Commands
             process.Start();
             process.WaitForExit();
         }
+        
+        /// <summary>
+        ///SSH command.
+        /// </summary>
+        public static void SSHCmd(string input)
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            {
+                UseShellExecute = false,
+                Arguments = $"/c ssh {input}"
 
+            };
+            process.Start();
+            process.WaitForExit();
+        }
     }
 }

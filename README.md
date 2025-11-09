@@ -74,6 +74,8 @@ Example:
                    -u    : Can run process with different user.
                    -we   : Disable wait for process to exit.
                    -wi   : Show new process window.
+                   -swd  : Set working directory for the process.
+                   -wd   : Check current working directory for the process.
                    -param: ./ process with specified parameters.
                          Example1: ./ -u <file_name>
                          Example2: ./ -u <file_name> -param <file_paramters>
@@ -256,6 +258,7 @@ Example:
                     C   : Sort processes by CPU usage.
                     M   : Sort processes by memory usage.
                     N   : Sort processes by name.
+    ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
