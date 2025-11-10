@@ -801,7 +801,8 @@ namespace Core.DirFiles
                 {
                     var psi = new ProcessStartInfo(filePath)
                     {
-                        UseShellExecute = true
+                        UseShellExecute = true,
+                        WorkingDirectory = Path.GetDirectoryName(filePath)
                     };
                     Process.Start(psi);
                 }
