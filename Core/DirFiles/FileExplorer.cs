@@ -1,12 +1,15 @@
 ﻿//GPT
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace Core.DirFiles
 {
+    [SupportedOSPlatform("Windows")]
     public class FileExplorer
     {
         private class Item
@@ -114,7 +117,7 @@ namespace Core.DirFiles
             if (rightWidth < 20) rightWidth = 20;
 
             // ---------- Header (trimmed, no wrapping) ----------
-            string title = "File Explorer";
+            string title = "xFile Explorer";
             WriteTrimmedAtColor(0, 0, title, width, ConsoleColor.Yellow);
 
             WriteTrimmedAt(0, 1, new string('=', width), width);
@@ -263,6 +266,7 @@ namespace Core.DirFiles
                         if (item.IsDirectory)
                         {
                             NavigateTo(item.Path);
+                            File.WriteAllText(GlobalVariables.currentDirectory, item.Path + "\\");
                             _selectedIndex = 0;
                             _scrollOffset = 0;
                         }
@@ -750,6 +754,7 @@ namespace Core.DirFiles
 
             _suppressHistory = true;
             NavigateTo(entry.Path);
+            File.WriteAllText(GlobalVariables.currentDirectory, entry.Path + "\\");
             _suppressHistory = false;
 
             // restore selection and scroll for that folder
@@ -766,6 +771,7 @@ namespace Core.DirFiles
                     return;
 
                 NavigateTo(parent);
+                File.WriteAllText(GlobalVariables.currentDirectory, parent+"\\");
             }
             catch { }
         }
