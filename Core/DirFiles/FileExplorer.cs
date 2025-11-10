@@ -245,7 +245,7 @@ namespace Core.DirFiles
             var item = _items[_selectedIndex];
 
             if (item.IsDirectory)
-                ShowFolderDetails(item.Path, left, top + 2, width);
+                ShowFolderDetails(item.Path, left, top + 2, width, height - 2);
             else
                 ShowFileDetails(item.Path, left, top + 2, width);
         }
@@ -847,34 +847,76 @@ namespace Core.DirFiles
             }
         }
 
-        private void ShowFolderDetails(string folderPath, int left, int top, int width)
+        // *** UPDATED: now also shows folder contents in the info pane ***
+        private void ShowFolderDetails(string folderPath, int left, int top, int width, int maxLines)
         {
-            // Type (red)
-            ClearLineAt(left, top, width);
-            WriteTrimmedAtColor(left, top, "Type: Folder", width, ConsoleColor.Red);
+            // maxLines is the number of lines available from 'top' downwards
+            int line = 0;
 
-            // Path (red)
-            ClearLineAt(left, top + 1, width);
-            string pathLine = $"Path: {folderPath}";
-            WriteTrimmedAtColor(left, top + 1, pathLine, width, ConsoleColor.Red);
+            void WriteLineColored(string text, ConsoleColor color)
+            {
+                if (line >= maxLines) return;
+                ClearLineAt(left, top + line, width);
+                WriteTrimmedAtColor(left, top + line, text, width, color);
+                line++;
+            }
+
+            string[] dirs = Array.Empty<string>();
+            string[] files = Array.Empty<string>();
 
             try
             {
-                int subDirs = Directory.GetDirectories(folderPath).Length;
-                int files = Directory.GetFiles(folderPath).Length;
-
-                // Subfolders
-                ClearLineAt(left, top + 2, width);
-                WriteTrimmedAtColor(left, top + 2, $"Subfolders: {subDirs}", width, ConsoleColor.Red);
-
-                // Files
-                ClearLineAt(left, top + 3, width);
-                WriteTrimmedAtColor(left, top + 3, $"Files: {files}", width, ConsoleColor.Red);
+                if (Directory.Exists(folderPath))
+                {
+                    dirs = Directory.GetDirectories(folderPath);
+                    files = Directory.GetFiles(folderPath);
+                }
             }
             catch
             {
-                ClearLineAt(left, top + 2, width);
-                WriteTrimmedAtColor(left, top + 2, "(unable to read folder contents)", width, ConsoleColor.Red);
+                // If we can't enumerate, just show basic info + error
+            }
+
+            // Header info (red)
+            WriteLineColored("Type: Folder", ConsoleColor.Red);
+            WriteLineColored($"Path: {folderPath}", ConsoleColor.Red);
+            WriteLineColored($"Subfolders: {dirs.Length}", ConsoleColor.Red);
+            WriteLineColored($"Files: {files.Length}", ConsoleColor.Red);
+
+            if (line >= maxLines)
+                return;
+
+            // Contents header
+            WriteLineColored("Contents:", ConsoleColor.Red);
+
+            // List subfolders (green)
+            foreach (var d in dirs)
+            {
+                if (line >= maxLines) break;
+                string name = Path.GetFileName(d);
+                if (string.IsNullOrEmpty(name)) name = d;
+                string text = "[D] " + name;
+                ClearLineAt(left, top + line, width);
+                WriteTrimmedAtColor(left, top + line, text, width, ConsoleColor.Green);
+                line++;
+            }
+
+            // List files (white)
+            foreach (var f in files)
+            {
+                if (line >= maxLines) break;
+                string name = Path.GetFileName(f);
+                if (string.IsNullOrEmpty(name)) name = f;
+                string text = "[F] " + name;
+                ClearLineAt(left, top + line, width);
+                WriteTrimmedAtColor(left, top + line, text, width, ConsoleColor.White);
+                line++;
+            }
+
+            if (!Directory.Exists(folderPath) && line == 0)
+            {
+                // fallback if folder doesn't exist or no access
+                WriteLineColored("(unable to read folder contents)", ConsoleColor.Red);
             }
         }
 
