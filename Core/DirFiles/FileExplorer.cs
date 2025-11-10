@@ -129,16 +129,19 @@ namespace Core.DirFiles
             int rightWidth = totalWidth - rightStartCol;
             if (rightWidth < 20) rightWidth = 20;
 
-            // Header
-            Console.SetCursorPosition(0, 0);
-            ColorConsoleTextLine(ConsoleColor.Yellow, "File Explorer");
-            Console.WriteLine(new string('=', totalWidth));
-            ColorConsoleText(ConsoleColor.Green, "Current folder:");
-            Console.WriteLine($" {_currentRoot}");
-            ColorConsoleTextLine(
-                ConsoleColor.Cyan,
-                "↑/↓: move | Enter: open | Backspace: back | PageUp: up | Del: delete | /: search | Tab: drives | `: quit"
-            );
+            // ---------- Header (trimmed, no wrapping) ----------
+            string title = "File Explorer";
+            WriteTrimmedAtColor(0, 0, title, width, ConsoleColor.Yellow);
+
+            WriteTrimmedAt(0, 1, new string('=', width), width);
+
+            string currentFolderLine = $"Current folder: {_currentRoot}";
+            WriteTrimmedAtColor(0, 2, currentFolderLine, width, ConsoleColor.Green);
+
+            string helpLine =
+                "↑/↓: move | Enter: open | Backspace: back | PageUp: up | Del: delete | /: search | Tab: drives | `: quit";
+            WriteTrimmedAtColor(0, 3, helpLine, width, ConsoleColor.Cyan);
+            // ---------------------------------------------------
 
             if (_items.Count > 0)
                 _selectedIndex = Clamp(_selectedIndex, 0, _items.Count - 1);
@@ -533,11 +536,16 @@ namespace Core.DirFiles
             int contentHeight = height - headerLines;
             if (contentHeight < 5) contentHeight = 5;
 
-            Console.SetCursorPosition(0, 0);
-            Console.WriteLine("Search Results");
-            Console.WriteLine(new string('=', width));
-            Console.WriteLine($"Base folder: {_currentRoot}");
-            Console.WriteLine("↑/↓: move | Enter: open/navigate | Del: delete | Esc/Q: exit search | Backspace: back | U: up");
+            // ---------- Search header: trimmed ----------
+            WriteTrimmedAtColor(0, 0, "Search Results", width, ConsoleColor.Yellow);
+            WriteTrimmedAt(0, 1, new string('=', width), width);
+
+            string baseFolder = $"Base folder: {_currentRoot}";
+            WriteTrimmedAt(0, 2, baseFolder, width);
+
+            string help = "↑/↓: move | Enter: open/navigate | Del: delete | Esc/Q: exit search | Backspace: back | U: up";
+            WriteTrimmedAt(0, 3, help, width);
+            // ------------------------------------------------
 
             if (_searchResults.Count > 0)
                 _searchSelectedIndex = Clamp(_searchSelectedIndex, 0, _searchResults.Count - 1);
@@ -847,10 +855,9 @@ namespace Core.DirFiles
             }
         }
 
-        // *** UPDATED: now also shows folder contents in the info pane ***
+        // Shows folder info + contents in info pane
         private void ShowFolderDetails(string folderPath, int left, int top, int width, int maxLines)
         {
-            // maxLines is the number of lines available from 'top' downwards
             int line = 0;
 
             void WriteLineColored(string text, ConsoleColor color)
@@ -874,7 +881,7 @@ namespace Core.DirFiles
             }
             catch
             {
-                // If we can't enumerate, just show basic info + error
+                // ignore
             }
 
             // Header info (red)
@@ -886,7 +893,6 @@ namespace Core.DirFiles
             if (line >= maxLines)
                 return;
 
-            // Contents header
             WriteLineColored("Contents:", ConsoleColor.Red);
 
             // List subfolders (green)
@@ -915,7 +921,6 @@ namespace Core.DirFiles
 
             if (!Directory.Exists(folderPath) && line == 0)
             {
-                // fallback if folder doesn't exist or no access
                 WriteLineColored("(unable to read folder contents)", ConsoleColor.Red);
             }
         }
