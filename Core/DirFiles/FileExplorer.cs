@@ -1,30 +1,14 @@
-﻿using System;
+﻿//GPT
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Core.DirFiles
 {
     public class FileExplorer
     {
-        /*
-         
-                 static void Main(string[] args)
-        {
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
-
-            string startPath = args.Length > 0 && Directory.Exists(args[0])
-                ? args[0]
-                : Environment.CurrentDirectory;
-
-            var explorer = new Explorer(startPath);
-            explorer.Run();
-        }
-         
-         */
         private class Item
         {
             public string Path { get; set; }
