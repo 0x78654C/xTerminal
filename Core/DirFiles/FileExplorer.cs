@@ -1,5 +1,4 @@
-﻿//GPT
-
+﻿using Castle.Components.DictionaryAdapter.Xml;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +15,9 @@ namespace Core.DirFiles
         {
             public string Path { get; set; }
             public bool IsDirectory { get; set; }
+
+            // Cache size to avoid FileInfo on every repaint
+            public long? SizeBytes { get; set; }
         }
 
         private class SearchItem
@@ -47,14 +49,20 @@ namespace Core.DirFiles
         private int _searchSelectedIndex = 0;
         private int _searchScrollOffset = 0;    // first visible index in search results
 
+        // only reload directory listing when needed
+        private bool _itemsDirty = true;
+
         public FileExplorer(string startPath)
         {
             _currentRoot = Path.GetFullPath(startPath);
+            _itemsDirty = true;
         }
 
         public void Run()
         {
             bool running = true;
+            Console.CursorVisible = false;
+
             while (running)
             {
                 if (_searchMode)
@@ -71,6 +79,7 @@ namespace Core.DirFiles
                 }
             }
 
+            Console.CursorVisible = true;
             Console.Clear();
         }
 
@@ -95,7 +104,7 @@ namespace Core.DirFiles
         {
             Console.Clear();
 
-            LoadItems();
+            EnsureItemsLoaded();
 
             int width = Math.Max(Console.WindowWidth, 60);
             int height = Math.Max(Console.WindowHeight, 20);
@@ -126,7 +135,7 @@ namespace Core.DirFiles
             WriteTrimmedAtColor(0, 2, currentFolderLine, width, ConsoleColor.Green);
 
             string helpLine =
-                "↑/↓: move | Enter: open | Backspace: back | PageUp: up | Del: delete | /: search | Tab: drives | `: quit";
+                "↑/↓: move | Home/End: top/bottom | Enter: open | Backspace: back | PageUp: up | Del: delete | /: search | Tab: drives | `: quit";
             WriteTrimmedAtColor(0, 3, helpLine, width, ConsoleColor.Cyan);
             // ---------------------------------------------------
 
@@ -167,12 +176,8 @@ namespace Core.DirFiles
                     else
                     {
                         string size = "";
-                        try
-                        {
-                            var fi = new FileInfo(item.Path);
-                            size = $"  {fi.Length / 1024} KB";
-                        }
-                        catch { }
+                        if (item.SizeBytes.HasValue)
+                            size = $"  {item.SizeBytes.Value / 1024} KB";
 
                         text = "[F] " + name + size;
                         color = ConsoleColor.White;      // files = white
@@ -191,6 +196,13 @@ namespace Core.DirFiles
             RenderInfoPane(rightStartCol, contentTop, rightWidth, contentHeight);
         }
 
+        private void EnsureItemsLoaded()
+        {
+            if (!_itemsDirty) return;
+            LoadItems();
+            _itemsDirty = false;
+        }
+
         private void LoadItems()
         {
             _items.Clear();
@@ -199,7 +211,12 @@ namespace Core.DirFiles
             {
                 foreach (var d in Directory.GetDirectories(_currentRoot))
                 {
-                    _items.Add(new Item { Path = d, IsDirectory = true });
+                    _items.Add(new Item
+                    {
+                        Path = d,
+                        IsDirectory = true,
+                        SizeBytes = null
+                    });
                 }
             }
             catch { }
@@ -208,7 +225,20 @@ namespace Core.DirFiles
             {
                 foreach (var f in Directory.GetFiles(_currentRoot))
                 {
-                    _items.Add(new Item { Path = f, IsDirectory = false });
+                    long? size = null;
+                    try
+                    {
+                        var fi = new FileInfo(f);
+                        size = fi.Length;
+                    }
+                    catch { }
+
+                    _items.Add(new Item
+                    {
+                        Path = f,
+                        IsDirectory = false,
+                        SizeBytes = size
+                    });
                 }
             }
             catch { }
@@ -240,6 +270,18 @@ namespace Core.DirFiles
                 ShowFileDetails(item.Path, left, top + 2, width);
         }
 
+        /// <summary>
+        /// Set current directory.
+        /// </summary>
+        /// <param name="path"></param>
+        private void SetCurretnDirectory(string path)
+        {
+            if (path.EndsWith(":\\"))
+                File.WriteAllText(GlobalVariables.currentDirectory, path);
+            else
+                File.WriteAllText(GlobalVariables.currentDirectory, path + "\\");
+        }
+
         private bool HandleMainKey(ConsoleKeyInfo key)
         {
             switch (key.Key)
@@ -257,6 +299,16 @@ namespace Core.DirFiles
                         _selectedIndex = Clamp(_selectedIndex + 1, 0, _items.Count - 1);
                     return true;
 
+                case ConsoleKey.Home:
+                    if (_items.Count > 0)
+                        _selectedIndex = 0;
+                    return true;
+
+                case ConsoleKey.End:
+                    if (_items.Count > 0)
+                        _selectedIndex = _items.Count - 1;
+                    return true;
+
                 case ConsoleKey.Enter:
                     if (_items.Count > 0 &&
                         _selectedIndex >= 0 &&
@@ -266,7 +318,7 @@ namespace Core.DirFiles
                         if (item.IsDirectory)
                         {
                             NavigateTo(item.Path);
-                            File.WriteAllText(GlobalVariables.currentDirectory, item.Path + "\\");
+                            SetCurretnDirectory(item.Path);
                             _selectedIndex = 0;
                             _scrollOffset = 0;
                         }
@@ -361,6 +413,8 @@ namespace Core.DirFiles
             // After this, next RenderMainScreen will reload items from disk
             if (_selectedIndex >= _items.Count - 1)
                 _selectedIndex = Math.Max(0, _selectedIndex - 1);
+
+            _itemsDirty = true;
         }
 
         // Jump to next item whose name starts with given character
@@ -435,6 +489,7 @@ namespace Core.DirFiles
             string newRoot = drives[idx - 1].RootDirectory.FullName;
             NavigateTo(newRoot);
             _scrollOffset = 0;
+            _itemsDirty = true;
         }
 
         private static string FormatSize(long bytes)
@@ -531,7 +586,7 @@ namespace Core.DirFiles
             string baseFolder = $"Base folder: {_currentRoot}";
             WriteTrimmedAt(0, 2, baseFolder, width);
 
-            string help = "↑/↓: move | Enter: open/navigate | Del: delete | Esc/Q: exit search | Backspace: back | U: up";
+            string help = "↑/↓: move | Home/End: top/bottom | Enter: open/navigate | Del: delete | Esc/Q: exit search | Backspace: back | U: up";
             WriteTrimmedAt(0, 3, help, width);
             // ------------------------------------------------
 
@@ -586,6 +641,16 @@ namespace Core.DirFiles
                 case ConsoleKey.DownArrow:
                     if (_searchResults.Count > 0)
                         _searchSelectedIndex = Clamp(_searchSelectedIndex + 1, 0, _searchResults.Count - 1);
+                    return true;
+
+                case ConsoleKey.Home:
+                    if (_searchResults.Count > 0)
+                        _searchSelectedIndex = 0;
+                    return true;
+
+                case ConsoleKey.End:
+                    if (_searchResults.Count > 0)
+                        _searchSelectedIndex = _searchResults.Count - 1;
                     return true;
 
                 case ConsoleKey.Enter:
@@ -684,6 +749,8 @@ namespace Core.DirFiles
             _searchResults.RemoveAt(_searchSelectedIndex);
             if (_searchSelectedIndex >= _searchResults.Count)
                 _searchSelectedIndex = Math.Max(0, _searchSelectedIndex - 1);
+
+            _itemsDirty = true;
         }
 
         // Jump to next search result whose name starts with given character
@@ -741,6 +808,7 @@ namespace Core.DirFiles
                 }
 
                 _currentRoot = newRoot;
+                _itemsDirty = true;
             }
             catch { }
         }
@@ -754,12 +822,14 @@ namespace Core.DirFiles
 
             _suppressHistory = true;
             NavigateTo(entry.Path);
-            File.WriteAllText(GlobalVariables.currentDirectory, entry.Path + "\\");
+            SetCurretnDirectory(entry.Path);
             _suppressHistory = false;
 
             // restore selection and scroll for that folder
             _selectedIndex = entry.SelectedIndex;
             _scrollOffset = entry.ScrollOffset;
+
+            _itemsDirty = true;
         }
 
         private void GoUp()
@@ -771,7 +841,8 @@ namespace Core.DirFiles
                     return;
 
                 NavigateTo(parent);
-                File.WriteAllText(GlobalVariables.currentDirectory, parent+"\\");
+                SetCurretnDirectory(parent);
+                _itemsDirty = true;
             }
             catch { }
         }
