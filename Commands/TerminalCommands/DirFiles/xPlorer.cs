@@ -16,7 +16,11 @@ namespace Commands.TerminalCommands.DirFiles
         public void Execute(string args)
         {
             var path = File.ReadAllText(GlobalVariables.currentDirectory);
-            var currentDir = path.Substring(0, path.Length - 1);
+            var currentDir = "";
+            if (path.EndsWith(":\\"))
+                currentDir = path;
+            else
+                currentDir = path.Substring(0, path.Length - 1);
             var fExplorer = new FileExplorer(currentDir);
             fExplorer.Run();
         }
