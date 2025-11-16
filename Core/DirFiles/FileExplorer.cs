@@ -945,12 +945,13 @@ namespace Core.DirFiles
             {
                 // ignore
             }
-
+            var difInfo = new DirectoryInfo(folderPath);
             // Header info (red)
             WriteLineColored("Type: Folder", ConsoleColor.Red);
             WriteLineColored($"Path: {folderPath}", ConsoleColor.Red);
             WriteLineColored($"Subfolders: {dirs.Length}", ConsoleColor.Red);
             WriteLineColored($"Files: {files.Length}", ConsoleColor.Red);
+            WriteLineColored($"Last modified: {difInfo.LastWriteTime}", ConsoleColor.Red);
 
             if (line >= maxLines)
                 return;
