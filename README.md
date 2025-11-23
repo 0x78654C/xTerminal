@@ -409,6 +409,7 @@ Example:
                      -gf : Get uploaded file information. waifu -gf <file_token>
                      -lr : List wifuvault restrictions types.
                  Example: waifu -u <file_path> -p <password> -b <bucket_token> -o -e 1h -h
+    fxp       -- Opens built in console file explorer.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
