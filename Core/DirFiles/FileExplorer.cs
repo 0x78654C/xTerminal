@@ -956,7 +956,7 @@ namespace Core.DirFiles
             if (line >= maxLines)
                 return;
 
-            WriteLineColored("Contents:", ConsoleColor.Red);
+            WriteLineColored("Contents:", ConsoleColor.Yellow);
 
             // List subfolders (green)
             foreach (var d in dirs)
