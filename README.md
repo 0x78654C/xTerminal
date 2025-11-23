@@ -17,7 +17,7 @@ Runs get-disk command from Powershell.
 
 ## Requirements:
 
-.NET 8 SDK
+.NET 10 SDK
 
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
