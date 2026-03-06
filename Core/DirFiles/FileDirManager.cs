@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.Versioning;
 
 namespace Core
@@ -65,6 +66,27 @@ namespace Core
                 file.Delete();
             }
             directory.Delete();
+        }
+
+        /// <summary>
+        /// Extracting exact directory name with correct letter case from the file system.
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static string GetExactDirectoryName(DirectoryInfo dir)
+        {
+            if (dir.Parent == null)
+                return dir.FullName; // root, like C:\
+
+            string parentPath = GetExactDirectoryName(dir.Parent);
+
+            foreach (var subDir in dir.Parent.GetDirectories())
+            {
+                if (string.Equals(subDir.Name, dir.Name, StringComparison.OrdinalIgnoreCase))
+                    return Path.Combine(parentPath, subDir.Name);
+            }
+
+            return dir.FullName;
         }
     }
 }

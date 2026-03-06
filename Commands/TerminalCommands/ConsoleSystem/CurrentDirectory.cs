@@ -40,7 +40,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             pathSeparator = s_newLocation + "\\";
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
                             var dirInfo = new DirectoryInfo(pathSeparator);
-                            var dirCssensitive = GetExactDirectoryName(dirInfo) + "\\";
+                            var dirCssensitive = FileDirManager.GetExactDirectoryName(dirInfo) + "\\";
                             File.WriteAllText(GlobalVariables.currentDirectory, dirCssensitive);
                             return;
                         }
@@ -95,7 +95,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             pathSeparator = pathCombine + "\\";
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
                             var dirInfo = new DirectoryInfo(pathSeparator);
-                            var dirCssensitive = GetExactDirectoryName(dirInfo)+"\\";
+                            var dirCssensitive =FileDirManager.GetExactDirectoryName(dirInfo)+"\\";
                             File.WriteAllText(GlobalVariables.currentDirectory, dirCssensitive);
                             return;
                         }
@@ -112,26 +112,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
         }
 
-        /// <summary>
-        /// Extracting exact directory name with correct letter case from the file system.
-        /// </summary>
-        /// <param name="dir"></param>
-        /// <returns></returns>
-        private static string GetExactDirectoryName(DirectoryInfo dir)
-        {
-            if (dir.Parent == null)
-                return dir.FullName; // root, like C:\
 
-            string parentPath = GetExactDirectoryName(dir.Parent);
-
-            foreach (var subDir in dir.Parent.GetDirectories())
-            {
-                if (string.Equals(subDir.Name, dir.Name, StringComparison.OrdinalIgnoreCase))
-                    return Path.Combine(parentPath, subDir.Name);
-            }
-
-            return dir.FullName;
-        }
 
         /// <summary>
         /// Getting parrent directory name from child one.
