@@ -388,7 +388,11 @@ Usage of Password Manager commands:
                             Console.WriteLine("-------------------------");
                             Console.WriteLine($"Application Name: ".PadRight(20, ' ') + outJson["site/application"]);
                             Console.WriteLine($"Account Name: ".PadRight(20, ' ') + outJson["account"]);
-                            Console.WriteLine($"Password: ".PadRight(20, ' ') + outJson["password"]);
+                            Console.WriteLine($"Password: ".PadRight(20, ' ') + new string('*', outJson["password"].Length));
+                            Console.Write("Reveal password? [y/N]: ");
+                            var reveal = Console.ReadLine()?.Trim();
+                            if (string.Equals(reveal, "y", StringComparison.OrdinalIgnoreCase))
+                                Console.WriteLine($"Password: ".PadRight(20, ' ') + outJson["password"]);
                         }
                     }
                 }
