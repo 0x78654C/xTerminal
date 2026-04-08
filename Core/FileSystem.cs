@@ -375,7 +375,12 @@ namespace Core
         /// <param name="path">File path.</param>
         /// <param name="currentDir">Terminal current direcotory.</param>
         /// <returns>string</returns>
-        public static string SanitizePath(string path, string currentDir) => path.Contains(":") && path.Contains(@"\") ? path : $@"{currentDir}{path}";
+        public static string SanitizePath(string path, string currentDir)
+        {
+            if (path.Contains(":") && path.Contains(@"\"))
+                return Path.GetFullPath(path);
+            return Path.GetFullPath(path, currentDir);
+        }
 
 
         /// <summary>
