@@ -13,6 +13,7 @@ namespace Commands.TerminalCommands.Network
          * Display machine's external IP.
          */
         public string Name => "extip";
+        private static readonly HttpClient s_httpClient = new HttpClient();
         private static string s_helpMessage = @" The command returns your public IP address provied by checkip.dyndns.org verification.";
         public void Execute(string arg)
         {
@@ -26,7 +27,7 @@ namespace Commands.TerminalCommands.Network
                 }
 
                 string externalIP;
-                externalIP = (new HttpClient()).GetStringAsync("http://checkip.dyndns.org").Result;
+                externalIP = s_httpClient.GetStringAsync("https://checkip.dyndns.org").Result;
                 externalIP = (new Regex(@"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"))
                              .Matches(externalIP)[0].ToString();
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
