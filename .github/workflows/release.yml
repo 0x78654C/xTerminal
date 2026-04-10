@@ -20,6 +20,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: Get latest release version
         id: get_version
         uses: actions/github-script@v7
@@ -117,22 +120,26 @@ jobs:
       - name: Build win-x64 (self-contained)
         shell: pwsh
         run: |
-          dotnet publish Shell/Shell.csproj `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
-            -p:PublishSingleFile=false `
-            -o publish/win-x64
+          msbuild Shell/Shell.csproj `
+            "/t:Restore;Publish" `
+            /p:Configuration=Release `
+            /p:RuntimeIdentifier=win-x64 `
+            /p:SelfContained=true `
+            /p:PublishSingleFile=false `
+            "/p:PublishDir=${{ github.workspace }}\publish\win-x64\" `
+            /m
 
       - name: Build win-x86 (self-contained)
         shell: pwsh
         run: |
-          dotnet publish Shell/Shell.csproj `
-            -c Release `
-            -r win-x86 `
-            --self-contained true `
-            -p:PublishSingleFile=false `
-            -o publish/win-x86
+          msbuild Shell/Shell.csproj `
+            "/t:Restore;Publish" `
+            /p:Configuration=Release `
+            /p:RuntimeIdentifier=win-x86 `
+            /p:SelfContained=true `
+            /p:PublishSingleFile=false `
+            "/p:PublishDir=${{ github.workspace }}\publish\win-x86\" `
+            /m
 
       - name: Package releases
         shell: pwsh
