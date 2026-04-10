@@ -146,14 +146,63 @@ jobs:
         run: |
           $ver = "${{ steps.new_version.outputs.new_version }}"
 
+          # Remove PDB files
+          Get-ChildItem publish/win-x64 -Recurse -Filter "*.pdb" | Remove-Item -Force
+          Get-ChildItem publish/win-x86 -Recurse -Filter "*.pdb" | Remove-Item -Force
+
           Copy-Item README.md publish/win-x64/README.md
           Copy-Item README.md publish/win-x86/README.md
+          Copy-Item -Recurse Licenses publish/win-x64/
+          Copy-Item -Recurse Licenses publish/win-x86/
 
           Compress-Archive -Path publish/win-x64/* -DestinationPath "xTerminal-v$ver-win-x64.zip" -Force
           Compress-Archive -Path publish/win-x86/* -DestinationPath "xTerminal-v$ver-win-x86.zip" -Force
 
           Write-Host "Packages created:"
           Get-ChildItem "xTerminal-v$ver-win-x64.zip", "xTerminal-v$ver-win-x86.zip" | Select-Object Name, Length
+
+      - name: Prepare xInstaller package
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $ver     = "${{ steps.new_version.outputs.new_version }}"
+          $headers = @{
+            Authorization = "Bearer ${{ secrets.GITHUB_TOKEN }}"
+            Accept        = 'application/vnd.github+json'
+            'User-Agent'  = 'gh-actions'
+          }
+
+          $releases = Invoke-RestMethod `
+            "https://api.github.com/repos/${{ github.repository }}/releases?per_page=1" `
+            -Headers $headers
+
+          if (-not $releases -or $releases.Count -eq 0) {
+            Write-Warning "No previous release found; skipping xInstaller packaging."
+            exit 0
+          }
+
+          $asset = $releases[0].assets | Where-Object { $_.name -like "xInstaller*" } | Select-Object -First 1
+          if (-not $asset) {
+            Write-Warning "No xInstaller asset in last release; skipping."
+            exit 0
+          }
+
+          Write-Host "Downloading $($asset.name) ($([math]::Round($asset.size / 1MB, 1)) MB) ..."
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile "xInstaller_prev.exe" -Headers $headers
+
+          Write-Host "Extracting ..."
+          7z x xInstaller_prev.exe -o"xInstaller_work" -y | Out-Null
+
+          Remove-Item -Recurse -Force "xInstaller_work\data\x64" -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force "xInstaller_work\data\x86" -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path "xInstaller_work\data\x64" -Force | Out-Null
+          New-Item -ItemType Directory -Path "xInstaller_work\data\x86" -Force | Out-Null
+          Copy-Item -Recurse -Force "publish\win-x64\*" "xInstaller_work\data\x64\"
+          Copy-Item -Recurse -Force "publish\win-x86\*" "xInstaller_work\data\x86\"
+
+          $outName = "xInstaller_x64_x86_v$ver.zip"
+          Compress-Archive -Path "xInstaller_work\*" -DestinationPath $outName -Force
+          Write-Host "Created: $outName ($([math]::Round((Get-Item $outName).Length / 1MB, 1)) MB)"
 
       - name: Create GitHub Release and upload assets
         uses: actions/github-script@v7
@@ -179,10 +228,12 @@ jobs:
               prerelease:       false
             });
 
-            const assets = [
+            const allAssets = [
               `xTerminal-v${ver}-win-x64.zip`,
-              `xTerminal-v${ver}-win-x86.zip`
+              `xTerminal-v${ver}-win-x86.zip`,
+              `xInstaller_x64_x86_v${ver}.zip`
             ];
+            const assets = allAssets.filter(a => require('fs').existsSync(a));
 
             for (const asset of assets) {
               const data = fs.readFileSync(asset);
