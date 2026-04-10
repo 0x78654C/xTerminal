@@ -1,112 +1,164 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# This workflow will build, test, sign and package a WPF or Windows Forms desktop application
-# built on .NET Core.
-# To learn how to migrate your existing application to .NET Core,
-# refer to https://docs.microsoft.com/en-us/dotnet/desktop-wpf/migration/convert-project-from-net-framework
-#
-# To configure this workflow:
-#
-# 1. Configure environment variables
-# GitHub sets default environment variables for every workflow run.
-# Replace the variables relative to your project in the "env" section below.
-#
-# 2. Signing
-# Generate a signing certificate in the Windows Application
-# Packaging Project or add an existing signing certificate to the project.
-# Next, use PowerShell to encode the .pfx file using Base64 encoding
-# by running the following Powershell script to generate the output string:
-#
-# $pfx_cert = Get-Content '.\SigningCertificate.pfx' -Encoding Byte
-# [System.Convert]::ToBase64String($pfx_cert) | Out-File 'SigningCertificate_Encoded.txt'
-#
-# Open the output file, SigningCertificate_Encoded.txt, and copy the
-# string inside. Then, add the string to the repo as a GitHub secret
-# and name it "Base64_Encoded_Pfx."
-# For more information on how to configure your signing certificate for
-# this workflow, refer to https://github.com/microsoft/github-actions-for-desktop-apps#signing
-#
-# Finally, add the signing certificate password to the repo as a secret and name it "Pfx_Key".
-# See "Build the Windows Application Packaging project" below to see how the secret is used.
-#
-# For more information on GitHub Actions, refer to https://github.com/features/actions
-# For a complete CI/CD sample to get started with GitHub Action workflows for Desktop Applications,
-# refer to https://github.com/microsoft/github-actions-for-desktop-apps
-
-name: .NET Core Desktop
+name: Release
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+
+permissions:
+  contents: write
 
 jobs:
-
-  build:
-
-    strategy:
-      matrix:
-        configuration: [Debug, Release]
-
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+  release:
+    runs-on: windows-latest
 
     env:
-      Solution_Name: Shell.sln                         # Replace with your solution name, i.e. MyWpfApp.sln.
+      SOLUTION: Shell.sln
+      PROJECT: Shell\Shell.csproj
+      ASSEMBLY_INFO: Shell\Properties\AssemblyInfo.cs
+      ARTIFACT_NAME: xTerminal
+      DEFAULT_VERSION: v2.2.0
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-    # Install the .NET Core workload
-    - name: Install .NET Core
+    - name: Install .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
 
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v2
+    # ── Determine release type from commit message ──────────────────────────
+    - name: Determine release type
+      id: type
+      shell: pwsh
+      run: |
+        $msg = "${{ github.event.head_commit.message }}"
+        if ($msg -match '(?i)^(fix|bug|hotfix|patch)(\(.*?\))?[:\s]') {
+          echo "kind=bugfix" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "kind=feature" >> $env:GITHUB_OUTPUT
+        }
 
-    # Execute all unit tests in the solution
-#    - name: Execute unit tests
- #     run: dotnet test
+    # ── Compute next version from latest tag ────────────────────────────────
+    - name: Compute next version
+      id: ver
+      shell: pwsh
+      run: |
+        $kind = "${{ steps.type.outputs.kind }}"
 
-    # Restore the application to populate the obj folder with RuntimeIdentifiers
-    - name: Restore the application
-      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
-      env:
-        Configuration: ${{ matrix.configuration }}
+        # Fetch all tags
+        git fetch --tags
 
-    # Decode the base 64 encoded pfx and save the Signing_Certificate
-    #- name: Decode the pfx
-    #  run: |
-    #    $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.Base64_Encoded_Pfx }}")
-     #   $certificatePath = Join-Path -Path $env:Wap_Project_Directory -ChildPath GitHubActionsWorkflow.pfx
-      #  [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        # Find the latest vX.X.X or vX.X.X.X tag (semver-style)
+        $latest = git tag --list 'v*' --sort=-version:refname |
+                  Where-Object { $_ -match '^v\d+\.\d+(\.\d+){1,2}$' } |
+                  Select-Object -First 1
 
-    # Create the app package by building and packaging the Windows Application Packaging project
-    - name: Create the app package
-      run: msbuild $env:Wap_Project_Path /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
-      env:
-        Appx_Bundle: Always
-        Appx_Bundle_Platforms: x86|x64
-        Appx_Package_Build_Mode: StoreUpload
-        Configuration: ${{ matrix.configuration }}
+        if (-not $latest) {
+          $latest = $env:DEFAULT_VERSION
+        }
 
-    # Remove the pfx
-   # - name: Remove the pfx
-    #  run: Remove-Item -path $env:Wap_Project_Directory\GitHubActionsWorkflow.pfx
+        Write-Host "Latest tag: $latest"
+        $parts = $latest.TrimStart('v') -split '\.'
 
-    # Upload the MSIX package: https://github.com/marketplace/actions/upload-a-build-artifact
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+        $major = [int]$parts[0]
+        $minor = [int]$parts[1]
+        $feat  = if ($parts.Count -ge 3) { [int]$parts[2] } else { 0 }
+        $patch = if ($parts.Count -ge 4) { [int]$parts[3] } else { 0 }
+
+        if ($kind -eq 'feature') {
+          $feat += 1
+          $patch = 0
+          $newVer  = "$major.$minor.$feat"
+          $asmVer  = "$major.$minor.$feat.0"
+          $tagName = "v$newVer"
+        } else {
+          $patch += 1
+          $newVer  = "$major.$minor.$feat.$patch"
+          $asmVer  = $newVer
+          $tagName = "v$newVer"
+        }
+
+        Write-Host "New version: $newVer  (assembly: $asmVer)"
+        echo "new_ver=$newVer"   >> $env:GITHUB_OUTPUT
+        echo "asm_ver=$asmVer"   >> $env:GITHUB_OUTPUT
+        echo "tag_name=$tagName" >> $env:GITHUB_OUTPUT
+
+    # ── Update AssemblyInfo.cs ───────────────────────────────────────────────
+    - name: Update AssemblyInfo.cs
+      shell: pwsh
+      run: |
+        $asmVer = "${{ steps.ver.outputs.asm_ver }}"
+        $file   = "$env:ASSEMBLY_INFO"
+        $content = Get-Content $file -Raw
+        $content = $content -replace 'AssemblyVersion\("[^"]*"\)',     "AssemblyVersion(`"$asmVer`")"
+        $content = $content -replace 'AssemblyFileVersion\("[^"]*"\)', "AssemblyFileVersion(`"$asmVer`")"
+        Set-Content $file $content -NoNewline
+
+    # ── Publish self-contained (not single-file) for win-x64 ────────────────
+    - name: Publish win-x64
+      run: >
+        dotnet publish ${{ env.PROJECT }}
+        -c Release
+        -r win-x64
+        --self-contained true
+        -p:PublishSingleFile=false
+        -o publish\win-x64
+
+    # ── Publish self-contained (not single-file) for win-x86 ────────────────
+    - name: Publish win-x86
+      run: >
+        dotnet publish ${{ env.PROJECT }}
+        -c Release
+        -r win-x86
+        --self-contained true
+        -p:PublishSingleFile=false
+        -o publish\win-x86
+
+    # ── Pack each build with README.md into a zip ────────────────────────────
+    - name: Pack archives
+      shell: pwsh
+      run: |
+        $ver = "${{ steps.ver.outputs.new_ver }}"
+        Copy-Item README.md publish\win-x64\README.md
+        Copy-Item README.md publish\win-x86\README.md
+        Compress-Archive -Path publish\win-x64\* -DestinationPath "$env:ARTIFACT_NAME-$ver-win-x64.zip"
+        Compress-Archive -Path publish\win-x86\* -DestinationPath "$env:ARTIFACT_NAME-$ver-win-x86.zip"
+
+    # ── Commit version bump and create tag ───────────────────────────────────
+    - name: Commit version and tag
+      shell: pwsh
+      run: |
+        $tagName = "${{ steps.ver.outputs.tag_name }}"
+        git config user.name  "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add $env:ASSEMBLY_INFO
+        git commit -m "chore: bump version to $tagName [skip ci]"
+        # Only create tag if it does not already exist
+        if (git tag --list $tagName) {
+          Write-Warning "Tag $tagName already exists; skipping tag creation."
+        } else {
+          git tag $tagName
+          git push origin $tagName
+        }
+        git push origin HEAD:main
+
+    # ── Create GitHub release ────────────────────────────────────────────────
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v2
       with:
-        name: MSIX Package
-        path: ${{ env.Wap_Project_Directory }}\AppPackages
+        tag_name: ${{ steps.ver.outputs.tag_name }}
+        name: ${{ env.ARTIFACT_NAME }} ${{ steps.ver.outputs.new_ver }}
+        body: |
+          ## ${{ env.ARTIFACT_NAME }} ${{ steps.ver.outputs.new_ver }}
+
+          **Release type:** ${{ steps.type.outputs.kind }}
+
+          See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for usage instructions.
+        files: |
+          ${{ env.ARTIFACT_NAME }}-${{ steps.ver.outputs.new_ver }}-win-x64.zip
+          ${{ env.ARTIFACT_NAME }}-${{ steps.ver.outputs.new_ver }}-win-x86.zip
+        generate_release_notes: true
