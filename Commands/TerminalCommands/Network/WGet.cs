@@ -26,7 +26,7 @@ namespace Commands.TerminalCommands.Network
         private static Stopwatch s_stopWatch;
         private static TimeSpan s_timeSpan;
         private static bool s_pingCheck = false;
-        private static HttpClient s_client;
+        private static readonly HttpClient s_client = new HttpClient();
         private static MatchCollection s_match2;
         private static MatchCollection s_match;
         private static AutoResetEvent s_resetEvent = new AutoResetEvent(false);
@@ -69,7 +69,6 @@ namespace Commands.TerminalCommands.Network
             {
                 if (arg.Contains("--tls"))
                     ActivateTls();
-                s_client = new HttpClient();
                 s_timeSpan = new TimeSpan();
                 s_stopWatch = new Stopwatch();
 

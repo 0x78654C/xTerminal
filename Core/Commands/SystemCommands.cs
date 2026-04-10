@@ -1,47 +1,71 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.Versioning;
+using System.Text.RegularExpressions;
 
 namespace Core.Commands
 {
+    [SupportedOSPlatform("Windows")]
     public static class SystemCommands
     {
+        private static readonly string s_shutdownPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System), "shutdown.exe");
+
+        // Validates UNC hostnames (\\server), plain hostnames, and IPv4 addresses.
+        private static readonly Regex s_remoteTargetRegex = new Regex(
+            @"^(\\\\)?[a-zA-Z0-9][a-zA-Z0-9\-\.]{0,62}$|^(\d{1,3}\.){3}\d{1,3}$",
+            RegexOptions.Compiled);
+
         /// <summary>
-        /// Shutdown command using command promt.
+        /// Shutdown command.
         /// </summary>
         public static void ShutDownCmd(bool force, string remotePC="")
         {
-            var process = new Process();
+            if (!string.IsNullOrEmpty(remotePC) && !s_remoteTargetRegex.IsMatch(remotePC.TrimStart('\\')))
+            {
+                FileSystem.ErrorWriteLine("Invalid remote computer name or address.");
+                return;
+            }
 
-            var arg = "";
-            if(string.IsNullOrEmpty(remotePC))
-                arg = (force) ? "/c shutdown /s /f /t 1": "/c shutdown /s /t 1";
-           else
-                arg = (force) ? $@"/c shutdown /s /m {remotePC} /f /t 1" : $@"/c shutdown /s /m {remotePC} /t 1";
-            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            string arg;
+            if (string.IsNullOrEmpty(remotePC))
+                arg = force ? "/s /f /t 1" : "/s /t 1";
+            else
+                arg = force ? $"/s /m {remotePC} /f /t 1" : $"/s /m {remotePC} /t 1";
+
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo(s_shutdownPath)
             {
                 UseShellExecute = false,
                 Arguments = arg
-
             };
             process.Start();
             process.WaitForExit();
         }
 
         /// <summary>
-        /// Reboot command using command promt.
+        /// Reboot command.
         /// </summary>
         public static void RebootCmd(bool force, string remotePC="")
         {
-            var arg = "";
+            if (!string.IsNullOrEmpty(remotePC) && !s_remoteTargetRegex.IsMatch(remotePC.TrimStart('\\')))
+            {
+                FileSystem.ErrorWriteLine("Invalid remote computer name or address.");
+                return;
+            }
+
+            string arg;
             if (string.IsNullOrEmpty(remotePC))
-                arg = (force) ? "/c shutdown /r /f /t 1" : "/c shutdown /r /t 1";
+                arg = force ? "/r /f /t 1" : "/r /t 1";
             else
-                arg = (force) ? $@"/c shutdown /r /m {remotePC} /f /t 1" : $@"/c shutdown /r /m {remotePC} /t 1";
+                arg = force ? $"/r /m {remotePC} /f /t 1" : $"/r /m {remotePC} /t 1";
+
             var process = new Process();
-            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            process.StartInfo = new ProcessStartInfo(s_shutdownPath)
             {
                 UseShellExecute = false,
                 Arguments = arg
-
             };
             process.Start();
             process.WaitForExit();
@@ -53,10 +77,10 @@ namespace Core.Commands
         public static void LogoffCmd()
         {
             var process = new Process();
-            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            process.StartInfo = new ProcessStartInfo(s_shutdownPath)
             {
                 UseShellExecute = false,
-                Arguments = "/c shutdown /l /f"
+                Arguments = "/l /f"
 
             };
             process.Start();
@@ -68,11 +92,12 @@ namespace Core.Commands
         /// </summary>
         public static void LockCmd()
         {
+            var rundll32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Rundll32.exe");
             var process = new Process();
-            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            process.StartInfo = new ProcessStartInfo(rundll32)
             {
                 UseShellExecute = false,
-                Arguments = "/c Rundll32.exe user32.dll,LockWorkStation"
+                Arguments = "user32.dll,LockWorkStation"
 
             };
             process.Start();
@@ -84,11 +109,12 @@ namespace Core.Commands
         /// </summary>
         public static void SleepCcmd()
         {
+            var rundll32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Rundll32.exe");
             var process = new Process();
-            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            process.StartInfo = new ProcessStartInfo(rundll32)
             {
                 UseShellExecute = false,
-                Arguments = "/c Rundll32.exe powrprof.dll,SetSuspendState"
+                Arguments = "powrprof.dll,SetSuspendState"
 
             };
             process.Start();
@@ -96,19 +122,19 @@ namespace Core.Commands
         }
         
         /// <summary>
-        ///SSH command.
+        /// SSH command — executes ssh directly to avoid shell injection via cmd.exe.
         /// </summary>
         public static void SSHCmd(string input)
         {
             var process = new Process();
-            process.StartInfo = new ProcessStartInfo("cmd.exe")
+            process.StartInfo = new ProcessStartInfo("ssh")
             {
                 UseShellExecute = false,
-                Arguments = $"/c ssh {input}"
-
+                Arguments = input
             };
             process.Start();
             process.WaitForExit();
         }
     }
 }
+

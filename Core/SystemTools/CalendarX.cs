@@ -61,39 +61,31 @@ namespace Core.SystemTools
         /// <param name="isCurrentDay"></param>
         private void FillCalendar(bool isCurrentDay)
         {
-            DrawHeader(isCurrentDay);
-            int days = 0;
-            var month = 0;
-            if (isCurrentDay)
-            {
-                days = DateTime.DaysInMonth(YearNow, MonthNow);
-                date = new DateTime(YearNow, MonthNow, 1);
-                month = MonthNow;
-            }
-            else
-            {
-                days = DateTime.DaysInMonth(Year, Month);
-                date = new DateTime(Year, Month, 1);
-                month = Month;
-            }
+            // clear previous values
+            Array.Clear(calendar, 0, calendar.Length);
 
-            int currentDay = 1;
-            var dayOfWeek = (int)date.DayOfWeek;
-            for (int i = 0; i < calendar.GetLength(0); i++)
+            int y = isCurrentDay ? YearNow : Year;
+            int m = isCurrentDay ? MonthNow : Month;
+
+            DrawHeader(isCurrentDay);
+
+            int days = DateTime.DaysInMonth(y, m);
+            date = new DateTime(y, m, 1);
+
+            // Monday-first offset (Mon=0 ... Sun=6)
+            int firstDayOffset = ((int)date.DayOfWeek + 6) % 7;
+
+            int day = 1;
+            for (int i = 0; i < calendar.GetLength(0) && day <= days; i++)
             {
-                for (int j = 0; j < calendar.GetLength(1) && currentDay - dayOfWeek + 1 <= days; j++)
+                for (int j = 0; j < calendar.GetLength(1) && day <= days; j++)
                 {
-                    if (i == 0 && month > j)
+                    if (i == 0 && j < firstDayOffset)
                         calendar[i, j] = 0;
                     else
-                    {
-                        calendar[i, j] = currentDay - dayOfWeek + 1;
-                        currentDay++;
-                    }
+                        calendar[i, j] = day++;
                 }
             }
-            if (dayOfWeek == 0)
-                calendar[0, 6] = 1;
         }
 
         /// <summary>

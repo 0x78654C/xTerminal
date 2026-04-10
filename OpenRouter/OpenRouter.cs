@@ -32,16 +32,13 @@ namespace OpenRouter
 
     public class OpenRouterClient
     {
-        private readonly HttpClient _httpClient;
+        private static readonly HttpClient _httpClient = new HttpClient();
         private const string ApiUrl = "https://openrouter.ai/api/v1/chat/completions";
         private readonly string _apiKey;
 
         public OpenRouterClient(string apiKey)
         {
             _apiKey = apiKey;
-            _httpClient = new HttpClient(); // Should look at injecting this in and using the HttpClientFactory https://stackoverflow.com/questions/58427764/httpclient-and-socket-exhaustion-clarification 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-            _httpClient.DefaultRequestHeaders.Add("X-Title", "xTerminal");
         }
 
         public async Task<string> SendPromptAsync(string prompt, string model = "openai/gpt-3.5-turbo")
@@ -53,9 +50,13 @@ namespace OpenRouter
             };
 
             var json = JsonConvert.SerializeObject(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(ApiUrl, content);
+            var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+            request.Headers.Add("X-Title", "xTerminal");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)

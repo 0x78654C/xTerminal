@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text.RegularExpressions;
 
 namespace Core.SystemTools
 {
@@ -11,6 +12,12 @@ namespace Core.SystemTools
     {
         private static string s_currentDirectory;
         private static string _cmdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
+        private static string _runasPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "runas.exe");
+
+        // Windows usernames: letters, digits, dots, hyphens, underscores, backslash (domain\user), at-sign (user@domain).
+        private static readonly Regex s_validUserNameRegex = new Regex(
+            @"^[a-zA-Z0-9][a-zA-Z0-9\._\-\\@]{0,99}$",
+            RegexOptions.Compiled);
 
         /// <summary>
         /// Execute process command.
@@ -182,9 +189,14 @@ namespace Core.SystemTools
                         FileSystem.ErrorWriteLine("User name must be provieded!");
                         return;
                     }
+                    if (!s_validUserNameRegex.IsMatch(userName))
+                    {
+                        FileSystem.ErrorWriteLine("Invalid username format.");
+                        return;
+                    }
                     Console.WriteLine(input);
-                    var arg = $"/c runas /user:{userName} {input}";
-                    process.StartInfo = new ProcessStartInfo(_cmdPath)
+                    var arg = $"/user:{userName} \"{input}\"";
+                    process.StartInfo = new ProcessStartInfo(_runasPath)
                     {
                         Arguments = arg,
                         UseShellExecute = true

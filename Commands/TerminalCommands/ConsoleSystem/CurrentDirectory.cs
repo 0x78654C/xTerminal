@@ -1,4 +1,5 @@
 ﻿using Core;
+using System;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -38,7 +39,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         {
                             pathSeparator = s_newLocation + "\\";
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
-                            File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
+                            var dirInfo = new DirectoryInfo(pathSeparator);
+                            var dirCssensitive = FileDirManager.GetExactDirectoryName(dirInfo) + "\\";
+                            File.WriteAllText(GlobalVariables.currentDirectory, dirCssensitive);
                             return;
                         }
                         FileSystem.ErrorWriteLine($"Directory '{s_newLocation}'\\ does not exist!");
@@ -91,7 +94,9 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         {
                             pathSeparator = pathCombine + "\\";
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
-                            File.WriteAllText(GlobalVariables.currentDirectory, pathSeparator);
+                            var dirInfo = new DirectoryInfo(pathSeparator);
+                            var dirCssensitive =FileDirManager.GetExactDirectoryName(dirInfo)+"\\";
+                            File.WriteAllText(GlobalVariables.currentDirectory, dirCssensitive);
                             return;
                         }
                         FileSystem.ErrorWriteLine($"Directory '{pathCombine}' does not exist!");
@@ -106,6 +111,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 File.WriteAllText(GlobalVariables.currentDirectory, GlobalVariables.rootPath);
             }
         }
+
+
 
         /// <summary>
         /// Getting parrent directory name from child one.
