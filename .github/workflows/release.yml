@@ -1,0 +1,192 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Get latest release version
+        id: get_version
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let version = '2.0.8.1';
+            try {
+              const releases = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 1
+              });
+              if (releases.data.length > 0) {
+                version = releases.data[0].tag_name.replace(/^v/, '');
+              }
+            } catch (e) {
+              core.warning(`Could not fetch releases: ${e.message}`);
+            }
+            core.setOutput('version', version);
+
+      - name: Find merged PR and determine release type
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.sha;
+            let isBugFix = false;
+            let releaseNotes = '';
+
+            try {
+              const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: sha
+              });
+
+              if (prs.length > 0) {
+                const pr = prs[0];
+                const labels = pr.labels.map(l => l.name.toLowerCase());
+                const title = pr.title.toLowerCase();
+
+                isBugFix = labels.some(l =>
+                  l.includes('bug') || l.includes('fix') || l === 'hotfix'
+                ) || /^(fix|bug|hotfix)(\(|:|\s)/.test(title);
+
+                const bodyLines = (pr.body || '').trim();
+                releaseNotes = bodyLines
+                  ? `${pr.title}\n\n${bodyLines}`
+                  : pr.title;
+              }
+            } catch (e) {
+              core.warning(`Could not fetch PR info: ${e.message}`);
+            }
+
+            core.setOutput('is_bug_fix', isBugFix ? 'true' : 'false');
+            core.setOutput('release_notes', releaseNotes);
+
+      - name: Calculate new version
+        id: new_version
+        shell: pwsh
+        run: |
+          $version = "${{ steps.get_version.outputs.version }}"
+          $parts   = $version.Split('.')
+          $major   = [int]$parts[0]
+          $minor   = [int]$parts[1]
+          $patch   = [int]$parts[2]
+          $bugfix  = if ($parts.Length -ge 4) { [int]$parts[3] } else { 0 }
+
+          $isBugFix = "${{ steps.pr_info.outputs.is_bug_fix }}" -eq 'true'
+
+          if ($isBugFix) {
+            $bugfix++
+            $newVersion = "$major.$minor.$patch.$bugfix"
+          } else {
+            $patch++
+            $bugfix = 0
+            $newVersion = "$major.$minor.$patch.$bugfix"
+          }
+
+          "new_version=$newVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "new_tag=v$newVersion"    | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "New version: $newVersion"
+
+      - name: Update AssemblyInfo version
+        shell: pwsh
+        run: |
+          $newVer  = "${{ steps.new_version.outputs.new_version }}"
+          $file    = "Shell\Properties\AssemblyInfo.cs"
+          $content = Get-Content $file -Raw
+          $content = $content -replace 'AssemblyVersion\("[^"]*"\)',     "AssemblyVersion(`"$newVer`")"
+          $content = $content -replace 'AssemblyFileVersion\("[^"]*"\)', "AssemblyFileVersion(`"$newVer`")"
+          Set-Content -Path $file -Value $content -NoNewline
+          Write-Host "Updated $file to $newVer"
+
+      - name: Build win-x64 (self-contained)
+        shell: pwsh
+        run: |
+          dotnet publish Shell/Shell.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=false `
+            -o publish/win-x64
+
+      - name: Build win-x86 (self-contained)
+        shell: pwsh
+        run: |
+          dotnet publish Shell/Shell.csproj `
+            -c Release `
+            -r win-x86 `
+            --self-contained true `
+            -p:PublishSingleFile=false `
+            -o publish/win-x86
+
+      - name: Package releases
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.new_version.outputs.new_version }}"
+
+          Copy-Item README.md publish/win-x64/README.md
+          Copy-Item README.md publish/win-x86/README.md
+
+          Compress-Archive -Path publish/win-x64/* -DestinationPath "xTerminal-v$ver-win-x64.zip" -Force
+          Compress-Archive -Path publish/win-x86/* -DestinationPath "xTerminal-v$ver-win-x86.zip" -Force
+
+          Write-Host "Packages created:"
+          Get-ChildItem "xTerminal-v$ver-win-x64.zip", "xTerminal-v$ver-win-x86.zip" | Select-Object Name, Length
+
+      - name: Create GitHub Release and upload assets
+        uses: actions/github-script@v7
+        env:
+          NEW_VERSION: ${{ steps.new_version.outputs.new_version }}
+          NEW_TAG: ${{ steps.new_version.outputs.new_tag }}
+          RELEASE_NOTES: ${{ steps.pr_info.outputs.release_notes }}
+        with:
+          script: |
+            const fs   = require('fs');
+            const ver  = process.env.NEW_VERSION;
+            const tag  = process.env.NEW_TAG;
+            const body = process.env.RELEASE_NOTES || `Release ${tag}`;
+
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              tag_name:         tag,
+              target_commitish: context.sha,
+              name:             `xTerminal ${tag}`,
+              body:             body,
+              draft:            false,
+              prerelease:       false
+            });
+
+            const assets = [
+              `xTerminal-v${ver}-win-x64.zip`,
+              `xTerminal-v${ver}-win-x86.zip`
+            ];
+
+            for (const asset of assets) {
+              const data = fs.readFileSync(asset);
+              await github.rest.repos.uploadReleaseAsset({
+                owner:      context.repo.owner,
+                repo:       context.repo.repo,
+                release_id: release.data.id,
+                name:       asset,
+                data:       data
+              });
+              core.info(`Uploaded ${asset}`);
+            }
+
+            core.info(`Release ${tag} created: ${release.data.html_url}`);
