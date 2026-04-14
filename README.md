@@ -259,6 +259,55 @@ Example:
                     M   : Sort processes by memory usage.
                     N   : Sort processes by name.
     ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
+    env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
+                   env                                     : List all variables across Process, User and System sections.
+                   env -t <user|system|process>            : List variables for the specified scope only.
+                   env [-t <scope>] get <NAME>             : Get a variable's value.
+                   env [-t <scope>] set <NAME> <VALUE>     : Set (overwrite) a variable.
+                   env [-t <scope>] del <NAME>             : Delete a variable.
+                   env [-t <scope>] addval <NAME> <VALUE>  : Append an entry to a semicolon-separated variable (e.g. PATH).
+                   env [-t <scope>] delval <NAME> <VALUE>  : Remove an entry from a semicolon-separated variable.
+                   env [-t <scope>] load <file>            : Load variables from a .env file.
+                   env [-t <scope>] export <file>          : Export variables to a .env file.
+                   Note: 'system' scope requires elevated (Administrator) privileges to write.
+                   Example: env -t user addval PATH C:\MyTool\bin
+                   Example: env -t system get PATH
+    watch     -- Re-run a command at a fixed interval and refresh its output. Use -h for additional help.
+                   watch -n <seconds> <command>  : Run command every N seconds (default: 2).
+                   watch -c <command>            : Clear screen between runs.
+                   Press Q or Esc to quit.
+                   Example: watch -n 5 "plist"
+    note      -- Persistent terminal notepad. Use -h for additional help.
+                   note add <text>   : Add a new note.
+                   note list         : List all saved notes with index.
+                   note del <index>  : Delete note at given index.
+                   note clear        : Delete all notes.
+                   Example: note add Remember to update the config
+    fsmon     -- Real-time file system monitor. Use -h for additional help.
+                   fsmon [path]     : Monitor the current (or given) directory for changes.
+                   fsmon -r [path]  : Monitor recursively including all sub-directories.
+                   Displays timestamp, event type (CREATED/DELETED/MODIFIED/RENAMED), actor user and path.
+                   User shown from Security Event Log when elevated + Object Access auditing is enabled,
+                   otherwise falls back to the file ACL owner.
+                   Press Q or Esc to quit.
+    bench     -- Benchmark a command by running it N times. Use -h for additional help.
+                   bench -n <count> <command>  : Run command N times and show min/avg/max/total timings.
+                   Example: bench -n 10 "ls -s"
+    ctx       -- Save and restore named terminal contexts (working directory + env vars). Use -h for additional help.
+                   ctx save <name>   : Save current directory and environment snapshot.
+                   ctx load <name>   : Restore a saved context.
+                   ctx list          : List all saved contexts.
+                   ctx show <name>   : Display a context without applying it.
+                   ctx del  <name>   : Delete a saved context.
+                   Example: ctx save myproject
+    chain     -- Create and run named command chains. Use -h for additional help.
+                   chain create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
+                   chain run    <name>                       : Execute all commands in the chain sequentially.
+                   chain add    <name> <command>             : Append a command to an existing chain.
+                   chain show   <name>                       : Display commands in a chain.
+                   chain list                                : List all saved chains.
+                   chain del    <name>                       : Delete a chain.
+                   Example: chain create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build"
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -410,6 +459,14 @@ Example:
                      -lr : List wifuvault restrictions types.
                  Example: waifu -u <file_path> -p <password> -b <bucket_token> -o -e 1h -h
     fxp       -- Opens built in console file explorer.
+    snap      -- Directory snapshot and diff. Use -h for additional help.
+                   snap save [name]  : Snapshot the current directory (default name: 'default').
+                   snap diff [name]  : Compare the current state against a saved snapshot.
+                   snap list         : List all saved snapshots.
+                   snap del  <name>  : Delete a snapshot.
+                   Diff output uses labeled lines (added:/deleted:/modified:) and supports pipe filtering.
+                   Example: snap save before-install
+                   Example: snap diff before-install | cat -s deleted
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)

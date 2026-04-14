@@ -62,6 +62,13 @@ This is the full list of commands that can be used in xTerminal:
     hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
     wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
     ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network. Use -h for additional help.
+    env       -- Process environment variable manager: list, get, set, del, load .env, export. Use -h for additional help.
+    watch     -- Re-run any command on a fixed interval with live refresh (like Linux watch). Use -h for additional help.
+    note      -- Persistent terminal sticky-notes: add, list, del, clear. Use -h for additional help.
+    fsmon     -- Real-time filesystem monitor — shows created/modified/deleted events live. Use -h for additional help.
+    bench     -- Benchmark any command: reports min/avg/max/total time over N runs. Use -h for additional help.
+    ctx       -- Terminal context manager: save/load/list named cwd + env-var snapshots. Use -h for additional help.
+    chain     -- Named reusable command chains: create, run, add, show, list, del. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -85,6 +92,7 @@ This is the full list of commands that can be used in xTerminal:
     cmp       -- Check if two files are identical by comparing MD5 hash. Use -h for additional help.
     waifu     -- Host temporary files on https://waifuvault.moe/. Use -h for additional help.
     fxp       -- Opens built in console file explorer.
+    snap      -- Directory snapshot + diff: save state and compare later to see what changed. Use -h for additional help.
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless). Use -h for additional parameters.
