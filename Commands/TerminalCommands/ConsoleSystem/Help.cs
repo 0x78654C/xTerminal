@@ -105,6 +105,7 @@ This is the full list of commands that can be used in xTerminal:
     wol       -- Sends Wake over LAN packet to a machine.  Use -h for additional parameters.
     dspoof    -- The command detects MITM(man in the middle) attacks using ARP spoof method. Use -h for additional parameters.
     trace     -- Traces the route to a specific IP/Hostname. Use -h for additional parameters.
+    latmon    -- Real-time multi-host latency monitor dashboard. Use -h for additional help.
 
     -----------------C# Core Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Use -h for additional help.

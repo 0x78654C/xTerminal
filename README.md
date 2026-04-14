@@ -503,6 +503,17 @@ Example:
                  Example 3: trace google.com -hops 50  (for traceroute with 50 hops)
                  Example 4: trace google.com -timeout 1000  (for traceroute with 1000 ms timeout)
                  Example 5: trace google.com -hops 50 -timeout 1000 -ipv6  (for traceroute with 50 hops, 1000 ms timeout and IPv6 traceroute enabled)
+    latmon    -- Real-time multi-host latency monitor dashboard. Use -h for additional help.
+                   Pings any number of hosts concurrently and shows a live table with sparkline history,
+                   current / avg / min / max latency, and packet loss — colour-coded by latency tier.
+                   Colour tiers:  green <50ms · yellow 50-150ms · red >150ms · gray timeout
+                   Sparkline chars: ▁▂▃▄▅▆▇█  (· = timed-out probe)
+                   latmon <host1> [host2] ...           : Monitor at 1-second interval.
+                   latmon -n <ms> <host1> [host2] ...   : Custom interval in milliseconds.
+                   Example: latmon google.com cloudflare.com 8.8.8.8
+                   Example: latmon -n 500 192.168.1.1 192.168.1.254
+                   Supports pipe output (one probe round, labeled lines):
+                   Example: latmon google.com 8.8.8.8 | cat -s timeout
 
     ---------------- C# Code Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
