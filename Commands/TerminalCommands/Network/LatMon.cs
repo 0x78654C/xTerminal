@@ -86,16 +86,16 @@ Press Q or Esc to quit.
                 }
             }
 
-            public double? Avg    => Count == 0 ? null : (double)Sum / Count;
-            public int     Total  => Count + Lost;
+            public double? Avg     => Count == 0 ? null : (double)Sum / Count;
+            public int     Total   => Count + Lost;
             public double  LossPct => Total == 0 ? 0.0 : Lost * 100.0 / Total;
 
             public string Sparkline()
             {
                 if (Filled == 0) return string.Empty;
 
-                int start = Filled < HistorySize ? 0 : Head;
-                long maxV = BuildScale(start);
+                int  start = Filled < HistorySize ? 0 : Head;
+                long maxV  = BuildScale(start);
 
                 var sb = new StringBuilder();
                 for (int i = 0; i < Filled; i++)
@@ -113,8 +113,8 @@ Press Q or Esc to quit.
             {
                 if (Filled == 0) return Array.Empty<(char, long?)>();
 
-                int start = Filled < HistorySize ? 0 : Head;
-                long maxV = BuildScale(start);
+                int  start = Filled < HistorySize ? 0 : Head;
+                long maxV  = BuildScale(start);
 
                 var parts = new (char Ch, long? Ms)[Filled];
                 for (int i = 0; i < Filled; i++)
@@ -209,19 +209,21 @@ Press Q or Esc to quit.
             Console.CursorVisible = false;
             try
             {
-                // Remember where the dashboard starts so we can overwrite in-place
-                // on every redraw instead of calling Console.Clear() (which flickers).
-                int startTop = Console.CursorTop;
                 int probe    = 0;
+                int startTop = Console.CursorTop;
 
                 while (true)
                 {
                     PingAllAsync(states).GetAwaiter().GetResult();
                     probe++;
 
-                    // Jump back to the top of the dashboard area and overwrite.
                     Console.SetCursorPosition(0, startTop);
                     DrawDashboard(states, intervalMs, probe);
+
+                    // On the first draw, capture the end position so we know
+                    // startTop is valid even if the first draw caused scrolling.
+                    if (probe == 1)
+                        startTop = Console.CursorTop - DashboardLineCount(states.Length);
 
                     // Poll for Q/Esc during the inter-probe sleep (100 ms ticks)
                     int ticks = Math.Max(1, intervalMs / 100);
@@ -243,26 +245,33 @@ Press Q or Esc to quit.
             }
         }
 
+        // Total lines emitted by DrawDashboard:
+        //   header \n  +  sep \n  +  colheader \n  +  sep \n  +  N host rows \n  +  sep \n
+        private static int DashboardLineCount(int hostCount) => 5 + hostCount;
+
         private static void DrawDashboard(HostState[] states, int intervalMs, int probe)
         {
-            const int colHost =  24;
-            const int colStat =   9;
+            const int colHost = 24;
+            const int colStat =  9;
             // Separator exactly matches the widest row: indent + host + 5 stats + gap + sparkline
-            int sepLen = 2 + colHost + 5 * colStat + 2 + HistorySize;
-            string sep = new string('─', sepLen);
+            int    sepLen = 2 + colHost + 5 * colStat + 2 + HistorySize;
+            string sep    = new string('─', sepLen);
 
-            // Header — pad to window width so growing probe count never leaves stale chars
-            string header = $"  interval:{intervalMs}ms  probes:{probe}  Q/Esc quit";
-            FileSystem.ColorConsoleText(ConsoleColor.Cyan,    "  latmon");
+            // Header — build as a single padded line to avoid stale chars on redraw
+            string headerLine = $"  latmon  interval:{intervalMs}ms  probes:{probe}  Q/Esc quit";
+            FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  latmon");
             FileSystem.ColorConsoleText(ConsoleColor.DarkGray,
-                header.PadRight(sepLen - "  latmon".Length) + "\n");
+                headerLine["  latmon".Length..].PadRight(sepLen - "  latmon".Length));
+            Console.WriteLine();
             Console.WriteLine(sep);
 
-            // Column headers — "History" padded to sparkline width so it aligns
-            FileSystem.ColorConsoleText(ConsoleColor.DarkGray,
+            // Column headers
+            string colLine =
                 $"  {"Host",-colHost}{"Cur",colStat}{"Avg",colStat}" +
                 $"{"Min",colStat}{"Max",colStat}{"Loss",colStat}  " +
-                $"{"History",-HistorySize}\n");
+                $"{"History",-HistorySize}";
+            FileSystem.ColorConsoleText(ConsoleColor.DarkGray, colLine);
+            Console.WriteLine();
             Console.WriteLine(sep);
 
             foreach (var s in states)
@@ -303,6 +312,7 @@ Press Q or Esc to quit.
 
                 // Sparkline — each bar coloured by its own latency value
                 FileSystem.ColorConsoleText(ConsoleColor.DarkGray, "  ");
+                int sparkLen = 0;
                 foreach (var (ch, ms) in s.SparklineParts())
                 {
                     ConsoleColor c = !ms.HasValue ? ConsoleColor.DarkRed
@@ -310,7 +320,13 @@ Press Q or Esc to quit.
                                    : ms < 150     ? ConsoleColor.Yellow
                                                   : ConsoleColor.Red;
                     FileSystem.ColorConsoleText(c, ch.ToString());
+                    sparkLen++;
                 }
+
+                // Pad remaining sparkline columns with spaces to erase stale chars
+                if (sparkLen < HistorySize)
+                    Console.Write(new string(' ', HistorySize - sparkLen));
+
                 Console.WriteLine();
             }
 
@@ -361,10 +377,10 @@ Press Q or Esc to quit.
             var sb = new StringBuilder();
             foreach (var s in states)
             {
-                string cur  = s.Last.HasValue    ? $"{s.Last.Value}ms" : "timeout";
-                string avg  = s.Avg.HasValue     ? $"{s.Avg.Value:F0}ms" : "—";
-                string min  = s.Count > 0        ? $"{s.Min}ms" : "—";
-                string max  = s.Count > 0        ? $"{s.Max}ms" : "—";
+                string cur = s.Last.HasValue ? $"{s.Last.Value}ms" : "timeout";
+                string avg = s.Avg.HasValue  ? $"{s.Avg.Value:F0}ms" : "—";
+                string min = s.Count > 0     ? $"{s.Min}ms" : "—";
+                string max = s.Count > 0     ? $"{s.Max}ms" : "—";
                 sb.AppendLine(
                     $"host: {s.Host}  cur: {cur}  avg: {avg}" +
                     $"  min: {min}  max: {max}  loss: {s.LossPct:F0}%");
