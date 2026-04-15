@@ -577,7 +577,7 @@ Example:
                      each f in lines:{exeFiles}
                          print "Found: {f}"
                      end
-
+    
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
                     ::Predefined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,

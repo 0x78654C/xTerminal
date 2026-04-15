@@ -14,23 +14,23 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class XTScript : ITerminalCommand
     {
         /*
-            xt — TermXT Script: a simple, easy-to-use scripting language for TermXTinal.
+            xt — xTermXT Script: a simple, easy-to-use scripting language for xTerminal.
 
-            Runs .xt script files containing TermXTinal commands with variables,
+            Runs .xt script files containing xTerminal commands with variables,
             conditionals, loops, functions, error handling and output capture.
-            Every TermXTinal command works as-is inside a script.
+            Every xTermXTinal command works as-is inside a script.
         */
 
         public string Name => "xt";
 
         private static readonly string s_helpMessage = @"Usage of xt command:
-    xt <script.xt>              : Run an TermXT Script file.
+    xt <script.xt>              : Run an xTermXT Script file.
     xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
     xt -h                       : Display this help message.
     xt -new <script.xt>         : Create a new empty script template.
     xt -check <script.xt>       : Validate script syntax without running.
 
-TermXT Script Language Reference:
+xTermXT Script Language Reference:
     # comment                          : Line comment.
     set <var> = <value>                : Set a variable.
     set <var> = eval <expr>            : Math expression (+ - * / % with parentheses).
@@ -41,7 +41,7 @@ TermXT Script Language Reference:
     set <var> = replace <t> <old> <new>: Replace text.
     set <var> = trim <text>            : Trim whitespace.
     print ""text with {var}""            : Print with variable interpolation.
-    run <command>                      : Run any TermXTinal command (supports pipes).
+    run <command>                      : Run any xTerminal command (supports pipes).
     capture <var> = <command>           : Run command, store stdout in variable (supports pipes).
     input <var> = ""prompt""             : Read user input into a variable.
     if <a> <op> <b> / elif / else / end : Conditional block.
@@ -116,7 +116,7 @@ Script file example (deploy.xt):
     print ""Done!""
 ";
 
-        private static readonly string s_template = @"# ── TermXT Script template ────────────────────────
+        private static readonly string s_template = @"# ── xTermXT Script template ────────────────────────
 # Created: {DATE}
 
 # Variables
@@ -188,6 +188,13 @@ print ""Done!""
                     return;
                 }
 
+                // Auto-validate before running — abort if syntax errors found.
+                if (CheckScript(scriptPath, silent: true) > 0)
+                {
+                    GlobalVariables.isErrorCommand = true;
+                    return;
+                }
+
                 var engine = new ScriptEngine(scriptPath, scriptArgs);
                 engine.Run();
             }
@@ -224,12 +231,16 @@ print ""Done!""
             return result.ToArray();
         }
 
-        private static void CheckScript(string path)
+        /// <summary>
+        /// Validates script syntax. Returns the number of errors found.
+        /// When silent is true, no success message is printed (used for auto-check before run).
+        /// </summary>
+        private static int CheckScript(string path, bool silent = false)
         {
             if (!File.Exists(path))
             {
                 FileSystem.ErrorWriteLine($"Script not found: {path}");
-                return;
+                return 1;
             }
 
             string[] lines = File.ReadAllLines(path);
@@ -313,10 +324,12 @@ print ""Done!""
                 errors++;
             }
 
-            if (errors == 0)
+            if (errors == 0 && !silent)
                 FileSystem.ColorConsoleText(ConsoleColor.Green, $"  ✓ Script '{path}' is valid ({lines.Length} lines).\n");
-            else
-                FileSystem.ColorConsoleText(ConsoleColor.Red, $"\n  ✗ Found {errors} error(s).\n");
+            else if (errors > 0)
+                FileSystem.ColorConsoleText(ConsoleColor.Red, $"\n  ✗ Found {errors} error(s). Script not executed.\n");
+
+            return errors;
         }
 
         // ── Script Engine ────────────────────────────────────────────────────
@@ -343,13 +356,13 @@ print ""Done!""
                 for (int i = 0; i < _scriptArgs.Length; i++)
                     _vars[$"{i + 1}"] = _scriptArgs[i];
 
-                _vars["DATE"]   = DateTime.Now.ToString("yyyy-MM-dd");
-                _vars["TIME"]   = DateTime.Now.ToString("HH:mm:ss");
-                _vars["USER"]   = GlobalVariables.accountName;
-                _vars["PC"]     = GlobalVariables.computerName;
-                _vars["CWD"]    = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
+                _vars["DATE"] = DateTime.Now.ToString("yyyy-MM-dd");
+                _vars["TIME"] = DateTime.Now.ToString("HH:mm:ss");
+                _vars["USER"] = GlobalVariables.accountName;
+                _vars["PC"] = GlobalVariables.computerName;
+                _vars["CWD"] = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
                 _vars["result"] = "";
-                _vars["error"]  = "false";
+                _vars["error"] = "false";
 
                 PreScanFunctions();
             }
@@ -366,8 +379,7 @@ print ""Done!""
                 {
                     string raw = _lines[_pc].Trim();
 
-                    // Skip empty lines and comments
-                    if (string.IsNullOrEmpty(raw) || raw.StartsWith('#') || raw.StartsWith("#!/"))
+                    if (string.IsNullOrEmpty(raw) || raw.StartsWith('#'))
                     {
                         _pc++;
                         continue;
@@ -378,25 +390,24 @@ print ""Done!""
 
                     switch (keyword)
                     {
-                        case "set":      ExecSet(line); _pc++; break;
-                        case "print":    ExecPrint(line); _pc++; break;
-                        case "run":      ExecRun(line); _pc++; break;
-                        case "capture":  ExecCapture(line); _pc++; break;
-                        case "input":    ExecInput(line); _pc++; break;
-                        case "wait":     ExecWait(line); _pc++; break;
-                        case "exit":     _stopRequested = true; break;
-                        case "break":    _breakRequested = true; _pc++; break;
+                        case "set": ExecSet(line); _pc++; break;
+                        case "print": ExecPrint(line); _pc++; break;
+                        case "run": ExecRun(line); _pc++; break;
+                        case "capture": ExecCapture(line); _pc++; break;
+                        case "input": ExecInput(line); _pc++; break;
+                        case "wait": ExecWait(line); _pc++; break;
+                        case "exit": _stopRequested = true; break;
+                        case "break": _breakRequested = true; _pc++; break;
                         case "continue": _continueRequested = true; _pc++; break;
-                        case "return":   ExecReturn(line); break;
-                        case "if":       ExecIf(end); break;
-                        case "loop":     ExecLoop(end); break;
-                        case "while":    ExecWhile(end); break;
-                        case "each":     ExecEach(end); break;
-                        case "call":     ExecCall(line); _pc++; break;
-                        case "try":      ExecTry(end); break;
-                        case "func":     SkipBlock(); break; // already pre-scanned
+                        case "return": ExecReturn(line); break;
+                        case "if": ExecIf(end); break;
+                        case "loop": ExecLoop(end); break;
+                        case "while": ExecWhile(end); break;
+                        case "each": ExecEach(end); break;
+                        case "call": ExecCall(line); _pc++; break;
+                        case "try": ExecTry(end); break;
+                        case "func": SkipBlock(); break;
                         default:
-                            // Treat unknown lines as implicit 'run' commands
                             ExecRun("run " + line);
                             _pc++;
                             break;
@@ -408,7 +419,6 @@ print ""Done!""
 
             private string Interpolate(string text)
             {
-                // Replace {varName} with variable values
                 return Regex.Replace(text, @"\{(\w+)\}", m =>
                 {
                     string key = m.Groups[1].Value;
@@ -420,66 +430,29 @@ print ""Done!""
 
             private void ExecSet(string line)
             {
-                // set <var> = <value>
-                // set <var> = eval <expr>
-                // set <var> = upper/lower/len/substr/replace/trim <args>
                 int eq = line.IndexOf('=');
                 if (eq < 0) { PrintError(_pc + 1, "'set' missing '='"); return; }
                 string varName = line[3..eq].Trim();
                 string rhs = line[(eq + 1)..].Trim();
-
                 _vars[varName] = EvalRhs(rhs);
             }
 
-            /// <summary>
-            /// Evaluates the right-hand side of a set assignment.
-            /// Supports: eval, upper, lower, len, substr, replace, trim, or raw value.
-            /// </summary>
             private string EvalRhs(string rhs)
             {
-                // eval <math expression>
                 if (rhs.StartsWith("eval ", StringComparison.OrdinalIgnoreCase))
-                {
                     return EvalMath(rhs[5..].Trim());
-                }
-
-                // upper <text>
                 if (rhs.StartsWith("upper ", StringComparison.OrdinalIgnoreCase))
-                {
                     return rhs[6..].Trim().Trim('"').ToUpper();
-                }
-
-                // lower <text>
                 if (rhs.StartsWith("lower ", StringComparison.OrdinalIgnoreCase))
-                {
                     return rhs[6..].Trim().Trim('"').ToLower();
-                }
-
-                // len <text>
                 if (rhs.StartsWith("len ", StringComparison.OrdinalIgnoreCase))
-                {
                     return rhs[4..].Trim().Trim('"').Length.ToString();
-                }
-
-                // trim <text>
                 if (rhs.StartsWith("trim ", StringComparison.OrdinalIgnoreCase))
-                {
                     return rhs[5..].Trim().Trim('"').Trim();
-                }
-
-                // substr <text> <start> <length>
                 if (rhs.StartsWith("substr ", StringComparison.OrdinalIgnoreCase))
-                {
                     return EvalSubstr(rhs[7..].Trim());
-                }
-
-                // replace <text> <old> <new>
                 if (rhs.StartsWith("replace ", StringComparison.OrdinalIgnoreCase))
-                {
                     return EvalReplace(rhs[8..].Trim());
-                }
-
-                // Raw value
                 return rhs.Trim('"');
             }
 
@@ -487,7 +460,6 @@ print ""Done!""
             {
                 try
                 {
-                    // DataTable.Compute handles +, -, *, /, %, parentheses
                     object result = s_calc.Compute(expression, null);
                     return Convert.ToDouble(result).ToString(CultureInfo.InvariantCulture);
                 }
@@ -500,21 +472,17 @@ print ""Done!""
 
             private string EvalSubstr(string args)
             {
-                // Parse: <text> <start> <length>
-                // The last two tokens are numbers, everything before is the text
                 string[] tokens = args.Split(' ');
                 if (tokens.Length < 3)
                 {
                     PrintError(_pc + 1, "substr expects: substr <text> <start> <length>");
                     return args;
                 }
-
                 if (!int.TryParse(tokens[^1], out int length) || !int.TryParse(tokens[^2], out int start))
                 {
                     PrintError(_pc + 1, "substr: start and length must be numbers.");
                     return args;
                 }
-
                 string text = string.Join(' ', tokens.Take(tokens.Length - 2)).Trim('"');
                 if (start < 0) start = 0;
                 if (start >= text.Length) return "";
@@ -524,17 +492,9 @@ print ""Done!""
 
             private string EvalReplace(string args)
             {
-                // Parse quoted: replace "text" "old" "new"
-                // Or simple:   replace text old new (last two tokens are old and new)
                 var parts = ParseQuotedTokens(args);
                 if (parts.Count >= 3)
-                {
-                    string text = parts[0];
-                    string oldVal = parts[1];
-                    string newVal = parts[2];
-                    return text.Replace(oldVal, newVal, StringComparison.OrdinalIgnoreCase);
-                }
-
+                    return parts[0].Replace(parts[1], parts[2], StringComparison.OrdinalIgnoreCase);
                 PrintError(_pc + 1, "replace expects: replace <text> <old> <new>");
                 return args;
             }
@@ -567,21 +527,20 @@ print ""Done!""
 
             private void ExecPrint(string line)
             {
-                // print "text" or print text
                 string text = line[5..].Trim().Trim('"');
+                text = text.Replace("\\n", "\n")
+                           .Replace("\\t", "\t")
+                           .Replace("\\\\", "\\");
                 Console.WriteLine(text);
             }
 
             private void ExecRun(string line)
             {
-                // run <any TermXTinal command>
-                // Supports pipe commands: run ls | cat -s exe
                 string cmdLine = line[3..].Trim();
                 if (string.IsNullOrEmpty(cmdLine)) return;
 
                 ResetCommandState();
 
-                // Check for pipe commands
                 if (cmdLine.Contains('|') && !cmdLine.Contains("||"))
                 {
                     var pipeStages = cmdLine.Split('|');
@@ -615,8 +574,6 @@ print ""Done!""
 
             private void ExecCapture(string line)
             {
-                // capture <var> = <command>
-                // Supports pipe commands: capture result = ls | cat -s exe
                 int eq = line.IndexOf('=');
                 if (eq < 0) { PrintError(_pc + 1, "'capture' missing '='"); return; }
                 string varName = line[7..eq].Trim();
@@ -630,7 +587,6 @@ print ""Done!""
                     Console.SetOut(sw);
                     try
                     {
-                        // Check for pipe commands
                         if (cmdLine.Contains('|') && !cmdLine.Contains("||"))
                         {
                             var pipeStages = cmdLine.Split('|');
@@ -647,8 +603,6 @@ print ""Done!""
                                 GlobalVariables.pipeCmdCount--;
                             }
 
-                            // The final pipe output is in pipeCmdOutput
-                            // but also check what was written to stdout
                             GlobalVariables.isPipeCommand = false;
                         }
                         else
@@ -665,15 +619,12 @@ print ""Done!""
                     captured = sw.ToString().Trim();
                 }
 
-                // Pipe commands store their final output in pipeCmdOutput.
-                // If captured stdout is empty but pipeCmdOutput has content, use that.
                 if (string.IsNullOrEmpty(captured) && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
                     captured = GlobalVariables.pipeCmdOutput.Trim();
 
                 _vars[varName] = captured;
                 _vars["error"] = GlobalVariables.isErrorCommand ? "true" : "false";
 
-                // Clean up pipe state
                 GlobalVariables.pipeCmdOutput = string.Empty;
                 GlobalVariables.pipeCmdCount = 0;
                 GlobalVariables.pipeCmdCountTemp = 0;
@@ -682,7 +633,6 @@ print ""Done!""
 
             private void ExecInput(string line)
             {
-                // input <var> = "prompt text"
                 int eq = line.IndexOf('=');
                 if (eq < 0) { PrintError(_pc + 1, "'input' missing '='"); return; }
                 string varName = line[5..eq].Trim();
@@ -694,7 +644,6 @@ print ""Done!""
 
             private void ExecWait(string line)
             {
-                // wait <ms>
                 string msStr = line[4..].Trim();
                 if (int.TryParse(msStr, out int ms) && ms > 0)
                     System.Threading.Thread.Sleep(ms);
@@ -702,7 +651,6 @@ print ""Done!""
 
             private void ExecReturn(string line)
             {
-                // return <value>
                 string val = line.Length > 6 ? line[6..].Trim().Trim('"') : "";
                 _vars["result"] = val;
                 _returnRequested = true;
@@ -713,11 +661,9 @@ print ""Done!""
 
             private void ExecIf(int blockEnd)
             {
-                // Find the matching end, collecting elif/else positions
                 var branches = new List<(int Line, string Type, string Condition)>();
                 int endLine = FindMatchingEnd(_pc, blockEnd, branches);
 
-                // Evaluate branches in order
                 bool executed = false;
                 for (int b = 0; b < branches.Count && !executed && !_stopRequested; b++)
                 {
@@ -730,7 +676,7 @@ print ""Done!""
                         ExecuteBlock(bodyStart, bodyEnd);
                         executed = true;
                     }
-                    else // "if" or "elif"
+                    else
                     {
                         if (EvalCondition(bCond))
                         {
@@ -771,13 +717,11 @@ print ""Done!""
                     }
                     i++;
                 }
-                return i; // fallback: past end
+                return i;
             }
 
             private bool EvalCondition(string condition)
             {
-                // Support && and || logical operators (evaluated left-to-right)
-                // Split by || first (lower precedence), then by &&
                 if (condition.Contains("||"))
                 {
                     string[] orParts = Regex.Split(condition, @"\s+\|\|\s+");
@@ -800,11 +744,6 @@ print ""Done!""
                     return true;
                 }
 
-                // Find the operator keyword in the condition by scanning for known
-                // operators as whole words surrounded by spaces.  This avoids the
-                // problem where the left-hand side contains spaces (e.g. captured
-                // ls output) and a naive Split(' ',3) picks the wrong token as the
-                // operator.
                 string[] operators = { "==", "!=", ">=", "<=", ">", "<", "contains", "startswith", "endswith" };
 
                 string foundOp = null;
@@ -813,8 +752,6 @@ print ""Done!""
 
                 foreach (string op in operators)
                 {
-                    // Search for " op " (surrounded by spaces) — this ensures we
-                    // don't accidentally match operator text inside a value.
                     string pattern = $" {op} ";
                     int idx = condition.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
                     if (idx >= 0)
@@ -828,7 +765,6 @@ print ""Done!""
 
                 if (foundOp == null)
                 {
-                    // Boolean-style: non-empty/non-zero = true
                     string val = condition.Trim().Trim('"');
                     return !string.IsNullOrEmpty(val) && val != "0" && val.ToLower() != "false";
                 }
@@ -844,15 +780,15 @@ print ""Done!""
 
                 return opLower switch
                 {
-                    "=="         => left.Equals(right, StringComparison.OrdinalIgnoreCase),
-                    "!="         => !left.Equals(right, StringComparison.OrdinalIgnoreCase),
-                    ">"          => isNumeric && numL > numR,
-                    "<"          => isNumeric && numL < numR,
-                    ">="         => isNumeric && numL >= numR,
-                    "<="         => isNumeric && numL <= numR,
-                    "contains"   => left.Contains(right, StringComparison.OrdinalIgnoreCase),
+                    "==" => left.Equals(right, StringComparison.OrdinalIgnoreCase),
+                    "!=" => !left.Equals(right, StringComparison.OrdinalIgnoreCase),
+                    ">" => isNumeric && numL > numR,
+                    "<" => isNumeric && numL < numR,
+                    ">=" => isNumeric && numL >= numR,
+                    "<=" => isNumeric && numL <= numR,
+                    "contains" => left.Contains(right, StringComparison.OrdinalIgnoreCase),
                     "startswith" => left.StartsWith(right, StringComparison.OrdinalIgnoreCase),
-                    "endswith"   => left.EndsWith(right, StringComparison.OrdinalIgnoreCase),
+                    "endswith" => left.EndsWith(right, StringComparison.OrdinalIgnoreCase),
                     _ => false
                 };
             }
@@ -900,12 +836,11 @@ print ""Done!""
                 int bodyEnd = endLine - 1;
 
                 int iter = 0;
-                const int maxIterations = 100000; // safety guard
+                const int maxIterations = 100000;
 
                 while (!_stopRequested && iter < maxIterations)
                 {
                     iter++;
-                    // Re-interpolate the condition each iteration
                     string condRaw = _lines[condLine].Trim();
                     string condInterp = Interpolate(condRaw);
                     string condStr = condInterp.Length > 5 ? condInterp[5..].Trim() : "";
@@ -932,11 +867,9 @@ print ""Done!""
 
             private void ExecEach(int blockEnd)
             {
-                // Use the raw line for parsing the 'lines:' variable reference,
-                // since Interpolate would expand multiline content and break the regex.
                 string raw = _lines[_pc].Trim();
 
-                // First check for lines:<varname> pattern BEFORE interpolation
+                // Check for lines:<varname> pattern BEFORE interpolation
                 var linesMatch = Regex.Match(raw, @"^each\s+(\w+)\s+in\s+lines:\{?(\w+)\}?$", RegexOptions.IgnoreCase);
                 if (linesMatch.Success)
                 {
@@ -969,7 +902,7 @@ print ""Done!""
                     return;
                 }
 
-                // Standard each: interpolate normally for comma-separated values
+                // Standard each: interpolate for comma-separated values
                 string line = Interpolate(raw);
                 var match = Regex.Match(line, @"^each\s+(\w+)\s+in\s+(.+)$", RegexOptions.IgnoreCase);
                 if (!match.Success)
@@ -1025,14 +958,13 @@ print ""Done!""
                             else if (kw == "end") depth--;
                             if (depth > 0) j++;
                         }
-                        _funcs[funcName] = (i + 1, j - 1); // body range (exclusive of func/end lines)
+                        _funcs[funcName] = (i + 1, j - 1);
                     }
                 }
             }
 
             private void ExecCall(string line)
             {
-                // call <name> [arg1 arg2 ...]
                 string rest = line[4..].Trim();
                 string[] parts = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length == 0) { PrintError(_pc + 1, "'call' missing function name."); return; }
@@ -1044,7 +976,6 @@ print ""Done!""
                     return;
                 }
 
-                // Save and set function-local positional args
                 var savedArgs = new Dictionary<string, string>();
                 for (int a = 1; a < parts.Length; a++)
                 {
@@ -1056,10 +987,9 @@ print ""Done!""
                 int savedPc = _pc;
                 _returnRequested = false;
                 ExecuteBlock(range.Start, range.End);
-                _returnRequested = false; // consumed by caller
+                _returnRequested = false;
                 _pc = savedPc;
 
-                // Restore previous positional args
                 foreach (var kv in savedArgs)
                     _vars[kv.Key] = kv.Value;
             }
@@ -1071,7 +1001,6 @@ print ""Done!""
                 var branches = new List<(int, string, string)>();
                 int endLine = FindMatchingEnd(_pc, blockEnd, branches);
 
-                // branches[0] = try, branches[1] = catch (if present)
                 int tryBodyStart = _pc + 1;
                 int tryBodyEnd = branches.Count > 1 ? branches[1].Item1 - 1 : endLine - 1;
                 int catchBodyStart = branches.Count > 1 ? branches[1].Item1 + 1 : -1;
