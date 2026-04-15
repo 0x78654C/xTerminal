@@ -107,9 +107,10 @@ This is the full list of commands that can be used in xTerminal:
     trace     -- Traces the route to a specific IP/Hostname. Use -h for additional parameters.
     latmon    -- Real-time multi-host latency monitor dashboard. Use -h for additional help.
 
-    -----------------C# Core Runner and Add-ons -------------
+    -------- XS Script /C# Core Runner and Add-on ----------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Use -h for additional help.
     !         -- Run or add custom C# code add-ons as a command. Use -h for additional help.
+    xt        -- xTerm Script: run .xt script files with variables, loops, conditionals, pipes and more. Use -h for additional help.
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.

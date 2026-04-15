@@ -314,7 +314,7 @@ Example:
                    chain show   <name>                       : Display commands in a chain.
                    chain list                                : List all saved chains.
                    chain del    <name>                       : Delete a chain.
-                   Example: chain create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build"
+                   Example: chain create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build".
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -522,7 +522,7 @@ Example:
                    Supports pipe output (one probe round, labeled lines):
                    Example: latmon google.com 8.8.8.8 | cat -s timeout
 
-    ---------------- C# Code Runner and Add-ons -------------
+    ---------------- XS Script / C# Code Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
                  Example 2: ccs <file_name> -p <parameter> 
@@ -536,6 +536,47 @@ Example:
                     -del   :  Deletes an Add-on.
                               Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
+    xt        -- xTerm Script: a scripting language for xTerminal. Use -h for additional help.
+                   xt <script.xt>              : Run an xTerm Script file.
+                   xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
+                   xt -new <script.xt>         : Create an empty script template.
+                   xt -check <script.xt>       : Validate syntax without running.
+
+                   Language features:
+                   set <var> = <value>                : Variables with {var} interpolation.
+                   set <var> = eval <expr>            : Math expressions (+ - * / % parentheses).
+                   set <var> = upper/lower/len/trim   : String operations.
+                   set <var> = substr/replace          : Substring and replace.
+                   print "text with {var}"            : Output with interpolation.
+                   run <command>                      : Execute any xTerminal command (supports pipes).
+                   capture <var> = <command>           : Store command output in a variable (supports pipes).
+                   input <var> = "prompt"              : Read user input.
+                   if <a> <op> <b> / elif / else / end : Conditionals (==, !=, >, <, contains, startswith, endswith).
+                      Logical operators: && (and), || (or).
+                   loop <n> / end                     : Repeat block N times ({i} = iteration).
+                   while <cond> / end                 : Loop while condition is true.
+                   each <var> in <a,b,c> / end        : Iterate comma-separated values.
+                   each <var> in lines:<varname> / end : Iterate lines of captured output.
+                   func <name> / end                  : Define reusable functions.
+                   call <name> [args]                  : Call function with args ({1},{2}...).
+                   return <value>                     : Return from function (stored in {result}).
+                   try / catch / end                  : Error handling.
+                   break / continue                   : Loop control.
+                   wait <ms>                           : Pause execution.
+                   exit                                : Stop script.
+
+                   Example script (monitor.xt):
+                     set hosts = google.com,cloudflare.com,8.8.8.8
+                     each host in {hosts}
+                         print "Checking {host}..."
+                         run ping {host}
+                     end
+                     capture ip = extip
+                     print "My external IP: {ip}"
+                     capture exeFiles = ls | cat -s exe
+                     each f in lines:{exeFiles}
+                         print "Found: {f}"
+                     end
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
