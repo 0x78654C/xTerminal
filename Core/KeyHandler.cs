@@ -357,6 +357,7 @@ namespace Core
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "zip", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "file", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "hash", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "fsmon", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
                     var aliasCommands = AliasCommands(GlobalVariables.aliasFile);
 
                     // Passing alias comamnds in auto suggestion list.
