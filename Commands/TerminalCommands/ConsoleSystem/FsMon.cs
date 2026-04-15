@@ -5,6 +5,7 @@ using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Security.Principal;
+using System.Text;
 using System.Threading;
 
 namespace Commands.TerminalCommands.ConsoleSystem
@@ -22,13 +23,20 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public string Name => "fsmon";
 
         private static readonly string s_helpMessage = @"Usage of fsmon command:
-    fsmon [path]     : Monitor the current (or given) directory for changes.
-    fsmon -r [path]  : Monitor recursively including all sub-directories.
-    fsmon -h         : Display this help message.
+    fsmon [path]                 : Monitor the current (or given) directory for changes.
+    fsmon -r [path]              : Monitor recursively including all sub-directories.
+    fsmon -l <logfile> [path]    : Log events to a file in addition to the console.
+    fsmon -r -l <logfile> [path] : Recursive monitoring with logging.
+    fsmon -h                     : Display this help message.
+
+Flags -r and -l can appear in any order, before or after the path.
 
 Examples:
     fsmon
     fsmon -r C:\Projects\myapp
+    fsmon -l C:\logs\fsmon.log C:\Windows\Temp
+    fsmon -r -l changes.log
+    fsmon -r C:\Users\<username>\Downloads -l C:\Users\<username>\audit.log
     fsmon C:\Windows\Temp
 
 Attention: For best user information that made the operation, enable File System auditing for the monitored directory (and subdirs if -r) with these steps:
@@ -57,18 +65,47 @@ Press Q or Esc to quit.
                 if (args == $"{Name} -h") { Console.WriteLine(s_helpMessage); return; }
 
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory);
-                bool recursive = false;
+                bool   recursive  = false;
+                string? logFile   = null;
+
                 string rest = args == Name ? string.Empty : args.SplitByText($"{Name} ", 1).Trim();
 
-                if (rest.StartsWith("-r"))
+                // Parse flags in any order from the argument tokens.
+                var tokens = new System.Collections.Generic.List<string>(
+                    rest.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+                for (int i = 0; i < tokens.Count;)
                 {
-                    recursive = true;
-                    rest = rest.SplitByText("-r", 1).Trim();
+                    if (tokens[i] == "-r")
+                    {
+                        recursive = true;
+                        tokens.RemoveAt(i);
+                    }
+                    else if (tokens[i] == "-l")
+                    {
+                        tokens.RemoveAt(i);
+                        if (i >= tokens.Count)
+                        {
+                            FileSystem.ErrorWriteLine("No log file specified. Usage: fsmon -l <logfile> [path]");
+                            GlobalVariables.isErrorCommand = true;
+                            return;
+                        }
+                        logFile = FileSystem.SanitizePath(tokens[i], currentDir);
+                        tokens.RemoveAt(i);
+                    }
+                    else
+                    {
+                        i++;
+                    }
                 }
 
-                string watchPath = string.IsNullOrWhiteSpace(rest)
+                // Whatever remains is the watch path (may contain spaces if it was
+                // a single token, but after splitting it could be multiple tokens
+                // that form a path — rejoin them).
+                string pathArg = string.Join(' ', tokens).Trim();
+                string watchPath = string.IsNullOrWhiteSpace(pathArg)
                     ? currentDir
-                    : FileSystem.SanitizePath(rest, currentDir);
+                    : FileSystem.SanitizePath(pathArg, currentDir);
 
                 if (!Directory.Exists(watchPath))
                 {
@@ -78,7 +115,7 @@ Press Q or Esc to quit.
                 }
 
                 s_actorCache.Clear();
-                RunMonitor(watchPath, recursive);
+                RunMonitor(watchPath, recursive, logFile);
             }
             catch (Exception ex)
             {
@@ -87,108 +124,142 @@ Press Q or Esc to quit.
             }
         }
 
-        private static void RunMonitor(string path, bool recursive)
+        private static void RunMonitor(string path, bool recursive, string? logFile)
         {
             bool secLog = CheckSecurityLogAccess();
 
-            Console.WriteLine();
-            FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  Monitoring : ");
-            Console.WriteLine(path);
-            FileSystem.ColorConsoleText(ConsoleColor.DarkGray, $"  Recursive  : {recursive}   Press Q to quit\n");
-            FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  User source: ");
-            if (secLog)
-                FileSystem.ColorConsoleText(ConsoleColor.Green, "Security Event Log\n");
-            else
-                FileSystem.ColorConsoleText(ConsoleColor.DarkYellow,
-                    "file owner (run elevated + enable Object Access auditing for actor tracking)\n");
-            Console.WriteLine(new string('─', 80));
-
-            // Secondary watcher dedicated to catching file access *before* deletion.
-            // NotifyFilters.Security | LastAccess fire when a process opens a handle
-            // with DELETE intent — the file still exists at that point so we can
-            // resolve the actor and cache it for the upcoming Deleted event.
-            using var preDeleteWatcher = new FileSystemWatcher(path)
+            // Open log file stream if requested.
+            StreamWriter? logWriter = null;
+            if (logFile != null)
             {
-                IncludeSubdirectories = recursive,
-                EnableRaisingEvents = false,
-                NotifyFilter = NotifyFilters.Attributes | NotifyFilters.Security | NotifyFilters.LastAccess,
-                InternalBufferSize = 65536
-            };
-
-            preDeleteWatcher.Changed += (_, e) =>
-            {
-                // File still exists here — cache the actor for a possible upcoming delete.
-                string actor = GetActor(e.FullPath);
-                if (actor != "—")
-                    s_actorCache[e.FullPath] = actor;
-            };
-
-            using var watcher = new FileSystemWatcher(path)
-            {
-                IncludeSubdirectories = recursive,
-                EnableRaisingEvents = false,
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName |
-                               NotifyFilters.LastWrite | NotifyFilters.Size,
-                InternalBufferSize = 65536
-            };
-
-            watcher.Created += (_, e) =>
-            {
-                string actor = GetActor(e.FullPath);
-                Print("CREATED ", ConsoleColor.Green, e.FullPath, actor);
-                // Cache in case the file is deleted immediately after creation.
-                if (actor != "—") s_actorCache[e.FullPath] = actor;
-            };
-            watcher.Changed += (_, e) =>
-            {
-                string actor = GetActor(e.FullPath);
-                Print("MODIFIED", ConsoleColor.Yellow, e.FullPath, actor);
-                // Update cache — the most recent modifier is the likely deleter.
-                if (actor != "—") s_actorCache[e.FullPath] = actor;
-            };
-            watcher.Deleted += (_, e) =>
-            {
-                // 1) Try the pre-cached actor (captured while file still existed).
-                // 2) Fall back to querying the Security Event Log with a delay.
-                string actor;
-                if (s_actorCache.TryRemove(e.FullPath, out string? cached) && cached != "—")
+                try
                 {
-                    actor = cached;
+                    logWriter = new StreamWriter(logFile, append: true, Encoding.UTF8)
+                    {
+                        AutoFlush = true
+                    };
                 }
+                catch (Exception ex)
+                {
+                    FileSystem.ErrorWriteLine($"Cannot open log file: {ex.Message}");
+                    GlobalVariables.isErrorCommand = true;
+                    return;
+                }
+            }
+
+            try
+            {
+                Console.WriteLine();
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  Monitoring : ");
+                Console.WriteLine(path);
+                FileSystem.ColorConsoleText(ConsoleColor.DarkGray, $"  Recursive  : {recursive}   Press Q to quit\n");
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  User source: ");
+                if (secLog)
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, "Security Event Log\n");
                 else
+                    FileSystem.ColorConsoleText(ConsoleColor.DarkYellow,
+                        "file owner (run elevated + enable Object Access auditing for actor tracking)\n");
+                if (logFile != null)
                 {
-                    Thread.Sleep(500);
-                    actor = TryQuerySecurityLog(e.FullPath) ?? "—";
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  Log file   : ");
+                    Console.WriteLine(logFile);
+
+                    // Write session header to log file.
+                    logWriter!.WriteLine(new string('─', 80));
+                    logWriter.WriteLine($"  fsmon session started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                    logWriter.WriteLine($"  Monitoring : {path}");
+                    logWriter.WriteLine($"  Recursive  : {recursive}");
+                    logWriter.WriteLine(new string('─', 80));
                 }
-                Print("DELETED ", ConsoleColor.Red, e.FullPath, actor);
-            };
-            watcher.Renamed += (_, e) =>
-            {
-                // Migrate cache entry to the new name.
-                if (s_actorCache.TryRemove(e.OldFullPath, out string? old))
-                    s_actorCache[e.FullPath] = old;
+                Console.WriteLine(new string('─', 80));
 
-                Print("RENAMED ", ConsoleColor.Cyan,
-                    $"{e.OldName}  →  {e.Name}", GetActor(e.FullPath));
-            };
-            watcher.Error += (_, e) =>
-            {
-                if (e.GetException() is InternalBufferOverflowException)
-                    Print("OVERFLOW", ConsoleColor.Magenta, "Event buffer overflowed — some events may be lost", "—");
-            };
-
-            preDeleteWatcher.EnableRaisingEvents = true;
-            watcher.EnableRaisingEvents = true;
-
-            while (true)
-            {
-                Thread.Sleep(100);
-                if (Console.KeyAvailable)
+                using var preDeleteWatcher = new FileSystemWatcher(path)
                 {
-                    var key = Console.ReadKey(intercept: true);
-                    if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape)
-                        break;
+                    IncludeSubdirectories = recursive,
+                    EnableRaisingEvents   = false,
+                    NotifyFilter          = NotifyFilters.Attributes | NotifyFilters.Security | NotifyFilters.LastAccess,
+                    InternalBufferSize    = 65536
+                };
+
+                preDeleteWatcher.Changed += (_, e) =>
+                {
+                    string actor = GetActor(e.FullPath);
+                    if (actor != "—")
+                        s_actorCache[e.FullPath] = actor;
+                };
+
+                using var watcher = new FileSystemWatcher(path)
+                {
+                    IncludeSubdirectories = recursive,
+                    EnableRaisingEvents   = false,
+                    NotifyFilter = NotifyFilters.FileName     | NotifyFilters.DirectoryName |
+                                   NotifyFilters.LastWrite    | NotifyFilters.Size,
+                    InternalBufferSize    = 65536
+                };
+
+                watcher.Created += (_, e) =>
+                {
+                    string actor = GetActor(e.FullPath);
+                    Print("CREATED ", ConsoleColor.Green, e.FullPath, actor, logWriter);
+                    if (actor != "—") s_actorCache[e.FullPath] = actor;
+                };
+                watcher.Changed += (_, e) =>
+                {
+                    string actor = GetActor(e.FullPath);
+                    Print("MODIFIED", ConsoleColor.Yellow, e.FullPath, actor, logWriter);
+                    if (actor != "—") s_actorCache[e.FullPath] = actor;
+                };
+                watcher.Deleted += (_, e) =>
+                {
+                    string actor;
+                    if (s_actorCache.TryRemove(e.FullPath, out string? cached) && cached != "—")
+                    {
+                        actor = cached;
+                    }
+                    else
+                    {
+                        Thread.Sleep(500);
+                        actor = TryQuerySecurityLog(e.FullPath) ?? "—";
+                    }
+                    Print("DELETED ", ConsoleColor.Red, e.FullPath, actor, logWriter);
+                };
+                watcher.Renamed += (_, e) =>
+                {
+                    if (s_actorCache.TryRemove(e.OldFullPath, out string? old))
+                        s_actorCache[e.FullPath] = old;
+
+                    Print("RENAMED ", ConsoleColor.Cyan,
+                        $"{e.OldName}  →  {e.Name}", GetActor(e.FullPath), logWriter);
+                };
+                watcher.Error += (_, e) =>
+                {
+                    if (e.GetException() is InternalBufferOverflowException)
+                        Print("OVERFLOW", ConsoleColor.Magenta,
+                            "Event buffer overflowed — some events may be lost", "—", logWriter);
+                };
+
+                preDeleteWatcher.EnableRaisingEvents = true;
+                watcher.EnableRaisingEvents = true;
+
+                while (true)
+                {
+                    Thread.Sleep(100);
+                    if (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(intercept: true);
+                        if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape)
+                            break;
+                    }
                 }
+
+                // Write session footer to log file.
+                logWriter?.WriteLine(new string('─', 80));
+                logWriter?.WriteLine($"  fsmon session ended: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                logWriter?.WriteLine(new string('─', 80));
+            }
+            finally
+            {
+                logWriter?.Dispose();
             }
         }
 
@@ -203,7 +274,7 @@ Press Q or Esc to quit.
                 var q = new EventLogQuery("Security", PathType.LogName, "*[System[EventID=4663]]")
                 { ReverseDirection = true };
                 using var r = new EventLogReader(q);
-                r.ReadEvent(); // throws UnauthorizedAccessException if not allowed
+                r.ReadEvent();
                 s_secLogAvailable = true;
             }
             catch { s_secLogAvailable = false; }
@@ -230,10 +301,8 @@ Press Q or Esc to quit.
                 using var ev = reader.ReadEvent();
                 if (ev == null) return null;
 
-                // Property order: SubjectUserSid[0], SubjectUserName[1],
-                //   SubjectDomainName[2], SubjectLogonId[3], ..., ProcessName[11]
-                string? user = ev.Properties[1].Value?.ToString();
-                string? domain = ev.Properties[2].Value?.ToString();
+                string? user    = ev.Properties[1].Value?.ToString();
+                string? domain  = ev.Properties[2].Value?.ToString();
                 string? process = ev.Properties.Count > 11
                     ? ev.Properties[11].Value?.ToString() : null;
 
@@ -271,14 +340,20 @@ Press Q or Esc to quit.
 
         private static readonly object s_lock = new();
 
-        private static void Print(string type, ConsoleColor color, string detail, string actor)
+        private static void Print(string type, ConsoleColor color, string detail, string actor, StreamWriter? logWriter)
         {
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
             lock (s_lock)
             {
+                // Console output (coloured).
                 FileSystem.ColorConsoleText(ConsoleColor.DarkGray, $"  {DateTime.Now:HH:mm:ss}  ");
-                FileSystem.ColorConsoleText(color, $"{type}  ");
-                FileSystem.ColorConsoleText(ConsoleColor.DarkCyan, $"{actor,-32}");
+                FileSystem.ColorConsoleText(color,                  $"{type}  ");
+                FileSystem.ColorConsoleText(ConsoleColor.DarkCyan,  $"{actor,-32}");
                 Console.WriteLine(detail);
+
+                // Log file output (plain text).
+                logWriter?.WriteLine($"  {timestamp}  {type}  {actor,-32}{detail}");
             }
         }
     }
