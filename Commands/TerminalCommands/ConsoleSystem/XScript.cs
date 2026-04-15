@@ -14,7 +14,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class XTScript : ITerminalCommand
     {
         /*
-            xt — xTermXT Script: a simple, easy-to-use scripting language for xTerminal.
+            xt — TermXT Script: a simple, easy-to-use scripting language for xTerminal.
 
             Runs .xt script files containing xTerminal commands with variables,
             conditionals, loops, functions, error handling and output capture.
@@ -24,13 +24,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
         public string Name => "xt";
 
         private static readonly string s_helpMessage = @"Usage of xt command:
-    xt <script.xt>              : Run an xTermXT Script file.
+    xt <script.xt>              : Run an TermXT Script file.
     xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
     xt -h                       : Display this help message.
     xt -new <script.xt>         : Create a new empty script template.
     xt -check <script.xt>       : Validate script syntax without running.
 
-xTermXT Script Language Reference:
+TermXT Script Language Reference:
     # comment                          : Line comment.
     set <var> = <value>                : Set a variable.
     set <var> = eval <expr>            : Math expression (+ - * / % with parentheses).

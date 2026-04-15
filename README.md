@@ -536,8 +536,8 @@ Example:
                     -del   :  Deletes an Add-on.
                               Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
-    xt        -- xTerm Script: a scripting language for xTerminal. Use -h for additional help.
-                   xt <script.xt>              : Run an xTerm Script file.
+    xt        -- TermXT: a scripting language for xTerminal. Use -h for additional help.
+                   xt <script.xt>              : Run an TermXT Script file.
                    xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
                    xt -new <script.xt>         : Create an empty script template.
                    xt -check <script.xt>       : Validate syntax without running.
