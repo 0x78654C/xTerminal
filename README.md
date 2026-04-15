@@ -284,12 +284,19 @@ Example:
                    note clear        : Delete all notes.
                    Example: note add Remember to update the config
     fsmon     -- Real-time file system monitor. Use -h for additional help.
-                   fsmon [path]     : Monitor the current (or given) directory for changes.
-                   fsmon -r [path]  : Monitor recursively including all sub-directories.
+                   fsmon [path]                    : Monitor the current (or given) directory for changes.
+                   fsmon -r [path]                 : Monitor recursively including all sub-directories.
+                   fsmon -l <logfile> [path]        : Log events to a file in addition to the console.
+                   fsmon -r -l <logfile> [path]     : Recursive monitoring with logging.
+                   fsmon -r [path] -l <logfile>     : Flags can appear in any order, before or after the path.
                    Displays timestamp, event type (CREATED/DELETED/MODIFIED/RENAMED), actor user and path.
                    User shown from Security Event Log when elevated + Object Access auditing is enabled,
                    otherwise falls back to the file ACL owner.
                    Press Q or Esc to quit.
+                   Examples:
+                   fsmon -r C:\Projects\myapp
+                   fsmon -l C:\logs\audit.log C:\Windows\Temp
+                   fsmon -r C:\Users\<username>\Downloads -l C:\Users\<username>\audit.log
     bench     -- Benchmark a command by running it N times. Use -h for additional help.
                    bench -n <count> <command>  : Run command N times and show min/avg/max/total timings.
                    Example: bench -n 10 "ls -s"
