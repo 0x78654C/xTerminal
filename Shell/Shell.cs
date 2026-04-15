@@ -849,6 +849,7 @@ namespace Shell
         {
             s_historyLimitSize = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
             int historyLimitSize = GlobalVariables.historyLimitSize;
+            var isValidCommand = false;
             if (s_historyLimitSize != "")
                 historyLimitSize = Int32.Parse(s_historyLimitSize);
             int countLines = File.ReadAllLines(historyFile).Count();
@@ -861,7 +862,9 @@ namespace Shell
                     tempList.Add(lines.ElementAt(i));
             }
 
-            if (!commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory"))
+            isValidCommand = !commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory");
+
+            if(isValidCommand || commandInput.StartsWith("chain"))
             {
                 if (!string.IsNullOrWhiteSpace(commandInput) && !string.IsNullOrEmpty(commandInput))
                 {
