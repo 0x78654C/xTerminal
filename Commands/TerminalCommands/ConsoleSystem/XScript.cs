@@ -116,8 +116,7 @@ Script file example (deploy.xt):
     print ""Done!""
 ";
 
-        private static readonly string s_template = @"#!/usr/bin/env xt
-# ── TermXT Script template ────────────────────────
+        private static readonly string s_template = @"# ── TermXT Script template ────────────────────────
 # Created: {DATE}
 
 # Variables
