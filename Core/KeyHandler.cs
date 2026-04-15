@@ -483,8 +483,20 @@ namespace Core
 
             Action action;
             _keyActions.TryGetValue(BuildKeyInput(), out action);
-            action = action ?? WriteChar;
-            action.Invoke();
+            if (action != null)
+            {
+                action.Invoke();
+            }
+            else
+            {
+                // Only write printable characters — ignore control chars that
+                // would corrupt the text buffer and move the console cursor
+                // into the prompt area.
+                if (!char.IsControl(_keyInfo.KeyChar))
+                {
+                    WriteChar();
+                }
+            }
         }
     }
 }
