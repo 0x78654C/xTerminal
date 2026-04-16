@@ -18,7 +18,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
             Runs .xt script files containing xTerminal commands with variables,
             conditionals, loops, functions, error handling and output capture.
-            Every xTermXTinal command works as-is inside a script.
+            Every xTerminal command works as-is inside a script.
         */
 
         public string Name => "xt";
@@ -46,10 +46,11 @@ TermXT Script Language Reference:
     input <var> = ""prompt""             : Read user input into a variable.
     if <a> <op> <b> / elif / else / end : Conditional block.
        Operators: ==  !=  >  <  >=  <=  contains  startswith  endswith
-       Logical:   && (and)   || (or)   — evaluated left to right
+       Logical:   && (and)   || (or)   not <cond>   — evaluated left to right
     loop <n> / end                     : Repeat block N times. {i} = iteration.
     while <condition> / end            : Repeat while condition is true.
     each <var> in <a,b,c> / end        : Iterate comma-separated values.
+    each <var> in <start>..<end> / end  : Iterate a numeric range (inclusive).
     each <var> in lines:<varname> / end : Iterate over lines of a variable.
     func <name> / end                  : Define a reusable function.
     call <name> [args]                 : Call function. {1},{2}.. for args.
@@ -69,6 +70,7 @@ Built-in variables:
     {i}      : Current loop iteration (1-based).
     {result} : Return value from last function call.
     {error}  : Set to ""true"" when last command failed.
+    {error_message} : Error message from last caught exception.
 
 Examples:
     xt deploy.xt
@@ -313,6 +315,27 @@ print ""Done!""
                             errors++;
                         }
                         break;
+                    case "return":
+                        bool inFunc = false;
+                        foreach (var entry in blockStack)
+                        {
+                            if (entry.type == "func") { inFunc = true; break; }
+                        }
+                        if (!inFunc)
+                        {
+                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
+                            Console.WriteLine("'return' outside of a function.");
+                            errors++;
+                        }
+                        break;
+                    case "input":
+                        if (!line.Contains('='))
+                        {
+                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
+                            Console.WriteLine("'input' missing '=' assignment.");
+                            errors++;
+                        }
+                        break;
                 }
             }
 
@@ -356,13 +379,11 @@ print ""Done!""
                 for (int i = 0; i < _scriptArgs.Length; i++)
                     _vars[$"{i + 1}"] = _scriptArgs[i];
 
-                _vars["DATE"] = DateTime.Now.ToString("yyyy-MM-dd");
-                _vars["TIME"] = DateTime.Now.ToString("HH:mm:ss");
                 _vars["USER"] = GlobalVariables.accountName;
                 _vars["PC"] = GlobalVariables.computerName;
-                _vars["CWD"] = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
                 _vars["result"] = "";
                 _vars["error"] = "false";
+                _vars["error_message"] = "";
 
                 PreScanFunctions();
             }
@@ -422,6 +443,15 @@ print ""Done!""
                 return Regex.Replace(text, @"\{(\w+)\}", m =>
                 {
                     string key = m.Groups[1].Value;
+
+                    // Dynamic built-in variables — always return current values.
+                    if (key.Equals("DATE", StringComparison.OrdinalIgnoreCase))
+                        return DateTime.Now.ToString("yyyy-MM-dd");
+                    if (key.Equals("TIME", StringComparison.OrdinalIgnoreCase))
+                        return DateTime.Now.ToString("HH:mm:ss");
+                    if (key.Equals("CWD", StringComparison.OrdinalIgnoreCase))
+                        return File.ReadAllText(GlobalVariables.currentDirectory).Trim();
+
                     return _vars.TryGetValue(key, out string val) ? val : m.Value;
                 });
             }
@@ -540,35 +570,7 @@ print ""Done!""
                 if (string.IsNullOrEmpty(cmdLine)) return;
 
                 ResetCommandState();
-
-                if (cmdLine.Contains('|') && !cmdLine.Contains("||"))
-                {
-                    var pipeStages = cmdLine.Split('|');
-                    GlobalVariables.isPipeCommand = true;
-                    GlobalVariables.pipeCmdCount = pipeStages.Length - 1;
-                    GlobalVariables.pipeCmdCountTemp = GlobalVariables.pipeCmdCount;
-
-                    foreach (var stage in pipeStages)
-                    {
-                        string stageTrimmed = stage.Trim();
-                        var cmd = CommandRepository.GetCommand(stageTrimmed);
-                        if (cmd != null)
-                            cmd.Execute(stageTrimmed);
-                        GlobalVariables.pipeCmdCount--;
-                    }
-
-                    GlobalVariables.isPipeCommand = false;
-                    GlobalVariables.pipeCmdOutput = string.Empty;
-                    GlobalVariables.pipeCmdCount = 0;
-                    GlobalVariables.pipeCmdCountTemp = 0;
-                }
-                else
-                {
-                    var cmd = CommandRepository.GetCommand(cmdLine);
-                    if (cmd != null)
-                        cmd.Execute(cmdLine);
-                }
-
+                ExecutePipeline(cmdLine);
                 _vars["error"] = GlobalVariables.isErrorCommand ? "true" : "false";
             }
 
@@ -587,30 +589,7 @@ print ""Done!""
                     Console.SetOut(sw);
                     try
                     {
-                        if (cmdLine.Contains('|') && !cmdLine.Contains("||"))
-                        {
-                            var pipeStages = cmdLine.Split('|');
-                            GlobalVariables.isPipeCommand = true;
-                            GlobalVariables.pipeCmdCount = pipeStages.Length - 1;
-                            GlobalVariables.pipeCmdCountTemp = GlobalVariables.pipeCmdCount;
-
-                            foreach (var stage in pipeStages)
-                            {
-                                string stageTrimmed = stage.Trim();
-                                var cmd = CommandRepository.GetCommand(stageTrimmed);
-                                if (cmd != null)
-                                    cmd.Execute(stageTrimmed);
-                                GlobalVariables.pipeCmdCount--;
-                            }
-
-                            GlobalVariables.isPipeCommand = false;
-                        }
-                        else
-                        {
-                            var cmd = CommandRepository.GetCommand(cmdLine);
-                            if (cmd != null)
-                                cmd.Execute(cmdLine);
-                        }
+                        ExecutePipeline(cmdLine);
                     }
                     finally
                     {
@@ -722,6 +701,11 @@ print ""Done!""
 
             private bool EvalCondition(string condition)
             {
+                // not <condition>
+                string trimmedCond = condition.Trim();
+                if (trimmedCond.StartsWith("not ", StringComparison.OrdinalIgnoreCase))
+                    return !EvalCondition(trimmedCond[4..].Trim());
+
                 if (condition.Contains("||"))
                 {
                     string[] orParts = Regex.Split(condition, @"\s+\|\|\s+");
@@ -782,10 +766,10 @@ print ""Done!""
                 {
                     "==" => left.Equals(right, StringComparison.OrdinalIgnoreCase),
                     "!=" => !left.Equals(right, StringComparison.OrdinalIgnoreCase),
-                    ">" => isNumeric && numL > numR,
-                    "<" => isNumeric && numL < numR,
-                    ">=" => isNumeric && numL >= numR,
-                    "<=" => isNumeric && numL <= numR,
+                    ">" => isNumeric ? numL > numR : string.Compare(left, right, StringComparison.OrdinalIgnoreCase) > 0,
+                    "<" => isNumeric ? numL < numR : string.Compare(left, right, StringComparison.OrdinalIgnoreCase) < 0,
+                    ">=" => isNumeric ? numL >= numR : string.Compare(left, right, StringComparison.OrdinalIgnoreCase) >= 0,
+                    "<=" => isNumeric ? numL <= numR : string.Compare(left, right, StringComparison.OrdinalIgnoreCase) <= 0,
                     "contains" => left.Contains(right, StringComparison.OrdinalIgnoreCase),
                     "startswith" => left.StartsWith(right, StringComparison.OrdinalIgnoreCase),
                     "endswith" => left.EndsWith(right, StringComparison.OrdinalIgnoreCase),
@@ -914,6 +898,39 @@ print ""Done!""
 
                 string eachVar = match.Groups[1].Value;
                 string valuesRaw = match.Groups[2].Value.Trim();
+
+                // Check for numeric range pattern: <start>..<end>
+                var rangeMatch = Regex.Match(valuesRaw, @"^(-?\d+)\.\.(-?\d+)$");
+                if (rangeMatch.Success)
+                {
+                    int rangeStart = int.Parse(rangeMatch.Groups[1].Value);
+                    int rangeEnd = int.Parse(rangeMatch.Groups[2].Value);
+                    int step = rangeStart <= rangeEnd ? 1 : -1;
+
+                    var branchesRange = new List<(int, string, string)>();
+                    int endLineRange = FindMatchingEnd(_pc, blockEnd, branchesRange);
+                    int bodyStartRange = _pc + 1;
+                    int bodyEndRange = endLineRange - 1;
+
+                    int idxRange = 0;
+                    for (int n = rangeStart; step > 0 ? n <= rangeEnd : n >= rangeEnd; n += step)
+                    {
+                        if (_stopRequested) break;
+                        idxRange++;
+                        _vars[eachVar] = n.ToString();
+                        _vars["i"] = idxRange.ToString();
+                        _continueRequested = false;
+                        ExecuteBlock(bodyStartRange, bodyEndRange);
+
+                        if (_breakRequested) { _breakRequested = false; break; }
+                        if (_returnRequested) break;
+                    }
+                    _continueRequested = false;
+
+                    _pc = endLineRange + 1;
+                    return;
+                }
+
                 string[] items = valuesRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
                 var branchesStd = new List<(int, string, string)>();
@@ -966,8 +983,8 @@ print ""Done!""
             private void ExecCall(string line)
             {
                 string rest = line[4..].Trim();
-                string[] parts = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length == 0) { PrintError(_pc + 1, "'call' missing function name."); return; }
+                var parts = ParseQuotedTokens(rest);
+                if (parts.Count == 0) { PrintError(_pc + 1, "'call' missing function name."); return; }
 
                 string funcName = parts[0];
                 if (!_funcs.TryGetValue(funcName, out var range))
@@ -976,12 +993,25 @@ print ""Done!""
                     return;
                 }
 
+                int argCount = parts.Count - 1;
                 var savedArgs = new Dictionary<string, string>();
-                for (int a = 1; a < parts.Length; a++)
+
+                // Save and set positional args for this call.
+                for (int a = 1; a <= argCount; a++)
                 {
                     string key = a.ToString();
                     if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
                     _vars[key] = parts[a];
+                }
+
+                // Remove any leftover positional args beyond what we're passing
+                // so they don't leak from a previous call.
+                for (int a = argCount + 1; a <= 20; a++)
+                {
+                    string key = a.ToString();
+                    if (!_vars.ContainsKey(key)) break;
+                    savedArgs[key] = _vars[key];
+                    _vars.Remove(key);
                 }
 
                 int savedPc = _pc;
@@ -990,6 +1020,7 @@ print ""Done!""
                 _returnRequested = false;
                 _pc = savedPc;
 
+                // Restore previous positional args.
                 foreach (var kv in savedArgs)
                     _vars[kv.Key] = kv.Value;
             }
@@ -1013,7 +1044,11 @@ print ""Done!""
                 {
                     ExecuteBlock(tryBodyStart, tryBodyEnd);
                 }
-                catch { GlobalVariables.isErrorCommand = true; }
+                catch (Exception ex)
+                {
+                    GlobalVariables.isErrorCommand = true;
+                    _vars["error_message"] = ex.Message;
+                }
 
                 if (GlobalVariables.isErrorCommand && catchBodyStart >= 0)
                 {
@@ -1057,6 +1092,65 @@ print ""Done!""
             {
                 FileSystem.ColorConsoleText(ConsoleColor.Red, $"  [xt line {lineNum}] ");
                 Console.WriteLine(msg);
+            }
+
+            /// <summary>
+            /// Splits a command line on single pipe <c>|</c> characters,
+            /// leaving double-pipe <c>||</c> sequences intact.
+            /// </summary>
+            private static string[] SplitPipes(string cmdLine)
+            {
+                var segments = new List<string>();
+                int segStart = 0;
+                for (int i = 0; i < cmdLine.Length; i++)
+                {
+                    if (cmdLine[i] == '|')
+                    {
+                        if (i + 1 < cmdLine.Length && cmdLine[i + 1] == '|')
+                        {
+                            i++; // skip ||
+                            continue;
+                        }
+                        segments.Add(cmdLine[segStart..i]);
+                        segStart = i + 1;
+                    }
+                }
+                segments.Add(cmdLine[segStart..]);
+                return segments.ToArray();
+            }
+
+            /// <summary>
+            /// Executes a command line, handling pipe chains when present.
+            /// </summary>
+            private static void ExecutePipeline(string cmdLine)
+            {
+                var stages = SplitPipes(cmdLine);
+                if (stages.Length > 1)
+                {
+                    GlobalVariables.isPipeCommand = true;
+                    GlobalVariables.pipeCmdCount = stages.Length - 1;
+                    GlobalVariables.pipeCmdCountTemp = GlobalVariables.pipeCmdCount;
+
+                    foreach (var stage in stages)
+                    {
+                        string stageTrimmed = stage.Trim();
+                        var cmd = CommandRepository.GetCommand(stageTrimmed);
+                        if (cmd != null)
+                            cmd.Execute(stageTrimmed);
+                        GlobalVariables.pipeCmdCount--;
+                    }
+
+                    GlobalVariables.isPipeCommand = false;
+                    GlobalVariables.pipeCmdOutput = string.Empty;
+                    GlobalVariables.pipeCmdCount = 0;
+                    GlobalVariables.pipeCmdCountTemp = 0;
+                }
+                else
+                {
+                    var cmd = CommandRepository.GetCommand(cmdLine);
+                    if (cmd != null)
+                        cmd.Execute(cmdLine);
+                }
             }
         }
     }
