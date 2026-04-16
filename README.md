@@ -562,6 +562,9 @@ Example:
                    return <value>                     : Return from function (stored in {result}).
                    try / catch / end                  : Error handling.
                    break / continue                   : Loop control.
+                   read <var> = <file>                 : Read file contents into a variable.
+                   write <file> "text"                 : Write text to a file (overwrite).
+                   append <file> "text"                : Append text to a file.
                    wait <ms>                           : Pause execution.
                    exit                                : Stop script.
 

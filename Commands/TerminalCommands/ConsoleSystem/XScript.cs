@@ -58,6 +58,9 @@ TermXT Script Language Reference:
     try / catch / end                  : Error handling.
     break                              : Exit current loop.
     continue                           : Skip to next loop iteration.
+    read <var> = <file>                    : Read file contents into a variable.
+    write <file> ""text""                  : Write text to file (overwrite).
+    append <file> ""text""                 : Append text to file.
     wait <ms>                          : Pause execution in milliseconds.
     exit                               : Stop script.
 
@@ -294,6 +297,7 @@ print ""Done!""
                         break;
                     case "set":
                     case "capture":
+                    case "read":
                         if (!line.Contains('='))
                         {
                             FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
@@ -416,7 +420,10 @@ print ""Done!""
                         case "run": ExecRun(line); _pc++; break;
                         case "capture": ExecCapture(line); _pc++; break;
                         case "input": ExecInput(line); _pc++; break;
+                        case "read": ExecRead(line); _pc++; break;
                         case "wait": ExecWait(line); _pc++; break;
+                        case "write": ExecFileWrite(line, append: false); _pc++; break;
+                        case "append": ExecFileWrite(line, append: true); _pc++; break;
                         case "exit": _stopRequested = true; break;
                         case "break": _breakRequested = true; _pc++; break;
                         case "continue": _continueRequested = true; _pc++; break;
@@ -626,6 +633,55 @@ print ""Done!""
                 string msStr = line[4..].Trim();
                 if (int.TryParse(msStr, out int ms) && ms > 0)
                     System.Threading.Thread.Sleep(ms);
+            }
+
+            private void ExecRead(string line)
+            {
+                int eq = line.IndexOf('=');
+                if (eq < 0) { PrintError(_pc + 1, "'read' missing '='"); return; }
+                string varName = line[4..eq].Trim();
+                string filePath = line[(eq + 1)..].Trim().Trim('"');
+
+                string currentDir = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
+                filePath = FileSystem.SanitizePath(filePath, currentDir);
+
+                if (!File.Exists(filePath))
+                {
+                    PrintError(_pc + 1, $"File not found: {filePath}");
+                    _vars["error"] = "true";
+                    _vars["error_message"] = $"File not found: {filePath}";
+                    return;
+                }
+
+                _vars[varName] = File.ReadAllText(filePath);
+                _vars["error"] = "false";
+            }
+
+            private void ExecFileWrite(string line, bool append)
+            {
+                string keyword = append ? "append" : "write";
+                string rest = line[keyword.Length..].Trim();
+
+                int sep = rest.IndexOf(' ');
+                if (sep < 0)
+                {
+                    PrintError(_pc + 1, $"'{keyword}' expects: {keyword} <file> \"text\"");
+                    return;
+                }
+
+                string filePath = rest[..sep].Trim();
+                string text = rest[(sep + 1)..].Trim().Trim('"');
+                text = text.Replace("\\n", "\n")
+                           .Replace("\\t", "\t")
+                           .Replace("\\\\", "\\");
+
+                string currentDir = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
+                filePath = FileSystem.SanitizePath(filePath, currentDir);
+
+                if (append)
+                    File.AppendAllText(filePath, text + Environment.NewLine);
+                else
+                    File.WriteAllText(filePath, text + Environment.NewLine);
             }
 
             private void ExecReturn(string line)

@@ -1,0 +1,302 @@
+# ═══════════════════════════════════════════════════════════════
+#  netaudit.xt — Advanced Network Audit & Diagnostics Toolkit
+#  Usage:  xt netaudit.xt
+#          xt netaudit.xt -p <target_host> <port_range>
+#          xt netaudit.xt -p google.com 80-443
+#  If no parameters, defaults to auditing common public DNS hosts.
+# ═══════════════════════════════════════════════════════════════
+
+# ── Configuration ──────────────────────────────────────────────
+set version = 2.0
+set divider = ════════════════════════════════════════════════════
+set thin_div = ────────────────────────────────────────────────────
+set pass_count = 0
+set fail_count = 0
+set total_tests = 0
+
+# ── Greeting Banner ───────────────────────────────────────────
+print """"
+print ""{divider}""
+print ""  ◆  NetAudit v{version} — Network Diagnostics Toolkit""
+print ""  ◆  Host: {USER}@{PC}""
+print ""  ◆  Date: {DATE}  Time: {TIME}""
+print ""{divider}""
+print """"
+
+# ── Helper Functions ──────────────────────────────────────────
+
+func log_pass
+    set total_tests = eval {total_tests} + 1
+    set pass_count = eval {pass_count} + 1
+    print ""  ✅ PASS: {1}""
+end
+
+func log_fail
+    set total_tests = eval {total_tests} + 1
+    set fail_count = eval {fail_count} + 1
+    print ""  ❌ FAIL: {1}""
+end
+
+func section_header
+    print """"
+    print ""{thin_div}""
+    print ""  ▶ {1}""
+    print ""{thin_div}""
+end
+
+func print_bar
+    # Simple percentage bar: {1} = passed, {2} = total
+    if {2} == 0
+        print ""  [no tests run]""
+        return
+    end
+    set pct = eval {1} * 100 / {2}
+    set fail_n = eval {2} - {1}
+    print ""  Results: {1}/{2} passed ({pct}%)  |  {fail_n} failed""
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 1 — Local Network Interface Inventory
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 1: Local Network Interfaces"
+
+print ""  Querying NIC configuration...""
+print """"
+try
+    run ifconfig
+    call log_pass "Network interface query succeeded"
+catch
+    call log_fail "Could not query network interfaces: {error_message}"
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 2 — External Connectivity & Public IP
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 2: External Connectivity"
+
+print ""  Resolving public IP address...""
+try
+    capture my_ip = extip
+    if {my_ip} contains .
+        call log_pass "Public IP resolved: {my_ip}"
+    else
+        call log_fail "Unexpected IP format: {my_ip}"
+    end
+catch
+    call log_fail "Could not resolve external IP: {error_message}"
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 3 — DNS & Reachability Sweep
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 3: DNS & Reachability Sweep"
+
+# Target list — mix of DNS providers and well-known hosts
+set targets = 8.8.8.8,1.1.1.1,208.67.222.222,google.com,github.com
+set reachable_count = 0
+set unreachable_hosts =
+
+each host in {targets}
+    print """"
+    print ""  ── Pinging {host} ──""
+    try
+        capture ping_out = ping {host}
+        if {ping_out} contains Reply
+            set reachable_count = eval {reachable_count} + 1
+            call log_pass "{host} is reachable"
+        elif {ping_out} contains host
+            call log_fail "{host} — host unreachable"
+            set unreachable_hosts = {unreachable_hosts} {host}
+        else
+            call log_pass "{host} responded"
+            set reachable_count = eval {reachable_count} + 1
+        end
+    catch
+        call log_fail "Ping to {host} threw error: {error_message}"
+        set unreachable_hosts = {unreachable_hosts} {host}
+    end
+end
+
+set target_count = len {targets}
+print """"
+print ""  Reachable: {reachable_count} hosts""
+if {unreachable_hosts} != 
+    print ""  Unreachable:{unreachable_hosts}""
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 4 — Port Scan (parameterised or default)
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 4: Port Scan"
+
+# Use CLI parameters if provided, otherwise scan common ports on 8.8.8.8
+if {1} != {1}
+    set scan_host = {1}
+else
+    set scan_host = 8.8.8.8
+end
+
+if {2} != {2}
+    set scan_ports = {2}
+else
+    set scan_ports = 53,80,443
+end
+
+print ""  Target : {scan_host}""
+print ""  Ports  : {scan_ports}""
+print """"
+
+set open_ports = 0
+set closed_ports = 0
+
+each port in {scan_ports}
+    try
+        capture port_result = cport {scan_host} -p {port}
+        set port_upper = upper {port_result}
+        if {port_upper} contains OPEN
+            set open_ports = eval {open_ports} + 1
+            print ""    Port {port} : 🟢 OPEN""
+        else
+            set closed_ports = eval {closed_ports} + 1
+            print ""    Port {port} : 🔴 CLOSED""
+        end
+    catch
+        set closed_ports = eval {closed_ports} + 1
+        print ""    Port {port} : ⚠️  ERROR — {error_message}""
+    end
+end
+
+print """"
+print ""  Open: {open_ports}  |  Closed: {closed_ports}""
+
+if {open_ports} > 0
+    call log_pass "Port scan found {open_ports} open port(s)"
+else
+    call log_fail "No open ports detected on {scan_host}"
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 5 — Traceroute Analysis
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 5: Traceroute to google.com"
+
+try
+    set trace_target = google.com
+    print ""  Tracing route to {trace_target} (max 15 hops)...""
+    print """"
+    capture trace_out = trace {trace_target} -hops 15
+    print ""{trace_out}""
+
+    # Count hops by looking for numbered lines
+    set hop_count = 0
+    each line in lines:trace_out
+        if {line} contains ms
+            set hop_count = eval {hop_count} + 1
+        end
+    end
+    print """"
+    print ""  Hops with response: {hop_count}""
+    call log_pass "Traceroute completed ({hop_count} responsive hops)"
+catch
+    call log_fail "Traceroute failed: {error_message}"
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 6 — DNS Resolution Benchmark
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 6: DNS Resolution Benchmark"
+
+set dns_targets = google.com,github.com,microsoft.com,cloudflare.com,amazon.com
+set resolved = 0
+set dns_failed = 0
+
+each domain in {dns_targets}
+    try
+        capture check_result = icheck {domain}
+        set check_upper = upper {check_result}
+        if {check_upper} contains ONLINE
+            set resolved = eval {resolved} + 1
+            print ""  ✓ {domain} — resolved""
+        elif {check_upper} contains OFFLINE
+            set dns_failed = eval {dns_failed} + 1
+            print ""  ✗ {domain} — offline""
+        else
+            set resolved = eval {resolved} + 1
+            print ""  ~ {domain} — {check_result}""
+        end
+    catch
+        set dns_failed = eval {dns_failed} + 1
+        print ""  ✗ {domain} — lookup failed: {error_message}""
+    end
+end
+
+print """"
+print ""  Resolved: {resolved}  |  Failed: {dns_failed}""
+
+if {dns_failed} == 0
+    call log_pass "All DNS lookups succeeded"
+else
+    call log_fail "{dns_failed} DNS lookup(s) failed"
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 7 — ARP Spoof Detection
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 7: ARP Spoof Detection"
+
+try
+    capture spoof_result = dspoof
+    set spoof_upper = upper {spoof_result}
+    if {spoof_upper} contains NO
+        call log_pass "No ARP spoofing detected"
+    elif {spoof_upper} contains SPOOF
+        call log_fail "Possible ARP spoofing detected!"
+    else
+        print ""  {spoof_result}""
+        call log_pass "Spoof check completed"
+    end
+catch
+    call log_fail "ARP spoof detection failed: {error_message}"
+end
+
+# ═══════════════════════════════════════════════════════════════
+#  PHASE 8 — Generate Report File
+# ═══════════════════════════════════════════════════════════════
+call section_header "PHASE 8: Audit Summary"
+
+set report_file = netaudit_report_{DATE}.txt
+set total_checks = eval {pass_count} + {fail_count}
+
+print """"
+print ""  {divider}""
+print ""  ◆  NETWORK AUDIT COMPLETE""
+print ""  {divider}""
+print ""  Total checks : {total_checks}""
+call print_bar {pass_count} {total_checks}
+
+if {fail_count} == 0
+    print """"
+    print ""  🛡️  Status: ALL CHECKS PASSED""
+elif {fail_count} < 3
+    print """"
+    print ""  ⚠️  Status: MINOR ISSUES DETECTED""
+else
+    print """"
+    print ""  🚨 Status: MULTIPLE FAILURES — investigate above""
+end
+
+print ""  {divider}""
+print ""  Completed at {TIME} on {DATE}""
+print ""{divider}""
+
+# Write summary to file
+try
+    write {report_file} "NetAudit Report - {DATE} {TIME}"
+    append {report_file} "Host: {USER}@{PC}"
+    append {report_file} "Passed: {pass_count}/{total_checks}"
+    append {report_file} "Failed: {fail_count}/{total_checks}"
+    print """"
+    print ""  📄 Report saved to {report_file}""
+catch
+    print ""  (Could not save report file)""
+end
