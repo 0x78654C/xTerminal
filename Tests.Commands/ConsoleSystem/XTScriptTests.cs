@@ -1233,4 +1233,136 @@ public class XTScriptTests : IDisposable
             "end");
         RunScript(path).Should().Be("5");
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // WRITE / APPEND / READ — File I/O
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Write_CreatesFileWithContent()
+    {
+        string target = Path.Combine(_tempDir, "out.txt");
+        var path = CreateScript($@"write {target} ""hello file""");
+        RunScript(path);
+        File.Exists(target).Should().BeTrue();
+        File.ReadAllText(target).TrimEnd().Should().Be("hello file");
+    }
+
+    [Fact]
+    public void Write_OverwritesExistingFile()
+    {
+        string target = Path.Combine(_tempDir, "overwrite.txt");
+        File.WriteAllText(target, "old content");
+        var path = CreateScript($@"write {target} ""new content""");
+        RunScript(path);
+        File.ReadAllText(target).TrimEnd().Should().Be("new content");
+    }
+
+    [Fact]
+    public void Write_InterpolatesVariables()
+    {
+        string target = Path.Combine(_tempDir, "interp.txt");
+        var path = CreateScript(
+            "set greeting = hello",
+            $@"write {target} ""{{greeting}} world""");
+        RunScript(path);
+        File.ReadAllText(target).TrimEnd().Should().Be("hello world");
+    }
+
+    [Fact]
+    public void Append_CreatesFileIfMissing()
+    {
+        string target = Path.Combine(_tempDir, "append_new.txt");
+        var path = CreateScript($@"append {target} ""first line""");
+        RunScript(path);
+        File.Exists(target).Should().BeTrue();
+        File.ReadAllText(target).TrimEnd().Should().Be("first line");
+    }
+
+    [Fact]
+    public void Append_AddsToExistingFile()
+    {
+        string target = Path.Combine(_tempDir, "append_multi.txt");
+        var path = CreateScript(
+            $@"write {target} ""line1""",
+            $@"append {target} ""line2""",
+            $@"append {target} ""line3""");
+        RunScript(path);
+        var lines = File.ReadAllLines(target)
+            .Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
+        lines.Should().BeEquivalentTo(
+            new[] { "line1", "line2", "line3" }, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Read_LoadsFileContents()
+    {
+        string source = Path.Combine(_tempDir, "source.txt");
+        File.WriteAllText(source, "file data");
+        var path = CreateScript(
+            $"read content = {source}",
+            @"print ""{content}""");
+        RunScript(path).Should().Be("file data");
+    }
+
+    [Fact]
+    public void Read_MultiLineFile()
+    {
+        string source = Path.Combine(_tempDir, "multi.txt");
+        File.WriteAllText(source, "alpha\nbeta\ngamma");
+        var path = CreateScript(
+            $"read data = {source}",
+            "each line in lines:data",
+            @"  print ""{line}""",
+            "end");
+        RunScriptLines(path).Should().BeEquivalentTo(
+            new[] { "alpha", "beta", "gamma" }, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Read_MissingFile_SetsError()
+    {
+        string missing = Path.Combine(_tempDir, "nope.txt");
+        var path = CreateScript(
+            $"read data = {missing}",
+            @"print ""{error}""");
+        RunScript(path).Should().Contain("true");
+    }
+
+    [Fact]
+    public void Read_MissingFile_SetsErrorMessage()
+    {
+        string missing = Path.Combine(_tempDir, "nope.txt");
+        var path = CreateScript(
+            $"read data = {missing}",
+            @"print ""{error_message}""");
+        RunScript(path).Should().Contain("File not found");
+    }
+
+    [Fact]
+    public void WriteAndRead_RoundTrip()
+    {
+        string target = Path.Combine(_tempDir, "roundtrip.txt");
+        var path = CreateScript(
+            $@"write {target} ""round trip data""",
+            $"read back = {target}",
+            @"print ""{back}""");
+        RunScript(path).Should().Be("round trip data");
+    }
+
+    [Fact]
+    public void Write_UnquotedText()
+    {
+        string target = Path.Combine(_tempDir, "unquoted.txt");
+        var path = CreateScript($"write {target} hello world");
+        RunScript(path);
+        File.ReadAllText(target).TrimEnd().Should().Be("hello world");
+    }
+
+    [Fact]
+    public void CheckScript_Read_MissingEquals_ReportsError()
+    {
+        var path = CreateScript("read x somefile.txt");
+        RunCheck(path).Should().Contain("error");
+    }
 }
