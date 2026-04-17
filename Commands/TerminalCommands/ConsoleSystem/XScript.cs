@@ -373,7 +373,8 @@ print ""Done!""
             private bool _continueRequested;
             private bool _returnRequested;
 
-            private static readonly DataTable s_calc = new DataTable();
+
+            private readonly DataTable _calc = new DataTable();
 
             public ScriptEngine(string path, string[] scriptArgs)
             {
@@ -497,7 +498,12 @@ print ""Done!""
             {
                 try
                 {
-                    object result = s_calc.Compute(expression, null);
+                    if (!Regex.IsMatch(expression, @"^[\d\s\+\-\*\/\%\(\)\.]+$"))
+                    {
+                        PrintError(_pc + 1, $"Math expression contains invalid characters: '{expression}'");
+                        return "0";
+                    }
+                    object result = _calc.Compute(expression, null);
                     return Convert.ToDouble(result).ToString(CultureInfo.InvariantCulture);
                 }
                 catch (Exception ex)
@@ -678,6 +684,7 @@ print ""Done!""
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
                 filePath = FileSystem.SanitizePath(filePath, currentDir);
 
+
                 if (append)
                     File.AppendAllText(filePath, text + Environment.NewLine);
                 else
@@ -845,7 +852,6 @@ print ""Done!""
                     SkipBlock();
                     return;
                 }
-
                 var branches = new List<(int, string, string)>();
                 int endLine = FindMatchingEnd(_pc, blockEnd, branches);
                 int bodyStart = _pc + 1;
@@ -876,9 +882,8 @@ print ""Done!""
                 int bodyEnd = endLine - 1;
 
                 int iter = 0;
-                const int maxIterations = 100000;
 
-                while (!_stopRequested && iter < maxIterations)
+                while (!_stopRequested)
                 {
                     iter++;
                     string condRaw = _lines[condLine].Trim();
@@ -896,9 +901,6 @@ print ""Done!""
                     if (_returnRequested) break;
                 }
                 _continueRequested = false;
-
-                if (iter >= maxIterations)
-                    PrintError(condLine + 1, $"'while' exceeded {maxIterations} iterations (infinite loop guard).");
 
                 _pc = endLine + 1;
             }
@@ -961,6 +963,7 @@ print ""Done!""
                 {
                     int rangeStart = int.Parse(rangeMatch.Groups[1].Value);
                     int rangeEnd = int.Parse(rangeMatch.Groups[2].Value);
+
                     int step = rangeStart <= rangeEnd ? 1 : -1;
 
                     var branchesRange = new List<(int, string, string)>();
@@ -1048,37 +1051,38 @@ print ""Done!""
                     PrintError(_pc + 1, $"Function '{funcName}' not found.");
                     return;
                 }
+       
+                    int argCount = parts.Count - 1;
+                    var savedArgs = new Dictionary<string, string>();
 
-                int argCount = parts.Count - 1;
-                var savedArgs = new Dictionary<string, string>();
+                    // Save and set positional args for this call.
+                    for (int a = 1; a <= argCount; a++)
+                    {
+                        string key = a.ToString();
+                        if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
+                        _vars[key] = parts[a];
+                    }
 
-                // Save and set positional args for this call.
-                for (int a = 1; a <= argCount; a++)
-                {
-                    string key = a.ToString();
-                    if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
-                    _vars[key] = parts[a];
-                }
+                    // Remove any leftover positional args beyond what we're passing
+                    // so they don't leak from a previous call.
+                    for (int a = argCount + 1; a <= 20; a++)
+                    {
+                        string key = a.ToString();
+                        if (!_vars.ContainsKey(key)) break;
+                        savedArgs[key] = _vars[key];
+                        _vars.Remove(key);
+                    }
 
-                // Remove any leftover positional args beyond what we're passing
-                // so they don't leak from a previous call.
-                for (int a = argCount + 1; a <= 20; a++)
-                {
-                    string key = a.ToString();
-                    if (!_vars.ContainsKey(key)) break;
-                    savedArgs[key] = _vars[key];
-                    _vars.Remove(key);
-                }
+                    int savedPc = _pc;
+                    _returnRequested = false;
+                    ExecuteBlock(range.Start, range.End);
+                    _returnRequested = false;
+                    _pc = savedPc;
 
-                int savedPc = _pc;
-                _returnRequested = false;
-                ExecuteBlock(range.Start, range.End);
-                _returnRequested = false;
-                _pc = savedPc;
-
-                // Restore previous positional args.
-                foreach (var kv in savedArgs)
-                    _vars[kv.Key] = kv.Value;
+                    // Restore previous positional args.
+                    foreach (var kv in savedArgs)
+                        _vars[kv.Key] = kv.Value;
+          
             }
 
             // ── Try / catch / end ────────────────────────────────────────────
