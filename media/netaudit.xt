@@ -14,7 +14,8 @@ set thin_div = ─────────────────────�
 set pass_count = 0
 set fail_count = 0
 set total_tests = 0
-set log_file = netaudit_log_{DATE}.txt
+set newTime = replace {time} ":" "-"
+set log_file = netaudit_log_{newTime}_{DATE}.txt
 
 # Initialize log file
 write {log_file} "NetAudit Log - {DATE} {TIME}"
@@ -253,7 +254,7 @@ end
 # ═══════════════════════════════════════════════════════════════
 call section_header "PHASE 6: DNS Resolution Benchmark"
 
-set dns_targets = google.com,github.com,microsoft.com,cloudflare.com,amazon.com
+set dns_targets = google.com,github.com,cloudflare.com,amazone.com
 set resolved = 0
 set dns_failed = 0
 
