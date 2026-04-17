@@ -399,6 +399,7 @@ namespace Shell
                 string param = string.Join(" ", ParamHandler(args));
                 if (!string.IsNullOrEmpty(param))
                 {
+                    File.WriteAllText(GlobalVariables.currentDirectory, Directory.GetCurrentDirectory());
                     SettingsLoad();
                     ExecuteCommands(param);
                     GlobalVariables.pipeCmdOutput = string.Empty;
@@ -511,7 +512,6 @@ namespace Shell
             }
 
             if (ExecuteParamCommands(args)) { return; }
-            ;
 
             // We loop until exit commands is hit
             do
