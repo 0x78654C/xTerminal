@@ -417,14 +417,14 @@ print ""Done!""
                     switch (keyword)
                     {
                         case "set": ExecSet(line); _pc++; break;
-                        case "print": ExecPrint(line); _pc++; break;
+                        case "print": ExecPrint(raw); _pc++; break;
                         case "run": ExecRun(line); _pc++; break;
                         case "capture": ExecCapture(line); _pc++; break;
                         case "input": ExecInput(line); _pc++; break;
                         case "read": ExecRead(line); _pc++; break;
                         case "wait": ExecWait(line); _pc++; break;
-                        case "write": ExecFileWrite(line, append: false); _pc++; break;
-                        case "append": ExecFileWrite(line, append: true); _pc++; break;
+                        case "write": ExecFileWrite(raw, append: false); _pc++; break;
+                        case "append": ExecFileWrite(raw, append: true); _pc++; break;
                         case "exit": _stopRequested = true; break;
                         case "break": _breakRequested = true; _pc++; break;
                         case "continue": _continueRequested = true; _pc++; break;
@@ -568,13 +568,20 @@ print ""Done!""
                 return result;
             }
 
-            private void ExecPrint(string line)
+            private void ExecPrint(string rawLine)
             {
-                string text = line[5..].Trim().Trim('"');
-                text = text.Replace("\\n", "\n")
-                           .Replace("\\t", "\t")
-                           .Replace("\\\\", "\\");
+                string text = rawLine[5..].Trim().Trim('"');
+                text = ProcessEscapes(text);
+                text = Interpolate(text);
                 Console.WriteLine(text);
+            }
+
+            private static string ProcessEscapes(string text)
+            {
+                return text.Replace("\\\\", "\x00")
+                           .Replace("\\n", "\n")
+                           .Replace("\\t", "\t")
+                           .Replace("\x00", "\\");
             }
 
             private void ExecRun(string line)
@@ -663,10 +670,10 @@ print ""Done!""
                 _vars["error"] = "false";
             }
 
-            private void ExecFileWrite(string line, bool append)
+            private void ExecFileWrite(string rawLine, bool append)
             {
                 string keyword = append ? "append" : "write";
-                string rest = line[keyword.Length..].Trim();
+                string rest = rawLine[keyword.Length..].Trim();
 
                 int sep = rest.IndexOf(' ');
                 if (sep < 0)
@@ -675,11 +682,10 @@ print ""Done!""
                     return;
                 }
 
-                string filePath = rest[..sep].Trim();
+                string filePath = Interpolate(rest[..sep].Trim());
                 string text = rest[(sep + 1)..].Trim().Trim('"');
-                text = text.Replace("\\n", "\n")
-                           .Replace("\\t", "\t")
-                           .Replace("\\\\", "\\");
+                text = ProcessEscapes(text);
+                text = Interpolate(text);
 
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
                 filePath = FileSystem.SanitizePath(filePath, currentDir);
