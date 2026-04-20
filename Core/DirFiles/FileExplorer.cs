@@ -86,7 +86,7 @@ namespace Core.DirFiles
         {
             bool running = true;
             Console.CursorVisible = false;
-
+            Console.Write("\x1b[?1049h"); // alternate screen
             while (running)
             {
                 if (_searchMode)
@@ -104,7 +104,8 @@ namespace Core.DirFiles
             }
 
             Console.CursorVisible = true;
-            Console.Clear();
+            //Console.Clear();
+            Console.Write("\x1b[?1049l"); // restore normal screen
         }
 
         public static void ColorConsoleTextLine(ConsoleColor color, string text)
