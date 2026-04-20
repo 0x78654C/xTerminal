@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using Core;
 
-namespace Commands.TerminalCommands.ConsoleSystem
+namespace Commands.TerminalCommands.ScriptingLanguage
 {
     [SupportedOSPlatform("Windows")]
     public class XTScript : ITerminalCommand
@@ -717,7 +717,7 @@ print ""Done!""
                 {
                     var (bLine, bType, bCond) = branches[b];
                     int bodyStart = bLine + 1;
-                    int bodyEnd = (b + 1 < branches.Count) ? branches[b + 1].Line - 1 : endLine - 1;
+                    int bodyEnd = b + 1 < branches.Count ? branches[b + 1].Line - 1 : endLine - 1;
 
                     if (bType == "else")
                     {

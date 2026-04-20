@@ -1,5 +1,5 @@
 using System.Runtime.Versioning;
-using Commands.TerminalCommands.ConsoleSystem;
+using Commands.TerminalCommands.ScriptingLanguage;
 using Core;
 using FluentAssertions;
 using Xunit;
