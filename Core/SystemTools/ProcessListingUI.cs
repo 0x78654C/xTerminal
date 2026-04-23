@@ -46,6 +46,10 @@ namespace Core.SystemTools
         private const int C_USER = 108;
         private const int C_DEAD = 238;
 
+        // FIX 2: default-background escape — lets the terminal's own background
+        //        show through for non-selected rows instead of painting BG_BASE (232 ≈ black).
+        private const string BgReset = "\x1b[49m";
+
         private static readonly char[] Sparks = { ' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉', '█' };
         private static readonly string[] Spin = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
 
@@ -76,6 +80,14 @@ namespace Core.SystemTools
         private string _status = string.Empty;
         private DateTime _statusExp = DateTime.MinValue;
         private int _spinIdx;
+
+        // Frame buffer — entire frame is assembled here, then flushed in one write.
+        // Eliminates per-row Console.Write syscalls and all mid-frame repaints.
+        private readonly StringBuilder _fb = new(1 << 17);
+
+        // Process list cached by the sampler so the render thread never calls
+        // Process.GetProcesses() itself (that call is slow and was happening every 100 ms).
+        private Process[] _cachedProcs = Array.Empty<Process>();
 
         private const int TOKEN_QUERY = 0x0008;
 
@@ -119,7 +131,7 @@ namespace Core.SystemTools
             try
             {
                 _cpuCounter.NextValue();
-                Thread.Sleep(200);
+                Thread.Sleep(30); // just needs to prime; doesn't need to settle
 
                 _cpuPctDraw = 0;
                 _memPctDraw = 0;
@@ -184,6 +196,7 @@ namespace Core.SystemTools
                         _memUsed = mUsed;
                         _memTotal = mTotal;
                         _memPct = Math.Clamp(mPct, 0, 100);
+                        _cachedProcs = procs; // render reads this; no extra GetProcesses() needed
 
                         foreach (int dead in _userCache.Keys.Except(liveIds).ToArray())
                             _userCache.Remove(dead);
@@ -391,7 +404,7 @@ namespace Core.SystemTools
 
             lock (_lock)
             {
-                procs = SortedProcesses();
+                procs = SortedCachedProcesses(); // uses sampler's cached list — no extra GetProcesses()
                 _lastProcessCount = procs.Length;
                 _selectedIndex = Math.Clamp(_selectedIndex, 0, Math.Max(0, procs.Length - 1));
 
@@ -432,22 +445,29 @@ namespace Core.SystemTools
             int userW = Math.Clamp(W / 7, 8, 18);
             int nameW = Math.Max(10, W - (2 + pidW + 2 + cpuW + 2 + memW + 2 + thrW + 2 + userW));
 
+            // ── Build entire frame into _fb, flush with one Console.Write ──
+            // This eliminates all mid-frame repaints: the terminal only sees
+            // a single write containing the finished frame.
+            _fb.Clear();
+
             // ── Row 0 : top bar ────────────────────────────────────────────
+            // Left and right portions go into the same buffer write — no gap
+            // between them for the terminal to render, so the clock/spinner
+            // no longer flicker independently of the left side.
             {
                 string left =
-                    $"{B(BG_TOPBAR)}{F(C_ACCENT)}{Bold} WTPP {R}" +
-                    $"{B(BG_TOPBAR)}{F(FG_DIM)}  ·  {F(FG_PRIMARY)}System Monitor";
+                    $"{B(BG_TOPBAR)}{F(C_ACCENT)}{Bold} WTOP {R}" +
+                    $"{B(BG_TOPBAR)}{F(FG_DIM)}  ·  {F(FG_PRIMARY)}Process manager";
 
                 string right =
                     $"{F(FG_DIM)}{Faint}{Spin[spin]}{R}" +
                     $"{B(BG_TOPBAR)}{F(FG_DIM)}  {DateTime.Now:HH:mm:ss}  ·  {F(FG_PRIMARY)}{procs.Length}{F(FG_DIM)} procs {R}";
 
-                Console.Write($"{At(0, 0)}{B(BG_TOPBAR)}{new string(' ', W)}");
-                Console.Write($"{At(0, 0)}{left}{EOL}");
-
                 int rightVisible = 16 + procs.Length.ToString().Length;
                 int rightCol = Math.Max(0, W - rightVisible);
-                Console.Write($"{At(rightCol, 0)}{B(BG_TOPBAR)}{right}{EOL}");
+
+                _fb.Append(At(0, 0)).Append(left).Append(EOL)
+                   .Append(At(rightCol, 0)).Append(B(BG_TOPBAR)).Append(right);
             }
 
             // ── Row 1 : gauges ─────────────────────────────────────────────
@@ -468,23 +488,21 @@ namespace Core.SystemTools
                 string usedStr = memUsed.ToString("0.0").PadLeft(8);
                 string totStr = memTotal.ToString("0.0").PadLeft(8);
 
-                Console.Write($"{At(0, 1)}{B(BG_TOPBAR)}{new string(' ', W)}");
-
-                Console.Write(
-                    $"{At(0, 1)}" +
-                    $"{B(BG_TOPBAR)}{F(FG_DIM)}  CPU  " +
-                    $"{cpuBar}" +
-                    $"{F(cpuC)}{Bold}  {cpuStr}" +
-                    $"{B(BG_TOPBAR)}{F(FG_MUTED)}    " +
-                    $"{F(FG_DIM)}MEM  " +
-                    $"{memBar}" +
-                    $"{F(memC)}{Bold}  {memStr}" +
-                    $"{B(BG_TOPBAR)}{F(FG_MUTED)}  {usedStr} / {totStr} MB" +
-                    $"{R}{EOL}");
+                _fb.Append(At(0, 1))
+                   .Append(B(BG_TOPBAR)).Append(F(FG_DIM)).Append("  CPU  ")
+                   .Append(cpuBar)
+                   .Append(F(cpuC)).Append(Bold).Append("  ").Append(cpuStr)
+                   .Append(B(BG_TOPBAR)).Append(F(FG_MUTED)).Append("    ")
+                   .Append(F(FG_DIM)).Append("MEM  ")
+                   .Append(memBar)
+                   .Append(F(memC)).Append(Bold).Append("  ").Append(memStr)
+                   .Append(B(BG_TOPBAR)).Append(F(FG_MUTED))
+                   .Append("  ").Append(usedStr).Append(" / ").Append(totStr).Append(" MB")
+                   .Append(R).Append(EOL);
             }
 
             // ── Row 2 : blank separator ────────────────────────────────────
-            Console.Write($"{At(0, 2)}{B(BG_BASE)}{EOL}");
+            _fb.Append(At(0, 2)).Append(BgReset).Append(EOL);
 
             // ── Row 3 : column header ──────────────────────────────────────
             {
@@ -502,21 +520,21 @@ namespace Core.SystemTools
                         : padded;
                 }
 
-                Console.Write(
-                    $"{At(0, 3)}" +
-                    $"{B(BG_COLHDR)}{F(FG_DIM)}" +
-                    $"  " +
-                    $"{"PID".PadLeft(aw)}  " +
-                    $"{ColHdr(SortMode.Name, "NAME", nameW)}  " +
-                    $"{ColHdr(SortMode.CPU, "CPU%", bw, rightAlign: true)}  " +
-                    $"{ColHdr(SortMode.Memory, "MEM MB", cw, rightAlign: true)}  " +
-                    $"{"THR".PadLeft(dw)}  " +
-                    $"{"USER".PadRight(userW)}" +
-                    R + EOL);
+                _fb.Append(At(0, 3))
+                   .Append(B(BG_COLHDR)).Append(F(FG_DIM))
+                   .Append("  ")
+                   .Append("PID".PadLeft(aw)).Append("  ")
+                   .Append(ColHdr(SortMode.Name, "NAME", nameW)).Append("  ")
+                   .Append(ColHdr(SortMode.CPU, "CPU%", bw, rightAlign: true)).Append("  ")
+                   .Append(ColHdr(SortMode.Memory, "MEM MB", cw, rightAlign: true)).Append("  ")
+                   .Append("THR".PadLeft(dw)).Append("  ")
+                   .Append("USER".PadRight(userW))
+                   .Append(R).Append(EOL);
             }
 
             // ── Row 4 : thin rule ──────────────────────────────────────────
-            Console.Write($"{At(0, 4)}{F(FG_MUTED)}{B(BG_BASE)}{new string('─', W)}{R}{EOL}");
+            _fb.Append(At(0, 4)).Append(F(FG_MUTED)).Append(BgReset)
+               .Append(new string('─', W)).Append(R).Append(EOL);
 
             // ── Process rows ───────────────────────────────────────────────
             int visCount = Math.Min(tableH, procs.Length);
@@ -529,15 +547,15 @@ namespace Core.SystemTools
 
                 if (procIdx >= procs.Length)
                 {
-                    Console.Write($"{At(0, y)}{B(BG_BASE)}{EOL}");
+                    _fb.Append(At(0, y)).Append(BgReset).Append(EOL);
                     continue;
                 }
 
                 Process p = procs[procIdx];
                 bool isSel = procIdx == sel;
-                int rowBg = isSel ? BG_SEL : BG_BASE;
+                string rowBgEsc = isSel ? B(BG_SEL) : BgReset;
 
-                string line;
+                _fb.Append(At(0, y));
 
                 try
                 {
@@ -548,66 +566,58 @@ namespace Core.SystemTools
 
                     int aw = pidW, bw = cpuW, cw = memW - 2, dw = thrW;
 
-                    string gutter = isSel
-                        ? $"{F(C_ACCENT)}{B(BG_SEL2)}▌{B(rowBg)} "
-                        : $"{F(BG_BASE)}{B(BG_BASE)}  ";
-
                     int pidC = isSel ? FG_PRIMARY : C_PID;
-                    int nameC = FG_PRIMARY;
                     int cpuC = isSel ? FG_PRIMARY : LoadColour(procCpu * 3);
                     int memC = isSel ? FG_PRIMARY : C_MEM;
                     int thrC = isSel ? FG_PRIMARY : C_THR;
                     int userC = isSel ? FG_PRIMARY : C_USER;
-                    string boldSel = isSel ? Bold : string.Empty;
 
-                    line =
-                        $"{gutter}{boldSel}" +
-                        $"{F(pidC)}{B(rowBg)}{p.Id.ToString().PadLeft(aw)}  " +
-                        $"{F(nameC)}{B(rowBg)}{name}  " +
-                        $"{F(cpuC)}{B(rowBg)}{procCpu.ToString("0.0").PadLeft(bw)}  " +
-                        $"{F(memC)}{B(rowBg)}{procMem.ToString("0.0").PadLeft(cw)}  " +
-                        $"{F(thrC)}{B(rowBg)}{p.Threads.Count.ToString().PadLeft(dw)}  " +
-                        $"{F(userC)}{B(rowBg)}{user}" +
-                        R;
+                    if (isSel)
+                        _fb.Append(F(C_ACCENT)).Append(B(BG_SEL2)).Append('▌').Append(rowBgEsc).Append(' ').Append(Bold);
+                    else
+                        _fb.Append(BgReset).Append("  ");
+
+                    _fb.Append(F(pidC)).Append(rowBgEsc).Append(p.Id.ToString().PadLeft(aw)).Append("  ")
+                       .Append(F(FG_PRIMARY)).Append(rowBgEsc).Append(name).Append("  ")
+                       .Append(F(cpuC)).Append(rowBgEsc).Append(procCpu.ToString("0.0").PadLeft(bw)).Append("  ")
+                       .Append(F(memC)).Append(rowBgEsc).Append(procMem.ToString("0.0").PadLeft(cw)).Append("  ")
+                       .Append(F(thrC)).Append(rowBgEsc).Append(p.Threads.Count.ToString().PadLeft(dw)).Append("  ")
+                       .Append(F(userC)).Append(rowBgEsc).Append(user)
+                       .Append(R).Append(EOL);
                 }
                 catch
                 {
                     int aw = pidW, bw = cpuW, cw = memW - 2, dw = thrW;
 
-                    line =
-                        $"  {Faint}{F(C_DEAD)}{B(BG_BASE)}" +
-                        $"{"?".PadLeft(aw)}  " +
-                        $"{"<access denied>".PadRight(nameW)}  " +
-                        $"{"·".PadLeft(bw)}  " +
-                        $"{"·".PadLeft(cw)}  " +
-                        $"{"·".PadLeft(dw)}  " +
-                        $"{"·".PadRight(userW)}" +
-                        R;
+                    _fb.Append("  ").Append(Faint).Append(F(C_DEAD)).Append(BgReset)
+                       .Append("?".PadLeft(aw)).Append("  ")
+                       .Append("<access denied>".PadRight(nameW)).Append("  ")
+                       .Append("·".PadLeft(bw)).Append("  ")
+                       .Append("·".PadLeft(cw)).Append("  ")
+                       .Append("·".PadLeft(dw)).Append("  ")
+                       .Append("·".PadRight(userW))
+                       .Append(R).Append(EOL);
                 }
-
-                Console.Write($"{At(0, y)}{line}{EOL}");
             }
 
             // ── Bottom rule ────────────────────────────────────────────────
-            Console.Write($"{At(0, bottomRule)}{F(FG_MUTED)}{B(BG_BASE)}{new string('─', W)}{R}{EOL}");
+            _fb.Append(At(0, bottomRule)).Append(F(FG_MUTED)).Append(BgReset)
+               .Append(new string('─', W)).Append(R).Append(EOL);
 
             // ── Status / search row ────────────────────────────────────────
+            _fb.Append(At(0, statusRow));
             if (searching)
             {
-                Console.Write(
-                    $"{At(0, statusRow)}" +
-                    $"{B(BG_BASE)}{F(C_SEARCH)}{Bold} / {R}" +
-                    $"{F(C_SEARCH)}{B(BG_BASE)}{query}" +
-                    $"{F(FG_MUTED)}█{R}" +
-                    $"{F(FG_MUTED)}   Enter to jump  ·  Esc to cancel{R}" +
-                    EOL);
+                _fb.Append(BgReset).Append(F(C_SEARCH)).Append(Bold).Append(" / ").Append(R)
+                   .Append(F(C_SEARCH)).Append(BgReset).Append(query)
+                   .Append(F(FG_MUTED)).Append('█').Append(R)
+                   .Append(F(FG_MUTED)).Append("   Enter to jump  ·  Esc to cancel").Append(R)
+                   .Append(EOL);
             }
             else
             {
-                Console.Write(
-                    $"{At(0, statusRow)}" +
-                    $"{B(BG_BASE)}{F(FG_DIM)} {Clip(statusText, W - 2)}{R}" +
-                    EOL);
+                _fb.Append(BgReset).Append(F(FG_DIM)).Append(' ')
+                   .Append(Clip(statusText, W - 2)).Append(R).Append(EOL);
             }
 
             // ── Selected-process detail label ──────────────────────────────
@@ -616,8 +626,13 @@ namespace Core.SystemTools
                     ? $"{F(FG_MUTED)}—{R}"
                     : SafeLabel(procs, sel);
 
-                Console.Write($"{At(0, labelRow)}{B(BG_BASE)}{F(C_ACCENT2)} ▸ {R}{B(BG_BASE)}{label}{R}{EOL}");
+                _fb.Append(At(0, labelRow)).Append(BgReset)
+                   .Append(F(C_ACCENT2)).Append(" ▸ ").Append(R)
+                   .Append(BgReset).Append(label).Append(R).Append(EOL);
             }
+
+            // ── Single atomic write — the whole frame lands at once ────────
+            Console.Write(_fb);
         }
 
         // ── Visual primitives ────────────────────────────────────────────────
@@ -658,6 +673,26 @@ namespace Core.SystemTools
             pct >= 85 ? C_DANGER : pct >= 40 ? C_WARN : C_OK;
 
         // ── Process helpers ──────────────────────────────────────────────────
+
+        // Used by the render thread — sorts the sampler's cached process snapshot.
+        // Never calls Process.GetProcesses(), so the render loop has zero process-enumeration cost.
+        private Process[] SortedCachedProcesses()
+        {
+            // _lock is already held by the caller (RenderFrame)
+            Process[] all = _cachedProcs;
+            Dictionary<int, double> snap = _cpuUsages;
+            SortMode sort = _sortMode;
+
+            return sort switch
+            {
+                SortMode.CPU => all.OrderByDescending(p => snap.TryGetValue(p.Id, out double c) ? c : 0)
+                                   .ThenBy(SafeName).ToArray(),
+                SortMode.Memory => all.OrderByDescending(SafeMemBytes).ThenBy(SafeName).ToArray(),
+                _ => all.OrderBy(SafeName).ToArray()
+            };
+        }
+
+        // Used by KillSelected / JumpToProcess — always fetches a fresh list.
         private Process[] SortedProcesses()
         {
             SortMode sort;
