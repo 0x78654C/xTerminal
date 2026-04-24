@@ -1,4 +1,4 @@
-﻿using Core;
+using Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,246 +10,297 @@ namespace Commands.TerminalCommands.ConsoleSystem
     [SupportedOSPlatform("Windows")]
     public class PCInfo : ITerminalCommand
     {
-        /*
-         Display System Information
-         */
-
         public string Name => "pcinfo";
+        private const int s_keyPadding = 12;
+        private static readonly string[] s_xTerminalLogo = new[]
+        {
+            @" __  __ _____                   _             _ ",
+            @" \ \/ /|_   _|__ _ __ _ __ ___ (_)_ __   __ _| |",
+            @"  \  /   | |/ _ \ '__| '_ ` _ \| | '_ \ / _` | |",
+            @"  /  \   | |  __/ |  | | | | | | | | | | (_| | |",
+            @" /_/\_\  |_|\___|_|  |_| |_| |_|_|_| |_|\__,_|_|"
+        };
+
         public void Execute(string args)
         {
             MachineInfo();
         }
 
-        // WMI class detail grab and ouput.
+        // WMI class detail grab and output in a Linux-like layout.
         private void MachineInfo()
         {
-            string pcInfo = wmi.GetWMIDetails("SELECT * FROM Win32_OperatingSystem");
+            string osInfo = wmi.GetWMIDetails("SELECT * FROM Win32_OperatingSystem");
             string gpuInfo = wmi.GetWMIDetails("SELECT * FROM Win32_VideoController");
-            string modelInfo = wmi.GetWMIDetails("SELECT * FROM Win32_ComputerSystem");
-            string coresInfo = wmi.GetWMIDetails("SELECT * FROM Win32_Processor");
-            if (!GlobalVariables.isPipeCommand)
-                Console.WriteLine("\n------------------------System Info------------------------\n");
+            string machineInfo = wmi.GetWMIDetails("SELECT * FROM Win32_ComputerSystem");
+            string cpuInfo = wmi.GetWMIDetails("SELECT * FROM Win32_Processor");
 
-            // User logged.
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                GlobalVariables.pipeCmdOutput += $"User logged: {GlobalVariables.accountName}\n";
-            else
-            {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, "User logged");
-                Console.WriteLine($": {GlobalVariables.accountName}");
-            }
+            string manufacturer = GetFirstWmiValue(machineInfo, "Manufacturer");
+            string model = GetFirstWmiValue(machineInfo, "Model");
+            string osCaption = GetFirstWmiValue(osInfo, "Caption");
+            string osVersion = GetFirstWmiValue(osInfo, "Version");
+            string osBuild = GetFirstWmiValue(osInfo, "BuildNumber");
+            string osArch = GetFirstWmiValue(osInfo, "OSArchitecture");
+            string physicalCpuCount = GetFirstWmiValue(machineInfo, "NumberOfProcessors");
+            string coreCount = GetFirstWmiValue(cpuInfo, "NumberOfCores");
+            string cpuName = RegistryManagement.regKey_ReadMachine(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString");
+            string kernel = BuildKernelLabel(osVersion, osBuild);
 
-            // Machine name.
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                GlobalVariables.pipeCmdOutput += $"Machine Name: {GlobalVariables.computerName}\n";
-            else
-            {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, "Machine Name");
-                Console.WriteLine($": {GlobalVariables.computerName}");
-            }
-
-            GetMachineModel(modelInfo);
-            if (!GlobalVariables.isPipeCommand)
-                Console.WriteLine("\n----------------------------OS----------------------------\n");
-            GetOSInfo(pcInfo);
-            if (!GlobalVariables.isPipeCommand)
-                Console.WriteLine("\n-------------------------Hardware-------------------------\n");
-            GetProcesorInfo(modelInfo, coresInfo);
-            GetRAMInfo();
-            GetGPUInfo(gpuInfo);
-            if (!GlobalVariables.isPipeCommand)
-                Console.WriteLine("\n-----------------------Storage Size-----------------------\n");
-            GetDrivesSize();
-            if (!GlobalVariables.isPipeCommand)
-                Console.WriteLine("\n----------------------------------------------------------\n");
-        }
-
-        /// <summary>
-        /// Grab machine manufacturer and model info from WMI.
-        /// </summary>
-        /// <param name="pcInfo">WMI data.</param>
-        private void GetMachineModel(string pcInfo)
-        {
-            List<string> machineParams = new List<string>() { "Manufacturer", "Model" };
-            using (var sRead = new StringReader(pcInfo))
-            {
-                string lineOS;
-                while ((lineOS = sRead.ReadLine()) != null)
-                {
-                    foreach (var param in machineParams)
-                    {
-                        if (lineOS.StartsWith(param))
-                        {
-                            string outParam = lineOS.Split(':')[1];
-                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                GlobalVariables.pipeCmdOutput += $"{param}: {outParam}\n";
-                            else
-                            {
-                                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{param}");
-                                Console.WriteLine($": {outParam}");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Grab Operating Sytem information from WMI output.
-        /// </summary>
-        /// <param name="pcInfo">WMI Data</param>
-        private void GetOSInfo(string pcInfo)
-        {
-            List<string> osParams = new List<string>() { "BuildNumber", "Caption", "OSArchitecture", "Version" };
-            using (var sRead = new StringReader(pcInfo))
-            {
-                string lineOS;
-                while ((lineOS = sRead.ReadLine()) != null)
-                {
-                    foreach (var param in osParams)
-                    {
-                        if (lineOS.StartsWith(param))
-                        {
-                            string outParam = lineOS.Split(':')[1];
-                            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                                GlobalVariables.pipeCmdOutput += $"{param}: {outParam}\n";
-                            else
-                            {
-                                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{param}");
-                                Console.WriteLine($": {outParam}");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Grap processor information from registry.
-        private void GetProcesorInfo(string cpuInfoWMI, string coresInfo)
-        {
-            string procInfo = RegistryManagement.regKey_ReadMachine(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString");
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                GlobalVariables.pipeCmdOutput += $"CPU: {procInfo}\n";
-            else
-            {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, "CPU");
-                Console.WriteLine($": {procInfo}");
-            }
-
-            using (var sRead = new StringReader(cpuInfoWMI))
-            {
-                string lineCPUCount;
-                while ((lineCPUCount = sRead.ReadLine()) != null)
-                {
-                    if (lineCPUCount.StartsWith("NumberOfProcessors"))
-                    {
-                        string outParam = "";
-                        outParam += lineCPUCount.Split(':')[1];
-                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput += $"Physical CPU's: {outParam}\n";
-                        else
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Green, $"Physical CPU's");
-                            Console.WriteLine($": {outParam}");
-                        }
-                    }
-                }
-            }
-            using (var sRead = new StringReader(coresInfo))
-            {
-                string lineCoresCount;
-                while ((lineCoresCount = sRead.ReadLine()) != null)
-                {
-                    if (lineCoresCount.StartsWith("NumberOfCores"))
-                    {
-                        string outParam = "";
-                        outParam += lineCoresCount.Split(':')[1];
-                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput += $"CPU(s) Cores: {outParam}\n";
-                        else
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Green, $"CPU(s) Cores");
-                            Console.WriteLine($": {outParam}");
-                        }
-                    }
-                }
-            }
-
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                GlobalVariables.pipeCmdOutput += $"Logical CPU's: {Environment.ProcessorCount}\n";
-            else
-            {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, $"Logical CPU's");
-                Console.WriteLine($": {Environment.ProcessorCount}");
-            }
-        }
-
-        // Grab RAM information.
-        private void GetRAMInfo()
-        {
             var ram = new Microsoft.VisualBasic.Devices.ComputerInfo();
-            string ramAvailable = FileSystem.GetSize(ram.AvailablePhysicalMemory.ToString(), false);
-            string ramTotal = FileSystem.GetSize(ram.TotalPhysicalMemory.ToString(), false);
-            if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                GlobalVariables.pipeCmdOutput += $"RAM: {ramAvailable} Available / {ramTotal} Total\n";
+            string totalRam = FileSystem.GetSize(ram.TotalPhysicalMemory.ToString(), false);
+            string usedRam = FileSystem.GetSize((ram.TotalPhysicalMemory - ram.AvailablePhysicalMemory).ToString(), false);
+
+            string userHost = $"{GlobalVariables.accountName}@{GlobalVariables.computerName}";
+
+            WriteRawLine(string.Empty);
+            WriteLogoHeader(userHost);
+            WriteRawLine(string.Empty);
+
+            WriteSection("system");
+            WriteEntry("user", GlobalVariables.accountName);
+            WriteEntry("host", GlobalVariables.computerName);
+            WriteEntry("vendor", manufacturer);
+            WriteEntry("model", model);
+
+            WriteSection("os");
+            WriteEntry("os", osCaption);
+            WriteEntry("kernel", kernel);
+            WriteEntry("arch", osArch);
+
+            WriteSection("hardware");
+            WriteEntry("cpu", cpuName);
+            WriteEntry("cpu(s)", Environment.ProcessorCount.ToString());
+            WriteEntry("topology", $"{NormalizeValue(physicalCpuCount)} socket(s), {NormalizeValue(coreCount)} core(s)");
+            WriteEntry("memory", $"{usedRam} used / {totalRam} total");
+
+            List<string> gpuList = GetWmiValues(gpuInfo, "Description");
+            if (gpuList.Count == 0)
+            {
+                WriteEntry("gpu", "N/A");
+            }
             else
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Green, "RAM");
-                Console.WriteLine($": {ramAvailable} Available / {ramTotal} Total");
+                for (int i = 0; i < gpuList.Count; i++)
+                {
+                    string key = i == 0 ? "gpu" : $"gpu{i + 1}";
+                    WriteEntry(key, gpuList[i]);
+                }
+            }
+
+            WriteSection("storage");
+            WriteDrives();
+            WriteRawLine(string.Empty);
+        }
+
+        private void WriteLogoHeader(string userHost)
+        {
+            string separator = new string('-', userHost.Length);
+            int logoWidth = 0;
+            foreach (string logoLine in s_xTerminalLogo)
+            {
+                if (logoLine.Length > logoWidth)
+                {
+                    logoWidth = logoLine.Length;
+                }
+            }
+
+            int totalLines = Math.Max(s_xTerminalLogo.Length, 2);
+            for (int i = 0; i < totalLines; i++)
+            {
+                string logoLine = i < s_xTerminalLogo.Length ? s_xTerminalLogo[i] : string.Empty;
+                string infoLine = i == 0 ? userHost : i == 1 ? separator : string.Empty;
+
+                WriteLogoLine(logoLine, "", logoWidth);
             }
         }
 
-        /// <summary>
-        /// Return the avaible free space and total space from installed drives.
-        /// </summary>
-        private void GetDrivesSize()
+        private void WriteLogoLine(string logoLine, string infoLine, int logoWidth)
         {
+            bool hasInfoLine = !string.IsNullOrEmpty(infoLine);
+            string paddedLogo = logoLine.PadRight(logoWidth);
+
+            if (ShouldPipe())
+            {
+                if (hasInfoLine)
+                {
+                    WriteRawLine($"{paddedLogo}  {infoLine}".TrimEnd());
+                }
+                else
+                {
+                    WriteRawLine(logoLine);
+                }
+
+                return;
+            }
+
+            if (hasInfoLine)
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, paddedLogo);
+                Console.Write("  ");
+                Console.WriteLine(infoLine);
+                return;
+            }
+
+            FileSystem.ColorConsoleTextLine(ConsoleColor.Cyan, logoLine);
+        }
+
+        private void WriteDrives()
+        {
+            bool hasDrives = false;
             try
             {
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
-                foreach (var d in allDrives)
+                foreach (var drive in allDrives)
                 {
-                    string totalSize = wmi.SizeConvert($"Size {d.TotalSize}", true);
-                    string availableSize = wmi.SizeConvert($"Size {d.AvailableFreeSpace}", true);
-                    if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                        GlobalVariables.pipeCmdOutput += $"{d.Name}:  Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n";
-                    else
+                    if (!drive.IsReady)
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.Green, $"{d.Name} -");
-                        Console.Write($" Free: {availableSize} / Total: {totalSize} / Type: {d.DriveType} \n");
+                        continue;
                     }
+
+                    hasDrives = true;
+                    string totalSize = wmi.SizeConvert($"Size {drive.TotalSize}", true);
+                    string freeSize = wmi.SizeConvert($"Size {drive.AvailableFreeSpace}", true);
+                    string mount = drive.Name.TrimEnd('\\');
+
+                    WriteEntry($"disk {mount}", $"{freeSize} free / {totalSize} total ({drive.DriveType})");
                 }
             }
-            catch { }
+            catch
+            {
+                hasDrives = false;
+            }
+
+            if (!hasDrives)
+            {
+                WriteEntry("disk", "N/A");
+            }
         }
 
-        /// <summary>
-        /// Grab GPU information from WMI output.
-        /// </summary>
-        /// <param name="gpuInfoWMI">WMI Data.</param>
-        private void GetGPUInfo(string gpuInfoWMI)
+        private static string BuildKernelLabel(string version, string buildNumber)
         {
-            using (var sRead = new StringReader(gpuInfoWMI))
+            string cleanVersion = NormalizeValue(version);
+            string cleanBuild = NormalizeValue(buildNumber);
+            if (cleanVersion == "N/A" && cleanBuild == "N/A")
             {
-                string lineGPU;
-                int countGPU = 0;
-                while ((lineGPU = sRead.ReadLine()) != null)
+                return "N/A";
+            }
+
+            if (cleanVersion == "N/A" || cleanBuild == "N/A")
+            {
+                return cleanVersion == "N/A" ? cleanBuild : cleanVersion;
+            }
+
+            return $"{cleanVersion}.{cleanBuild}";
+        }
+
+        private static string GetFirstWmiValue(string wmiData, string key)
+        {
+            if (string.IsNullOrWhiteSpace(wmiData))
+            {
+                return string.Empty;
+            }
+
+            using (var reader = new StringReader(wmiData))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
                 {
-                    if (lineGPU.StartsWith("Description"))
+                    if (!line.StartsWith(key, StringComparison.OrdinalIgnoreCase))
                     {
-                        countGPU++;
-                        string outParam = "";
-                        outParam += lineGPU.Split(':')[1];
-                        if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
-                            GlobalVariables.pipeCmdOutput += $"GPU{countGPU}: {outParam}\n";
-                        else
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Green, $"GPU{countGPU}");
-                            Console.WriteLine($": {outParam}");
-                        }
+                        continue;
+                    }
+
+                    string[] split = line.Split(new[] { ':' }, 2);
+                    if (split.Length < 2)
+                    {
+                        continue;
+                    }
+
+                    return split[1].Trim();
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static List<string> GetWmiValues(string wmiData, string key)
+        {
+            var values = new List<string>();
+            if (string.IsNullOrWhiteSpace(wmiData))
+            {
+                return values;
+            }
+
+            using (var reader = new StringReader(wmiData))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (!line.StartsWith(key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    string[] split = line.Split(new[] { ':' }, 2);
+                    if (split.Length < 2)
+                    {
+                        continue;
+                    }
+
+                    string value = split[1].Trim();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        values.Add(value);
                     }
                 }
             }
+
+            return values;
+        }
+
+        private void WriteSection(string section)
+        {
+            WriteRawLine($"[{section}]");
+        }
+
+        private void WriteEntry(string key, string value)
+        {
+            string normalizedValue = NormalizeValue(value);
+            if (ShouldPipe())
+            {
+                GlobalVariables.pipeCmdOutput += $"{key.PadRight(s_keyPadding)}: {normalizedValue}{Environment.NewLine}";
+            }
+            else
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.Green, $"{key.PadRight(s_keyPadding)}:");
+                Console.WriteLine($" {normalizedValue}");
+            }
+        }
+
+        private void WriteRawLine(string line)
+        {
+            if (ShouldPipe())
+            {
+                GlobalVariables.pipeCmdOutput += line + Environment.NewLine;
+            }
+            else
+            {
+                Console.WriteLine(line);
+            }
+        }
+
+        private static string NormalizeValue(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "N/A";
+            }
+
+            return value.Trim();
+        }
+
+        private static bool ShouldPipe()
+        {
+            return GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0;
         }
     }
 }
