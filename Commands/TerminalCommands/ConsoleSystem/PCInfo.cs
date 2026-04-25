@@ -11,7 +11,10 @@ namespace Commands.TerminalCommands.ConsoleSystem
     public class PCInfo : ITerminalCommand
     {
         public string Name => "pcinfo";
-        private const int s_keyPadding = 12;
+        private const int s_keyPadding = 14;
+        private const int s_maxFrameWidth = 112;
+        private const int s_meterWidth = 18;
+
         private static readonly string[] s_xTerminalLogo = new[]
         {
             @" __  __ _____                   _             _ ",
@@ -26,8 +29,20 @@ namespace Commands.TerminalCommands.ConsoleSystem
             MachineInfo();
         }
 
-        // WMI class detail grab and output in a Linux-like layout.
         private void MachineInfo()
+        {
+            MachineSnapshot info = ReadMachineInfo();
+
+            if (ShouldPipe())
+            {
+                WritePipeSnapshot(info);
+                return;
+            }
+
+            WriteTechDashboard(info);
+        }
+
+        private static MachineSnapshot ReadMachineInfo()
         {
             string osInfo = wmi.GetWMIDetails("SELECT * FROM Win32_OperatingSystem");
             string gpuInfo = wmi.GetWMIDetails("SELECT * FROM Win32_VideoController");
@@ -46,106 +61,184 @@ namespace Commands.TerminalCommands.ConsoleSystem
             string kernel = BuildKernelLabel(osVersion, osBuild);
 
             var ram = new Microsoft.VisualBasic.Devices.ComputerInfo();
-            string totalRam = FileSystem.GetSize(ram.TotalPhysicalMemory.ToString(), false);
-            string usedRam = FileSystem.GetSize((ram.TotalPhysicalMemory - ram.AvailablePhysicalMemory).ToString(), false);
+            ulong totalPhysical = ram.TotalPhysicalMemory;
+            ulong usedPhysical = totalPhysical - ram.AvailablePhysicalMemory;
 
-            string userHost = $"{GlobalVariables.accountName}@{GlobalVariables.computerName}";
-
-            WriteRawLine(string.Empty);
-            WriteLogoHeader(userHost);
-            WriteRawLine(string.Empty);
-
-            WriteSection("system");
-            WriteEntry("user", GlobalVariables.accountName);
-            WriteEntry("host", GlobalVariables.computerName);
-            WriteEntry("vendor", manufacturer);
-            WriteEntry("model", model);
-
-            WriteSection("os");
-            WriteEntry("os", osCaption);
-            WriteEntry("kernel", kernel);
-            WriteEntry("arch", osArch);
-
-            WriteSection("hardware");
-            WriteEntry("cpu", cpuName);
-            WriteEntry("cpu(s)", Environment.ProcessorCount.ToString());
-            WriteEntry("topology", $"{NormalizeValue(physicalCpuCount)} socket(s), {NormalizeValue(coreCount)} core(s)");
-            WriteEntry("memory", $"{usedRam} used / {totalRam} total");
-
-            List<string> gpuList = GetWmiValues(gpuInfo, "Description");
-            if (gpuList.Count == 0)
+            var snapshot = new MachineSnapshot
             {
-                WriteEntry("gpu", "N/A");
+                User = GlobalVariables.accountName,
+                Host = GlobalVariables.computerName,
+                ScanTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                Manufacturer = manufacturer,
+                Model = model,
+                OsCaption = osCaption,
+                Kernel = kernel,
+                Architecture = osArch,
+                CpuName = cpuName,
+                LogicalProcessors = Environment.ProcessorCount.ToString(),
+                Topology = $"{NormalizeValue(physicalCpuCount)} socket(s), {NormalizeValue(coreCount)} core(s)",
+                MemoryUsed = FileSystem.GetSize(usedPhysical.ToString(), false),
+                MemoryTotal = FileSystem.GetSize(totalPhysical.ToString(), false),
+                MemoryUsedPercent = Percent(usedPhysical, totalPhysical),
+                Gpus = GetWmiValues(gpuInfo, "Description"),
+                Drives = GetDriveSnapshots()
+            };
+
+            if (snapshot.Gpus.Count == 0)
+            {
+                snapshot.Gpus.Add("N/A");
+            }
+
+            return snapshot;
+        }
+
+        private void WriteTechDashboard(MachineSnapshot info)
+        {
+            int width = GetFrameWidth();
+            WriteRawLine(string.Empty);
+            WriteRule(width, " XTERMINAL SYSTEM HUD ", ConsoleColor.Cyan);
+            WriteLogoHeader(info, width);
+
+            WriteSectionRule(width, "node");
+            WriteMetricLine(width, "user", info.User);
+            WriteMetricLine(width, "host", info.Host);
+            WriteMetricLine(width, "vendor", info.Manufacturer);
+            WriteMetricLine(width, "model", info.Model);
+
+            WriteSectionRule(width, "operating system");
+            WriteMetricLine(width, "os", info.OsCaption);
+            WriteMetricLine(width, "kernel", info.Kernel);
+            WriteMetricLine(width, "arch", info.Architecture);
+
+            WriteSectionRule(width, "compute");
+            WriteMetricLine(width, "cpu", info.CpuName);
+            WriteMetricLine(width, "threads", info.LogicalProcessors);
+            WriteMetricLine(width, "topology", info.Topology);
+            WriteMeterLine(width, "memory", $"{info.MemoryUsed} used / {info.MemoryTotal} total", info.MemoryUsedPercent);
+
+            WriteSectionRule(width, "graphics");
+            for (int i = 0; i < info.Gpus.Count; i++)
+            {
+                string key = i == 0 ? "gpu" : $"gpu{i + 1}";
+                WriteMetricLine(width, key, info.Gpus[i]);
+            }
+
+            WriteSectionRule(width, "storage");
+            if (info.Drives.Count == 0)
+            {
+                WriteMetricLine(width, "disk", "N/A");
             }
             else
             {
-                for (int i = 0; i < gpuList.Count; i++)
+                foreach (DriveSnapshot drive in info.Drives)
                 {
-                    string key = i == 0 ? "gpu" : $"gpu{i + 1}";
-                    WriteEntry(key, gpuList[i]);
+                    WriteMeterLine(width, $"disk {drive.Mount}", $"{drive.Free} free / {drive.Total} total ({drive.Type})", drive.UsedPercent);
                 }
             }
 
-            WriteSection("storage");
-            WriteDrives();
+            WriteRule(width, string.Empty, ConsoleColor.DarkCyan);
             WriteRawLine(string.Empty);
         }
 
-        private void WriteLogoHeader(string userHost)
+        private void WritePipeSnapshot(MachineSnapshot info)
         {
-            string separator = new string('-', userHost.Length);
-            int logoWidth = 0;
-            foreach (string logoLine in s_xTerminalLogo)
+            WriteRawLine(string.Empty);
+            WriteRawLine($"xTerminal pcinfo - {info.User}@{info.Host}");
+            WriteRawLine($"scan          : {info.ScanTime}");
+            WriteRawLine(string.Empty);
+
+            WriteSection("system");
+            WriteEntry("user", info.User);
+            WriteEntry("host", info.Host);
+            WriteEntry("vendor", info.Manufacturer);
+            WriteEntry("model", info.Model);
+
+            WriteSection("os");
+            WriteEntry("os", info.OsCaption);
+            WriteEntry("kernel", info.Kernel);
+            WriteEntry("arch", info.Architecture);
+
+            WriteSection("hardware");
+            WriteEntry("cpu", info.CpuName);
+            WriteEntry("threads", info.LogicalProcessors);
+            WriteEntry("topology", info.Topology);
+            WriteEntry("memory", $"{info.MemoryUsed} used / {info.MemoryTotal} total ({FormatPercent(info.MemoryUsedPercent)} used)");
+
+            for (int i = 0; i < info.Gpus.Count; i++)
             {
-                if (logoLine.Length > logoWidth)
+                string key = i == 0 ? "gpu" : $"gpu{i + 1}";
+                WriteEntry(key, info.Gpus[i]);
+            }
+
+            WriteSection("storage");
+            if (info.Drives.Count == 0)
+            {
+                WriteEntry("disk", "N/A");
+            }
+            else
+            {
+                foreach (DriveSnapshot drive in info.Drives)
                 {
-                    logoWidth = logoLine.Length;
+                    WriteEntry($"disk {drive.Mount}", $"{drive.Free} free / {drive.Total} total ({drive.Type}, {FormatPercent(drive.UsedPercent)} used)");
                 }
             }
 
-            int totalLines = Math.Max(s_xTerminalLogo.Length, 2);
-            for (int i = 0; i < totalLines; i++)
-            {
-                string logoLine = i < s_xTerminalLogo.Length ? s_xTerminalLogo[i] : string.Empty;
-                string infoLine = i == 0 ? userHost : i == 1 ? separator : string.Empty;
-
-                WriteLogoLine(logoLine, "", logoWidth);
-            }
+            WriteRawLine(string.Empty);
         }
 
-        private void WriteLogoLine(string logoLine, string infoLine, int logoWidth)
+        private void WriteLogoHeader(MachineSnapshot info, int width)
         {
-            bool hasInfoLine = !string.IsNullOrEmpty(infoLine);
-            string paddedLogo = logoLine.PadRight(logoWidth);
-
-            if (ShouldPipe())
+            int innerWidth = Math.Max(0, width - 4);
+            int logoWidth = GetLogoWidth();
+            string userHost = $"{NormalizeValue(info.User)}@{NormalizeValue(info.Host)}";
+            string[] telemetryLines = new[]
             {
-                if (hasInfoLine)
-                {
-                    WriteRawLine($"{paddedLogo}  {infoLine}".TrimEnd());
-                }
-                else
-                {
-                    WriteRawLine(logoLine);
-                }
+                $"NODE {userHost}",
+                $"SCAN {info.ScanTime}",
+                $"OS   {NormalizeValue(info.OsCaption)}",
+                $"CPU  {NormalizeValue(info.CpuName)}",
+                $"RAM  {FormatPercent(info.MemoryUsedPercent)} used"
+            };
 
+            if (innerWidth < logoWidth + 14)
+            {
+                WriteFrameLine(width, $"NODE {userHost}");
+                WriteFrameLine(width, $"SCAN {info.ScanTime}");
+                WriteFrameLine(width, $"OS   {NormalizeValue(info.OsCaption)}");
                 return;
             }
 
-            if (hasInfoLine)
+            for (int i = 0; i < s_xTerminalLogo.Length; i++)
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, paddedLogo);
-                Console.Write("  ");
-                Console.WriteLine(infoLine);
-                return;
-            }
+                string logo = s_xTerminalLogo[i].PadRight(logoWidth);
+                string telemetry = i < telemetryLines.Length ? telemetryLines[i] : string.Empty;
+                int used = 0;
 
-            FileSystem.ColorConsoleTextLine(ConsoleColor.Cyan, logoLine);
+                Console.Write("| ");
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, logo);
+                used += logo.Length;
+
+                if (used < innerWidth)
+                {
+                    Console.Write("  ");
+                    used += 2;
+                    string clippedTelemetry = Clip(telemetry, innerWidth - used);
+                    FileSystem.ColorConsoleText(i == 0 ? ConsoleColor.White : ConsoleColor.Gray, clippedTelemetry);
+                    used += clippedTelemetry.Length;
+                }
+
+                if (used < innerWidth)
+                {
+                    Console.Write(new string(' ', innerWidth - used));
+                }
+
+                Console.WriteLine(" |");
+            }
         }
 
-        private void WriteDrives()
+        private static List<DriveSnapshot> GetDriveSnapshots()
         {
-            bool hasDrives = false;
+            var drives = new List<DriveSnapshot>();
             try
             {
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
@@ -156,23 +249,23 @@ namespace Commands.TerminalCommands.ConsoleSystem
                         continue;
                     }
 
-                    hasDrives = true;
-                    string totalSize = wmi.SizeConvert($"Size {drive.TotalSize}", true);
-                    string freeSize = wmi.SizeConvert($"Size {drive.AvailableFreeSpace}", true);
+                    long used = drive.TotalSize - drive.AvailableFreeSpace;
                     string mount = drive.Name.TrimEnd('\\');
-
-                    WriteEntry($"disk {mount}", $"{freeSize} free / {totalSize} total ({drive.DriveType})");
+                    drives.Add(new DriveSnapshot
+                    {
+                        Mount = mount,
+                        Free = FileSystem.GetSize(drive.AvailableFreeSpace.ToString(), false),
+                        Total = FileSystem.GetSize(drive.TotalSize.ToString(), false),
+                        Type = drive.DriveType.ToString(),
+                        UsedPercent = Percent(used, drive.TotalSize)
+                    });
                 }
             }
             catch
             {
-                hasDrives = false;
             }
 
-            if (!hasDrives)
-            {
-                WriteEntry("disk", "N/A");
-            }
+            return drives;
         }
 
         private static string BuildKernelLabel(string version, string buildNumber)
@@ -190,6 +283,199 @@ namespace Commands.TerminalCommands.ConsoleSystem
             }
 
             return $"{cleanVersion}.{cleanBuild}";
+        }
+
+        private void WriteRule(int width, string title, ConsoleColor color)
+        {
+            FileSystem.ColorConsoleTextLine(color, BuildRule(width, title));
+        }
+
+        private static string BuildRule(int width, string title)
+        {
+            int innerWidth = Math.Max(0, width - 2);
+            string normalizedTitle = title ?? string.Empty;
+            if (normalizedTitle.Length == 0 || normalizedTitle.Length + 2 >= innerWidth)
+            {
+                return "+" + new string('-', innerWidth) + "+";
+            }
+
+            int left = (innerWidth - normalizedTitle.Length) / 2;
+            int right = innerWidth - normalizedTitle.Length - left;
+            return "+" + new string('-', left) + normalizedTitle + new string('-', right) + "+";
+        }
+
+        private void WriteSectionRule(int width, string section)
+        {
+            int innerWidth = Math.Max(0, width - 2);
+            string title = $"-- {section.ToUpperInvariant()} ";
+            string content = Clip(title, innerWidth).PadRight(innerWidth, '-');
+            FileSystem.ColorConsoleTextLine(ConsoleColor.DarkGray, "|" + content + "|");
+        }
+
+        private void WriteFrameLine(int width, string content)
+        {
+            int innerWidth = Math.Max(0, width - 4);
+            string clipped = Clip(content, innerWidth);
+            Console.Write("| ");
+            Console.Write(clipped);
+            Console.Write(new string(' ', innerWidth - clipped.Length));
+            Console.WriteLine(" |");
+        }
+
+        private void WriteMetricLine(int width, string key, string value)
+        {
+            int innerWidth = Math.Max(0, width - 4);
+            string prefix = $"  {key.PadRight(s_keyPadding)} :: ";
+            string normalizedValue = NormalizeValue(value);
+
+            if (prefix.Length >= innerWidth)
+            {
+                WriteFrameLine(width, $"{key} :: {normalizedValue}");
+                return;
+            }
+
+            int valueWidth = innerWidth - prefix.Length;
+            string clippedValue = Clip(normalizedValue, valueWidth);
+            Console.Write("| ");
+            FileSystem.ColorConsoleText(ConsoleColor.DarkCyan, prefix);
+            Console.Write(clippedValue);
+            Console.Write(new string(' ', valueWidth - clippedValue.Length));
+            Console.WriteLine(" |");
+        }
+
+        private void WriteMeterLine(int width, string key, string detail, double percent)
+        {
+            int innerWidth = Math.Max(0, width - 4);
+            string prefix = $"  {key.PadRight(s_keyPadding)} :: ";
+            string meter = $"{FormatPercent(percent),6} {BuildMeter(percent)}";
+            string normalizedDetail = NormalizeValue(detail);
+
+            if (prefix.Length >= innerWidth)
+            {
+                WriteFrameLine(width, $"{key} :: {meter} {normalizedDetail}");
+                return;
+            }
+
+            int remaining = innerWidth - prefix.Length;
+            Console.Write("| ");
+            FileSystem.ColorConsoleText(ConsoleColor.DarkCyan, prefix);
+
+            string clippedMeter = Clip(meter, remaining);
+            FileSystem.ColorConsoleText(GetLoadColor(percent), clippedMeter);
+            remaining -= clippedMeter.Length;
+
+            if (remaining > 0)
+            {
+                string clippedDetail = Clip("  " + normalizedDetail, remaining);
+                Console.Write(clippedDetail);
+                remaining -= clippedDetail.Length;
+            }
+
+            if (remaining > 0)
+            {
+                Console.Write(new string(' ', remaining));
+            }
+
+            Console.WriteLine(" |");
+        }
+
+        private static string BuildMeter(double percent)
+        {
+            if (percent < 0)
+            {
+                return "[" + new string('?', s_meterWidth) + "]";
+            }
+
+            double clamped = Math.Max(0, Math.Min(100, percent));
+            int filled = (int)Math.Round(clamped / 100 * s_meterWidth);
+            filled = Math.Max(0, Math.Min(s_meterWidth, filled));
+            return "[" + new string('#', filled) + new string('-', s_meterWidth - filled) + "]";
+        }
+
+        private static ConsoleColor GetLoadColor(double percent)
+        {
+            if (percent < 0)
+            {
+                return ConsoleColor.DarkGray;
+            }
+
+            if (percent >= 85)
+            {
+                return ConsoleColor.Red;
+            }
+
+            if (percent >= 65)
+            {
+                return ConsoleColor.Yellow;
+            }
+
+            return ConsoleColor.Green;
+        }
+
+        private static int GetLogoWidth()
+        {
+            int width = 0;
+            foreach (string line in s_xTerminalLogo)
+            {
+                if (line.Length > width)
+                {
+                    width = line.Length;
+                }
+            }
+
+            return width;
+        }
+
+        private static int GetFrameWidth()
+        {
+            try
+            {
+                int availableWidth = Console.WindowWidth - 1;
+                if (availableWidth > 0)
+                {
+                    return Math.Min(availableWidth, s_maxFrameWidth);
+                }
+            }
+            catch
+            {
+            }
+
+            return 90;
+        }
+
+        private static double Percent(double used, double total)
+        {
+            if (total <= 0)
+            {
+                return -1;
+            }
+
+            return Math.Round(used / total * 100, 1);
+        }
+
+        private static string FormatPercent(double percent)
+        {
+            return percent < 0 ? "N/A" : $"{percent:0.0}%";
+        }
+
+        private static string Clip(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value) || maxLength <= 0)
+            {
+                return string.Empty;
+            }
+
+            if (value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            if (maxLength <= 3)
+            {
+                return value.Substring(0, maxLength);
+            }
+
+            return value.Substring(0, maxLength - 3) + "...";
         }
 
         private static string GetFirstWmiValue(string wmiData, string key)
@@ -301,6 +587,35 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static bool ShouldPipe()
         {
             return GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0;
+        }
+
+        private sealed class MachineSnapshot
+        {
+            public string User { get; set; } = string.Empty;
+            public string Host { get; set; } = string.Empty;
+            public string ScanTime { get; set; } = string.Empty;
+            public string Manufacturer { get; set; } = string.Empty;
+            public string Model { get; set; } = string.Empty;
+            public string OsCaption { get; set; } = string.Empty;
+            public string Kernel { get; set; } = string.Empty;
+            public string Architecture { get; set; } = string.Empty;
+            public string CpuName { get; set; } = string.Empty;
+            public string LogicalProcessors { get; set; } = string.Empty;
+            public string Topology { get; set; } = string.Empty;
+            public string MemoryUsed { get; set; } = string.Empty;
+            public string MemoryTotal { get; set; } = string.Empty;
+            public double MemoryUsedPercent { get; set; }
+            public List<string> Gpus { get; set; } = new List<string>();
+            public List<DriveSnapshot> Drives { get; set; } = new List<DriveSnapshot>();
+        }
+
+        private sealed class DriveSnapshot
+        {
+            public string Mount { get; set; } = string.Empty;
+            public string Free { get; set; } = string.Empty;
+            public string Total { get; set; } = string.Empty;
+            public string Type { get; set; } = string.Empty;
+            public double UsedPercent { get; set; }
         }
     }
 }
