@@ -2,7 +2,7 @@
       Description: xTerminal uninstaller
 
       This app is distributed under the MIT License.
-      Copyright © 2022 - 2025 x_coding. All rights reserved.
+      Copyright © 2022 - 2026 x_coding. All rights reserved.
 
       THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
       IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
