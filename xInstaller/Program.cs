@@ -2,7 +2,7 @@
       Description: xTerminal installer
 
       This app is distributed under the MIT License.
-      Copyright © 2022 - 2025 x_coding. All rights reserved.
+      Copyright © 2022 - 2026 x_coding. All rights reserved.
 
       THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
       IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -38,15 +38,60 @@ namespace xInstaller
         const string _bgPath3 = @"resources\bg2.png";
         const string _bgPath4 = @"resources\bg3.png";
         const string _iconPath = @"resources\xTerminal.png";
+        const string _latestIconPath = @"media\xterminal_logo.png";
         const string _sourceDirX64 = @"data\x64\";
         const string _sourceDirX86 = @"data\x86\";
         const string _uninstaller = @"data\Uninstaller\xUninstaller.exe";
+        const int WindowWidth = 800;
+        const int WindowHeight = 480;
+        const int HeroHeight = 368;
+        static readonly Rectangle s_installButtonBounds = new Rectangle(620, 402, 152, 48);
+        static readonly Color s_background = new Color(2, 3, 8, 255);
+        static readonly Color s_panel = new Color(9, 15, 24, 252);
+        static readonly Color s_panelDeep = new Color(5, 8, 14, 255);
+        static readonly Color s_panelLine = new Color(72, 218, 232, 150);
+        static readonly Color s_textPrimary = new Color(235, 241, 231, 255);
+        static readonly Color s_textSecondary = new Color(177, 195, 201, 255);
+        static readonly Color s_accent = new Color(35, 219, 230, 255);
+        static readonly Color s_accentHover = new Color(247, 211, 76, 255);
+        static readonly Color s_warning = new Color(236, 82, 74, 255);
+        static readonly Color s_success = new Color(107, 229, 129, 255);
         static string s_destDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Programs\xTerminal";
         static string s_profilePath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\xTerminal";
         static bool s_isAdmin = IsLoggedUserAdmin();
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int MessageBox(IntPtr hWnd, String text, String caption, uint type);
+
+        private const int GWL_EXSTYLE = -20;
+        private const long WS_EX_APPWINDOW = 0x00040000L;
+        private const long WS_EX_TOOLWINDOW = 0x00000080L;
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOZORDER = 0x0004;
+        private const uint SWP_FRAMECHANGED = 0x0020;
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongW", SetLastError = true)]
+        private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
+        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongW", SetLastError = true)]
+        private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+
+        private enum WindowAction
+        {
+            None,
+            Minimize,
+            Close
+        }
 
         /// <summary>
         /// Entry point
@@ -59,6 +104,9 @@ namespace xInstaller
             var timer = 0.0f;
             var progress = 0.0f;
             var sourceDir = "";
+            var shouldClose = false;
+            var isDraggingWindow = false;
+            var dragOffset = Vector2.Zero;
 
             Raylib.SetTraceLogLevel(TraceLogLevel.None);
 
@@ -67,24 +115,38 @@ namespace xInstaller
             else
                 sourceDir = _sourceDirX86;
 
-            Image icon = Raylib.LoadImage(_iconPath);
-            Raylib.InitWindow(800, 480, s_isAdmin ? "xTerminal Installer : Administrator" : "xTerminal Installer");
+            var iconPath = ResolveResourcePath(_latestIconPath);
+            if (string.IsNullOrEmpty(iconPath))
+                iconPath = ResolveResourcePath(_iconPath);
+            Raylib.SetConfigFlags(ConfigFlags.UndecoratedWindow);
+            Raylib.InitWindow(WindowWidth, WindowHeight, s_isAdmin ? "xTerminal Installer : Administrator" : "xTerminal Installer");
             Raylib.SetTargetFPS(60);
-            Raylib.SetWindowIcon(icon);
-            Raylib.UnloadImage(icon);
+
+            if (!string.IsNullOrEmpty(iconPath))
+            {
+                Image icon = Raylib.LoadImage(iconPath);
+                Raylib.SetWindowIcon(icon);
+                Raylib.UnloadImage(icon);
+            }
+
+            EnsureTaskbarIcon();
 
             Texture2D[] backgrounds =
             [
-                Raylib.LoadTexture(_bgPath1),
-                Raylib.LoadTexture(_bgPath2),
-                Raylib.LoadTexture(_bgPath3),
-                Raylib.LoadTexture(_bgPath4)
+                LoadTextureIfExists(_bgPath1),
+                LoadTextureIfExists(_bgPath2),
+                LoadTextureIfExists(_bgPath3),
+                LoadTextureIfExists(_bgPath4)
             ];
 
-            while (!Raylib.WindowShouldClose())
+            Texture2D appLogo = LoadTextureIfExists(_latestIconPath);
+            if (!IsTextureReady(appLogo))
+                appLogo = LoadTextureIfExists(_iconPath);
+
+            while (!Raylib.WindowShouldClose() && !shouldClose)
             {
                 Raylib.BeginDrawing();
-                Raylib.ClearBackground(Color.White);
+                Raylib.ClearBackground(s_background);
 
 
                 // Set multiple backgrounds
@@ -99,20 +161,31 @@ namespace xInstaller
 
 
                 Texture2D bg = backgrounds[currentBackground];
-                Raylib.DrawTexturePro(
-                    bg,
-                    new Rectangle(0, 0, bg.Width, bg.Height),
-                    new Rectangle(0, 0, 800, 398),
-                    new Vector2(0, 0),
-                    0.0f,
-                    Color.White
-                );
+                DrawInstallerHero(bg, appLogo, timer);
+                HandleWindowDrag(ref isDraggingWindow, ref dragOffset);
+
+                var windowAction = DrawWindowControls();
+                if (windowAction == WindowAction.Minimize)
+                    Raylib.MinimizeWindow();
+                else if (windowAction == WindowAction.Close)
+                    shouldClose = true;
+
+                var isAlreadyInstalled = s_statusPrint.Contains("installed");
+                var isInstalling = isButtonClicked && !isAlreadyInstalled && !s_isCopyingDone;
+
+                if (isInstalling)
+                    progress = s_totalBytes > 0 ? Math.Clamp((float)s_copiedBytes / s_totalBytes, 0f, 1f) : 0f;
+                else if (s_isCopyingDone && !isAlreadyInstalled)
+                    progress = 1f;
+
+                DrawInstallerFooter(GetStatusText(isButtonClicked, isInstalling, s_isCopyingDone, isAlreadyInstalled), progress, isInstalling, s_isCopyingDone, isAlreadyInstalled, timer);
 
                 // Install button action.
-                if (InstallButton(new Rectangle(690, 420, 82, 40), "Install", Color.LightGray))
+                if (InstallButton(s_installButtonBounds, isInstalling ? "DEPLOYING" : "DEPLOY", !isInstalling))
                 {
-                    Raylib.DrawText($"", 22, 460, 13, Color.DarkGray);
                     s_statusPrint = "";
+                    s_totalBytes = 0;
+                    s_copiedBytes = 0;
                     progress = 0.0f;
                     isButtonClicked = true;
                     s_isCopyingDone = false;
@@ -122,56 +195,38 @@ namespace xInstaller
                         CopyUninstaller(_uninstaller, s_profilePath);
                 }
 
-                // Progress bar variables.     		
-                const int barX = 20;
-                const int barY = 424;
-                const int barWidth = 643;
-                const int barHeigth = 30;
-                Raylib.DrawRectangle(barX, barY, barWidth, barHeigth, Color.LightGray);
-
                 // Start progress bar only if clicked install button.
-                if (s_isCopyingDone && !s_statusPrint.Contains("installed"))
+                if (s_isCopyingDone && !s_statusPrint.Contains("installed") && !s_isShortAsked)
                 {
-                    Raylib.DrawText($"Done!", 22, 460, 13, Color.DarkGray);
-                    if (!s_isShortAsked)
+                    var result = MessageBox(IntPtr.Zero, "Do you want to create shortcut on desktop for xTerminal?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                    if (result == 6)
                     {
-                        var result = MessageBox(IntPtr.Zero, "Do you want to create shortcut on desktop for xTerminal?", "xTerminal-Installer", 0x00000004 | 0x00000020);
-                        if (result == 6)
-                        {
-                            var pathX = $"{s_destDirectory}\\xTerminal.exe";
-                            if (File.Exists(pathX))
-                                CreateShortcut(pathX);
-                        }
-
-                        var resultStartMenu = MessageBox(IntPtr.Zero, "Do you want to add xTerminal to Start Menu?", "xTerminal-Installer", 0x00000004 | 0x00000020);
-                        if (resultStartMenu == 6)
-                        {
-                            var pathX = $"{s_destDirectory}\\xTerminal.exe";
-                            if (File.Exists(pathX))
-                                CreateShortcut(pathX, true);
-                        }
-
-                        s_isShortAsked = true;
+                        var pathX = $"{s_destDirectory}\\xTerminal.exe";
+                        if (File.Exists(pathX))
+                            CreateShortcut(pathX);
                     }
-                }
-                else if (isButtonClicked && !s_statusPrint.Contains("installed") && !s_isCopyingDone)
-                {
-                    Raylib.DrawText($"Copying files ....", 22, 460, 13, Color.DarkGray);
-                    progress = s_totalBytes > 0 ? (float)s_copiedBytes / s_totalBytes : 0f;
-                    var filledWidth = (int)(barWidth * (progress));
-                    Raylib.DrawRectangle(barX, barY, filledWidth, barHeigth, Color.Green);
-                    InstallButton(new Rectangle(690, 420, 82, 40), "Install", Color.Gray);
-                }
 
-                if (s_statusPrint.Contains("installed") && isButtonClicked)
-                    Raylib.DrawText($"xTerminal is already installed!", 22, 460, 15, Color.DarkGray);
+                    var resultStartMenu = MessageBox(IntPtr.Zero, "Do you want to add xTerminal to Start Menu?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                    if (resultStartMenu == 6)
+                    {
+                        var pathX = $"{s_destDirectory}\\xTerminal.exe";
+                        if (File.Exists(pathX))
+                            CreateShortcut(pathX, true);
+                    }
+
+                    s_isShortAsked = true;
+                }
                 Raylib.EndDrawing();
             }
 
 
             // Unload background
             foreach (var bg in backgrounds)
-                Raylib.UnloadTexture(bg);
+                if (IsTextureReady(bg))
+                    Raylib.UnloadTexture(bg);
+
+            if (IsTextureReady(appLogo))
+                Raylib.UnloadTexture(appLogo);
 
             Raylib.CloseWindow();
         }
@@ -181,14 +236,509 @@ namespace xInstaller
         /// </summary>
         /// <param name="bounds"></param>
         /// <param name="text"></param>
-        /// <param name="color"></param>
+        /// <param name="enabled"></param>
         /// <returns></returns>
-        private static bool InstallButton(Rectangle bounds, string text, Color color)
+        private static bool InstallButton(Rectangle bounds, string text, bool enabled)
         {
-            Raylib.DrawRectangleRec(bounds, color);
-            Raylib.DrawRectangleLinesEx(bounds, 2, Color.Black);
-            Raylib.DrawText(text, (int)(bounds.X + 10), (int)(bounds.Y + 10), 20, Color.Black);
-            return Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), bounds) && Raylib.IsMouseButtonPressed(MouseButton.Left);
+            var mouse = Raylib.GetMousePosition();
+            var isHover = enabled && Raylib.CheckCollisionPointRec(mouse, bounds);
+            var isPressed = isHover && Raylib.IsMouseButtonDown(MouseButton.Left);
+            var fill = enabled
+                ? isPressed ? new Color(145, 82, 22, 255) : isHover ? new Color(70, 50, 16, 255) : new Color(10, 38, 48, 255)
+                : new Color(42, 45, 52, 255);
+            var edge = enabled
+                ? isHover ? s_accentHover : s_accent
+                : new Color(106, 116, 122, 255);
+
+            DrawAngledPanel(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), 12, new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), 0);
+            DrawAngledPanel(bounds, 12, fill, edge, 2.5f);
+            Raylib.DrawLineEx(new Vector2(bounds.X + 18, bounds.Y + 8), new Vector2(bounds.X + bounds.Width - 24, bounds.Y + 8), 1.0f, new Color((int)edge.R, (int)edge.G, (int)edge.B, 110));
+            Raylib.DrawLineEx(new Vector2(bounds.X + 24, bounds.Y + bounds.Height - 8), new Vector2(bounds.X + bounds.Width - 18, bounds.Y + bounds.Height - 8), 1.0f, new Color((int)edge.R, (int)edge.G, (int)edge.B, 90));
+            DrawTextCentered(text, bounds, 17, enabled ? Color.White : new Color(190, 198, 199, 255));
+
+            return isHover && Raylib.IsMouseButtonPressed(MouseButton.Left);
+        }
+
+        private static void DrawInstallerHero(Texture2D background, Texture2D appLogo, float timer)
+        {
+            var heroBounds = new Rectangle(0, 0, WindowWidth, HeroHeight);
+            DrawTextureCover(background, heroBounds, new Color(115, 135, 150, 90));
+            DrawHeroBackdrop(IsTextureReady(background));
+            DrawHeroPattern(timer);
+            DrawCockpitFrame();
+            DrawBrandLockup(appLogo);
+            DrawTerminalPreview();
+        }
+
+        private static void DrawHeroBackdrop(bool hasImage)
+        {
+            for (var y = 0; y < HeroHeight; y += 3)
+            {
+                var t = y / (float)HeroHeight;
+                var color = new Color(
+                    (int)(2 + 10 * t),
+                    (int)(4 + 8 * t),
+                    (int)(10 + 18 * t),
+                    hasImage ? 232 : 255);
+                Raylib.DrawRectangle(0, y, WindowWidth, 3, color);
+            }
+
+            Raylib.DrawRectangle(0, 0, WindowWidth, HeroHeight, new Color(0, 0, 0, hasImage ? 116 : 22));
+            Raylib.DrawCircleGradient(620, 116, 220, new Color(88, 24, 20, 76), new Color(0, 0, 0, 0));
+            Raylib.DrawCircleGradient(206, 172, 190, new Color(28, 132, 150, 42), new Color(0, 0, 0, 0));
+            Raylib.DrawRectangle(0, HeroHeight - 78, WindowWidth, 78, new Color(0, 0, 0, 156));
+        }
+
+        private static void DrawHeroPattern(float timer)
+        {
+            DrawStarfield(timer);
+            DrawHyperspaceLines(timer);
+
+            var scan = (timer * 42f) % 54f;
+            for (var y = -54f + scan; y < HeroHeight; y += 54f)
+                Raylib.DrawLineEx(new Vector2(0, y), new Vector2(WindowWidth, y + 20), 1.0f, new Color(62, 218, 235, 14));
+
+            for (var x = 24; x < WindowWidth; x += 58)
+            {
+                var pulse = (int)(14 + (MathF.Sin(timer * 2.2f + x * 0.03f) + 1f) * 16f);
+                Raylib.DrawLine(x, 0, x - 76, HeroHeight, new Color(62, 218, 235, pulse));
+            }
+
+            Raylib.DrawRectangle(0, HeroHeight - 1, WindowWidth, 1, new Color(247, 211, 76, 130));
+        }
+
+        private static void DrawStarfield(float timer)
+        {
+            for (var i = 0; i < 120; i++)
+            {
+                var x = (i * 73 + 19) % WindowWidth;
+                var baseY = (i * 151 + 37) % HeroHeight;
+                var y = (baseY + timer * (10f + i % 9)) % HeroHeight;
+                var alpha = 56 + (i % 4) * 24;
+                var color = i % 11 == 0 ? new Color(247, 211, 76, alpha) : new Color(220, 237, 240, alpha);
+
+                if (i % 7 == 0)
+                    Raylib.DrawLineEx(new Vector2(x, y), new Vector2(x - 3, y + 8), 1.2f, color);
+                else
+                    Raylib.DrawPixel(x, (int)y, color);
+            }
+        }
+
+        private static void DrawHyperspaceLines(float timer)
+        {
+            var center = new Vector2(404, 152);
+            var pulse = MathF.Sin(timer * 2.4f) * 0.5f + 0.5f;
+
+            for (var i = 0; i < 28; i++)
+            {
+                var angle = i * (MathF.PI * 2f / 28f) + timer * 0.06f;
+                var length = 84f + (i % 5) * 24f + pulse * 36f;
+                var start = center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * 32f;
+                var end = center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * length;
+                var color = i % 4 == 0 ? new Color(247, 211, 76, 24) : new Color(62, 218, 235, 22);
+                Raylib.DrawLineEx(start, end, 1.1f, color);
+            }
+        }
+
+        private static void DrawCockpitFrame()
+        {
+            DrawAngledPanel(new Rectangle(0, 0, WindowWidth, 34), 0, new Color(0, 0, 0, 186), new Color(42, 48, 58, 255), 1.0f);
+            DrawAngledPanel(new Rectangle(0, HeroHeight - 28, WindowWidth, 28), 0, new Color(0, 0, 0, 190), new Color(247, 211, 76, 98), 1.0f);
+
+            Raylib.DrawLineEx(new Vector2(0, 34), new Vector2(92, HeroHeight - 28), 7f, new Color(0, 0, 0, 152));
+            Raylib.DrawLineEx(new Vector2(WindowWidth, 34), new Vector2(WindowWidth - 92, HeroHeight - 28), 7f, new Color(0, 0, 0, 152));
+            Raylib.DrawLineEx(new Vector2(0, 34), new Vector2(92, HeroHeight - 28), 1.3f, new Color(62, 218, 235, 86));
+            Raylib.DrawLineEx(new Vector2(WindowWidth, 34), new Vector2(WindowWidth - 92, HeroHeight - 28), 1.3f, new Color(62, 218, 235, 86));
+
+            Raylib.DrawText("xINSTALLER // COMMAND DECK", 24, 11, 12, new Color(247, 211, 76, 235));
+            Raylib.DrawText(DateTime.Now.ToString("yyyy.MM.dd HH:mm"), 600, 11, 12, new Color(156, 177, 184, 220));
+        }
+
+        private static void HandleWindowDrag(ref bool isDraggingWindow, ref Vector2 dragOffset)
+        {
+            var mouse = Raylib.GetMousePosition();
+            var dragBounds = new Rectangle(0, 0, 704, 34);
+            var isOnControls = Raylib.CheckCollisionPointRec(mouse, new Rectangle(710, 5, 68, 24));
+
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left) && Raylib.CheckCollisionPointRec(mouse, dragBounds) && !isOnControls)
+            {
+                isDraggingWindow = true;
+                dragOffset = mouse;
+            }
+
+            if (Raylib.IsMouseButtonReleased(MouseButton.Left))
+                isDraggingWindow = false;
+
+            if (!isDraggingWindow)
+                return;
+
+            var windowPosition = Raylib.GetWindowPosition();
+            var delta = mouse - dragOffset;
+            Raylib.SetWindowPosition((int)(windowPosition.X + delta.X), (int)(windowPosition.Y + delta.Y));
+        }
+
+        private static WindowAction DrawWindowControls()
+        {
+            var minimize = new Rectangle(712, 6, 28, 22);
+            var close = new Rectangle(744, 6, 28, 22);
+
+            var action = WindowAction.None;
+            if (DrawChromeButton(minimize, WindowAction.Minimize))
+                action = WindowAction.Minimize;
+            if (DrawChromeButton(close, WindowAction.Close))
+                action = WindowAction.Close;
+
+            return action;
+        }
+
+        private static bool DrawChromeButton(Rectangle bounds, WindowAction action)
+        {
+            var mouse = Raylib.GetMousePosition();
+            var isHover = Raylib.CheckCollisionPointRec(mouse, bounds);
+            var isPressed = isHover && Raylib.IsMouseButtonDown(MouseButton.Left);
+            var accent = action == WindowAction.Close ? s_warning : s_accent;
+            var fill = isPressed
+                ? new Color(68, 34, 28, 255)
+                : isHover
+                    ? new Color(25, 43, 52, 255)
+                    : new Color(8, 16, 25, 245);
+
+            DrawAngledPanel(bounds, 6, fill, isHover ? accent : new Color(62, 218, 235, 82), 1.1f);
+
+            if (action == WindowAction.Minimize)
+            {
+                Raylib.DrawLineEx(
+                    new Vector2(bounds.X + 8, bounds.Y + 14),
+                    new Vector2(bounds.X + bounds.Width - 8, bounds.Y + 14),
+                    2.0f,
+                    isHover ? s_accentHover : s_textSecondary);
+            }
+            else
+            {
+                Raylib.DrawLineEx(
+                    new Vector2(bounds.X + 9, bounds.Y + 7),
+                    new Vector2(bounds.X + bounds.Width - 9, bounds.Y + bounds.Height - 7),
+                    2.0f,
+                    isHover ? s_warning : s_textSecondary);
+                Raylib.DrawLineEx(
+                    new Vector2(bounds.X + bounds.Width - 9, bounds.Y + 7),
+                    new Vector2(bounds.X + 9, bounds.Y + bounds.Height - 7),
+                    2.0f,
+                    isHover ? s_warning : s_textSecondary);
+            }
+
+            return isHover && Raylib.IsMouseButtonPressed(MouseButton.Left);
+        }
+
+        private static void EnsureTaskbarIcon()
+        {
+            using var currentProcess = Process.GetCurrentProcess();
+            currentProcess.Refresh();
+            var windowHandle = currentProcess.MainWindowHandle;
+            if (windowHandle == IntPtr.Zero)
+                return;
+
+            var exStyle = GetWindowLongPtr(windowHandle, GWL_EXSTYLE).ToInt64();
+            exStyle |= WS_EX_APPWINDOW;
+            exStyle &= ~WS_EX_TOOLWINDOW;
+            SetWindowLongPtr(windowHandle, GWL_EXSTYLE, new IntPtr(exStyle));
+            SetWindowPos(windowHandle, IntPtr.Zero, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+        }
+
+        private static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
+        {
+            return IntPtr.Size == 8
+                ? GetWindowLongPtr64(hWnd, nIndex)
+                : new IntPtr(GetWindowLong32(hWnd, nIndex));
+        }
+
+        private static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+        {
+            return IntPtr.Size == 8
+                ? SetWindowLongPtr64(hWnd, nIndex, dwNewLong)
+                : new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
+        }
+
+        private static void DrawBrandLockup(Texture2D appLogo)
+        {
+            var panel = new Rectangle(34, 56, 732, 118);
+            DrawAngledPanel(new Rectangle(panel.X + 8, panel.Y + 9, panel.Width, panel.Height), 18, new Color(0, 0, 0, 146), new Color(0, 0, 0, 0), 0);
+            DrawAngledPanel(panel, 18, s_panel, new Color(62, 218, 235, 132), 1.5f);
+            Raylib.DrawRectangle((int)panel.X + 18, (int)panel.Y + 16, (int)panel.Width - 38, 1, new Color(247, 211, 76, 92));
+
+            DrawIconPanel(new Rectangle(58, 82, 60, 60), appLogo);
+
+            Raylib.DrawText("xTerminal", 142, 78, 34, s_textPrimary);
+            Raylib.DrawText("SIMPLE SHELL FOR WINDOWS", 146, 116, 15, new Color(247, 211, 76, 245));
+            Raylib.DrawText("Local shell install with registry and shortcut setup.", 146, 141, 13, s_textSecondary);
+
+            DrawInfoCard(516, 84, 96, "ARCH", Environment.Is64BitOperatingSystem ? "X64" : "X86", s_accent);
+            DrawInfoCard(624, 84, 102, "SESSION", s_isAdmin ? "ADMIN" : "USER", s_accentHover);
+            DrawTechReadout(new Rectangle(516, 144, 210, 10), 0.68f, s_accent);
+        }
+
+        private static void DrawTerminalPreview()
+        {
+            var panel = new Rectangle(34, 184, 732, 166);
+            DrawAngledPanel(new Rectangle(panel.X + 8, panel.Y + 10, panel.Width, panel.Height), 18, new Color(0, 0, 0, 148), new Color(0, 0, 0, 0), 0);
+            DrawAngledPanel(panel, 18, s_panel, s_panelLine, 1.5f);
+
+            Raylib.DrawText("INSTALL VECTOR", (int)panel.X + 22, (int)panel.Y + 18, 14, s_accentHover);
+            Raylib.DrawText("LOCAL NODE // xTerminal", (int)panel.X + 556, (int)panel.Y + 19, 11, s_textSecondary);
+            Raylib.DrawLineEx(new Vector2(panel.X + 20, panel.Y + 44), new Vector2(panel.X + panel.Width - 22, panel.Y + 44), 1.2f, new Color(62, 218, 235, 90));
+
+            var rowX = (int)panel.X + 28;
+            var rowY = (int)panel.Y + 54;
+            var rowWidth = (int)panel.Width - 56;
+            DrawSystemMapRow(rowX, rowY, rowWidth, "SOURCE PACKAGE", Environment.Is64BitOperatingSystem ? @"data\x64\xTerminal.exe" : @"data\x86\xTerminal.exe", s_accent);
+            DrawSystemMapRow(rowX, rowY + 28, rowWidth, "INSTALL TARGET", TrimMiddle(s_destDirectory, 58), s_textPrimary);
+            DrawSystemMapRow(rowX, rowY + 56, rowWidth, "USER PROFILE", TrimMiddle(s_profilePath, 58), s_textPrimary);
+            DrawSystemMapRow(rowX, rowY + 84, rowWidth, "SYSTEM ENTRIES", @"HKCU uninstall registry + shortcut prompts", s_textPrimary);
+        }
+
+        private static void DrawTerminalLine(int x, int y, string text, Color color)
+        {
+            Raylib.DrawRectangle(x - 12, y + 5, 5, 5, color);
+            Raylib.DrawText(text, x, y, 14, color);
+            Raylib.DrawRectangle(x, y + 20, Math.Min(Raylib.MeasureText(text, 14), 158), 1, new Color((int)color.R, (int)color.G, (int)color.B, 44));
+        }
+
+        private static void DrawIconPanel(Rectangle bounds, Texture2D appLogo)
+        {
+            DrawAngledPanel(bounds, 12, new Color(4, 20, 29, 255), s_accent, 1.7f);
+            Raylib.DrawLineEx(new Vector2(bounds.X + 10, bounds.Y + 12), new Vector2(bounds.X + bounds.Width - 10, bounds.Y + 12), 1.2f, new Color(247, 211, 76, 140));
+            Raylib.DrawLineEx(new Vector2(bounds.X + 10, bounds.Y + bounds.Height - 12), new Vector2(bounds.X + bounds.Width - 10, bounds.Y + bounds.Height - 12), 1.2f, new Color(62, 218, 235, 120));
+
+            if (IsTextureReady(appLogo))
+            {
+                DrawTextureContain(appLogo, new Rectangle(bounds.X + 10, bounds.Y + 10, bounds.Width - 20, bounds.Height - 20), new Color(235, 250, 250, 255));
+                return;
+            }
+
+            var center = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
+            Raylib.DrawLineEx(new Vector2(center.X - 16, center.Y - 14), new Vector2(center.X + 2, center.Y + 2), 4.0f, s_accent);
+            Raylib.DrawLineEx(new Vector2(center.X + 2, center.Y + 2), new Vector2(center.X - 16, center.Y + 18), 4.0f, s_accent);
+            Raylib.DrawLineEx(new Vector2(center.X + 10, center.Y + 16), new Vector2(center.X + 24, center.Y + 16), 4.0f, s_accentHover);
+            Raylib.DrawCircle((int)(bounds.X + bounds.Width - 10), (int)(bounds.Y + 10), 3, s_accentHover);
+        }
+
+        private static void DrawInfoCard(int x, int y, int width, string label, string value, Color accent)
+        {
+            var bounds = new Rectangle(x, y, width, 46);
+            Raylib.DrawRectangleRec(bounds, new Color(13, 23, 33, 238));
+            Raylib.DrawRectangleLinesEx(bounds, 1, new Color((int)accent.R, (int)accent.G, (int)accent.B, 100));
+            Raylib.DrawText(label, x + 10, y + 8, 10, s_textSecondary);
+            Raylib.DrawText(value, x + 10, y + 23, 15, accent);
+        }
+
+        private static void DrawSystemMapRow(int x, int y, int width, string label, string value, Color valueColor)
+        {
+            var bounds = new Rectangle(x, y, width, 25);
+            Raylib.DrawRectangleRec(bounds, new Color(13, 23, 33, 230));
+            Raylib.DrawRectangleLinesEx(bounds, 1, new Color(62, 218, 235, 66));
+            Raylib.DrawRectangle(x + 8, y + 8, 8, 8, valueColor);
+            Raylib.DrawText(label, x + 24, y + 7, 11, s_accentHover);
+            Raylib.DrawText(value, x + 170, y + 6, 12, valueColor);
+        }
+
+        private static float DrawPill(float x, float y, string text)
+        {
+            var fontSize = 12;
+            var width = Raylib.MeasureText(text, fontSize) + 20;
+            var bounds = new Rectangle(x, y, width, 24);
+            DrawAngledPanel(bounds, 7, new Color(5, 23, 31, 220), new Color(62, 218, 235, 116), 1.0f);
+            Raylib.DrawText(text, (int)x + 10, (int)y + 7, fontSize, new Color(220, 239, 240, 255));
+            return width;
+        }
+
+        private static void DrawInstallerFooter(string statusText, float progress, bool isInstalling, bool isDone, bool isAlreadyInstalled, float timer)
+        {
+            Raylib.DrawRectangle(0, HeroHeight, WindowWidth, WindowHeight - HeroHeight, new Color(2, 4, 8, 255));
+            Raylib.DrawRectangle(0, HeroHeight, WindowWidth, 1, new Color(247, 211, 76, 116));
+
+            DrawAngledPanel(new Rectangle(22, 386, 582, 70), 14, s_panelDeep, new Color(62, 218, 235, 92), 1.2f);
+            Raylib.DrawText(statusText.ToUpperInvariant(), 42, 399, 17, isAlreadyInstalled ? s_warning : isDone ? s_success : s_textPrimary);
+
+            var detail = isAlreadyInstalled
+                ? "Repair prompt available when deployment is re-engaged."
+                : isDone
+                    ? "Installed to " + TrimMiddle(s_destDirectory, 54)
+                    : "Target " + TrimMiddle(s_destDirectory, 58);
+            Raylib.DrawText(detail, 42, 436, 12, s_textSecondary);
+
+            DrawProgressBar(new Rectangle(42, 424, 520, 9), progress, isInstalling, isDone, isAlreadyInstalled, timer);
+
+            if (isInstalling)
+            {
+                var percent = $"{Math.Clamp((int)(progress * 100), 0, 100)}%";
+                Raylib.DrawText(percent, 566, 421, 13, s_accentHover);
+            }
+        }
+
+        private static void DrawProgressBar(Rectangle bounds, float progress, bool isInstalling, bool isDone, bool isAlreadyInstalled, float timer)
+        {
+            Raylib.DrawRectangleRec(bounds, new Color(18, 25, 31, 255));
+            Raylib.DrawRectangleLinesEx(bounds, 1, new Color(62, 218, 235, 95));
+
+            var fillProgress = isAlreadyInstalled ? 0f : isDone ? 1f : Math.Clamp(progress, 0f, 1f);
+            var segments = 28;
+            var gap = 3f;
+            var segmentWidth = (bounds.Width - gap * (segments - 1)) / segments;
+            var filledSegments = (int)MathF.Round(segments * fillProgress);
+            var fillColor = isDone ? s_success : s_accent;
+
+            for (var i = 0; i < segments; i++)
+            {
+                var x = bounds.X + i * (segmentWidth + gap);
+                var segment = new Rectangle(x, bounds.Y, segmentWidth, bounds.Height);
+                var active = i < filledSegments;
+                var color = active ? fillColor : new Color(45, 58, 66, 255);
+
+                if (isInstalling && active && i == (int)(timer * 14f) % Math.Max(filledSegments, 1))
+                    color = s_accentHover;
+
+                Raylib.DrawRectangleRec(segment, color);
+            }
+        }
+
+        private static string GetStatusText(bool wasInstallClicked, bool isInstalling, bool isDone, bool isAlreadyInstalled)
+        {
+            if (isAlreadyInstalled && wasInstallClicked)
+                return "xTerminal is already installed";
+            if (isDone)
+                return "Deployment complete";
+            if (isInstalling)
+                return "Transferring xTerminal payload";
+            return "Ready to deploy xTerminal";
+        }
+
+        private static void DrawTechReadout(Rectangle bounds, float fill, Color color)
+        {
+            Raylib.DrawRectangleRec(bounds, new Color(22, 31, 38, 255));
+            Raylib.DrawRectangleLinesEx(bounds, 1, new Color((int)color.R, (int)color.G, (int)color.B, 90));
+            Raylib.DrawRectangleRec(new Rectangle(bounds.X + 2, bounds.Y + 2, (bounds.Width - 4) * Math.Clamp(fill, 0f, 1f), bounds.Height - 4), color);
+
+            for (var x = bounds.X + 16; x < bounds.X + bounds.Width; x += 16)
+                Raylib.DrawLine((int)x, (int)bounds.Y, (int)x, (int)(bounds.Y + bounds.Height), new Color(0, 0, 0, 90));
+        }
+
+        private static void DrawAngledPanel(Rectangle bounds, float cut, Color fill, Color border, float borderWidth)
+        {
+            Vector2[] points =
+            [
+                new Vector2(bounds.X + cut, bounds.Y),
+                new Vector2(bounds.X + bounds.Width, bounds.Y),
+                new Vector2(bounds.X + bounds.Width, bounds.Y + bounds.Height - cut),
+                new Vector2(bounds.X + bounds.Width - cut, bounds.Y + bounds.Height),
+                new Vector2(bounds.X, bounds.Y + bounds.Height),
+                new Vector2(bounds.X, bounds.Y + cut)
+            ];
+
+            Raylib.DrawTriangle(points[0], points[1], points[5], fill);
+            Raylib.DrawTriangle(points[1], points[2], points[5], fill);
+            Raylib.DrawTriangle(points[2], points[4], points[5], fill);
+            Raylib.DrawTriangle(points[2], points[3], points[4], fill);
+
+            if (borderWidth <= 0)
+                return;
+
+            for (var i = 0; i < points.Length; i++)
+            {
+                var next = points[(i + 1) % points.Length];
+                Raylib.DrawLineEx(points[i], next, borderWidth, border);
+            }
+        }
+
+        private static void DrawTextCentered(string text, Rectangle bounds, int fontSize, Color color)
+        {
+            var textWidth = Raylib.MeasureText(text, fontSize);
+            var x = (int)(bounds.X + (bounds.Width - textWidth) / 2);
+            var y = (int)(bounds.Y + (bounds.Height - fontSize) / 2) - 1;
+            Raylib.DrawText(text, x, y, fontSize, color);
+        }
+
+        private static void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint)
+        {
+            if (!IsTextureReady(texture))
+                return;
+
+            var scale = MathF.Max(destination.Width / texture.Width, destination.Height / texture.Height);
+            var sourceWidth = destination.Width / scale;
+            var sourceHeight = destination.Height / scale;
+            var source = new Rectangle(
+                (texture.Width - sourceWidth) / 2f,
+                (texture.Height - sourceHeight) / 2f,
+                sourceWidth,
+                sourceHeight);
+
+            Raylib.DrawTexturePro(texture, source, destination, Vector2.Zero, 0.0f, tint);
+        }
+
+        private static void DrawTextureContain(Texture2D texture, Rectangle destination, Color tint)
+        {
+            if (!IsTextureReady(texture))
+                return;
+
+            var scale = MathF.Min(destination.Width / texture.Width, destination.Height / texture.Height);
+            var width = texture.Width * scale;
+            var height = texture.Height * scale;
+            var target = new Rectangle(
+                destination.X + (destination.Width - width) / 2f,
+                destination.Y + (destination.Height - height) / 2f,
+                width,
+                height);
+
+            Raylib.DrawTexturePro(
+                texture,
+                new Rectangle(0, 0, texture.Width, texture.Height),
+                target,
+                Vector2.Zero,
+                0.0f,
+                tint);
+        }
+
+        private static Texture2D LoadTextureIfExists(string path)
+        {
+            var resolvedPath = ResolveResourcePath(path);
+            return string.IsNullOrEmpty(resolvedPath) ? default : Raylib.LoadTexture(resolvedPath);
+        }
+
+        private static string ResolveResourcePath(string path)
+        {
+            var fileName = Path.GetFileName(path);
+            string[] candidates =
+            [
+                path,
+                Path.Combine(Environment.CurrentDirectory, path),
+                Path.Combine(Environment.CurrentDirectory, "resources", fileName),
+                Path.Combine(Environment.CurrentDirectory, "media", fileName),
+                Path.Combine(AppContext.BaseDirectory, path),
+                Path.Combine(AppContext.BaseDirectory, "resources", fileName),
+                Path.Combine(AppContext.BaseDirectory, fileName),
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "media", fileName))
+            ];
+
+            foreach (var candidate in candidates)
+            {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            return "";
+        }
+
+        private static bool IsTextureReady(Texture2D texture)
+        {
+            return texture.Id != 0 && texture.Width > 0 && texture.Height > 0;
+        }
+
+        private static string TrimMiddle(string text, int maxLength)
+        {
+            if (text.Length <= maxLength)
+                return text;
+
+            var sideLength = (maxLength - 3) / 2;
+            return text[..sideLength] + "..." + text[^sideLength..];
         }
 
         /// <summary>
