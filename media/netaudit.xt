@@ -307,7 +307,7 @@ try
     elif {spoof_upper} contains SPOOF
         call log_fail "Possible ARP spoofing detected!"
     else
-        print ""  {spoof_result}""
+        print ""{spoof_result}""
         call log_pass "Spoof check completed"
     end
 catch
@@ -322,9 +322,9 @@ call section_header "PHASE 8: Audit Summary"
 set total_checks = eval {pass_count} + {fail_count}
 
 print """"
-print ""  {divider}""
+print ""{divider}""
 print ""  ◆  NETWORK AUDIT COMPLETE""
-print ""  {divider}""
+print ""{divider}""
 print ""  Total checks : {total_checks}""
 append {log_file} ""
 append {log_file} "  {divider}"
@@ -350,7 +350,7 @@ else
     append {log_file} "  Status: MULTIPLE FAILURES — investigate above"
 end
 
-print ""  {divider}""
+print ""{divider}""
 print ""  Completed at {TIME} on {DATE}""
 print ""{divider}""
 append {log_file} "  {divider}"
