@@ -315,6 +315,11 @@ Example:
                    chain list                                : List all saved chains.
                    chain del    <name>                       : Delete a chain.
                    Example: chain create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build".
+    uninstall -- Uninstall installed applications. Use -h for additional help.
+                   uninstall -list                  : List installed applications.
+                   uninstall -list <filter>         : List installed applications matching filter text.
+                   uninstall <application_name>     : Start the uninstaller for an installed application.
+                   Example: uninstall "Google Chrome"
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

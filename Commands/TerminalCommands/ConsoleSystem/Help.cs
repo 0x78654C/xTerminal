@@ -69,6 +69,7 @@ This is the full list of commands that can be used in xTerminal:
     bench     -- Benchmark any command: reports min/avg/max/total time over N runs. Use -h for additional help.
     ctx       -- Terminal context manager: save/load/list named cwd + env-var snapshots. Use -h for additional help.
     chain     -- Named reusable command chains: create, run, add, show, list, del. Use -h for additional help.
+    uninstall -- Uninstall installed applications. Use -h for additional help.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
