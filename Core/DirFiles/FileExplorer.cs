@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
 
 namespace Core.DirFiles
 {
@@ -145,6 +146,18 @@ namespace Core.DirFiles
             _lastRenderHeight = -1;
             _lastSelectedIndex = -2;
             _lastScrollOffset  = -2;
+        }
+
+        private void EnterSearchMode()
+        {
+            _searchMode = true;
+            ForceFullRedraw();
+        }
+
+        private void ExitSearchMode()
+        {
+            _searchMode = false;
+            ForceFullRedraw();
         }
 
         private void RenderMainScreen()
@@ -622,13 +635,15 @@ namespace Core.DirFiles
             Console.Write("  Search term: ");
             Console.ForegroundColor = ClrInfoValue;
             Console.CursorVisible = true;
-            string term = Console.ReadLine();
+            int inputLeft = Console.CursorLeft;
+            int inputTop  = Console.CursorTop;
+            string term = ReadSearchTerm(inputLeft, inputTop, width - inputLeft);
             Console.CursorVisible = false;
             Console.ForegroundColor = oldFg;
 
             if (string.IsNullOrWhiteSpace(term))
             {
-                _searchMode = false;
+                ExitSearchMode();
                 return;
             }
 
@@ -667,7 +682,56 @@ namespace Core.DirFiles
                 catch (IOException) { }
             }
 
-            _searchMode = true;
+            EnterSearchMode();
+        }
+
+        private static string ReadSearchTerm(int left, int top, int width)
+        {
+            var term = new StringBuilder();
+            int inputWidth = Math.Max(1, width);
+
+            while (true)
+            {
+                var key = Console.ReadKey(intercept: true);
+
+                switch (key.Key)
+                {
+                    case ConsoleKey.Enter:
+                        Console.WriteLine();
+                        return term.ToString();
+
+                    case ConsoleKey.Escape:
+                        return null;
+
+                    case ConsoleKey.Backspace:
+                        if (term.Length == 0)
+                            return null;
+
+                        term.Remove(term.Length - 1, 1);
+                        RenderSearchTermInput(term.ToString(), left, top, inputWidth);
+                        break;
+
+                    default:
+                        if (!char.IsControl(key.KeyChar))
+                        {
+                            term.Append(key.KeyChar);
+                            RenderSearchTermInput(term.ToString(), left, top, inputWidth);
+                        }
+                        break;
+                }
+            }
+        }
+
+        private static void RenderSearchTermInput(string term, int left, int top, int width)
+        {
+            int inputWidth = Math.Max(1, width);
+            string visible = term.Length > inputWidth
+                ? term.Substring(term.Length - inputWidth)
+                : term;
+
+            WriteTrimmedAt(left, top, visible, inputWidth);
+            int cursorOffset = Math.Min(visible.Length, inputWidth - 1);
+            Console.SetCursorPosition(left + cursorOffset, top);
         }
 
         private void RenderSearchScreen()
@@ -752,7 +816,7 @@ namespace Core.DirFiles
             {
                 case ConsoleKey.Q:
                 case ConsoleKey.Escape:
-                    _searchMode = false;
+                    ExitSearchMode();
                     return true;
 
                 case ConsoleKey.UpArrow:
@@ -782,7 +846,7 @@ namespace Core.DirFiles
                             NavigateTo(item.Path);
                             _selectedIndex = 0;
                             _scrollOffset  = 0;
-                            _searchMode    = false;
+                            ExitSearchMode();
                         }
                         else
                         {
@@ -794,14 +858,14 @@ namespace Core.DirFiles
 
                 case ConsoleKey.Backspace:
                     GoBack();
-                    _searchMode = false;
+                    ExitSearchMode();
                     return true;
 
                 case ConsoleKey.U:
                     GoUp();
                     _selectedIndex = 0;
                     _scrollOffset  = 0;
-                    _searchMode    = false;
+                    ExitSearchMode();
                     return true;
 
                 case ConsoleKey.Delete:
