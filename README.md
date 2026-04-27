@@ -527,7 +527,7 @@ Example:
                    Supports pipe output (one probe round, labeled lines):
                    Example: latmon google.com 8.8.8.8 | cat -s timeout
 
-    ---------------- XS Script / C# Code Runner and Add-ons -------------
+    ---------------- TermXT / C# Code Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
                  Example 2: ccs <file_name> -p <parameter> 
@@ -546,6 +546,7 @@ Example:
                    xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
                    xt -new <script.xt>         : Create an empty script template.
                    xt -check <script.xt>       : Validate syntax without running.
+                   xt -ver                     : Display TermXT version.
 
                    Language features:
                    set <var> = <value>                : Variables with {var} interpolation.

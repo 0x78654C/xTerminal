@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
             conditionals, loops, functions, error handling and output capture.
             Every xTerminal command works as-is inside a script.
         */
-
+        private static Version s_version = new(1, 0, 0);
         public string Name => "xt";
 
         private static readonly string s_helpMessage = @"Usage of xt command:
@@ -29,6 +29,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
     xt -h                       : Display this help message.
     xt -new <script.xt>         : Create a new empty script template.
     xt -check <script.xt>       : Validate script syntax without running.
+    xt -ver                     : Display TermXT version.
 
 TermXT Script Language Reference:
     # comment                          : Line comment.
@@ -152,6 +153,12 @@ print ""Done!""
 
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory);
                 string rest = args.Substring(Name.Length).TrimStart();
+
+                if(rest.StartsWith("-ver"))
+                {
+                    FileSystem.SuccessWriteLine($"TermXT version: {s_version}");
+                    return;
+                }
 
                 // xt -new <file>
                 if (rest.StartsWith("-new "))
