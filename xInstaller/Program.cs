@@ -33,6 +33,7 @@ namespace xInstaller
         static bool s_isCopyingDone = false;
         static string s_statusPrint = "";
         static bool s_isShortAsked = false;
+        static string s_xTerminalVersion = "UNKNOWN";
         const string _bgPath1 = @"resources\banner.png";
         const string _bgPath2 = @"resources\bg1.png";
         const string _bgPath3 = @"resources\bg2.png";
@@ -114,6 +115,8 @@ namespace xInstaller
                 sourceDir = _sourceDirX64;
             else
                 sourceDir = _sourceDirX86;
+
+            s_xTerminalVersion = GetFileVersionLabel(Path.Combine(sourceDir, "xTerminal.exe"));
 
             var iconPath = ResolveResourcePath(_latestIconPath);
             if (string.IsNullOrEmpty(iconPath))
@@ -469,11 +472,12 @@ namespace xInstaller
             DrawIconPanel(new Rectangle(58, 82, 60, 60), appLogo);
 
             Raylib.DrawText("xTerminal", 142, 78, 34, s_textPrimary);
-            Raylib.DrawText("SIMPLE SHELL FOR WINDOWS", 146, 116, 15, new Color(247, 211, 76, 245));
-            Raylib.DrawText("Local shell install with registry and shortcut setup.", 146, 141, 13, s_textSecondary);
+            Raylib.DrawText("A MODERN SHELL FOR WINDOWS", 146, 116, 15, new Color(247, 211, 76, 245));
+            Raylib.DrawText("Local shell installer.", 146, 141, 13, s_textSecondary);
 
-            DrawInfoCard(516, 84, 96, "ARCH", Environment.Is64BitOperatingSystem ? "X64" : "X86", s_accent);
-            DrawInfoCard(624, 84, 102, "SESSION", s_isAdmin ? "ADMIN" : "USER", s_accentHover);
+            DrawInfoCard(398, 84, 104, "VERSION", s_xTerminalVersion, s_accentHover);
+            DrawInfoCard(514, 84, 96, "ARCH", Environment.Is64BitOperatingSystem ? "x64" : "x86", s_accent);
+            DrawInfoCard(622, 84, 104, "SESSION", s_isAdmin ? "ADMIN" : "USER", s_accentHover);
             DrawTechReadout(new Rectangle(516, 144, 210, 10), 0.68f, s_accent);
         }
 
@@ -730,6 +734,20 @@ namespace xInstaller
         private static bool IsTextureReady(Texture2D texture)
         {
             return texture.Id != 0 && texture.Width > 0 && texture.Height > 0;
+        }
+
+        private static string GetFileVersionLabel(string filePath)
+        {
+            if (!File.Exists(filePath))
+                return "UNKNOWN";
+
+            var versionInfo = FileVersionInfo.GetVersionInfo(filePath);
+            if (string.IsNullOrWhiteSpace(versionInfo.FileVersion))
+                return "UNKNOWN";
+
+            return Version.TryParse(versionInfo.FileVersion, out var version)
+                ? version.ToString()
+                : versionInfo.FileVersion;
         }
 
         private static string TrimMiddle(string text, int maxLength)
