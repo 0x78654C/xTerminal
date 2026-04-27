@@ -717,7 +717,7 @@ For that we use following command:
 
 TermXT is the xTerminal scripting language. It runs `.xt` files and can execute any xTerminal command, capture command output, use variables, branch, loop, call functions, and read/write files.
 
-Full manual: [Documents/TermXT_Scripting_Language_Manual_User_Manual.pdf](Documents/TermXT_Scripting_Language_Manual_User_Manual.pdf)
+Full manual: [Documents/TermXT_Scripting_Language_Manual_User_Manual_v1.0.0.pdf](Documents/TermXT_Scripting_Language_Manual_User_Manual.pdf)
 
 Sample script: [media/netaudit.xt](media/netaudit.xt)
 
