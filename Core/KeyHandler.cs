@@ -37,6 +37,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Text.RegularExpressions;
 using Json = Core.SystemTools.JsonManage;
 using AliasC = Core.SystemTools.AliasC;
 
@@ -57,6 +58,7 @@ namespace Core
         private int _completionsIndex;
         private IConsole Console2;
         private string _multiParam = "";
+        private static readonly Regex s_quotedPathRegex = new Regex(@"""([^""]+)""", RegexOptions.Compiled);
         private bool IsStartOfLine() => _cursorPos == 0;
 
         private bool IsEndOfLine() => _cursorPos == _cursorLimit;
@@ -129,6 +131,55 @@ namespace Core
         {
             foreach (char character in str)
                 WriteChar(character);
+        }
+
+        private void TrimDroppedPathQuotes()
+        {
+            string input = _text.ToString();
+            string trimmedInput = TrimQuotedPathSegments(input);
+
+            if (trimmedInput == input)
+                return;
+
+            int cursorPos = TrimQuotedPathSegments(input.Substring(0, _cursorPos)).Length;
+            WriteNewString(trimmedInput);
+
+            while (_cursorPos > cursorPos)
+                MoveCursorLeft();
+        }
+
+        private static string TrimQuotedPathSegments(string input)
+        {
+            return s_quotedPathRegex.Replace(input, match =>
+            {
+                string path = match.Groups[1].Value.Trim();
+                return IsExistingWindowsPath(path) ? path : match.Value;
+            });
+        }
+
+        private static bool IsExistingWindowsPath(string path)
+        {
+            if (!LooksLikeWindowsPath(path))
+                return false;
+
+            try
+            {
+                return File.Exists(path) || Directory.Exists(path);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool LooksLikeWindowsPath(string path)
+        {
+            if (path.Length < 3)
+                return false;
+
+            return char.IsLetter(path[0]) && path[1] == ':' && (path[2] == '\\' || path[2] == '/') ||
+                path.StartsWith(@"\\") ||
+                path.StartsWith("//");
         }
 
         private void WriteChar() => WriteChar(_keyInfo.KeyChar);
@@ -498,6 +549,7 @@ namespace Core
                 if (!char.IsControl(_keyInfo.KeyChar))
                 {
                     WriteChar();
+                    TrimDroppedPathQuotes();
                 }
             }
         }
