@@ -712,6 +712,124 @@ For that we use following command:
  ```
  pwm -delv
  ```
+## TermXT Scripting Language
+
+TermXT is the xTerminal scripting language. It runs `.xt` files and can execute any xTerminal command, capture command output, use variables, branch, loop, call functions, and read/write files.
+
+Full manual: [Documents/TermXT_Scripting_Language_Manual_User_Manual.pdf](Documents/TermXT_Scripting_Language_Manual_User_Manual.pdf)
+
+Sample script: [media/netaudit.xt](media/netaudit.xt)
+
+### Running Scripts
+
+```text
+xt script.xt
+xt script.xt -p production 8080
+xt -new script.xt
+xt -check script.xt
+xt -h
+```
+
+Arguments passed after `-p` are available as `{1}`, `{2}`, and so on.
+
+### Language Reference
+
+| Syntax | Description |
+| --- | --- |
+| `# comment` | Line comment. |
+| `set name = value` | Create or update a variable. |
+| `set n = eval 2 + 3 * 4` | Math expression with `+`, `-`, `*`, `/`, `%`, and parentheses. |
+| `set x = upper text` | Convert to uppercase. |
+| `set x = lower text` | Convert to lowercase. |
+| `set x = len text` | Get text length. |
+| `set x = trim text` | Trim whitespace. |
+| `set x = substr text start length` | Extract a substring. |
+| `set x = replace text old new` | Replace text. |
+| `print "Hello {name}"` | Print interpolated text. |
+| `run command` | Run any xTerminal command. Pipes are supported. |
+| `capture var = command` | Run a command and store stdout in a variable. Pipes are supported. |
+| `input var = "Prompt"` | Read user input. |
+| `if condition`, `elif`, `else`, `end` | Conditional blocks. |
+| `loop 5`, `end` | Repeat a block. `{i}` is the 1-based iteration. |
+| `while condition`, `end` | Loop while a condition is true. |
+| `each item in a,b,c`, `end` | Iterate comma-separated values. |
+| `each n in 1..5`, `end` | Iterate an inclusive numeric range. |
+| `each line in lines:var`, `end` | Iterate lines stored in a variable. |
+| `func name`, `call name args`, `return value`, `end` | Define and call reusable functions. |
+| `try`, `catch`, `end` | Handle command/script errors. |
+| `break`, `continue` | Control loops. |
+| `read var = file` | Read a file into a variable. |
+| `write file "text"` | Write a file, overwriting existing content. |
+| `append file "text"` | Append text to a file. |
+| `wait ms` | Pause execution. |
+| `exit` | Stop the script. |
+
+### Conditions
+
+TermXT supports truthy checks, `not`, logical operators, numeric comparisons, and text comparisons.
+
+```text
+if {env} == production
+if {count} >= 10
+if {name} contains admin
+if {path} startswith C:\
+if {file} endswith .log
+if not {error}
+if {host} == google.com || {host} == cloudflare.com
+if {ok} == true && {error} == false
+```
+
+Supported operators:
+
+```text
+==  !=  >  <  >=  <=  contains  startswith  endswith
+```
+
+### Built-in Variables
+
+| Variable | Value |
+| --- | --- |
+| `{DATE}` | Current date as `yyyy-MM-dd`. |
+| `{TIME}` | Current time as `HH:mm:ss`. |
+| `{USER}` | Current Windows username. |
+| `{PC}` | Computer name. |
+| `{CWD}` | Current xTerminal working directory. |
+| `{i}` | Current loop iteration. |
+| `{result}` | Return value from the last function call. |
+| `{error}` | `true` when the last command failed, otherwise `false`. |
+| `{error_message}` | Message from the last caught error. |
+
+### Example Script
+
+Save as `healthcheck.xt`:
+
+```text
+# Basic TermXT health check
+set target = {1}
+
+capture ip = extip
+print "External IP: {ip}"
+
+try
+    capture ping_result = ping {target}
+    print "{ping_result}"
+catch
+    print "Ping failed: {error_message}"
+end
+
+set hosts = google.com,cloudflare.com,8.8.8.8
+each host in {hosts}
+    print "Port check: {host}:443"
+    run cport {host} -p 443 --noping
+end
+```
+
+Run it:
+
+```text
+xt healthcheck.xt -p github.com
+```
+
 
 ## Usage of pipe commands
 
