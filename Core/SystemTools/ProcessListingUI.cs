@@ -65,9 +65,7 @@ namespace Core.SystemTools
         private Dictionary<int, double> _cpuUsages = new();
         private readonly Dictionary<int, TimeSpan> _prevCpuTimes = new();
         private readonly Dictionary<int, string> _userCache = new();
-
-        private readonly PerformanceCounter _cpuCounter =
-            new("Processor", "% Processor Time", "_Total");
+        private readonly HashSet<int> _pendingUserLookups = new();
 
         private double _cpuPct;
         private double _memPct;
@@ -130,9 +128,6 @@ namespace Core.SystemTools
 
             try
             {
-                _cpuCounter.NextValue();
-                Thread.Sleep(30); // just needs to prime; doesn't need to settle
-
                 _cpuPctDraw = 0;
                 _memPctDraw = 0;
 
@@ -146,7 +141,6 @@ namespace Core.SystemTools
             finally
             {
                 try { Console.Write(ShowCursor + NormalScreen); } catch { }
-                _cpuCounter.Dispose();
             }
         }
 
@@ -154,57 +148,76 @@ namespace Core.SystemTools
         private void SampleLoop()
         {
             DateTime prev = DateTime.UtcNow;
+            PerformanceCounter? cpuCounter = null;
+            bool cpuCounterPrimed = false;
 
-            while (!_exitRequested)
+            try
             {
-                try
+                while (!_exitRequested)
                 {
-                    double cpu = _cpuCounter.NextValue();
-                    (double mUsed, double mTotal, double mPct) = GetMemInfo();
-
-                    Process[] procs = Process.GetProcesses();
-                    DateTime now = DateTime.UtcNow;
-                    double dt = Math.Max((now - prev).TotalSeconds, 0.001);
-                    prev = now;
-
-                    var newCpu = new Dictionary<int, double>(procs.Length);
-                    var liveIds = new HashSet<int>(procs.Length);
-
-                    foreach (Process p in procs)
+                    try
                     {
-                        try
+                        Process[] procs = Process.GetProcesses();
+                        DateTime now = DateTime.UtcNow;
+                        double dt = Math.Max((now - prev).TotalSeconds, 0.001);
+                        prev = now;
+
+                        (double mUsed, double mTotal, double mPct) = GetMemInfo();
+
+                        lock (_lock)
                         {
-                            liveIds.Add(p.Id);
-                            TimeSpan t = p.TotalProcessorTime;
-
-                            newCpu[p.Id] = _prevCpuTimes.TryGetValue(p.Id, out TimeSpan prevT)
-                                ? Math.Clamp((t - prevT).TotalSeconds / dt / Environment.ProcessorCount * 100.0, 0, 100)
-                                : 0.0;
-
-                            _prevCpuTimes[p.Id] = t;
+                            _cachedProcs = procs; // render can draw as soon as the cheap snapshot is available
+                            _memUsed = mUsed;
+                            _memTotal = mTotal;
+                            _memPct = Math.Clamp(mPct, 0, 100);
                         }
-                        catch { }
+
+                        var newCpu = new Dictionary<int, double>(procs.Length);
+                        var liveIds = new HashSet<int>(procs.Length);
+
+                        foreach (Process p in procs)
+                        {
+                            try
+                            {
+                                liveIds.Add(p.Id);
+                                TimeSpan t = p.TotalProcessorTime;
+
+                                newCpu[p.Id] = _prevCpuTimes.TryGetValue(p.Id, out TimeSpan prevT)
+                                    ? Math.Clamp((t - prevT).TotalSeconds / dt / Environment.ProcessorCount * 100.0, 0, 100)
+                                    : 0.0;
+
+                                _prevCpuTimes[p.Id] = t;
+                            }
+                            catch { }
+                        }
+
+                        foreach (int dead in _prevCpuTimes.Keys.Except(liveIds).ToArray())
+                            _prevCpuTimes.Remove(dead);
+
+                        bool hasCpu = TryReadSystemCpu(ref cpuCounter, ref cpuCounterPrimed, out double cpu);
+
+                        lock (_lock)
+                        {
+                            _cpuUsages = newCpu;
+
+                            if (hasCpu)
+                                _cpuPct = Math.Clamp(cpu, 0, 100);
+
+                            foreach (int dead in _userCache.Keys.Except(liveIds).ToArray())
+                                _userCache.Remove(dead);
+
+                            foreach (int dead in _pendingUserLookups.Except(liveIds).ToArray())
+                                _pendingUserLookups.Remove(dead);
+                        }
                     }
+                    catch { }
 
-                    foreach (int dead in _prevCpuTimes.Keys.Except(liveIds).ToArray())
-                        _prevCpuTimes.Remove(dead);
-
-                    lock (_lock)
-                    {
-                        _cpuUsages = newCpu;
-                        _cpuPct = Math.Clamp(cpu, 0, 100);
-                        _memUsed = mUsed;
-                        _memTotal = mTotal;
-                        _memPct = Math.Clamp(mPct, 0, 100);
-                        _cachedProcs = procs; // render reads this; no extra GetProcesses() needed
-
-                        foreach (int dead in _userCache.Keys.Except(liveIds).ToArray())
-                            _userCache.Remove(dead);
-                    }
+                    Thread.Sleep(1000);
                 }
-                catch { }
-
-                Thread.Sleep(1000);
+            }
+            finally
+            {
+                cpuCounter?.Dispose();
             }
         }
 
@@ -393,7 +406,7 @@ namespace Core.SystemTools
 
         private void RenderFrame()
         {
-            Process[] procs;
+            Process[] cachedProcs;
             Dictionary<int, double> cpuSnap;
             double cpuPct, memPct, memUsed, memTotal;
             int sel;
@@ -404,10 +417,7 @@ namespace Core.SystemTools
 
             lock (_lock)
             {
-                procs = SortedCachedProcesses(); // uses sampler's cached list — no extra GetProcesses()
-                _lastProcessCount = procs.Length;
-                _selectedIndex = Math.Clamp(_selectedIndex, 0, Math.Max(0, procs.Length - 1));
-
+                cachedProcs = _cachedProcs;
                 cpuSnap = _cpuUsages;
                 cpuPct = _cpuPct;
                 memPct = _memPct;
@@ -422,6 +432,15 @@ namespace Core.SystemTools
                 statusText = DateTime.UtcNow <= _statusExp
                     ? _status
                     : "↑↓  navigate    K  kill    /  search    C M N  sort    Q  quit";
+            }
+
+            Process[] procs = SortProcesses(cachedProcs, cpuSnap, sort);
+
+            lock (_lock)
+            {
+                _lastProcessCount = procs.Length;
+                _selectedIndex = Math.Clamp(_selectedIndex, 0, Math.Max(0, procs.Length - 1));
+                sel = _selectedIndex;
             }
 
             (int W, int H) = WinSize();
@@ -674,15 +693,8 @@ namespace Core.SystemTools
 
         // ── Process helpers ──────────────────────────────────────────────────
 
-        // Used by the render thread — sorts the sampler's cached process snapshot.
-        // Never calls Process.GetProcesses(), so the render loop has zero process-enumeration cost.
-        private Process[] SortedCachedProcesses()
+        private static Process[] SortProcesses(Process[] all, Dictionary<int, double> snap, SortMode sort)
         {
-            // _lock is already held by the caller (RenderFrame)
-            Process[] all = _cachedProcs;
-            Dictionary<int, double> snap = _cpuUsages;
-            SortMode sort = _sortMode;
-
             return sort switch
             {
                 SortMode.CPU => all.OrderByDescending(p => snap.TryGetValue(p.Id, out double c) ? c : 0)
@@ -706,32 +718,41 @@ namespace Core.SystemTools
 
             Process[] all = Process.GetProcesses();
 
-            return sort switch
-            {
-                SortMode.CPU => all.OrderByDescending(p => snap.TryGetValue(p.Id, out double c) ? c : 0)
-                                   .ThenBy(SafeName).ToArray(),
-
-                SortMode.Memory => all.OrderByDescending(SafeMemBytes)
-                                      .ThenBy(SafeName).ToArray(),
-
-                _ => all.OrderBy(SafeName).ToArray()
-            };
+            return SortProcesses(all, snap, sort);
         }
 
         private string CachedUser(Process p)
         {
+            int pid;
+
+            try { pid = p.Id; }
+            catch { return "—"; }
+
+            bool shouldQueueLookup = false;
+
             lock (_lock)
             {
-                if (_userCache.TryGetValue(p.Id, out string? u))
+                if (_userCache.TryGetValue(pid, out string? u))
                     return u;
+
+                shouldQueueLookup = _pendingUserLookups.Add(pid);
             }
 
+            if (shouldQueueLookup)
+                ThreadPool.QueueUserWorkItem(_ => ResolveUser(pid, p));
+
+            return "…";
+        }
+
+        private void ResolveUser(int pid, Process p)
+        {
             string user = GetUser(p);
 
             lock (_lock)
-                _userCache[p.Id] = user;
-
-            return user;
+            {
+                _pendingUserLookups.Remove(pid);
+                _userCache[pid] = user;
+            }
         }
 
         private string GetUser(Process p)
@@ -775,6 +796,36 @@ namespace Core.SystemTools
             double used = Math.Max(0, tot - avl);
 
             return (used, tot, tot <= 0 ? 0 : used / tot * 100.0);
+        }
+
+        private static bool TryReadSystemCpu(
+            ref PerformanceCounter? counter,
+            ref bool primed,
+            out double cpu)
+        {
+            cpu = 0;
+
+            try
+            {
+                counter ??= new PerformanceCounter("Processor", "% Processor Time", "_Total", readOnly: true);
+                double next = counter.NextValue();
+
+                if (!primed)
+                {
+                    primed = true;
+                    return false;
+                }
+
+                cpu = next;
+                return true;
+            }
+            catch
+            {
+                try { counter?.Dispose(); } catch { }
+                counter = null;
+                primed = false;
+                return false;
+            }
         }
 
         private void Status(string msg, int ms = 2400)
