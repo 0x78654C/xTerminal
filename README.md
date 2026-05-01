@@ -492,7 +492,6 @@ Example:
                          Example2: wget <url> -o <directory_path>
                  WGet command can be used with --noping parameter to disable ping check on hostname/ip.
                  Example: wget <url> -o <directory_path> --noping
-    email     -- Email sender client for Microsoft (all), Yahoo, Gmail!
     ping      -- Pings a IP/Hostname.
                  Example 1: ping google.com  (for normal ping with 4 replies)
                  Example 2: ping google.com -t 10  (for 10 replies)
