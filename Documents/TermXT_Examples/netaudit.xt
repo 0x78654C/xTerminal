@@ -165,13 +165,13 @@ end
 call section_header "PHASE 4: Port Scan"
 
 # Use CLI parameters if provided, otherwise scan common ports on 8.8.8.8
-if {1} != {1}
+if {1} != null
     set scan_host = {1}
 else
     set scan_host = 8.8.8.8
 end
 
-if {2} != {2}
+if {2} != null
     set scan_ports = {2}
 else
     set scan_ports = 53,80,443
