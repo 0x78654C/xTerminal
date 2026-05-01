@@ -1,0 +1,83 @@
+# ═══════════════════════════════════════════════════════════════
+#  portcheck.xt — Port Availability Checker
+#  Checks a comma-separated list of ports on a target host and
+#  summarises which are open or closed.
+#
+#  Usage   : xt portcheck.xt -p <host> <ports>
+#  Example : xt portcheck.xt -p github.com 22,80,443
+#
+#  Defaults to scanning 8.8.8.8 on ports 53,80,443
+#  when no parameters are supplied.
+# ═══════════════════════════════════════════════════════════════
+print {1}
+# ── Parameters (with defaults) ───────────────────────────────
+if {1} != null
+    set host = {1}
+else
+    set host = 8.8.8.8
+end
+
+if {2} != null
+    set ports = {2}
+else
+    set ports = 53,80,443
+end
+
+# ── Setup ─────────────────────────────────────────────────────
+set open_count   = 0
+set closed_count = 0
+set div          = ════════════════════════════════════════════════
+set thin         = ────────────────────────────────────────────────
+
+print ""
+print "{div}"
+print "  Port Checker"
+print "  Host  : {host}"
+print "  Ports : {ports}"
+print "{div}"
+print ""
+
+# ── Resolve external IP for context ──────────────────────────
+try
+    capture my_ip = extip
+    print "  My IP : {my_ip}"
+    print ""
+catch
+    print "  (could not resolve external IP)"
+    print ""
+end
+
+# ── Scan each port ────────────────────────────────────────────
+print "{thin}"
+each port in {ports}
+    try
+        capture result = cport {host} -p {port}
+        set result_up = upper {result}
+        if {result_up} contains OPEN
+            print "  Port {port:5}  →  🟢 OPEN"
+            set open_count = eval {open_count} + 1
+        else
+            print "  Port {port:5}  →  🔴 CLOSED"
+            set closed_count = eval {closed_count} + 1
+        end
+    catch
+        print "  Port {port:5}  →  ⚠️  ERROR — {error_message}"
+        set closed_count = eval {closed_count} + 1
+    end
+end
+print "{thin}"
+print ""
+
+# ── Summary ───────────────────────────────────────────────────
+set total = eval {open_count} + {closed_count}
+
+print "  Total : {total}   Open : {open_count}   Closed : {closed_count}"
+
+if {open_count} > 0
+    print "  ✅ {open_count} open port(s) found on {host}."
+else
+    print "  ℹ️  No open ports detected on {host}."
+end
+
+print ""
+print "{div}"

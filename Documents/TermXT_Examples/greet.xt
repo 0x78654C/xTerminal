@@ -1,0 +1,73 @@
+# ═══════════════════════════════════════════════════════════════
+#  greet.xt — TermXT Basics Demo
+#  Demonstrates: variables, input, conditions, loops, functions.
+#  Usage: xt greet.xt
+# ═══════════════════════════════════════════════════════════════
+
+func banner
+    print "  ╔════════════════════════════╗"
+    print "  ║   Welcome to xTerminal!    ║"
+    print "  ╚════════════════════════════╝"
+end
+
+func greet
+    set name_up = upper {1}
+    print "  Hello, {name_up}! Nice to meet you."
+end
+
+func pluralise
+    # {1} = count, {2} = singular word
+    if {1} == 1
+        return {2}
+    end
+    set word_plural = {2}s
+    return {word_plural}
+end
+
+# ── Greeting ─────────────────────────────────────────────────
+call banner
+print ""
+
+input username = "  Enter your name: "
+
+if not {username}
+    set username = Stranger
+end
+
+call greet {username}
+print ""
+print "  Today : {DATE}"
+print "  Time  : {TIME}"
+print "  User  : {USER}  on  {PC}"
+print ""
+
+# ── Counting loop ─────────────────────────────────────────────
+input count_to = "  Count to how many? (default 5): "
+
+if not {count_to}
+    set count_to = 5
+end
+
+print ""
+print "  Counting to {count_to}:"
+each n in 1..{count_to}
+    print "    {n}"
+    wait 200
+end
+print ""
+
+# ── Favourite languages ───────────────────────────────────────
+set langs  = C#,Python,Go,Rust,JavaScript
+set picked = 0
+
+print "  Known languages:"
+each lang in {langs}
+    print "    • {lang}"
+    set picked = eval {picked} + 1
+end
+
+call pluralise {picked} "language"
+print ""
+print "  {picked} {result} listed above."
+print ""
+print "  Goodbye, {username}! Have fun with xTerminal 🚀"
