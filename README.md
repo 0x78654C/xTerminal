@@ -831,6 +831,18 @@ Run it:
 xt healthcheck.xt -p github.com
 ```
 
+### Example Scripts
+
+Ready-to-run `.xt` scripts are provided in the [`Documents/TermXT_Examples/`](Documents/TermXT_Examples/) folder.
+
+| Script | Description | Usage |
+| --- | --- | --- |
+| [`greet.xt`](Documents/TermXT_Examples/greet.xt) | Beginner demo — variables, `input`, `if`, numeric range loop, `func`/`call`/`return`. | `xt greet.xt` |
+| [`countdown.xt`](Documents/TermXT_Examples/countdown.xt) | Countdown timer using `while`, `eval` arithmetic, and `wait`. Warns at ≤ 5 seconds. | `xt countdown.xt -p 30 "Coffee break"` |
+| [`portcheck.xt`](Documents/TermXT_Examples/portcheck.xt) | Checks a comma-separated list of ports on a target host and summarises open / closed results. | `xt portcheck.xt -p github.com 22,80,443` |
+| [`sysreport.xt`](Documents/TermXT_Examples/sysreport.xt) | Collects PC, BIOS, storage, network interface, and external-IP info and saves a timestamped report file. | `xt sysreport.xt` |
+| [`netaudit.xt`](Documents/TermXT_Examples/netaudit.xt) | Advanced network audit — NIC inventory, DNS reachability sweep, port scan, traceroute analysis, and a scored summary log. | `xt netaudit.xt -p google.com 80,443` |
+
 
 ## Usage of pipe commands
 
