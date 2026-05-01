@@ -181,7 +181,7 @@ namespace xInstaller
                 else if (s_isCopyingDone && !isAlreadyInstalled)
                     progress = 1f;
 
-                DrawInstallerFooter(GetStatusText(isButtonClicked, isInstalling, s_isCopyingDone, isAlreadyInstalled), progress, isInstalling, s_isCopyingDone, isAlreadyInstalled, timer);
+                DrawInstallerFooter(GetStatusText(isButtonClicked, isInstalling, s_isCopyingDone, isAlreadyInstalled, timer), progress, isInstalling, s_isCopyingDone, isAlreadyInstalled, timer);
 
                 // Install button action.
                 if (InstallButton(s_installButtonBounds, isInstalling ? "DEPLOYING" : "DEPLOY", !isInstalling))
@@ -269,7 +269,7 @@ namespace xInstaller
             DrawHeroBackdrop(IsTextureReady(background));
             DrawHeroPattern(timer);
             DrawCockpitFrame();
-            DrawBrandLockup(appLogo);
+            DrawBrandLockup(appLogo, timer);
             DrawTerminalPreview();
         }
 
@@ -462,7 +462,7 @@ namespace xInstaller
                 : new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
         }
 
-        private static void DrawBrandLockup(Texture2D appLogo)
+        private static void DrawBrandLockup(Texture2D appLogo, float timer)
         {
             var panel = new Rectangle(34, 56, 732, 118);
             DrawAngledPanel(new Rectangle(panel.X + 8, panel.Y + 9, panel.Width, panel.Height), 18, new Color(0, 0, 0, 146), new Color(0, 0, 0, 0), 0);
@@ -478,7 +478,7 @@ namespace xInstaller
             DrawInfoCard(398, 84, 104, "VERSION", s_xTerminalVersion, s_accentHover);
             DrawInfoCard(514, 84, 96, "ARCH", Environment.Is64BitOperatingSystem ? "x64" : "x86", s_accent);
             DrawInfoCard(622, 84, 104, "SESSION", s_isAdmin ? "ADMIN" : "USER", s_accentHover);
-            DrawTechReadout(new Rectangle(516, 144, 210, 10), 0.68f, s_accent);
+            DrawTechReadout(new Rectangle(516, 144, 210, 10), 0.64f + MathF.Sin(timer * 1.8f) * 0.08f, s_accent);
         }
 
         private static void DrawTerminalPreview()
@@ -560,7 +560,12 @@ namespace xInstaller
             Raylib.DrawRectangle(0, HeroHeight, WindowWidth, WindowHeight - HeroHeight, new Color(2, 4, 8, 255));
             Raylib.DrawRectangle(0, HeroHeight, WindowWidth, 1, new Color(247, 211, 76, 116));
 
-            DrawAngledPanel(new Rectangle(22, 386, 582, 70), 14, s_panelDeep, new Color(62, 218, 235, 92), 1.2f);
+            var footerBorder = isAlreadyInstalled
+                ? new Color(236, 82, 74, 92)
+                : isDone
+                    ? new Color(107, 229, 129, (int)(62 + 44 * MathF.Abs(MathF.Sin(timer * 2.2f))))
+                    : new Color(62, 218, 235, 92);
+            DrawAngledPanel(new Rectangle(22, 386, 582, 70), 14, s_panelDeep, footerBorder, 1.2f);
             Raylib.DrawText(statusText.ToUpperInvariant(), 42, 399, 17, isAlreadyInstalled ? s_warning : isDone ? s_success : s_textPrimary);
 
             var detail = isAlreadyInstalled
@@ -572,10 +577,10 @@ namespace xInstaller
 
             DrawProgressBar(new Rectangle(42, 424, 520, 9), progress, isInstalling, isDone, isAlreadyInstalled, timer);
 
-            if (isInstalling)
+            if (isInstalling || isDone)
             {
-                var percent = $"{Math.Clamp((int)(progress * 100), 0, 100)}%";
-                Raylib.DrawText(percent, 566, 421, 13, s_accentHover);
+                var pct = isDone ? 100 : Math.Clamp((int)(progress * 100), 0, 100);
+                Raylib.DrawText($"{pct}%", 566, 421, 13, isDone ? s_success : s_accentHover);
             }
         }
 
@@ -605,14 +610,17 @@ namespace xInstaller
             }
         }
 
-        private static string GetStatusText(bool wasInstallClicked, bool isInstalling, bool isDone, bool isAlreadyInstalled)
+        private static string GetStatusText(bool wasInstallClicked, bool isInstalling, bool isDone, bool isAlreadyInstalled, float timer)
         {
             if (isAlreadyInstalled && wasInstallClicked)
                 return "xTerminal is already installed";
             if (isDone)
                 return "Deployment complete";
             if (isInstalling)
-                return "Transferring xTerminal payload";
+            {
+                var dotCount = (int)(timer * 3f) % 4;
+                return "Transferring xTerminal payload" + new string('.', dotCount);
+            }
             return "Ready to deploy xTerminal";
         }
 
@@ -798,15 +806,15 @@ namespace xInstaller
             if (File.Exists(destFile) && versionCompare < 0)
             {
                 MessageBox(IntPtr.Zero, $"You already have the newest version for xTerminal!", "xTerminal-Installer", 0x00000000 | 0x00000030);
-                s_statusPrint = "xTerminal is allready installed!";
+                s_statusPrint = "xTerminal is already installed!";
                 Environment.Exit(0);
             }
 
             // If same version (already installed).
             if (File.Exists(destFile) && versionCompare == 0)
             {
-                s_statusPrint = "xTerminal is allready installed!";
-                var result = MessageBox(IntPtr.Zero, "xTerminal is allready installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
+                s_statusPrint = "xTerminal is already installed!";
+                var result = MessageBox(IntPtr.Zero, "xTerminal is already installed. Do you want to repair it?", "xTerminal-Installer", 0x00000004 | 0x00000020);
                 if (result != 6)
                     Environment.Exit(0);
                 else
@@ -920,7 +928,7 @@ namespace xInstaller
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erorr" + ex.ToString());
+                Console.WriteLine("Error: " + ex.ToString());
             }
         }
 
