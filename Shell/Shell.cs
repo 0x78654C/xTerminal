@@ -399,6 +399,7 @@ namespace Shell
                 string param = string.Join(" ", ParamHandler(args));
                 if (!string.IsNullOrEmpty(param))
                 {
+                    File.WriteAllText(GlobalVariables.currentDirectory, Directory.GetCurrentDirectory());
                     SettingsLoad();
                     ExecuteCommands(param);
                     GlobalVariables.pipeCmdOutput = string.Empty;
@@ -511,7 +512,6 @@ namespace Shell
             }
 
             if (ExecuteParamCommands(args)) { return; }
-            ;
 
             // We loop until exit commands is hit
             do
@@ -849,6 +849,7 @@ namespace Shell
         {
             s_historyLimitSize = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
             int historyLimitSize = GlobalVariables.historyLimitSize;
+            var isValidCommand = false;
             if (s_historyLimitSize != "")
                 historyLimitSize = Int32.Parse(s_historyLimitSize);
             int countLines = File.ReadAllLines(historyFile).Count();
@@ -861,7 +862,9 @@ namespace Shell
                     tempList.Add(lines.ElementAt(i));
             }
 
-            if (!commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory"))
+            isValidCommand = !commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory");
+
+            if(isValidCommand || commandInput.StartsWith("chain"))
             {
                 if (!string.IsNullOrWhiteSpace(commandInput) && !string.IsNullOrEmpty(commandInput))
                 {

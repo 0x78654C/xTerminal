@@ -108,7 +108,11 @@ Command can be canceled with CTRL+X key combination.
                     }
 
                     var rtt = reply.RoundtripTime;
-                    string status = reply.Status.ToString();
+                    string status = reply.Status switch
+                    {
+                        IPStatus.TtlExpired => "Forwarded",
+                        _ => reply.Status.ToString()
+                    };
                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                         GlobalVariables.pipeCmdOutput += $"Hop {sentTtl} - Host: {hostname} ({address}), RoundTrip: {rtt} ms, Status: {status}\n";
                     else

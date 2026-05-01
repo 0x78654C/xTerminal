@@ -1,0 +1,59 @@
+# ═══════════════════════════════════════════════════════════════
+#  countdown.xt — Countdown Timer
+#  Counts down from N seconds and fires an alert when done.
+#  Demonstrates: while loop, math eval, wait, and conditions.
+#
+#  Usage   : xt countdown.xt -p <seconds> [label]
+#  Example : xt countdown.xt -p 30 "Build timeout"
+#
+#  Defaults to 10 seconds when no parameter is supplied.
+# ═══════════════════════════════════════════════════════════════
+
+# ── Parameters ───────────────────────────────────────────────
+if {1} != {1}
+    set seconds = {1}
+else
+    set seconds = 10
+end
+
+if {2} != {2}
+    set label = {2}
+else
+    set label = Countdown
+end
+
+# ── Validate ─────────────────────────────────────────────────
+if {seconds} <= 0
+    print "  ⚠️  Seconds must be greater than 0. Using 10."
+    set seconds = 10
+end
+
+set div = ──────────────────────────────────────────────────
+
+print ""
+print "{div}"
+print "  ⏱  {label}"
+print "  Starting at {seconds} second(s)  —  {TIME}"
+print "{div}"
+print ""
+
+# ── Timer loop ────────────────────────────────────────────────
+set remaining = {seconds}
+
+while {remaining} > 0
+    if {remaining} <= 5
+        print "  ⚠️  {remaining}..."
+    else
+        print "  {remaining}..."
+    end
+    wait 1000
+    set remaining = eval {remaining} - 1
+end
+
+# ── Done ──────────────────────────────────────────────────────
+print ""
+print "{div}"
+print "  🔔  Time's up! — {label}"
+print "  Finished at {TIME}"
+print "{div}"
+print ""

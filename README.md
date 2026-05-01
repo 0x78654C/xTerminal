@@ -259,6 +259,67 @@ Example:
                     M   : Sort processes by memory usage.
                     N   : Sort processes by name.
     ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
+    env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
+                   env                                     : List all variables across Process, User and System sections.
+                   env -t <user|system|process>            : List variables for the specified scope only.
+                   env [-t <scope>] get <NAME>             : Get a variable's value.
+                   env [-t <scope>] set <NAME> <VALUE>     : Set (overwrite) a variable.
+                   env [-t <scope>] del <NAME>             : Delete a variable.
+                   env [-t <scope>] addval <NAME> <VALUE>  : Append an entry to a semicolon-separated variable (e.g. PATH).
+                   env [-t <scope>] delval <NAME> <VALUE>  : Remove an entry from a semicolon-separated variable.
+                   env [-t <scope>] load <file>            : Load variables from a .env file.
+                   env [-t <scope>] export <file>          : Export variables to a .env file.
+                   Note: 'system' scope requires elevated (Administrator) privileges to write.
+                   Example: env -t user addval PATH C:\MyTool\bin
+                   Example: env -t system get PATH
+    watch     -- Re-run a command at a fixed interval and refresh its output. Use -h for additional help.
+                   watch -n <seconds> <command>  : Run command every N seconds (default: 2).
+                   watch -c <command>            : Clear screen between runs.
+                   Press Q or Esc to quit.
+                   Example: watch -n 5 "plist"
+    note      -- Persistent terminal notepad. Use -h for additional help.
+                   note add <text>   : Add a new note.
+                   note list         : List all saved notes with index.
+                   note del <index>  : Delete note at given index.
+                   note clear        : Delete all notes.
+                   Example: note add Remember to update the config
+    fsmon     -- Real-time file system monitor. Use -h for additional help.
+                   fsmon [path]                    : Monitor the current (or given) directory for changes.
+                   fsmon -r [path]                 : Monitor recursively including all sub-directories.
+                   fsmon -l <logfile> [path]        : Log events to a file in addition to the console.
+                   fsmon -r -l <logfile> [path]     : Recursive monitoring with logging.
+                   fsmon -r [path] -l <logfile>     : Flags can appear in any order, before or after the path.
+                   Displays timestamp, event type (CREATED/DELETED/MODIFIED/RENAMED), actor user and path.
+                   User shown from Security Event Log when elevated + Object Access auditing is enabled,
+                   otherwise falls back to the file ACL owner.
+                   Press Q or Esc to quit.
+                   Examples:
+                   fsmon -r C:\Projects\myapp
+                   fsmon -l C:\logs\audit.log C:\Windows\Temp
+                   fsmon -r C:\Users\<username>\Downloads -l C:\Users\<username>\audit.log
+    bench     -- Benchmark a command by running it N times. Use -h for additional help.
+                   bench -n <count> <command>  : Run command N times and show min/avg/max/total timings.
+                   Example: bench -n 10 "ls -s"
+    ctx       -- Save and restore named terminal contexts (working directory + env vars). Use -h for additional help.
+                   ctx save <name>   : Save current directory and environment snapshot.
+                   ctx load <name>   : Restore a saved context.
+                   ctx list          : List all saved contexts.
+                   ctx show <name>   : Display a context without applying it.
+                   ctx del  <name>   : Delete a saved context.
+                   Example: ctx save myproject
+    chain     -- Create and run named command chains. Use -h for additional help.
+                   chain create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
+                   chain run    <name>                       : Execute all commands in the chain sequentially.
+                   chain add    <name> <command>             : Append a command to an existing chain.
+                   chain show   <name>                       : Display commands in a chain.
+                   chain list                                : List all saved chains.
+                   chain del    <name>                       : Delete a chain.
+                   Example: chain create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build".
+    uninstall -- Uninstall installed applications. Use -h for additional help.
+                   uninstall -list                  : List installed applications.
+                   uninstall -list <filter>         : List installed applications matching filter text.
+                   uninstall <application_name>     : Start the uninstaller for an installed application.
+                   Example: uninstall "Google Chrome"
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
@@ -410,6 +471,14 @@ Example:
                      -lr : List wifuvault restrictions types.
                  Example: waifu -u <file_path> -p <password> -b <bucket_token> -o -e 1h -h
     fxp       -- Opens built in console file explorer.
+    snap      -- Directory snapshot and diff. Use -h for additional help.
+                   snap save [name]  : Snapshot the current directory (default name: 'default').
+                   snap diff [name]  : Compare the current state against a saved snapshot.
+                   snap list         : List all saved snapshots.
+                   snap del  <name>  : Delete a snapshot.
+                   Diff output uses labeled lines (added:/deleted:/modified:) and supports pipe filtering.
+                   Example: snap save before-install
+                   Example: snap diff before-install | cat -s deleted
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
@@ -446,8 +515,19 @@ Example:
                  Example 3: trace google.com -hops 50  (for traceroute with 50 hops)
                  Example 4: trace google.com -timeout 1000  (for traceroute with 1000 ms timeout)
                  Example 5: trace google.com -hops 50 -timeout 1000 -ipv6  (for traceroute with 50 hops, 1000 ms timeout and IPv6 traceroute enabled)
+    latmon    -- Real-time multi-host latency monitor dashboard. Use -h for additional help.
+                   Pings any number of hosts concurrently and shows a live table with sparkline history,
+                   current / avg / min / max latency, and packet loss — colour-coded by latency tier.
+                   Colour tiers:  green <50ms · yellow 50-150ms · red >150ms · gray timeout
+                   Sparkline chars: ▁▂▃▄▅▆▇█  (· = timed-out probe)
+                   latmon <host1> [host2] ...           : Monitor at 1-second interval.
+                   latmon -n <ms> <host1> [host2] ...   : Custom interval in milliseconds.
+                   Example: latmon google.com cloudflare.com 8.8.8.8
+                   Example: latmon -n 500 192.168.1.1 192.168.1.254
+                   Supports pipe output (one probe round, labeled lines):
+                   Example: latmon google.com 8.8.8.8 | cat -s timeout
 
-    ---------------- C# Code Runner and Add-ons -------------
+    ---------------- TermXT / C# Code Runner and Add-ons -------------
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Usage:
                  Example 1: ccs <file_name> 
                  Example 2: ccs <file_name> -p <parameter> 
@@ -461,7 +541,52 @@ Example:
                     -del   :  Deletes an Add-on.
                               Example: ! -del <command_name>
                     -list  :  Display the list of the saved add-ons with description.
+    xt        -- TermXT: a scripting language for xTerminal. Use -h for additional help.
+                   xt <script.xt>              : Run an TermXT Script file.
+                   xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
+                   xt -new <script.xt>         : Create an empty script template.
+                   xt -check <script.xt>       : Validate syntax without running.
+                   xt -ver                     : Display TermXT version.
 
+                   Language features:
+                   set <var> = <value>                : Variables with {var} interpolation.
+                   set <var> = eval <expr>            : Math expressions (+ - * / % parentheses).
+                   set <var> = upper/lower/len/trim   : String operations.
+                   set <var> = substr/replace          : Substring and replace.
+                   print "text with {var}"            : Output with interpolation.
+                   run <command>                      : Execute any xTerminal command (supports pipes).
+                   capture <var> = <command>           : Store command output in a variable (supports pipes).
+                   input <var> = "prompt"              : Read user input.
+                   if <a> <op> <b> / elif / else / end : Conditionals (==, !=, >, <, contains, startswith, endswith).
+                      Logical operators: && (and), || (or).
+                   loop <n> / end                     : Repeat block N times ({i} = iteration).
+                   while <cond> / end                 : Loop while condition is true.
+                   each <var> in <a,b,c> / end        : Iterate comma-separated values.
+                   each <var> in lines:<varname> / end : Iterate lines of captured output.
+                   func <name> / end                  : Define reusable functions.
+                   call <name> [args]                  : Call function with args ({1},{2}...).
+                   return <value>                     : Return from function (stored in {result}).
+                   try / catch / end                  : Error handling.
+                   break / continue                   : Loop control.
+                   read <var> = <file>                 : Read file contents into a variable.
+                   write <file> "text"                 : Write text to a file (overwrite).
+                   append <file> "text"                : Append text to a file.
+                   wait <ms>                           : Pause execution.
+                   exit                                : Stop script.
+
+                   Example script (monitor.xt):
+                     set hosts = google.com,cloudflare.com,8.8.8.8
+                     each host in {hosts}
+                         print "Checking {host}..."
+                         run ping {host}
+                     end
+                     capture ip = extip
+                     print "My external IP: {ip}"
+                     capture exeFiles = ls | cat -s exe
+                     each f in lines:{exeFiles}
+                         print "Found: {f}"
+                     end
+    
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
                     ::Predefined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
@@ -588,6 +713,136 @@ For that we use following command:
  ```
  pwm -delv
  ```
+## TermXT Scripting Language
+
+TermXT is the xTerminal scripting language. It runs `.xt` files and can execute any xTerminal command, capture command output, use variables, branch, loop, call functions, and read/write files.
+
+Full manual: [Documents/TermXT_Scripting_Language_Manual_User_Manual_v1.0.0.pdf](Documents/TermXT_Scripting_Language_Manual_User_Manual.pdf)
+
+Sample script: [media/netaudit.xt](media/netaudit.xt)
+
+### Running Scripts
+
+```text
+xt script.xt
+xt script.xt -p production 8080
+xt -new script.xt
+xt -check script.xt
+xt -h
+```
+
+Arguments passed after `-p` are available as `{1}`, `{2}`, and so on.
+
+### Language Reference
+
+| Syntax | Description |
+| --- | --- |
+| `# comment` | Line comment. |
+| `set name = value` | Create or update a variable. |
+| `set n = eval 2 + 3 * 4` | Math expression with `+`, `-`, `*`, `/`, `%`, and parentheses. |
+| `set x = upper text` | Convert to uppercase. |
+| `set x = lower text` | Convert to lowercase. |
+| `set x = len text` | Get text length. |
+| `set x = trim text` | Trim whitespace. |
+| `set x = substr text start length` | Extract a substring. |
+| `set x = replace text old new` | Replace text. |
+| `print "Hello {name}"` | Print interpolated text. |
+| `run command` | Run any xTerminal command. Pipes are supported. |
+| `capture var = command` | Run a command and store stdout in a variable. Pipes are supported. |
+| `input var = "Prompt"` | Read user input. |
+| `if condition`, `elif`, `else`, `end` | Conditional blocks. |
+| `loop 5`, `end` | Repeat a block. `{i}` is the 1-based iteration. |
+| `while condition`, `end` | Loop while a condition is true. |
+| `each item in a,b,c`, `end` | Iterate comma-separated values. |
+| `each n in 1..5`, `end` | Iterate an inclusive numeric range. |
+| `each line in lines:var`, `end` | Iterate lines stored in a variable. |
+| `func name`, `call name args`, `return value`, `end` | Define and call reusable functions. |
+| `try`, `catch`, `end` | Handle command/script errors. |
+| `break`, `continue` | Control loops. |
+| `read var = file` | Read a file into a variable. |
+| `write file "text"` | Write a file, overwriting existing content. |
+| `append file "text"` | Append text to a file. |
+| `wait ms` | Pause execution. |
+| `exit` | Stop the script. |
+
+### Conditions
+
+TermXT supports truthy checks, `not`, logical operators, numeric comparisons, and text comparisons.
+
+```text
+if {env} == production
+if {count} >= 10
+if {name} contains admin
+if {path} startswith C:\
+if {file} endswith .log
+if not {error}
+if {host} == google.com || {host} == cloudflare.com
+if {ok} == true && {error} == false
+```
+
+Supported operators:
+
+```text
+==  !=  >  <  >=  <=  contains  startswith  endswith
+```
+
+### Built-in Variables
+
+| Variable | Value |
+| --- | --- |
+| `{DATE}` | Current date as `yyyy-MM-dd`. |
+| `{TIME}` | Current time as `HH:mm:ss`. |
+| `{USER}` | Current Windows username. |
+| `{PC}` | Computer name. |
+| `{CWD}` | Current xTerminal working directory. |
+| `{i}` | Current loop iteration. |
+| `{result}` | Return value from the last function call. |
+| `{error}` | `true` when the last command failed, otherwise `false`. |
+| `{error_message}` | Message from the last caught error. |
+
+### Example Script
+
+Save as `healthcheck.xt`:
+
+```text
+# Basic TermXT health check
+set target = {1}
+
+capture ip = extip
+print "External IP: {ip}"
+
+try
+    capture ping_result = ping {target}
+    print "{ping_result}"
+catch
+    print "Ping failed: {error_message}"
+end
+
+set hosts = google.com,cloudflare.com,8.8.8.8
+each host in {hosts}
+    print "Port check: {host}:443"
+    run cport {host} -p 443 --noping
+end
+```
+
+Run it:
+
+```text
+xt healthcheck.xt -p github.com
+```
+
+### Example Scripts
+
+Ready-to-run `.xt` scripts are provided in the [`Documents/TermXT_Examples/`](Documents/TermXT_Examples/) folder.
+
+| Script | Description | Usage |
+| --- | --- | --- |
+| [`greet.xt`](Documents/TermXT_Examples/greet.xt) | Beginner demo — variables, `input`, `if`, numeric range loop, `func`/`call`/`return`. | `xt greet.xt` |
+| [`countdown.xt`](Documents/TermXT_Examples/countdown.xt) | Countdown timer using `while`, `eval` arithmetic, and `wait`. Warns at ≤ 5 seconds. | `xt countdown.xt -p 30 "Coffee break"` |
+| [`portcheck.xt`](Documents/TermXT_Examples/portcheck.xt) | Checks a comma-separated list of ports on a target host and summarises open / closed results. | `xt portcheck.xt -p github.com 22,80,443` |
+| [`sysreport.xt`](Documents/TermXT_Examples/sysreport.xt) | Collects PC, BIOS, storage, network interface, and external-IP info and saves a timestamped report file. | `xt sysreport.xt` |
+| [`netaudit.xt`](Documents/TermXT_Examples/netaudit.xt) | Advanced network audit — NIC inventory, DNS reachability sweep, port scan, traceroute analysis, and a scored summary log. | `xt netaudit.xt -p google.com 80,443` |
+
 
 ## Usage of pipe commands
 

@@ -1,0 +1,84 @@
+# ═══════════════════════════════════════════════════════════════
+#  sysreport.xt — System Information Reporter
+#  Collects PC, BIOS, storage, network, and external-IP info
+#  and saves everything to a timestamped report file.
+#  Usage: xt sysreport.xt
+# ═══════════════════════════════════════════════════════════════
+
+set safe_time = replace {TIME} ":" "-"
+set report    = sysreport_{DATE}_{safe_time}.txt
+set div       = ══════════════════════════════════════════════════
+set thin      = ──────────────────────────────────────────────────
+set pass      = 0
+set fail      = 0
+
+# ── Init report file ──────────────────────────────────────────
+write {report} "{div}"
+append {report} "  System Report"
+append {report} "  Date : {DATE}    Time : {TIME}"
+append {report} "  Host : {USER}@{PC}"
+append {report} "{div}"
+append {report} ""
+
+print "{div}"
+print "  System Report  —  {DATE}  {TIME}"
+print "  Host : {USER}@{PC}"
+print "{div}"
+print ""
+
+# ── Helper: run a command and save output ─────────────────────
+func collect
+    # {1} = section label   {2} = xTerminal command to run
+    print "  ► {1}..."
+    append {report} "{thin}"
+    append {report} "  ▶ {1}"
+    append {report} "{thin}"
+    try
+        capture out = {2}
+        append {report} "{out}"
+        append {report} ""
+        print "    ✅ captured."
+        set pass = eval {pass} + 1
+    catch
+        append {report} "  ERROR: {error_message}"
+        append {report} ""
+        print "    ❌ failed: {error_message}"
+        set fail = eval {fail} + 1
+    end
+end
+
+# ── Collect sections ──────────────────────────────────────────
+call collect "PC Information"    "pcinfo"
+call collect "BIOS"              "bios"
+call collect "Network Interfaces" "ifconfig"
+
+# External IP (separate because output is plain text)
+print "  ► External IP..."
+append {report} "{thin}"
+append {report} "  ▶ External IP"
+append {report} "{thin}"
+try
+    capture my_ip = extip
+    append {report} "  Public IP: {my_ip}"
+    append {report} ""
+    print "    ✅ {my_ip}"
+    set pass = eval {pass} + 1
+catch
+    append {report} "  ERROR: {error_message}"
+    print "    ❌ extip failed: {error_message}"
+    set fail = eval {fail} + 1
+end
+
+# ── Summary ───────────────────────────────────────────────────
+set total = eval {pass} + {fail}
+
+append {report} ""
+append {report} "{div}"
+append {report} "  Sections : {total}   Passed : {pass}   Failed : {fail}"
+append {report} "{div}"
+
+print ""
+print "{div}"
+print "  Sections : {total}   Passed : {pass}   Failed : {fail}"
+print "  Report saved → {report}"
+print "{div}"
