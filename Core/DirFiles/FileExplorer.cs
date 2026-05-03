@@ -1292,29 +1292,29 @@ namespace Core.DirFiles
 
         private static void WritePadded(string text, int width, bool selected, ConsoleColor normalColor)
         {
-            var oldFg = Console.ForegroundColor;
-            var oldBg = Console.BackgroundColor;
-
-            if (selected)
-            {
-                Console.BackgroundColor = ConsoleColor.DarkCyan;
-                Console.ForegroundColor = ConsoleColor.White;
-            }
-            else
-            {
-                Console.ForegroundColor = normalColor;
-            }
-
             if (text == null) text = "";
             if (text.Length > width)
                 text = text.Substring(0, width);
             if (text.Length < width)
                 text = text + new string(' ', width - text.Length);
 
-            Console.Write(text);
-
-            Console.ForegroundColor = oldFg;
-            Console.BackgroundColor = oldBg;
+            if (selected)
+            {
+                // ▌ accent bar on darker teal (BG_SEL2=24), then bold white on teal (BG_SEL=23) —
+                // matches the wtop selection style exactly.
+                string body = text.Length > 1 ? text.Substring(1) : "";
+                Console.Write(
+                    "\x1b[38;5;45m\x1b[48;5;24m▌" +
+                    "\x1b[48;5;23m\x1b[1m\x1b[38;5;253m" + body +
+                    "\x1b[0m");
+            }
+            else
+            {
+                var oldFg = Console.ForegroundColor;
+                Console.ForegroundColor = normalColor;
+                Console.Write(text);
+                Console.ForegroundColor = oldFg;
+            }
         }
 
         private static void WriteTrimmedAt(int left, int top, string text, int width)
