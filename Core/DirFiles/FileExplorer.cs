@@ -592,9 +592,11 @@ namespace Core.DirFiles
                         NavigateTo(drives[selected].RootDirectory.FullName);
                         _scrollOffset = 0;
                         _itemsDirty   = true;
+                        ForceFullRedraw();
                         running = false;
                         break;
                     case ConsoleKey.Escape:
+                        ForceFullRedraw();
                         running = false;
                         break;
                 }
