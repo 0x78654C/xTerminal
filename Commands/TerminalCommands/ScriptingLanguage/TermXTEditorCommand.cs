@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
+using System.Text;
 using Core;
 using Core.DirFiles;
 
@@ -12,14 +14,18 @@ namespace Commands.TerminalCommands.ScriptingLanguage
         public string Name => "xte";
 
         private static readonly string s_helpMessage = @"Usage of xte command:
-    xte <script.xt>        : Open a TermXT script in the built-in Vim-style editor.
-    xte -new <script.xt>   : Create a TermXT script template and open it.
-    xte -h                 : Display this help message.
+    xte <file>                  : Open a file in the built-in Vim-style editor.
+    xte -new <file>             : Create a template and open it.
+    xte -syntax xt <file>       : Use TermXT script syntax highlighting.
+    xte -syntax cs <file>       : Use C# syntax highlighting.
+    xte -h                      : Display this help message.
+
+Syntax is selected by extension by default: .xt uses TermXT, .cs and .csx use C#.
 
 Inside the editor:
     Normal mode : h/j/k/l or arrows move, i or Insert enters insert, dd delete line, / search.
     Insert mode : Esc returns to normal mode, Ctrl+S saves current data, Ctrl+U undo.
-    Commands    : :w save, :q quit, :q! quit without saving, :wq save and quit.
+    Commands    : :w save, :q quit, :q! quit without saving, :wq save and quit, :syntax xt|cs switch highlight.
 ";
 
         private static readonly string s_template = @"# xTermXT Script template
@@ -31,6 +37,17 @@ print ""Running {name}...""
 run time
 
 print ""Done!""
+";
+
+        private static readonly string s_csharpTemplate = @"using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        Console.WriteLine(""Hello from xTerminal"");
+    }
+}
 ";
 
         public void Execute(string args)
@@ -59,15 +76,18 @@ print ""Done!""
 
         internal static void OpenFromArguments(string rest, string currentDir)
         {
-            bool createTemplate = rest.StartsWith("-new ", StringComparison.OrdinalIgnoreCase);
-            string targetArg = createTemplate ? rest.Substring(5).Trim() : rest.Trim();
+            EditorArguments options = ParseEditorArguments(rest);
+            string targetArg = options.Target;
 
             if (string.IsNullOrWhiteSpace(targetArg))
-                throw new ArgumentException("You must provide a script file path.");
+                throw new ArgumentException("You must provide a file path.");
 
             string target = FileSystem.SanitizePath(TrimMatchingQuotes(targetArg), currentDir);
+            TermXTEditorSyntax syntax = options.SyntaxSpecified
+                ? options.Syntax
+                : TermXTEditor.DetectSyntaxFromPath(target);
 
-            if (createTemplate && !File.Exists(target))
+            if (options.CreateTemplate && !File.Exists(target))
             {
                 string directory = Path.GetDirectoryName(target);
                 if (!string.IsNullOrWhiteSpace(directory))
@@ -75,11 +95,117 @@ print ""Done!""
 
                 File.WriteAllText(
                     target,
-                    s_template.Replace("{DATE}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
+                    TemplateForSyntax(syntax).Replace("{DATE}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
             }
 
-            var editor = new TermXTEditor(target);
+            var editor = new TermXTEditor(target, syntax);
             editor.Run();
+        }
+
+        private static EditorArguments ParseEditorArguments(string rest)
+        {
+            var options = new EditorArguments();
+            var targetParts = new List<string>();
+            List<string> tokens = ParseArguments(rest);
+
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                string token = tokens[i];
+
+                if (string.Equals(token, "-new", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.CreateTemplate = true;
+                    continue;
+                }
+
+                if (IsSyntaxOption(token))
+                {
+                    if (i + 1 >= tokens.Count)
+                        throw new ArgumentException("Missing syntax value. Use xt or cs.");
+
+                    options.SetSyntax(ParseSyntax(tokens[++i]));
+                    continue;
+                }
+
+                string inlineSyntax = GetInlineSyntaxValue(token);
+                if (!string.IsNullOrWhiteSpace(inlineSyntax))
+                {
+                    options.SetSyntax(ParseSyntax(inlineSyntax));
+                    continue;
+                }
+
+                targetParts.Add(token);
+            }
+
+            options.Target = string.Join(" ", targetParts);
+            return options;
+        }
+
+        private static bool IsSyntaxOption(string token)
+        {
+            return string.Equals(token, "-syntax", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(token, "-lang", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(token, "-highlight", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetInlineSyntaxValue(string token)
+        {
+            foreach (string option in new[] { "-syntax=", "-lang=", "-highlight=", "-syntax:", "-lang:", "-highlight:" })
+            {
+                if (token.StartsWith(option, StringComparison.OrdinalIgnoreCase))
+                    return token.Substring(option.Length);
+            }
+
+            return string.Empty;
+        }
+
+        private static TermXTEditorSyntax ParseSyntax(string value)
+        {
+            if (TermXTEditor.TryParseSyntax(value, out TermXTEditorSyntax syntax))
+                return syntax;
+
+            throw new ArgumentException("Unknown syntax '" + value + "'. Use xt or cs.");
+        }
+
+        private static string TemplateForSyntax(TermXTEditorSyntax syntax)
+        {
+            return syntax == TermXTEditorSyntax.CSharp ? s_csharpTemplate : s_template;
+        }
+
+        private static List<string> ParseArguments(string input)
+        {
+            var tokens = new List<string>();
+            var current = new StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                    continue;
+                }
+
+                if (char.IsWhiteSpace(c) && !inQuotes)
+                {
+                    if (current.Length > 0)
+                    {
+                        tokens.Add(current.ToString());
+                        current.Clear();
+                    }
+
+                    continue;
+                }
+
+                current.Append(c);
+            }
+
+            if (current.Length > 0)
+                tokens.Add(current.ToString());
+
+            return tokens;
         }
 
         private static string TrimMatchingQuotes(string value)
@@ -92,6 +218,20 @@ print ""Done!""
                 return value.Substring(1, value.Length - 2);
 
             return value;
+        }
+
+        private sealed class EditorArguments
+        {
+            public bool CreateTemplate { get; set; }
+            public bool SyntaxSpecified { get; private set; }
+            public TermXTEditorSyntax Syntax { get; private set; }
+            public string Target { get; set; }
+
+            public void SetSyntax(TermXTEditorSyntax syntax)
+            {
+                Syntax = syntax;
+                SyntaxSpecified = true;
+            }
         }
     }
 }

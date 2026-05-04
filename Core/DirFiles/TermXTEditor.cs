@@ -7,6 +7,12 @@ using System.Threading;
 
 namespace Core.DirFiles
 {
+    public enum TermXTEditorSyntax
+    {
+        TermXt,
+        CSharp
+    }
+
     [SupportedOSPlatform("windows")]
     public sealed class TermXTEditor
     {
@@ -44,6 +50,7 @@ namespace Core.DirFiles
         private const int CComment = 108;
         private const int CError = 203;
         private const int CSearch = 227;
+        private const int CPreprocessor = 183;
 
         private static readonly HashSet<string> s_flowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -64,6 +71,36 @@ namespace Core.DirFiles
         private static readonly HashSet<string> s_operatorWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "in", "not", "contains", "startswith", "endswith", "and", "or"
+        };
+
+        private static readonly HashSet<string> s_csharpFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "if", "else", "switch", "case", "default", "for", "foreach", "while", "do",
+            "break", "continue", "return", "goto", "try", "catch", "finally", "throw",
+            "yield", "when"
+        };
+
+        private static readonly HashSet<string> s_csharpKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "abstract", "as", "async", "await", "base", "checked", "class", "const",
+            "delegate", "enum", "event", "explicit", "extern", "file", "fixed", "global",
+            "implicit", "in", "interface", "internal", "is", "lock", "namespace", "new",
+            "operator", "out", "override", "params", "partial", "private", "protected",
+            "public", "readonly", "record", "ref", "required", "sealed", "sizeof",
+            "stackalloc", "static", "struct", "this", "typeof", "unchecked", "unsafe",
+            "using", "virtual", "volatile", "where", "with"
+        };
+
+        private static readonly HashSet<string> s_csharpTypeKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "bool", "byte", "char", "decimal", "double", "dynamic", "float", "int",
+            "long", "nint", "nuint", "object", "sbyte", "short", "string", "uint",
+            "ulong", "ushort", "var", "void"
+        };
+
+        private static readonly HashSet<string> s_csharpLiteralKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "default", "false", "null", "true"
         };
 
         private readonly string _path;
@@ -94,11 +131,61 @@ namespace Core.DirFiles
         private bool _bottomStatusError;
         private string _lineClipboard = string.Empty;
         private bool _hasLineClipboard;
+        private TermXTEditorSyntax _syntax;
 
         public TermXTEditor(string path)
+            : this(path, DetectSyntaxFromPath(path))
+        {
+        }
+
+        public TermXTEditor(string path, TermXTEditorSyntax syntax)
         {
             _path = Path.GetFullPath(path);
+            _syntax = syntax;
             LoadFile();
+        }
+
+        public static TermXTEditorSyntax DetectSyntaxFromPath(string path)
+        {
+            string extension = Path.GetExtension(path);
+            if (string.Equals(extension, ".cs", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".csx", StringComparison.OrdinalIgnoreCase))
+            {
+                return TermXTEditorSyntax.CSharp;
+            }
+
+            return TermXTEditorSyntax.TermXt;
+        }
+
+        public static bool TryParseSyntax(string value, out TermXTEditorSyntax syntax)
+        {
+            syntax = TermXTEditorSyntax.TermXt;
+
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            switch (value.Trim().ToLowerInvariant())
+            {
+                case "xt":
+                case "termxt":
+                case "xtermxt":
+                case "script":
+                    syntax = TermXTEditorSyntax.TermXt;
+                    return true;
+                case "cs":
+                case "c#":
+                case "csharp":
+                case "c-sharp":
+                    syntax = TermXTEditorSyntax.CSharp;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static string SyntaxDisplayName(TermXTEditorSyntax syntax)
+        {
+            return syntax == TermXTEditorSyntax.CSharp ? "C#" : "TermXT";
         }
 
         public void Run()
@@ -253,7 +340,7 @@ namespace Core.DirFiles
 
             string dirty = _dirty ? " [+]" : "";
             string left = " TermXT Editor ";
-            string middle = " " + name + dirty;
+            string middle = " " + name + " [" + SyntaxDisplayName(_syntax) + "]" + dirty;
             string right = " " + (_cursorLine + 1) + ":" + (_cursorCol + 1) + " ";
 
             _frame.Append(At(0, 0))
@@ -268,10 +355,10 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Ctrl+S save | Ctrl+U undo | Enter newline | Tab indent | arrows/Home/End move";
+                    help = " INSERT  Esc normal | Ctrl+U undo | Enter newline | Tab indent | arrows/Home/End move";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  type w, q, q!, wq, e! then Enter | Backspace edit | Esc cancel";
+                    help = " COMMAND  type w, q, q!, wq, e!, syntax xt|cs then Enter | Backspace edit | Esc cancel";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | Backspace edit | Esc cancel";
@@ -414,12 +501,6 @@ namespace Core.DirFiles
         {
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
-                if (key.Key == ConsoleKey.S)
-                {
-                    Save();
-                    return;
-                }
-
                 if (key.Key == ConsoleKey.U)
                 {
                     Undo();
@@ -680,6 +761,9 @@ namespace Core.DirFiles
                 return;
             }
 
+            if (TryExecuteSyntaxCommand(command))
+                return;
+
             switch (command.ToLowerInvariant())
             {
                 case "w":
@@ -718,6 +802,30 @@ namespace Core.DirFiles
                     _mode = Mode.Normal;
                     break;
             }
+        }
+
+        private bool TryExecuteSyntaxCommand(string command)
+        {
+            const string prefix = "syntax";
+
+            if (!command.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (command.Length > prefix.Length && !char.IsWhiteSpace(command[prefix.Length]))
+                return false;
+
+            string value = command.Length > prefix.Length ? command.Substring(prefix.Length).Trim() : string.Empty;
+            if (!TryParseSyntax(value, out TermXTEditorSyntax syntax))
+            {
+                Status("Unknown syntax. Use :syntax xt or :syntax cs.", error: true);
+                _mode = Mode.Normal;
+                return true;
+            }
+
+            _syntax = syntax;
+            Status("Syntax: " + SyntaxDisplayName(_syntax));
+            _mode = Mode.Normal;
+            return true;
         }
 
         private void Save()
@@ -1251,7 +1359,7 @@ namespace Core.DirFiles
             return "ready";
         }
 
-        private static string BuildHighlightedLine(string line, int start, int width)
+        private string BuildHighlightedLine(string line, int start, int width)
         {
             if (width <= 0)
                 return string.Empty;
@@ -1286,7 +1394,14 @@ namespace Core.DirFiles
             return sb.ToString();
         }
 
-        private static List<Token> Tokenize(string line)
+        private List<Token> Tokenize(string line)
+        {
+            return _syntax == TermXTEditorSyntax.CSharp
+                ? TokenizeCSharp(line)
+                : TokenizeTermXt(line);
+        }
+
+        private static List<Token> TokenizeTermXt(string line)
         {
             var tokens = new List<Token>();
             int i = 0;
@@ -1340,11 +1455,11 @@ namespace Core.DirFiles
                 if (IsWordStart(c))
                 {
                     int start = i++;
-                    while (i < line.Length && IsWordPart(line[i]))
+                    while (i < line.Length && IsTermXtWordPart(line[i]))
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, WordColor(word)));
+                    tokens.Add(new Token(start, i - start, TermXtWordColor(word)));
                     continue;
                 }
 
@@ -1365,7 +1480,122 @@ namespace Core.DirFiles
             return tokens;
         }
 
-        private static int WordColor(string word)
+        private static List<Token> TokenizeCSharp(string line)
+        {
+            var tokens = new List<Token>();
+            int i = 0;
+
+            while (i < line.Length)
+            {
+                char c = line[i];
+
+                if (c == '#' && IsOnlyWhitespaceBefore(line, i))
+                {
+                    tokens.Add(new Token(i, line.Length - i, CPreprocessor));
+                    break;
+                }
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                {
+                    tokens.Add(new Token(i, line.Length - i, CComment));
+                    break;
+                }
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '*')
+                {
+                    int start = i;
+                    i += 2;
+                    while (i + 1 < line.Length && !(line[i] == '*' && line[i + 1] == '/'))
+                        i++;
+
+                    i = i + 1 < line.Length ? i + 2 : line.Length;
+                    tokens.Add(new Token(start, i - start, CComment));
+                    continue;
+                }
+
+                if (TryReadCSharpString(line, i, out int stringLength))
+                {
+                    tokens.Add(new Token(i, stringLength, CString));
+                    i += stringLength;
+                    continue;
+                }
+
+                if (c == '\'')
+                {
+                    int start = i++;
+                    while (i < line.Length)
+                    {
+                        if (line[i] == '\\')
+                        {
+                            i = Math.Min(line.Length, i + 2);
+                            continue;
+                        }
+
+                        if (line[i] == '\'')
+                        {
+                            i++;
+                            break;
+                        }
+
+                        i++;
+                    }
+
+                    tokens.Add(new Token(start, i - start, CString));
+                    continue;
+                }
+
+                if (char.IsDigit(c))
+                {
+                    int start = i++;
+
+                    if (c == '0' && i < line.Length && (line[i] == 'x' || line[i] == 'X' || line[i] == 'b' || line[i] == 'B'))
+                        i++;
+
+                    while (i < line.Length && IsCSharpNumberPart(line[i]))
+                        i++;
+
+                    tokens.Add(new Token(start, i - start, CNumber));
+                    continue;
+                }
+
+                if (IsCSharpWordStart(c) || (c == '@' && i + 1 < line.Length && IsCSharpWordStart(line[i + 1])))
+                {
+                    int start = i;
+                    bool escapedIdentifier = false;
+
+                    if (line[i] == '@')
+                    {
+                        escapedIdentifier = true;
+                        i++;
+                    }
+
+                    int wordStart = i++;
+                    while (i < line.Length && IsCSharpWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(wordStart, i - wordStart);
+                    tokens.Add(new Token(start, i - start, CSharpWordColor(word, escapedIdentifier)));
+                    continue;
+                }
+
+                if ("{}[]()=+-*/%<>!|&^~?:;.,\\".IndexOf(c) >= 0)
+                {
+                    tokens.Add(new Token(i, 1, COperator));
+                    i++;
+                    continue;
+                }
+
+                tokens.Add(new Token(i, 1, CNormal));
+                i++;
+            }
+
+            if (tokens.Count == 0)
+                tokens.Add(new Token(0, 0, CNormal));
+
+            return tokens;
+        }
+
+        private static int TermXtWordColor(string word)
         {
             if (s_flowKeywords.Contains(word))
                 return CFlow;
@@ -1382,14 +1612,133 @@ namespace Core.DirFiles
             return CNormal;
         }
 
+        private static int CSharpWordColor(string word, bool escapedIdentifier)
+        {
+            if (escapedIdentifier)
+                return CNormal;
+
+            if (s_csharpFlowKeywords.Contains(word))
+                return CFlow;
+
+            if (s_csharpKeywords.Contains(word))
+                return CKeyword;
+
+            if (s_csharpTypeKeywords.Contains(word))
+                return CFunction;
+
+            if (s_csharpLiteralKeywords.Contains(word))
+                return CNumber;
+
+            return CNormal;
+        }
+
         private static bool IsWordStart(char c)
         {
             return char.IsLetter(c) || c == '_';
         }
 
-        private static bool IsWordPart(char c)
+        private static bool IsTermXtWordPart(char c)
         {
             return char.IsLetterOrDigit(c) || c == '_' || c == '-';
+        }
+
+        private static bool IsCSharpWordStart(char c)
+        {
+            return char.IsLetter(c) || c == '_';
+        }
+
+        private static bool IsCSharpWordPart(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_';
+        }
+
+        private static bool IsCSharpNumberPart(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_' || c == '.';
+        }
+
+        private static bool IsOnlyWhitespaceBefore(string line, int index)
+        {
+            for (int i = 0; i < index; i++)
+            {
+                if (!char.IsWhiteSpace(line[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryReadCSharpString(string line, int index, out int length)
+        {
+            length = 0;
+            int i = index;
+            bool verbatim = false;
+
+            while (i < line.Length && (line[i] == '@' || line[i] == '$'))
+            {
+                if (line[i] == '@')
+                    verbatim = true;
+
+                i++;
+            }
+
+            if (i >= line.Length || line[i] != '"')
+                return false;
+
+            int quoteCount = CountConsecutive(line, i, '"');
+            if (quoteCount >= 3)
+            {
+                i += quoteCount;
+                while (i < line.Length)
+                {
+                    if (CountConsecutive(line, i, '"') >= quoteCount)
+                    {
+                        i += quoteCount;
+                        break;
+                    }
+
+                    i++;
+                }
+
+                length = i - index;
+                return true;
+            }
+
+            i++;
+            while (i < line.Length)
+            {
+                if (verbatim && line[i] == '"' && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    i += 2;
+                    continue;
+                }
+
+                if (!verbatim && line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == '"')
+                {
+                    i++;
+                    break;
+                }
+
+                i++;
+            }
+
+            length = i - index;
+            return true;
+        }
+
+        private static int CountConsecutive(string line, int index, char value)
+        {
+            int count = 0;
+            while (index + count < line.Length && line[index + count] == value)
+                count++;
+
+            return count;
         }
 
         private static string EscapeText(string text)
