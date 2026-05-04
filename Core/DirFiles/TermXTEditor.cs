@@ -368,10 +368,10 @@ namespace Core.DirFiles
                     help = " COMMAND  w save | q quit | 42 or goto 42 go to line | syntax xt|cs | Esc cancel";
                     break;
                 case Mode.Search:
-                    help = " SEARCH  Type text then Enter | Backspace edit | Esc cancel";
+                    help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  i or Insert edit | h/j/k/l move | dd delete | x char | z/Ctrl+Z undo | Ctrl+Y redo | / search | : command";
+                    help = " NORMAL  i or Insert edit | h/j/k/l move | dd delete | x char | z/Ctrl+Z undo | Ctrl+Y redo | / search | n/F3 next | : command";
                     break;
             }
 
@@ -572,6 +572,9 @@ namespace Core.DirFiles
                 case ConsoleKey.Insert:
                     EnterInsertMode();
                     break;
+                case ConsoleKey.F3:
+                    SearchNext();
+                    break;
                 case ConsoleKey.Escape:
                     _pendingDelete = false;
                     Status("NORMAL");
@@ -637,7 +640,7 @@ namespace Core.DirFiles
                     _searchText = string.Empty;
                     break;
                 case 'n':
-                    FindNext(_lastSearch, startAfterCursor: true);
+                    SearchNext();
                     break;
             }
         }
@@ -744,11 +747,17 @@ namespace Core.DirFiles
                     Status("Search cancelled");
                     break;
                 case ConsoleKey.Enter:
-                    _lastSearch = _searchText;
-                    FindNext(_searchText, startAfterCursor: false);
+                {
+                    bool repeatLastSearch = string.IsNullOrWhiteSpace(_searchText);
+                    string queryText = repeatLastSearch ? _lastSearch : _searchText;
+                    if (!repeatLastSearch)
+                        _lastSearch = _searchText;
+
+                    FindNext(queryText, startAfterCursor: repeatLastSearch);
                     _searchText = string.Empty;
                     _mode = Mode.Normal;
                     break;
+                }
                 case ConsoleKey.Backspace:
                     if (_searchText.Length > 0)
                         _searchText = _searchText.Substring(0, _searchText.Length - 1);
@@ -1150,6 +1159,11 @@ namespace Core.DirFiles
             }
 
             Status("No match: " + text);
+        }
+
+        private void SearchNext()
+        {
+            FindNext(_lastSearch, startAfterCursor: true);
         }
 
         private void MoveLeft()
