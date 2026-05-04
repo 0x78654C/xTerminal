@@ -28,6 +28,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
     xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
     xt -h                       : Display this help message.
     xt -new <script.xt>         : Create a new empty script template.
+    xt -edit <script.xt>        : Open script in the built-in Vim-style TermXT editor.
     xt -check <script.xt>       : Validate script syntax without running.
     xt -ver                     : Display TermXT version.
 
@@ -166,6 +167,14 @@ print ""Done!""
                     string newFile = FileSystem.SanitizePath(rest.Substring(5).Trim(), currentDir);
                     File.WriteAllText(newFile, s_template.Replace("{DATE}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
                     FileSystem.SuccessWriteLine($"Script template created: {newFile}");
+                    return;
+                }
+
+                // xt -edit <file>
+                if (rest.StartsWith("-edit", StringComparison.OrdinalIgnoreCase))
+                {
+                    string editorArgs = rest.Length > 5 ? rest.Substring(5).TrimStart() : string.Empty;
+                    TermXTEditorCommand.OpenFromArguments(editorArgs, currentDir);
                     return;
                 }
 

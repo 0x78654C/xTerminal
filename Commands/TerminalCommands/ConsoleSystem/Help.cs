@@ -112,6 +112,7 @@ This is the full list of commands that can be used in xTerminal:
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Use -h for additional help.
     !         -- Run or add custom C# code add-ons as a command. Use -h for additional help.
     xt        -- TermXT: run .xt script files with variables, loops, conditionals, pipes and more. Use -h for additional help.
+    xte       -- Built-in Vim-style TermXT code editor with syntax highlighting. Use -h for additional help.
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
