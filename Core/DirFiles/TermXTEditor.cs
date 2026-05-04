@@ -362,7 +362,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Ctrl+U undo | Enter newline | Tab indent | arrows/Home/End move";
+                    help = " INSERT  Esc normal | Ctrl+Z undo | Ctrl+Y redo | Enter newline | Tab indent | arrows/Home/End move";
                     break;
                 case Mode.Command:
                     help = " COMMAND  w save | q quit | 42 or goto 42 go to line | syntax xt|cs | Esc cancel";
@@ -371,7 +371,7 @@ namespace Core.DirFiles
                     help = " SEARCH  Type text then Enter | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  i or Insert edit | h/j/k/l move | dd delete | x char | u/Ctrl+U undo | Ctrl+R redo | / search | : command";
+                    help = " NORMAL  i or Insert edit | h/j/k/l move | dd delete | x char | z/Ctrl+Z undo | Ctrl+Y redo | / search | : command";
                     break;
             }
 
@@ -508,13 +508,13 @@ namespace Core.DirFiles
         {
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
-                if (key.Key == ConsoleKey.U)
+                if (key.Key == ConsoleKey.Z)
                 {
                     Undo();
                     return;
                 }
 
-                if (key.Key == ConsoleKey.R)
+                if (key.Key == ConsoleKey.Y)
                 {
                     Redo();
                     return;
