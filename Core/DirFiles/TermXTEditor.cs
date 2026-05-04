@@ -23,6 +23,12 @@ namespace Core.DirFiles
         private const int CTitleDim = 250;
         private const int CStatusFg = 232;
         private const int CStatusBg = 45;
+        private const int CStatusInsertFg = 231;
+        private const int CStatusInsertBg = 34;
+        private const int CStatusCommandFg = 232;
+        private const int CStatusCommandBg = 214;
+        private const int CStatusSearchFg = 231;
+        private const int CStatusSearchBg = 99;
         private const int CNormal = 252;
         private const int CDim = 244;
         private const int CMuted = 238;
@@ -308,10 +314,34 @@ namespace Core.DirFiles
             string mode = _mode.ToString().ToUpperInvariant();
             string message = DateTime.UtcNow <= _statusUntil ? _status : DefaultStatus();
             string text = " " + mode.PadRight(7) + " " + message;
+            GetStatusColors(out int fg, out int bg);
 
             _frame.Append(At(0, row))
-                .Append(B(CStatusBg)).Append(F(CStatusFg)).Append(Clip(text, width).PadRight(width))
+                .Append(B(bg)).Append(F(fg)).Append(Clip(text, width).PadRight(width))
                 .Append(Reset);
+        }
+
+        private void GetStatusColors(out int fg, out int bg)
+        {
+            switch (_mode)
+            {
+                case Mode.Insert:
+                    fg = CStatusInsertFg;
+                    bg = CStatusInsertBg;
+                    break;
+                case Mode.Command:
+                    fg = CStatusCommandFg;
+                    bg = CStatusCommandBg;
+                    break;
+                case Mode.Search:
+                    fg = CStatusSearchFg;
+                    bg = CStatusSearchBg;
+                    break;
+                default:
+                    fg = CStatusFg;
+                    bg = CStatusBg;
+                    break;
+            }
         }
 
         private void RenderCommandLine(int row, int width)
@@ -703,7 +733,6 @@ namespace Core.DirFiles
                 _dirty = false;
                 _insertUndoStarted = false;
                 Status("Saved current data");
-                BottomStatus("Saved current data");
             }
             catch (Exception ex)
             {
