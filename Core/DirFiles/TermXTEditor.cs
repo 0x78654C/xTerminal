@@ -204,7 +204,10 @@ namespace Core.DirFiles
                     Render();
 
                     if (WaitForKey(out ConsoleKeyInfo key))
+                    {
+                        Console.Write(HideCursor);
                         HandleKey(key);
+                    }
                 }
             }
             finally
@@ -297,7 +300,11 @@ namespace Core.DirFiles
             {
                 _lastWidth = width;
                 _lastHeight = height;
-                Console.Write(ClearScreen);
+                Console.Write(HideCursor + ClearScreen);
+            }
+            else
+            {
+                Console.Write(HideCursor);
             }
 
             if (width < 44 || height < 10)
@@ -358,7 +365,7 @@ namespace Core.DirFiles
                     help = " INSERT  Esc normal | Ctrl+U undo | Enter newline | Tab indent | arrows/Home/End move";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  type w, q, q!, wq, e!, syntax xt|cs then Enter | Backspace edit | Esc cancel";
+                    help = " COMMAND  w save | q quit | 42 or goto 42 go to line | syntax xt|cs | Esc cancel";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | Backspace edit | Esc cancel";
@@ -494,7 +501,7 @@ namespace Core.DirFiles
                 x = Math.Min(Console.WindowWidth - 1, Math.Max(0, x));
             }
 
-            Console.Write(ShowCursor + At(x, y));
+            Console.Write(At(x, y) + ShowCursor);
         }
 
         private void HandleKey(ConsoleKeyInfo key)
@@ -761,6 +768,9 @@ namespace Core.DirFiles
                 return;
             }
 
+            if (TryExecuteGoToLineCommand(command))
+                return;
+
             if (TryExecuteSyntaxCommand(command))
                 return;
 
@@ -802,6 +812,77 @@ namespace Core.DirFiles
                     _mode = Mode.Normal;
                     break;
             }
+        }
+
+        private bool TryExecuteGoToLineCommand(string command)
+        {
+            if (!TryGetGoToLineValue(command, out string value))
+                return false;
+
+            if (!int.TryParse(value, out int lineNumber))
+            {
+                Status("Invalid line number: " + value, error: true);
+                _mode = Mode.Normal;
+                return true;
+            }
+
+            GoToLine(lineNumber);
+            return true;
+        }
+
+        private static bool TryGetGoToLineValue(string command, out string value)
+        {
+            value = string.Empty;
+            string trimmed = command.Trim();
+
+            if (IsUnsignedInteger(trimmed))
+            {
+                value = trimmed;
+                return true;
+            }
+
+            foreach (string prefix in new[] { "goto ", "go ", "line ", "ln " })
+            {
+                if (trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = trimmed.Substring(prefix.Length).Trim();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsUnsignedInteger(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (!char.IsDigit(value[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private void GoToLine(int lineNumber)
+        {
+            if (lineNumber < 1 || lineNumber > _lines.Count)
+            {
+                Status("Line must be between 1 and " + _lines.Count, error: true);
+                _mode = Mode.Normal;
+                return;
+            }
+
+            _mode = Mode.Normal;
+            _pendingDelete = false;
+            _insertUndoStarted = false;
+            _cursorLine = lineNumber - 1;
+            _cursorCol = 0;
+            ClampCursor();
+            Status("Line " + lineNumber);
         }
 
         private bool TryExecuteSyntaxCommand(string command)

@@ -25,7 +25,8 @@ Syntax is selected by extension by default: .xt uses TermXT, .cs and .csx use C#
 Inside the editor:
     Normal mode : h/j/k/l or arrows move, i or Insert enters insert, dd delete line, / search.
     Insert mode : Esc returns to normal mode, Ctrl+S saves current data, Ctrl+U undo.
-    Commands    : :w save, :q quit, :q! quit without saving, :wq save and quit, :syntax xt|cs switch highlight.
+    Commands    : :w save, :q quit, :q! quit without saving, :wq save and quit.
+                  :42 or :goto 42 go to line, :syntax xt|cs switch highlight.
 ";
 
         private static readonly string s_template = @"# xTermXT Script template
