@@ -10,7 +10,9 @@ namespace Core.DirFiles
     public enum TermXTEditorSyntax
     {
         TermXt,
-        CSharp
+        CSharp,
+        C,
+        Cpp
     }
 
     [SupportedOSPlatform("windows")]
@@ -53,6 +55,38 @@ namespace Core.DirFiles
         private const int CPreprocessor = 183;
         private const int CSelectionFg = 232;
         private const int CSelectionBg = 153;
+        private const int CSourceFlow = 39;
+        private const int CSourceKeyword = 75;
+        private const int CSourceType = 179;
+        private const int CSourceStd = 117;
+        private const int CSourceDirective = 208;
+        private const int CSourceInclude = 159;
+        private const int CSourceString = 186;
+        private const int CSourceNumber = 203;
+        private const int CSourceOperator = 250;
+        private const int CSourceComment = 101;
+        private const int CppSourceFlow = 75;
+        private const int CppSourceKeyword = 141;
+        private const int CppSourceType = 111;
+        private const int CppSourceStd = 219;
+        private const int CppSourceDirective = 105;
+        private const int CppSourceInclude = 183;
+        private const int CppSourceString = 150;
+        private const int CppSourceNumber = 214;
+        private const int CppSourceOperator = 222;
+        private const int CppSourceComment = 103;
+        private const int CSharpFlow = 39;
+        private const int CSharpKeyword = 81;
+        private const int CSharpType = 51;
+        private const int CSharpDeclaration = 214;
+        private const int CSharpModifier = 117;
+        private const int CSharpBcl = 159;
+        private const int CSharpDirective = 183;
+        private const int CSharpAttribute = 213;
+        private const int CSharpString = 150;
+        private const int CSharpNumber = 209;
+        private const int CSharpOperator = 220;
+        private const int CSharpComment = 108;
 
         private static readonly HashSet<string> s_flowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -93,6 +127,28 @@ namespace Core.DirFiles
             "using", "virtual", "volatile", "where", "with"
         };
 
+        private static readonly HashSet<string> s_csharpDeclarationKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "class", "delegate", "enum", "event", "interface", "namespace", "record",
+            "struct"
+        };
+
+        private static readonly HashSet<string> s_csharpModifierKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "abstract", "async", "const", "extern", "file", "fixed", "internal",
+            "new", "override", "params", "partial", "private", "protected", "public",
+            "readonly", "ref", "required", "sealed", "static", "unsafe", "virtual",
+            "volatile"
+        };
+
+        private static readonly HashSet<string> s_csharpContextualKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "add", "alias", "ascending", "by", "descending", "dynamic", "equals",
+            "from", "get", "global", "group", "init", "into", "join", "let", "nameof",
+            "notnull", "on", "orderby", "remove", "select", "set", "unmanaged",
+            "value", "var", "where", "with", "yield"
+        };
+
         private static readonly HashSet<string> s_csharpTypeKeywords = new HashSet<string>(StringComparer.Ordinal)
         {
             "bool", "byte", "char", "decimal", "double", "dynamic", "float", "int",
@@ -103,6 +159,123 @@ namespace Core.DirFiles
         private static readonly HashSet<string> s_csharpLiteralKeywords = new HashSet<string>(StringComparer.Ordinal)
         {
             "default", "false", "null", "true"
+        };
+
+        private static readonly HashSet<string> s_csharpBclIdentifiers = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Action", "ArgumentException", "Array", "Attribute", "CancellationToken",
+            "Console", "DateTime", "Dictionary", "Directory", "Enumerable", "Exception",
+            "File", "Func", "Guid", "HashSet", "IEnumerable", "IDisposable", "IList",
+            "InvalidOperationException", "KeyValuePair", "List", "Math", "Nullable",
+            "Object", "Path", "Random", "ReadOnlySpan", "Regex", "Span", "String",
+            "StringBuilder", "Task", "Thread", "TimeSpan", "Tuple", "Uri"
+        };
+
+        private static readonly HashSet<string> s_csharpPreprocessorDirectives = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "define", "elif", "else", "endif", "endregion", "error", "if", "line",
+            "nullable", "pragma", "region", "undef", "warning"
+        };
+
+        private static readonly HashSet<string> s_cFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "if", "else", "switch", "case", "default", "for", "while", "do",
+            "break", "continue", "return", "goto"
+        };
+
+        private static readonly HashSet<string> s_cKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "auto", "const", "enum", "extern", "inline", "register", "restrict", "sizeof",
+            "static", "struct", "typedef", "union", "volatile", "_Alignas",
+            "_Alignof", "_Atomic", "_Generic", "_Noreturn", "_Static_assert",
+            "_Thread_local"
+        };
+
+        private static readonly HashSet<string> s_cTypeKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "void", "char", "short", "int", "long", "float", "double", "signed",
+            "unsigned", "_Bool", "_Complex", "_Imaginary"
+        };
+
+        private static readonly HashSet<string> s_cLiteralKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "NULL", "false", "nullptr", "true"
+        };
+
+        private static readonly HashSet<string> s_cOperatorWords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "and", "and_eq", "bitand", "bitor", "compl", "not", "not_eq", "or",
+            "or_eq", "xor", "xor_eq"
+        };
+
+        private static readonly HashSet<string> s_cStdIdentifiers = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "abort", "abs", "atexit", "atof", "atoi", "atol", "bsearch", "calloc",
+            "clock", "errno", "exit", "fclose", "feof", "ferror", "fflush", "fgetc",
+            "fgets", "fopen", "fprintf", "fputc", "fputs", "fread", "free", "fscanf",
+            "fseek", "ftell", "fwrite", "getchar", "gets", "malloc", "memchr",
+            "memcmp", "memcpy", "memmove", "memset", "perror", "printf", "putchar",
+            "puts", "qsort", "rand", "realloc", "remove", "rename", "scanf", "size_t",
+            "snprintf", "sprintf", "srand", "sscanf", "stderr", "stdin", "stdout",
+            "strcat", "strchr", "strcmp", "strcpy", "strlen", "strncmp", "strncpy",
+            "strstr", "time"
+        };
+
+        private static readonly HashSet<string> s_cPreprocessorDirectives = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "define", "elif", "else", "endif", "error", "if", "ifdef", "ifndef",
+            "include", "include_next", "line", "pragma", "undef", "warning"
+        };
+
+        private static readonly HashSet<string> s_cppFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "if", "else", "switch", "case", "default", "for", "while", "do",
+            "break", "continue", "return", "goto", "try", "catch", "throw",
+            "co_await", "co_return", "co_yield"
+        };
+
+        private static readonly HashSet<string> s_cppKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "alignas", "alignof", "asm", "class", "concept", "const", "consteval",
+            "constexpr", "constinit", "decltype", "delete", "explicit", "export",
+            "extern", "friend", "inline", "mutable", "namespace", "new", "noexcept",
+            "operator", "private", "protected", "public", "requires", "sizeof",
+            "static", "static_assert", "struct", "template", "this", "thread_local",
+            "typedef", "typeid", "typename", "union", "using", "virtual", "volatile",
+            "enum", "final", "override"
+        };
+
+        private static readonly HashSet<string> s_cppTypeKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "auto", "bool", "char", "char8_t", "char16_t", "char32_t", "double",
+            "float", "int", "long", "short", "signed", "unsigned", "void", "wchar_t"
+        };
+
+        private static readonly HashSet<string> s_cppLiteralKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "false", "nullptr", "NULL", "true"
+        };
+
+        private static readonly HashSet<string> s_cppOperatorWords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "and", "and_eq", "bitand", "bitor", "compl", "not", "not_eq", "or",
+            "or_eq", "xor", "xor_eq"
+        };
+
+        private static readonly HashSet<string> s_cppStdIdentifiers = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "array", "begin", "cerr", "cin", "cout", "deque", "endl", "exception",
+            "find", "forward", "function", "get", "make_pair", "make_shared",
+            "make_unique", "map", "move", "optional", "pair", "queue", "set",
+            "shared_ptr", "sort", "span", "stack", "std", "string", "string_view",
+            "tuple", "unique_ptr", "unordered_map", "unordered_set", "variant",
+            "vector", "weak_ptr"
+        };
+
+        private static readonly HashSet<string> s_cppPreprocessorDirectives = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "define", "elif", "else", "endif", "error", "if", "ifdef", "ifndef",
+            "import", "include", "include_next", "line", "pragma", "undef", "warning"
         };
 
         private readonly string _path;
@@ -159,6 +332,24 @@ namespace Core.DirFiles
                 return TermXTEditorSyntax.CSharp;
             }
 
+            if (string.Equals(extension, ".c", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".h", StringComparison.OrdinalIgnoreCase))
+            {
+                return TermXTEditorSyntax.C;
+            }
+
+            if (string.Equals(extension, ".cpp", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".cxx", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".cc", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".hpp", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".hxx", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".hh", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".ipp", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".ixx", StringComparison.OrdinalIgnoreCase))
+            {
+                return TermXTEditorSyntax.Cpp;
+            }
+
             return TermXTEditorSyntax.TermXt;
         }
 
@@ -183,6 +374,21 @@ namespace Core.DirFiles
                 case "c-sharp":
                     syntax = TermXTEditorSyntax.CSharp;
                     return true;
+                case "c":
+                case "c89":
+                case "c99":
+                case "c11":
+                case "c17":
+                case "c23":
+                    syntax = TermXTEditorSyntax.C;
+                    return true;
+                case "cpp":
+                case "c++":
+                case "cplusplus":
+                case "cxx":
+                case "cc":
+                    syntax = TermXTEditorSyntax.Cpp;
+                    return true;
                 default:
                     return false;
             }
@@ -190,7 +396,17 @@ namespace Core.DirFiles
 
         public static string SyntaxDisplayName(TermXTEditorSyntax syntax)
         {
-            return syntax == TermXTEditorSyntax.CSharp ? "C#" : "TermXT";
+            switch (syntax)
+            {
+                case TermXTEditorSyntax.CSharp:
+                    return "C#";
+                case TermXTEditorSyntax.C:
+                    return "C";
+                case TermXTEditorSyntax.Cpp:
+                    return "C++";
+                default:
+                    return "TermXT";
+            }
         }
 
         public void Run()
@@ -368,16 +584,16 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | Ctrl+Z undo | Ctrl+Y redo";
+                    help = " INSERT  Esc normal | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | Ctrl+Z/Y undo/redo";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  w save | q quit | 42 or goto 42 go to line | syntax xt|cs | Esc cancel";
+                    help = " COMMAND  w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp | Esc cancel";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  Shift+arrows select | Ctrl+C copy | Ctrl+V paste | i edit | dd delete | z/Ctrl+Z undo | / search | : command";
+                    help = " NORMAL  Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -523,6 +739,18 @@ namespace Core.DirFiles
                 if (key.Key == ConsoleKey.V)
                 {
                     PasteFromClipboard();
+                    return;
+                }
+
+                if (key.Key == ConsoleKey.Home)
+                {
+                    MoveToDocumentStart();
+                    return;
+                }
+
+                if (key.Key == ConsoleKey.End)
+                {
+                    MoveToDocumentEnd();
                     return;
                 }
 
@@ -941,7 +1169,7 @@ namespace Core.DirFiles
             string value = command.Length > prefix.Length ? command.Substring(prefix.Length).Trim() : string.Empty;
             if (!TryParseSyntax(value, out TermXTEditorSyntax syntax))
             {
-                Status("Unknown syntax. Use :syntax xt or :syntax cs.", error: true);
+                Status("Unknown syntax. Use :syntax xt, cs, c, or cpp.", error: true);
                 _mode = Mode.Normal;
                 return true;
             }
@@ -1380,6 +1608,31 @@ namespace Core.DirFiles
             _cursorCol = Math.Min(desiredCol, CurrentLine().Length);
             if (_mode == Mode.Normal && CurrentLine().Length > 0)
                 _cursorCol = Math.Min(_cursorCol, CurrentLine().Length - 1);
+        }
+
+        private void MoveToDocumentStart()
+        {
+            ClearSelection();
+            _pendingDelete = false;
+            _insertUndoStarted = false;
+            _cursorLine = 0;
+            _cursorCol = 0;
+            _scrollTop = 0;
+            _scrollLeft = 0;
+            ClampCursor();
+            Status("First line");
+        }
+
+        private void MoveToDocumentEnd()
+        {
+            ClearSelection();
+            _pendingDelete = false;
+            _insertUndoStarted = false;
+            _cursorLine = Math.Max(0, _lines.Count - 1);
+            _cursorCol = CurrentLine().Length;
+            _scrollLeft = 0;
+            ClampCursor();
+            Status("Last line");
         }
 
         private void MoveWithSelection(ConsoleKeyInfo key, Action move)
@@ -1873,7 +2126,7 @@ namespace Core.DirFiles
             if (width <= 0)
                 return string.Empty;
 
-            var tokens = Tokenize(line);
+            var tokens = Tokenize(line, lineIndex);
             var sb = new StringBuilder(width + 128);
             int end = start + width;
             int visible = 0;
@@ -1935,11 +2188,74 @@ namespace Core.DirFiles
             }
         }
 
-        private List<Token> Tokenize(string line)
+        private List<Token> Tokenize(string line, int lineIndex)
         {
-            return _syntax == TermXTEditorSyntax.CSharp
-                ? TokenizeCSharp(line)
-                : TokenizeTermXt(line);
+            switch (_syntax)
+            {
+                case TermXTEditorSyntax.CSharp:
+                    return TokenizeCSharp(line, IsCSharpLineInBlockComment(lineIndex));
+                case TermXTEditorSyntax.C:
+                    return TokenizeCStyle(line, cpp: false);
+                case TermXTEditorSyntax.Cpp:
+                    return TokenizeCStyle(line, cpp: true);
+                default:
+                    return TokenizeTermXt(line);
+            }
+        }
+
+        private bool IsCSharpLineInBlockComment(int lineIndex)
+        {
+            bool inBlockComment = false;
+
+            for (int i = 0; i < lineIndex && i < _lines.Count; i++)
+                inBlockComment = ScanCSharpBlockCommentState(_lines[i], inBlockComment);
+
+            return inBlockComment;
+        }
+
+        private static bool ScanCSharpBlockCommentState(string line, bool inBlockComment)
+        {
+            int i = 0;
+
+            while (i < line.Length)
+            {
+                if (inBlockComment)
+                {
+                    int end = line.IndexOf("*/", i, StringComparison.Ordinal);
+                    if (end < 0)
+                        return true;
+
+                    i = end + 2;
+                    inBlockComment = false;
+                    continue;
+                }
+
+                if (line[i] == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                    return false;
+
+                if (line[i] == '/' && i + 1 < line.Length && line[i + 1] == '*')
+                {
+                    i += 2;
+                    inBlockComment = true;
+                    continue;
+                }
+
+                if (TryReadCSharpString(line, i, out int stringLength))
+                {
+                    i += Math.Max(1, stringLength);
+                    continue;
+                }
+
+                if (TryReadCSharpChar(line, i, out int charLength))
+                {
+                    i += Math.Max(1, charLength);
+                    continue;
+                }
+
+                i++;
+            }
+
+            return inBlockComment;
         }
 
         private static List<Token> TokenizeTermXt(string line)
@@ -2021,24 +2337,44 @@ namespace Core.DirFiles
             return tokens;
         }
 
-        private static List<Token> TokenizeCSharp(string line)
+        private static List<Token> TokenizeCSharp(string line, bool startsInBlockComment)
         {
             var tokens = new List<Token>();
             int i = 0;
+            bool inBlockComment = startsInBlockComment;
 
             while (i < line.Length)
             {
+                if (inBlockComment)
+                {
+                    int start = i;
+                    int end = line.IndexOf("*/", i, StringComparison.Ordinal);
+                    if (end < 0)
+                    {
+                        tokens.Add(new Token(start, line.Length - start, CSharpComment));
+                        i = line.Length;
+                    }
+                    else
+                    {
+                        i = end + 2;
+                        tokens.Add(new Token(start, i - start, CSharpComment));
+                        inBlockComment = false;
+                    }
+
+                    continue;
+                }
+
                 char c = line[i];
 
                 if (c == '#' && IsOnlyWhitespaceBefore(line, i))
                 {
-                    tokens.Add(new Token(i, line.Length - i, CPreprocessor));
+                    tokens.AddRange(TokenizeCSharpPreprocessor(line, i));
                     break;
                 }
 
                 if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
                 {
-                    tokens.Add(new Token(i, line.Length - i, CComment));
+                    tokens.Add(new Token(i, line.Length - i, CSharpComment));
                     break;
                 }
 
@@ -2049,15 +2385,31 @@ namespace Core.DirFiles
                     while (i + 1 < line.Length && !(line[i] == '*' && line[i + 1] == '/'))
                         i++;
 
-                    i = i + 1 < line.Length ? i + 2 : line.Length;
-                    tokens.Add(new Token(start, i - start, CComment));
+                    if (i + 1 < line.Length)
+                    {
+                        i += 2;
+                    }
+                    else
+                    {
+                        i = line.Length;
+                        inBlockComment = true;
+                    }
+
+                    tokens.Add(new Token(start, i - start, CSharpComment));
                     continue;
                 }
 
                 if (TryReadCSharpString(line, i, out int stringLength))
                 {
-                    tokens.Add(new Token(i, stringLength, CString));
+                    tokens.Add(new Token(i, stringLength, CSharpString));
                     i += stringLength;
+                    continue;
+                }
+
+                if (TryReadCSharpAttribute(line, i, out int attributeLength))
+                {
+                    tokens.Add(new Token(i, attributeLength, CSharpAttribute));
+                    i += attributeLength;
                     continue;
                 }
 
@@ -2081,7 +2433,7 @@ namespace Core.DirFiles
                         i++;
                     }
 
-                    tokens.Add(new Token(start, i - start, CString));
+                    tokens.Add(new Token(start, i - start, CSharpString));
                     continue;
                 }
 
@@ -2095,7 +2447,7 @@ namespace Core.DirFiles
                     while (i < line.Length && IsCSharpNumberPart(line[i]))
                         i++;
 
-                    tokens.Add(new Token(start, i - start, CNumber));
+                    tokens.Add(new Token(start, i - start, CSharpNumber));
                     continue;
                 }
 
@@ -2121,7 +2473,7 @@ namespace Core.DirFiles
 
                 if ("{}[]()=+-*/%<>!|&^~?:;.,\\".IndexOf(c) >= 0)
                 {
-                    tokens.Add(new Token(i, 1, COperator));
+                    tokens.Add(new Token(i, 1, CSharpOperator));
                     i++;
                     continue;
                 }
@@ -2132,6 +2484,249 @@ namespace Core.DirFiles
 
             if (tokens.Count == 0)
                 tokens.Add(new Token(0, 0, CNormal));
+
+            return tokens;
+        }
+
+        private static List<Token> TokenizeCSharpPreprocessor(string line, int index)
+        {
+            var tokens = new List<Token>();
+            int i = index;
+
+            tokens.Add(new Token(i, 1, CSharpOperator));
+            i++;
+
+            while (i < line.Length)
+            {
+                char c = line[i];
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                {
+                    tokens.Add(new Token(i, line.Length - i, CSharpComment));
+                    break;
+                }
+
+                if (TryReadCSharpString(line, i, out int stringLength))
+                {
+                    tokens.Add(new Token(i, stringLength, CSharpString));
+                    i += stringLength;
+                    continue;
+                }
+
+                if (char.IsDigit(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsCSharpNumberPart(line[i]))
+                        i++;
+
+                    tokens.Add(new Token(start, i - start, CSharpNumber));
+                    continue;
+                }
+
+                if (IsCSharpWordStart(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsCSharpWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(start, i - start);
+                    int color = s_csharpPreprocessorDirectives.Contains(word) || IsLikelyMacroName(word)
+                        ? CSharpDirective
+                        : CSharpKeyword;
+                    tokens.Add(new Token(start, i - start, color));
+                    continue;
+                }
+
+                if ("{}[]()=+-*/%<>!|&^~?:;.,\\".IndexOf(c) >= 0)
+                {
+                    tokens.Add(new Token(i, 1, CSharpOperator));
+                    i++;
+                    continue;
+                }
+
+                tokens.Add(new Token(i, 1, CNormal));
+                i++;
+            }
+
+            return tokens;
+        }
+
+        private static List<Token> TokenizeCStyle(string line, bool cpp)
+        {
+            var tokens = new List<Token>();
+            int i = 0;
+
+            while (i < line.Length)
+            {
+                char c = line[i];
+
+                if (c == '#' && IsOnlyWhitespaceBefore(line, i))
+                {
+                    tokens.AddRange(TokenizeCStylePreprocessor(line, i, cpp));
+                    break;
+                }
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                {
+                    tokens.Add(new Token(i, line.Length - i, CStyleCommentColor(cpp)));
+                    break;
+                }
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '*')
+                {
+                    int start = i;
+                    i += 2;
+                    while (i + 1 < line.Length && !(line[i] == '*' && line[i + 1] == '/'))
+                        i++;
+
+                    i = i + 1 < line.Length ? i + 2 : line.Length;
+                    tokens.Add(new Token(start, i - start, CStyleCommentColor(cpp)));
+                    continue;
+                }
+
+                if (TryReadCStyleString(line, i, cpp, out int stringLength))
+                {
+                    tokens.Add(new Token(i, stringLength, CStyleStringColor(cpp)));
+                    i += stringLength;
+                    continue;
+                }
+
+                if (TryReadCStyleChar(line, i, out int charLength))
+                {
+                    tokens.Add(new Token(i, charLength, CStyleStringColor(cpp)));
+                    i += charLength;
+                    continue;
+                }
+
+                if (char.IsDigit(c))
+                {
+                    int start = i++;
+
+                    if (c == '0' && i < line.Length && (line[i] == 'x' || line[i] == 'X' || line[i] == 'b' || line[i] == 'B'))
+                        i++;
+
+                    while (i < line.Length && IsCStyleNumberPart(line[i]))
+                        i++;
+
+                    tokens.Add(new Token(start, i - start, CStyleNumberColor(cpp)));
+                    continue;
+                }
+
+                if (IsCStyleWordStart(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsCStyleWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(start, i - start);
+                    tokens.Add(new Token(start, i - start, CStyleWordColor(word, cpp)));
+                    continue;
+                }
+
+                if ("{}[]()=+-*/%<>!|&^~?:;.,\\#".IndexOf(c) >= 0)
+                {
+                    tokens.Add(new Token(i, 1, CStyleOperatorColor(cpp)));
+                    i++;
+                    continue;
+                }
+
+                tokens.Add(new Token(i, 1, CNormal));
+                i++;
+            }
+
+            if (tokens.Count == 0)
+                tokens.Add(new Token(0, 0, CNormal));
+
+            return tokens;
+        }
+
+        private static List<Token> TokenizeCStylePreprocessor(string line, int index, bool cpp)
+        {
+            var tokens = new List<Token>();
+            int i = index;
+            bool expectIncludePath = false;
+
+            tokens.Add(new Token(i, 1, CStyleOperatorColor(cpp)));
+            i++;
+
+            while (i < line.Length)
+            {
+                char c = line[i];
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                {
+                    tokens.Add(new Token(i, line.Length - i, CStyleCommentColor(cpp)));
+                    break;
+                }
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '*')
+                {
+                    int start = i;
+                    i += 2;
+                    while (i + 1 < line.Length && !(line[i] == '*' && line[i + 1] == '/'))
+                        i++;
+
+                    i = i + 1 < line.Length ? i + 2 : line.Length;
+                    tokens.Add(new Token(start, i - start, CStyleCommentColor(cpp)));
+                    continue;
+                }
+
+                if (c == '<' && expectIncludePath)
+                {
+                    int start = i++;
+                    while (i < line.Length && line[i] != '>')
+                        i++;
+
+                    if (i < line.Length)
+                        i++;
+
+                    tokens.Add(new Token(start, i - start, CStyleIncludeColor(cpp)));
+                    expectIncludePath = false;
+                    continue;
+                }
+
+                if (TryReadCStyleString(line, i, cpp, out int stringLength))
+                {
+                    tokens.Add(new Token(i, stringLength, expectIncludePath ? CStyleIncludeColor(cpp) : CStyleStringColor(cpp)));
+                    i += stringLength;
+                    expectIncludePath = false;
+                    continue;
+                }
+
+                if (char.IsDigit(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsCStyleNumberPart(line[i]))
+                        i++;
+
+                    tokens.Add(new Token(start, i - start, CStyleNumberColor(cpp)));
+                    continue;
+                }
+
+                if (IsCStyleWordStart(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsCStyleWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(start, i - start);
+                    int color = CStylePreprocessorDirectiveColor(word, cpp);
+                    tokens.Add(new Token(start, i - start, color));
+                    expectIncludePath = IsIncludeDirective(word);
+                    continue;
+                }
+
+                if ("{}[]()=+-*/%<>!|&^~?:;.,\\#".IndexOf(c) >= 0)
+                {
+                    tokens.Add(new Token(i, 1, CStyleOperatorColor(cpp)));
+                    i++;
+                    expectIncludePath = false;
+                    continue;
+                }
+
+                tokens.Add(new Token(i, 1, CNormal));
+                i++;
+            }
 
             return tokens;
         }
@@ -2159,18 +2754,163 @@ namespace Core.DirFiles
                 return CNormal;
 
             if (s_csharpFlowKeywords.Contains(word))
-                return CFlow;
+                return CSharpFlow;
+
+            if (s_csharpDeclarationKeywords.Contains(word))
+                return CSharpDeclaration;
+
+            if (s_csharpModifierKeywords.Contains(word))
+                return CSharpModifier;
 
             if (s_csharpKeywords.Contains(word))
-                return CKeyword;
+                return CSharpKeyword;
 
             if (s_csharpTypeKeywords.Contains(word))
-                return CFunction;
+                return CSharpType;
 
             if (s_csharpLiteralKeywords.Contains(word))
-                return CNumber;
+                return CSharpNumber;
+
+            if (s_csharpContextualKeywords.Contains(word))
+                return CSharpKeyword;
+
+            if (s_csharpBclIdentifiers.Contains(word))
+                return CSharpBcl;
+
+            if (IsLikelyMacroName(word))
+                return CSharpDirective;
 
             return CNormal;
+        }
+
+        private static int CStyleWordColor(string word, bool cpp)
+        {
+            if (cpp)
+            {
+                if (s_cppOperatorWords.Contains(word))
+                    return CppSourceOperator;
+
+                if (s_cppFlowKeywords.Contains(word))
+                    return CppSourceFlow;
+
+                if (s_cppKeywords.Contains(word))
+                    return CppSourceKeyword;
+
+                if (s_cppTypeKeywords.Contains(word))
+                    return CppSourceType;
+
+                if (s_cppLiteralKeywords.Contains(word))
+                    return CppSourceNumber;
+
+                if (s_cppStdIdentifiers.Contains(word))
+                    return CppSourceStd;
+
+                if (IsLikelyMacroName(word))
+                    return CppSourceDirective;
+            }
+            else
+            {
+                if (s_cOperatorWords.Contains(word))
+                    return CSourceOperator;
+
+                if (s_cFlowKeywords.Contains(word))
+                    return CSourceFlow;
+
+                if (s_cKeywords.Contains(word))
+                    return CSourceKeyword;
+
+                if (s_cTypeKeywords.Contains(word))
+                    return CSourceType;
+
+                if (s_cLiteralKeywords.Contains(word))
+                    return CSourceNumber;
+
+                if (s_cStdIdentifiers.Contains(word))
+                    return CSourceStd;
+
+                if (IsLikelyMacroName(word))
+                    return CSourceDirective;
+            }
+
+            return CNormal;
+        }
+
+        private static int CStylePreprocessorDirectiveColor(string word, bool cpp)
+        {
+            if (cpp)
+            {
+                if (s_cppPreprocessorDirectives.Contains(word) || IsLikelyMacroName(word))
+                    return CppSourceDirective;
+
+                if (s_cppStdIdentifiers.Contains(word))
+                    return CppSourceStd;
+
+                return CppSourceKeyword;
+            }
+
+            if (s_cPreprocessorDirectives.Contains(word) || IsLikelyMacroName(word))
+                return CSourceDirective;
+
+            if (s_cStdIdentifiers.Contains(word))
+                return CSourceStd;
+
+            return CSourceKeyword;
+        }
+
+        private static int CStyleCommentColor(bool cpp)
+        {
+            return cpp ? CppSourceComment : CSourceComment;
+        }
+
+        private static int CStyleIncludeColor(bool cpp)
+        {
+            return cpp ? CppSourceInclude : CSourceInclude;
+        }
+
+        private static int CStyleStringColor(bool cpp)
+        {
+            return cpp ? CppSourceString : CSourceString;
+        }
+
+        private static int CStyleNumberColor(bool cpp)
+        {
+            return cpp ? CppSourceNumber : CSourceNumber;
+        }
+
+        private static int CStyleOperatorColor(bool cpp)
+        {
+            return cpp ? CppSourceOperator : CSourceOperator;
+        }
+
+        private static bool IsIncludeDirective(string word)
+        {
+            return string.Equals(word, "include", StringComparison.Ordinal) ||
+                string.Equals(word, "include_next", StringComparison.Ordinal) ||
+                string.Equals(word, "import", StringComparison.Ordinal);
+        }
+
+        private static bool IsLikelyMacroName(string word)
+        {
+            if (string.IsNullOrWhiteSpace(word) || word.Length < 2)
+                return false;
+
+            bool hasLetter = false;
+            for (int i = 0; i < word.Length; i++)
+            {
+                char c = word[i];
+                if (char.IsLetter(c))
+                {
+                    hasLetter = true;
+                    if (char.IsLower(c))
+                        return false;
+                }
+                else if (!char.IsDigit(c) && c != '_')
+                {
+                    return false;
+                }
+            }
+
+            return hasLetter;
         }
 
         private static bool IsWordStart(char c)
@@ -2196,6 +2936,21 @@ namespace Core.DirFiles
         private static bool IsCSharpNumberPart(char c)
         {
             return char.IsLetterOrDigit(c) || c == '_' || c == '.';
+        }
+
+        private static bool IsCStyleWordStart(char c)
+        {
+            return char.IsLetter(c) || c == '_';
+        }
+
+        private static bool IsCStyleWordPart(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_';
+        }
+
+        private static bool IsCStyleNumberPart(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '\'';
         }
 
         private static bool IsOnlyWhitespaceBefore(string line, int index)
@@ -2270,6 +3025,215 @@ namespace Core.DirFiles
             }
 
             length = i - index;
+            return true;
+        }
+
+        private static bool TryReadCSharpChar(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || line[index] != '\'')
+                return false;
+
+            int i = index + 1;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == '\'')
+                {
+                    i++;
+                    break;
+                }
+
+                i++;
+            }
+
+            length = i - index;
+            return true;
+        }
+
+        private static bool TryReadCSharpAttribute(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || line[index] != '[' || !IsLikelyCSharpAttributeStart(line, index))
+                return false;
+
+            int depth = 0;
+            int i = index;
+            bool hasName = false;
+
+            while (i < line.Length)
+            {
+                if (TryReadCSharpString(line, i, out int stringLength))
+                {
+                    i += stringLength;
+                    continue;
+                }
+
+                if (line[i] == '\'')
+                {
+                    i++;
+                    while (i < line.Length)
+                    {
+                        if (line[i] == '\\')
+                        {
+                            i = Math.Min(line.Length, i + 2);
+                            continue;
+                        }
+
+                        if (line[i] == '\'')
+                        {
+                            i++;
+                            break;
+                        }
+
+                        i++;
+                    }
+                    continue;
+                }
+
+                if (IsCSharpWordStart(line[i]))
+                    hasName = true;
+
+                if (line[i] == '[')
+                    depth++;
+                else if (line[i] == ']')
+                {
+                    depth--;
+                    i++;
+                    if (depth == 0)
+                    {
+                        length = i - index;
+                        return hasName;
+                    }
+                    continue;
+                }
+
+                i++;
+            }
+
+            return false;
+        }
+
+        private static bool IsLikelyCSharpAttributeStart(string line, int index)
+        {
+            int previous = index - 1;
+            while (previous >= 0 && char.IsWhiteSpace(line[previous]))
+                previous--;
+
+            if (previous >= 0 && line[previous] != '{' && line[previous] != ';' && line[previous] != ',')
+                return false;
+
+            int next = index + 1;
+            while (next < line.Length && char.IsWhiteSpace(line[next]))
+                next++;
+
+            return next < line.Length && (IsCSharpWordStart(line[next]) || line[next] == '@');
+        }
+
+        private static bool TryReadCStyleString(string line, int index, bool cpp, out int length)
+        {
+            length = 0;
+            int i = index;
+
+            if (cpp && line[i] == 'R')
+                return TryReadCppRawString(line, index, i, out length);
+
+            if (line[i] == 'u' && i + 1 < line.Length && line[i + 1] == '8')
+                i += 2;
+            else if (line[i] == 'u' || line[i] == 'U' || line[i] == 'L')
+                i++;
+
+            if (i >= line.Length)
+                return false;
+
+            if (cpp && line[i] == 'R')
+                return TryReadCppRawString(line, index, i, out length);
+
+            if (line[i] != '"')
+                return false;
+
+            i++;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == '"')
+                {
+                    i++;
+                    break;
+                }
+
+                i++;
+            }
+
+            length = i - index;
+            return true;
+        }
+
+        private static bool TryReadCStyleChar(string line, int index, out int length)
+        {
+            length = 0;
+            int i = index;
+
+            if (line[i] == 'u' && i + 1 < line.Length && line[i + 1] == '8')
+                i += 2;
+            else if (line[i] == 'u' || line[i] == 'U' || line[i] == 'L')
+                i++;
+
+            if (i >= line.Length || line[i] != '\'')
+                return false;
+
+            i++;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == '\'')
+                {
+                    i++;
+                    break;
+                }
+
+                i++;
+            }
+
+            length = i - index;
+            return true;
+        }
+
+        private static bool TryReadCppRawString(string line, int tokenStart, int rawStart, out int length)
+        {
+            length = 0;
+            int openQuote = rawStart + 1;
+            if (openQuote >= line.Length || line[openQuote] != '"')
+                return false;
+
+            int delimiterStart = openQuote + 1;
+            int openParen = line.IndexOf('(', delimiterStart);
+            if (openParen < 0)
+                return false;
+
+            string delimiter = line.Substring(delimiterStart, openParen - delimiterStart);
+            string terminator = ")" + delimiter + "\"";
+            int end = line.IndexOf(terminator, openParen + 1, StringComparison.Ordinal);
+            length = end >= 0
+                ? end + terminator.Length - tokenStart
+                : line.Length - tokenStart;
             return true;
         }
 

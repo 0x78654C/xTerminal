@@ -18,16 +18,18 @@ namespace Commands.TerminalCommands.ScriptingLanguage
     xte -new <file>             : Create a template and open it.
     xte -syntax xt <file>       : Use TermXT script syntax highlighting.
     xte -syntax cs <file>       : Use C# syntax highlighting.
+    xte -syntax c <file>        : Use C syntax highlighting.
+    xte -syntax cpp <file>      : Use C++ syntax highlighting.
     xte -h                      : Display this help message.
 
-Syntax is selected by extension by default: .xt uses TermXT, .cs and .csx use C#.
+Syntax is selected by extension by default: .xt uses TermXT, .cs/.csx use C#, .c/.h use C, and .cpp/.cc/.cxx/.hpp/.hh/.hxx use C++.
 
 Inside the editor:
     Normal mode : h/j/k/l or arrows move, i or Insert enters insert, dd delete line, / search, n or F3 search next.
     Search      : Enter finds, empty Enter repeats the previous search.
     Insert mode : Esc returns to normal mode, Ctrl+Z undo, Ctrl+Y redo.
     Commands    : :w save, :q quit, :q! quit without saving, :wq save and quit.
-                  :42 or :goto 42 go to line, :syntax xt|cs switch highlight.
+                  :42 or :goto 42 go to line, :syntax xt|cs|c|cpp switch highlight.
 ";
 
         private static readonly string s_template = @"# xTermXT Script template
@@ -49,6 +51,24 @@ public class Program
     {
         Console.WriteLine(""Hello from xTerminal"");
     }
+}
+";
+
+        private static readonly string s_cTemplate = @"#include <stdio.h>
+
+int main(void)
+{
+    printf(""Hello from xTerminal\n"");
+    return 0;
+}
+";
+
+        private static readonly string s_cppTemplate = @"#include <iostream>
+
+int main()
+{
+    std::cout << ""Hello from xTerminal"" << std::endl;
+    return 0;
 }
 ";
 
@@ -123,7 +143,7 @@ public class Program
                 if (IsSyntaxOption(token))
                 {
                     if (i + 1 >= tokens.Count)
-                        throw new ArgumentException("Missing syntax value. Use xt or cs.");
+                        throw new ArgumentException("Missing syntax value. Use xt, cs, c, or cpp.");
 
                     options.SetSyntax(ParseSyntax(tokens[++i]));
                     continue;
@@ -166,12 +186,22 @@ public class Program
             if (TermXTEditor.TryParseSyntax(value, out TermXTEditorSyntax syntax))
                 return syntax;
 
-            throw new ArgumentException("Unknown syntax '" + value + "'. Use xt or cs.");
+            throw new ArgumentException("Unknown syntax '" + value + "'. Use xt, cs, c, or cpp.");
         }
 
         private static string TemplateForSyntax(TermXTEditorSyntax syntax)
         {
-            return syntax == TermXTEditorSyntax.CSharp ? s_csharpTemplate : s_template;
+            switch (syntax)
+            {
+                case TermXTEditorSyntax.CSharp:
+                    return s_csharpTemplate;
+                case TermXTEditorSyntax.C:
+                    return s_cTemplate;
+                case TermXTEditorSyntax.Cpp:
+                    return s_cppTemplate;
+                default:
+                    return s_template;
+            }
         }
 
         private static List<string> ParseArguments(string input)
