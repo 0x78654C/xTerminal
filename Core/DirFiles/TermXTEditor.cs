@@ -310,6 +310,11 @@ namespace Core.DirFiles
         private bool _hasSelectionAnchor;
         private int _selectionAnchorLine;
         private int _selectionAnchorCol;
+        private int _wrapCacheTextWidth = -1;
+        private int[] _wrapPrefixRows = Array.Empty<int>();
+        private bool _wrapCacheDirty = true;
+        private bool[] _csharpBlockCommentLineStarts = Array.Empty<bool>();
+        private bool _csharpBlockCommentCacheDirty = true;
 
         public TermXTEditor(string path)
             : this(path, DetectSyntaxFromPath(path))
@@ -512,6 +517,37 @@ namespace Core.DirFiles
             _undo.Clear();
             _redo.Clear();
             ClearSelection();
+            InvalidateDocumentCaches();
+        }
+
+        private void InvalidateDocumentCaches()
+        {
+            _wrapCacheDirty = true;
+            _csharpBlockCommentCacheDirty = true;
+        }
+
+        private void InvalidateSyntaxStateCache()
+        {
+            _csharpBlockCommentCacheDirty = true;
+        }
+
+        private void EnsureWrapCache(int textWidth)
+        {
+            int width = Math.Max(1, textWidth);
+            if (!_wrapCacheDirty &&
+                _wrapCacheTextWidth == width &&
+                _wrapPrefixRows.Length == _lines.Count + 1)
+            {
+                return;
+            }
+
+            var prefixRows = new int[_lines.Count + 1];
+            for (int i = 0; i < _lines.Count; i++)
+                prefixRows[i + 1] = prefixRows[i] + GetWrapCount(_lines[i], width);
+
+            _wrapPrefixRows = prefixRows;
+            _wrapCacheTextWidth = width;
+            _wrapCacheDirty = false;
         }
 
         private void Render()
@@ -546,6 +582,7 @@ namespace Core.DirFiles
             int textWidth = Math.Max(1, width - textLeft);
 
             ClampCursor();
+            EnsureWrapCache(textWidth);
             AdjustScroll(textRows, textWidth);
 
             _frame.Clear();
@@ -1175,6 +1212,7 @@ namespace Core.DirFiles
             }
 
             _syntax = syntax;
+            InvalidateSyntaxStateCache();
             Status("Syntax: " + SyntaxDisplayName(_syntax));
             _mode = Mode.Normal;
             return true;
@@ -1222,6 +1260,7 @@ namespace Core.DirFiles
             {
                 _lines[_cursorLine] = line.Insert(_cursorCol, parts[0]);
                 _cursorCol += parts[0].Length;
+                InvalidateDocumentCaches();
                 return;
             }
 
@@ -1240,6 +1279,7 @@ namespace Core.DirFiles
             _lines.Insert(insertLine, last + right);
             _cursorLine = insertLine;
             _cursorCol = last.Length;
+            InvalidateDocumentCaches();
         }
 
         private void InsertNewLine()
@@ -1253,6 +1293,7 @@ namespace Core.DirFiles
             _lines.Insert(_cursorLine + 1, right);
             _cursorLine++;
             _cursorCol = 0;
+            InvalidateDocumentCaches();
             MarkDirty();
         }
 
@@ -1274,6 +1315,7 @@ namespace Core.DirFiles
                 string line = CurrentLine();
                 _lines[_cursorLine] = line.Remove(_cursorCol - 1, 1);
                 _cursorCol--;
+                InvalidateDocumentCaches();
                 MarkDirty();
                 return;
             }
@@ -1286,6 +1328,7 @@ namespace Core.DirFiles
                 _lines.RemoveAt(_cursorLine);
                 _cursorLine--;
                 _cursorCol = previousLength;
+                InvalidateDocumentCaches();
                 MarkDirty();
             }
         }
@@ -1308,6 +1351,7 @@ namespace Core.DirFiles
             {
                 PushInsertUndo();
                 _lines[_cursorLine] = line.Remove(_cursorCol, 1);
+                InvalidateDocumentCaches();
                 MarkDirty();
                 return;
             }
@@ -1317,6 +1361,7 @@ namespace Core.DirFiles
                 PushInsertUndo();
                 _lines[_cursorLine] += _lines[_cursorLine + 1];
                 _lines.RemoveAt(_cursorLine + 1);
+                InvalidateDocumentCaches();
                 MarkDirty();
             }
         }
@@ -1341,6 +1386,7 @@ namespace Core.DirFiles
             _lines[_cursorLine] = line.Remove(_cursorCol, 1);
             if (_cursorCol >= _lines[_cursorLine].Length)
                 _cursorCol = Math.Max(0, _lines[_cursorLine].Length - 1);
+            InvalidateDocumentCaches();
             MarkDirty();
         }
 
@@ -1357,6 +1403,7 @@ namespace Core.DirFiles
 
             _cursorLine = Math.Min(_cursorLine, _lines.Count - 1);
             _cursorCol = 0;
+            InvalidateDocumentCaches();
             MarkDirty();
         }
 
@@ -1370,6 +1417,7 @@ namespace Core.DirFiles
             _lines.Insert(_cursorLine + 1, _lineClipboard);
             _cursorLine++;
             _cursorCol = 0;
+            InvalidateDocumentCaches();
             MarkDirty();
         }
 
@@ -1515,6 +1563,7 @@ namespace Core.DirFiles
             _dirty = !LinesEqual(_lines, _savedLines);
             _pendingDelete = false;
             ClearSelection();
+            InvalidateDocumentCaches();
             ClampCursor();
         }
 
@@ -1673,7 +1722,10 @@ namespace Core.DirFiles
         private void ClampCursor()
         {
             if (_lines.Count == 0)
+            {
                 _lines.Add(string.Empty);
+                InvalidateDocumentCaches();
+            }
 
             _cursorLine = Math.Max(0, Math.Min(_lines.Count - 1, _cursorLine));
             _cursorCol = Math.Max(0, Math.Min(CurrentLine().Length, _cursorCol));
@@ -1681,6 +1733,7 @@ namespace Core.DirFiles
 
         private void AdjustScroll(int textRows, int textWidth)
         {
+            EnsureWrapCache(textWidth);
             int cursorVisualRow = GetCursorVisualRow(textWidth);
             int totalVisualRows = GetTotalVisualRows(textWidth);
 
@@ -1695,10 +1748,9 @@ namespace Core.DirFiles
 
         private int GetCursorVisualRow(int textWidth)
         {
-            int row = 0;
-            for (int i = 0; i < _cursorLine; i++)
-                row += GetWrapCount(_lines[i], textWidth);
-
+            EnsureWrapCache(textWidth);
+            int line = Math.Max(0, Math.Min(_lines.Count - 1, _cursorLine));
+            int row = line < _wrapPrefixRows.Length ? _wrapPrefixRows[line] : 0;
             return row + GetCursorWrapIndex(textWidth);
         }
 
@@ -1714,11 +1766,11 @@ namespace Core.DirFiles
 
         private int GetTotalVisualRows(int textWidth)
         {
-            int total = 0;
-            foreach (string line in _lines)
-                total += GetWrapCount(line, textWidth);
+            EnsureWrapCache(textWidth);
+            if (_wrapPrefixRows.Length == 0)
+                return 1;
 
-            return Math.Max(1, total);
+            return Math.Max(1, _wrapPrefixRows[_wrapPrefixRows.Length - 1]);
         }
 
         private static int GetWrapCount(string line, int textWidth)
@@ -1732,27 +1784,27 @@ namespace Core.DirFiles
 
         private bool TryGetVisualRow(int visualRow, int textWidth, out VisualRow rowInfo)
         {
-            int remaining = visualRow;
+            EnsureWrapCache(textWidth);
 
-            for (int lineIndex = 0; lineIndex < _lines.Count; lineIndex++)
+            if (visualRow < 0 || visualRow >= GetTotalVisualRows(textWidth))
             {
-                int wraps = GetWrapCount(_lines[lineIndex], textWidth);
-                if (remaining < wraps)
-                {
-                    rowInfo = new VisualRow
-                    {
-                        LineIndex = lineIndex,
-                        WrapIndex = remaining,
-                        StartColumn = remaining * Math.Max(1, textWidth)
-                    };
-                    return true;
-                }
-
-                remaining -= wraps;
+                rowInfo = default;
+                return false;
             }
 
-            rowInfo = default;
-            return false;
+            int lineIndex = Array.BinarySearch(_wrapPrefixRows, visualRow);
+            if (lineIndex < 0)
+                lineIndex = ~lineIndex - 1;
+
+            lineIndex = Math.Max(0, Math.Min(_lines.Count - 1, lineIndex));
+            int wrapIndex = visualRow - _wrapPrefixRows[lineIndex];
+            rowInfo = new VisualRow
+            {
+                LineIndex = lineIndex,
+                WrapIndex = wrapIndex,
+                StartColumn = wrapIndex * Math.Max(1, textWidth)
+            };
+            return true;
         }
 
         private int PageSize()
@@ -1847,6 +1899,7 @@ namespace Core.DirFiles
             _cursorCol = start.Col;
             ClearSelection();
             _pendingDelete = false;
+            InvalidateDocumentCaches();
             return true;
         }
 
@@ -2205,12 +2258,31 @@ namespace Core.DirFiles
 
         private bool IsCSharpLineInBlockComment(int lineIndex)
         {
+            EnsureCSharpBlockCommentCache();
+            if (lineIndex < 0 || lineIndex >= _csharpBlockCommentLineStarts.Length)
+                return false;
+
+            return _csharpBlockCommentLineStarts[lineIndex];
+        }
+
+        private void EnsureCSharpBlockCommentCache()
+        {
+            if (!_csharpBlockCommentCacheDirty &&
+                _csharpBlockCommentLineStarts.Length == _lines.Count)
+            {
+                return;
+            }
+
+            var lineStarts = new bool[_lines.Count];
             bool inBlockComment = false;
-
-            for (int i = 0; i < lineIndex && i < _lines.Count; i++)
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                lineStarts[i] = inBlockComment;
                 inBlockComment = ScanCSharpBlockCommentState(_lines[i], inBlockComment);
+            }
 
-            return inBlockComment;
+            _csharpBlockCommentLineStarts = lineStarts;
+            _csharpBlockCommentCacheDirty = false;
         }
 
         private static bool ScanCSharpBlockCommentState(string line, bool inBlockComment)
