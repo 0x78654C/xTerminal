@@ -51,6 +51,8 @@ namespace Core.DirFiles
         private const int CError = 203;
         private const int CSearch = 227;
         private const int CPreprocessor = 183;
+        private const int CSelectionFg = 232;
+        private const int CSelectionBg = 153;
 
         private static readonly HashSet<string> s_flowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -132,6 +134,9 @@ namespace Core.DirFiles
         private string _lineClipboard = string.Empty;
         private bool _hasLineClipboard;
         private TermXTEditorSyntax _syntax;
+        private bool _hasSelectionAnchor;
+        private int _selectionAnchorLine;
+        private int _selectionAnchorCol;
 
         public TermXTEditor(string path)
             : this(path, DetectSyntaxFromPath(path))
@@ -290,6 +295,7 @@ namespace Core.DirFiles
             _insertUndoStarted = false;
             _undo.Clear();
             _redo.Clear();
+            ClearSelection();
         }
 
         private void Render()
@@ -362,7 +368,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Ctrl+Z undo | Ctrl+Y redo | Enter newline | Tab indent | arrows/Home/End move";
+                    help = " INSERT  Esc normal | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | Ctrl+Z undo | Ctrl+Y redo";
                     break;
                 case Mode.Command:
                     help = " COMMAND  w save | q quit | 42 or goto 42 go to line | syntax xt|cs | Esc cancel";
@@ -371,7 +377,7 @@ namespace Core.DirFiles
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  i or Insert edit | h/j/k/l move | dd delete | x char | z/Ctrl+Z undo | Ctrl+Y redo | / search | n/F3 next | : command";
+                    help = " NORMAL  Shift+arrows select | Ctrl+C copy | Ctrl+V paste | i edit | dd delete | z/Ctrl+Z undo | / search | : command";
                     break;
             }
 
@@ -395,7 +401,7 @@ namespace Core.DirFiles
             _frame.Append(F(current ? CCurrentLineNo : CLineNo)).Append(lineNo).Append(Reset).Append(' ');
 
             string line = _lines[rowInfo.LineIndex];
-            string rendered = BuildHighlightedLine(line, rowInfo.StartColumn, textWidth);
+            string rendered = BuildHighlightedLine(line, rowInfo.LineIndex, rowInfo.StartColumn, textWidth);
             _frame.Append(rendered);
 
             int used = numberWidth + 1 + Math.Min(textWidth, Math.Max(0, line.Length - rowInfo.StartColumn));
@@ -508,6 +514,18 @@ namespace Core.DirFiles
         {
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
+                if (key.Key == ConsoleKey.C)
+                {
+                    CopySelectionToClipboard();
+                    return;
+                }
+
+                if (key.Key == ConsoleKey.V)
+                {
+                    PasteFromClipboard();
+                    return;
+                }
+
                 if (key.Key == ConsoleKey.Z)
                 {
                     Undo();
@@ -546,28 +564,32 @@ namespace Core.DirFiles
             switch (key.Key)
             {
                 case ConsoleKey.LeftArrow:
-                    MoveLeft();
+                    MoveWithSelection(key, MoveLeft);
                     break;
                 case ConsoleKey.RightArrow:
-                    MoveRight();
+                    MoveWithSelection(key, MoveRight);
                     break;
                 case ConsoleKey.UpArrow:
-                    MoveUp();
+                    MoveWithSelection(key, MoveUp);
                     break;
                 case ConsoleKey.DownArrow:
-                    MoveDown();
+                    MoveWithSelection(key, MoveDown);
                     break;
                 case ConsoleKey.PageUp:
-                    MoveVertical(-PageSize());
+                    MoveWithSelection(key, () => MoveVertical(-PageSize()));
                     break;
                 case ConsoleKey.PageDown:
-                    MoveVertical(PageSize());
+                    MoveWithSelection(key, () => MoveVertical(PageSize()));
                     break;
                 case ConsoleKey.Home:
+                    UpdateSelectionBeforeMove(key);
                     _cursorCol = 0;
+                    ClearSelectionAfterMoveIfNeeded(key);
                     break;
                 case ConsoleKey.End:
+                    UpdateSelectionBeforeMove(key);
                     _cursorCol = CurrentLine().Length;
+                    ClearSelectionAfterMoveIfNeeded(key);
                     break;
                 case ConsoleKey.Insert:
                     EnterInsertMode();
@@ -577,6 +599,7 @@ namespace Core.DirFiles
                     break;
                 case ConsoleKey.Escape:
                     _pendingDelete = false;
+                    ClearSelection();
                     Status("NORMAL");
                     break;
                 default:
@@ -590,21 +613,27 @@ namespace Core.DirFiles
             switch (key.KeyChar)
             {
                 case 'h':
+                    ClearSelection();
                     MoveLeft();
                     break;
                 case 'j':
+                    ClearSelection();
                     MoveDown();
                     break;
                 case 'k':
+                    ClearSelection();
                     MoveUp();
                     break;
                 case 'l':
+                    ClearSelection();
                     MoveRight();
                     break;
                 case '0':
+                    ClearSelection();
                     _cursorCol = 0;
                     break;
                 case '$':
+                    ClearSelection();
                     _cursorCol = CurrentLine().Length;
                     break;
                 case 'i':
@@ -669,27 +698,31 @@ namespace Core.DirFiles
                     ExitInsertMode();
                     break;
                 case ConsoleKey.LeftArrow:
-                    MoveLeft();
+                    MoveWithSelection(key, MoveLeft);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.RightArrow:
-                    MoveRight();
+                    MoveWithSelection(key, MoveRight);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.UpArrow:
-                    MoveUp();
+                    MoveWithSelection(key, MoveUp);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.DownArrow:
-                    MoveDown();
+                    MoveWithSelection(key, MoveDown);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.Home:
+                    UpdateSelectionBeforeMove(key);
                     _cursorCol = 0;
+                    ClearSelectionAfterMoveIfNeeded(key);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.End:
+                    UpdateSelectionBeforeMove(key);
                     _cursorCol = CurrentLine().Length;
+                    ClearSelectionAfterMoveIfNeeded(key);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.Enter:
@@ -888,6 +921,7 @@ namespace Core.DirFiles
             _mode = Mode.Normal;
             _pendingDelete = false;
             _insertUndoStarted = false;
+            ClearSelection();
             _cursorLine = lineNumber - 1;
             _cursorCol = 0;
             ClampCursor();
@@ -941,16 +975,49 @@ namespace Core.DirFiles
 
         private void InsertText(string text)
         {
+            if (string.IsNullOrEmpty(text))
+                return;
+
             PushInsertUndo();
-            string line = CurrentLine();
-            _lines[_cursorLine] = line.Insert(_cursorCol, text);
-            _cursorCol += text.Length;
+            DeleteSelectionWithoutUndo();
+            InsertTextWithoutUndo(text);
             MarkDirty();
+        }
+
+        private void InsertTextWithoutUndo(string text)
+        {
+            string normalized = NormalizeNewlines(text);
+            string[] parts = normalized.Split('\n');
+            string line = CurrentLine();
+
+            if (parts.Length == 1)
+            {
+                _lines[_cursorLine] = line.Insert(_cursorCol, parts[0]);
+                _cursorCol += parts[0].Length;
+                return;
+            }
+
+            string left = line.Substring(0, _cursorCol);
+            string right = line.Substring(_cursorCol);
+            _lines[_cursorLine] = left + parts[0];
+
+            int insertLine = _cursorLine + 1;
+            for (int i = 1; i < parts.Length - 1; i++)
+            {
+                _lines.Insert(insertLine, parts[i]);
+                insertLine++;
+            }
+
+            string last = parts[parts.Length - 1];
+            _lines.Insert(insertLine, last + right);
+            _cursorLine = insertLine;
+            _cursorCol = last.Length;
         }
 
         private void InsertNewLine()
         {
             PushInsertUndo();
+            DeleteSelectionWithoutUndo();
             string line = CurrentLine();
             string left = line.Substring(0, _cursorCol);
             string right = line.Substring(_cursorCol);
@@ -963,6 +1030,16 @@ namespace Core.DirFiles
 
         private void Backspace()
         {
+            if (HasSelection())
+            {
+                PushInsertUndo();
+                DeleteSelectionWithoutUndo();
+                MarkDirty();
+                return;
+            }
+
+            ClearSelection();
+
             if (_cursorCol > 0)
             {
                 PushInsertUndo();
@@ -987,6 +1064,16 @@ namespace Core.DirFiles
 
         private void DeleteForward()
         {
+            if (HasSelection())
+            {
+                PushInsertUndo();
+                DeleteSelectionWithoutUndo();
+                MarkDirty();
+                return;
+            }
+
+            ClearSelection();
+
             string line = CurrentLine();
 
             if (_cursorCol < line.Length)
@@ -1008,6 +1095,16 @@ namespace Core.DirFiles
 
         private void DeleteCharUnderCursor()
         {
+            if (HasSelection())
+            {
+                PushUndo();
+                DeleteSelectionWithoutUndo();
+                MarkDirty();
+                return;
+            }
+
+            ClearSelection();
+
             string line = CurrentLine();
             if (line.Length == 0 || _cursorCol >= line.Length)
                 return;
@@ -1022,6 +1119,7 @@ namespace Core.DirFiles
         private void DeleteCurrentLine()
         {
             PushUndo();
+            ClearSelection();
             _lineClipboard = _lines[_cursorLine];
             _hasLineClipboard = true;
             _lines.RemoveAt(_cursorLine);
@@ -1040,10 +1138,74 @@ namespace Core.DirFiles
                 return;
 
             PushUndo();
+            ClearSelection();
             _lines.Insert(_cursorLine + 1, _lineClipboard);
             _cursorLine++;
             _cursorCol = 0;
             MarkDirty();
+        }
+
+        private void CopySelectionToClipboard()
+        {
+            if (!TryGetSelectedText(out string text))
+            {
+                Status("No selection", error: true);
+                return;
+            }
+
+            if (TrySetClipboardText(text, out string error))
+            {
+                Status("Copied selection");
+                BottomStatus("Copied " + text.Length + " characters");
+            }
+            else
+            {
+                Status("Copy failed", error: true);
+                BottomStatus(error, error: true);
+            }
+        }
+
+        private void PasteFromClipboard()
+        {
+            if (!TryGetClipboardText(out string text, out string error))
+            {
+                Status("Paste failed", error: true);
+                BottomStatus(error, error: true);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(text))
+            {
+                Status("Clipboard empty", error: true);
+                return;
+            }
+
+            if (_mode == Mode.Command)
+            {
+                _commandText += ToSingleLine(text);
+                return;
+            }
+
+            if (_mode == Mode.Search)
+            {
+                _searchText += ToSingleLine(text);
+                return;
+            }
+
+            if (_mode == Mode.Insert)
+            {
+                InsertText(text);
+            }
+            else
+            {
+                PushUndo();
+                DeleteSelectionWithoutUndo();
+                InsertTextWithoutUndo(text);
+                MarkDirty();
+                _insertUndoStarted = false;
+            }
+
+            Status("Pasted");
         }
 
         private void Undo()
@@ -1057,6 +1219,7 @@ namespace Core.DirFiles
             _redo.Push(TakeSnapshot());
             RestoreSnapshot(_undo.Pop());
             _insertUndoStarted = false;
+            ClearSelection();
             Status("Undo");
         }
 
@@ -1071,6 +1234,7 @@ namespace Core.DirFiles
             _undo.Push(TakeSnapshot());
             RestoreSnapshot(_redo.Pop());
             _insertUndoStarted = false;
+            ClearSelection();
             Status("Redo");
         }
 
@@ -1122,6 +1286,7 @@ namespace Core.DirFiles
             _scrollLeft = snapshot.ScrollLeft;
             _dirty = !LinesEqual(_lines, _savedLines);
             _pendingDelete = false;
+            ClearSelection();
             ClampCursor();
         }
 
@@ -1150,6 +1315,7 @@ namespace Core.DirFiles
                     int idx = _lines[line].IndexOf(text, colFrom, StringComparison.OrdinalIgnoreCase);
                     if (idx >= 0)
                     {
+                        ClearSelection();
                         _cursorLine = line;
                         _cursorCol = idx;
                         Status("Found: " + text);
@@ -1214,6 +1380,41 @@ namespace Core.DirFiles
             _cursorCol = Math.Min(desiredCol, CurrentLine().Length);
             if (_mode == Mode.Normal && CurrentLine().Length > 0)
                 _cursorCol = Math.Min(_cursorCol, CurrentLine().Length - 1);
+        }
+
+        private void MoveWithSelection(ConsoleKeyInfo key, Action move)
+        {
+            UpdateSelectionBeforeMove(key);
+            move();
+            ClearSelectionAfterMoveIfNeeded(key);
+        }
+
+        private void UpdateSelectionBeforeMove(ConsoleKeyInfo key)
+        {
+            if (IsShiftPressed(key))
+            {
+                if (!_hasSelectionAnchor)
+                {
+                    _selectionAnchorLine = _cursorLine;
+                    _selectionAnchorCol = _cursorCol;
+                    _hasSelectionAnchor = true;
+                }
+            }
+            else
+            {
+                ClearSelection();
+            }
+        }
+
+        private void ClearSelectionAfterMoveIfNeeded(ConsoleKeyInfo key)
+        {
+            if (!IsShiftPressed(key))
+                ClearSelection();
+        }
+
+        private static bool IsShiftPressed(ConsoleKeyInfo key)
+        {
+            return (key.Modifiers & ConsoleModifiers.Shift) == ConsoleModifiers.Shift;
         }
 
         private void ClampCursor()
@@ -1318,6 +1519,131 @@ namespace Core.DirFiles
             return _lines[_cursorLine];
         }
 
+        private bool HasSelection()
+        {
+            return _hasSelectionAnchor &&
+                ComparePositions(_selectionAnchorLine, _selectionAnchorCol, _cursorLine, _cursorCol) != 0;
+        }
+
+        private void ClearSelection()
+        {
+            _hasSelectionAnchor = false;
+        }
+
+        private bool TryGetSelectionRange(out TextPosition start, out TextPosition end)
+        {
+            start = default;
+            end = default;
+
+            if (!HasSelection())
+                return false;
+
+            var anchor = new TextPosition(_selectionAnchorLine, _selectionAnchorCol);
+            var cursor = new TextPosition(_cursorLine, _cursorCol);
+
+            if (ComparePositions(anchor.Line, anchor.Col, cursor.Line, cursor.Col) <= 0)
+            {
+                start = ClampPosition(anchor);
+                end = ClampPosition(cursor);
+            }
+            else
+            {
+                start = ClampPosition(cursor);
+                end = ClampPosition(anchor);
+            }
+
+            return ComparePositions(start.Line, start.Col, end.Line, end.Col) != 0;
+        }
+
+        private TextPosition ClampPosition(TextPosition position)
+        {
+            int line = Math.Max(0, Math.Min(_lines.Count - 1, position.Line));
+            int col = Math.Max(0, Math.Min(_lines[line].Length, position.Col));
+            return new TextPosition(line, col);
+        }
+
+        private static int ComparePositions(int leftLine, int leftCol, int rightLine, int rightCol)
+        {
+            if (leftLine != rightLine)
+                return leftLine.CompareTo(rightLine);
+
+            return leftCol.CompareTo(rightCol);
+        }
+
+        private bool DeleteSelectionWithoutUndo()
+        {
+            if (!TryGetSelectionRange(out TextPosition start, out TextPosition end))
+            {
+                ClearSelection();
+                return false;
+            }
+
+            if (start.Line == end.Line)
+            {
+                _lines[start.Line] = _lines[start.Line].Remove(start.Col, end.Col - start.Col);
+            }
+            else
+            {
+                string left = _lines[start.Line].Substring(0, start.Col);
+                string right = _lines[end.Line].Substring(end.Col);
+                _lines[start.Line] = left + right;
+                _lines.RemoveRange(start.Line + 1, end.Line - start.Line);
+            }
+
+            _cursorLine = start.Line;
+            _cursorCol = start.Col;
+            ClearSelection();
+            _pendingDelete = false;
+            return true;
+        }
+
+        private bool TryGetSelectedText(out string text)
+        {
+            text = string.Empty;
+
+            if (!TryGetSelectionRange(out TextPosition start, out TextPosition end))
+                return false;
+
+            if (start.Line == end.Line)
+            {
+                text = _lines[start.Line].Substring(start.Col, end.Col - start.Col);
+                return text.Length > 0;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(_lines[start.Line].Substring(start.Col));
+            sb.Append(Environment.NewLine);
+
+            for (int line = start.Line + 1; line < end.Line; line++)
+            {
+                sb.Append(_lines[line]);
+                sb.Append(Environment.NewLine);
+            }
+
+            sb.Append(_lines[end.Line].Substring(0, end.Col));
+            text = sb.ToString();
+            return text.Length > 0;
+        }
+
+        private bool TryGetSelectionSpanForLine(int lineIndex, out int startCol, out int endCol)
+        {
+            startCol = 0;
+            endCol = 0;
+
+            if (!TryGetSelectionRange(out TextPosition start, out TextPosition end))
+                return false;
+
+            if (lineIndex < start.Line || lineIndex > end.Line)
+                return false;
+
+            int lineLength = _lines[lineIndex].Length;
+            startCol = lineIndex == start.Line ? start.Col : 0;
+            endCol = lineIndex == end.Line ? end.Col : lineLength;
+            startCol = Math.Max(0, Math.Min(lineLength, startCol));
+            endCol = Math.Max(0, Math.Min(lineLength, endCol));
+            return endCol > startCol;
+        }
+
         private void MarkDirty()
         {
             _dirty = !LinesEqual(_lines, _savedLines);
@@ -1335,6 +1661,91 @@ namespace Core.DirFiles
             _bottomStatus = message;
             _bottomStatusError = error;
             _bottomStatusUntil = DateTime.UtcNow.AddMilliseconds(error ? 4000 : 2200);
+        }
+
+        private static bool TrySetClipboardText(string text, out string error)
+        {
+            error = string.Empty;
+
+            try
+            {
+                RunSta(() =>
+                {
+                    System.Windows.Forms.Clipboard.SetText(text, System.Windows.Forms.TextDataFormat.UnicodeText);
+                });
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = "Clipboard write failed: " + ex.Message;
+                return false;
+            }
+        }
+
+        private static bool TryGetClipboardText(out string text, out string error)
+        {
+            text = string.Empty;
+            error = string.Empty;
+
+            try
+            {
+                text = RunSta(() =>
+                    System.Windows.Forms.Clipboard.ContainsText()
+                        ? System.Windows.Forms.Clipboard.GetText(System.Windows.Forms.TextDataFormat.UnicodeText)
+                        : string.Empty);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = "Clipboard read failed: " + ex.Message;
+                return false;
+            }
+        }
+
+        private static void RunSta(Action action)
+        {
+            RunSta(() =>
+            {
+                action();
+                return true;
+            });
+        }
+
+        private static T RunSta<T>(Func<T> action)
+        {
+            T result = default;
+            Exception error = null;
+
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    result = action();
+                }
+                catch (Exception ex)
+                {
+                    error = ex;
+                }
+            });
+
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            if (error != null)
+                throw error;
+
+            return result;
+        }
+
+        private static string NormalizeNewlines(string text)
+        {
+            return text.Replace("\r\n", "\n").Replace('\r', '\n');
+        }
+
+        private static string ToSingleLine(string text)
+        {
+            return NormalizeNewlines(text).Replace('\n', ' ');
         }
 
         private static bool TryGetInputText(ConsoleKeyInfo key, out string text)
@@ -1448,13 +1859,16 @@ namespace Core.DirFiles
             if (_pendingDelete)
                 return "d";
 
+            if (HasSelection())
+                return "selection";
+
             if (_dirty)
                 return "modified";
 
             return "ready";
         }
 
-        private string BuildHighlightedLine(string line, int start, int width)
+        private string BuildHighlightedLine(string line, int lineIndex, int start, int width)
         {
             if (width <= 0)
                 return string.Empty;
@@ -1463,6 +1877,7 @@ namespace Core.DirFiles
             var sb = new StringBuilder(width + 128);
             int end = start + width;
             int visible = 0;
+            TryGetSelectionSpanForLine(lineIndex, out int selectionStart, out int selectionEnd);
 
             foreach (var token in tokens)
             {
@@ -1475,10 +1890,9 @@ namespace Core.DirFiles
 
                 int clipStart = Math.Max(start, token.Start);
                 int clipEnd = Math.Min(end, tokenEnd);
-                string text = line.Substring(clipStart, clipEnd - clipStart);
+                AppendHighlightedSegment(sb, line, clipStart, clipEnd, token.Color, selectionStart, selectionEnd);
 
-                sb.Append(F(token.Color)).Append(EscapeText(text));
-                visible += text.Length;
+                visible += clipEnd - clipStart;
             }
 
             sb.Append(Reset);
@@ -1487,6 +1901,38 @@ namespace Core.DirFiles
                 sb.Append(new string(' ', width - visible));
 
             return sb.ToString();
+        }
+
+        private static void AppendHighlightedSegment(
+            StringBuilder sb,
+            string line,
+            int start,
+            int end,
+            int color,
+            int selectionStart,
+            int selectionEnd)
+        {
+            int cursor = start;
+
+            while (cursor < end)
+            {
+                bool selected = cursor >= selectionStart && cursor < selectionEnd;
+                int next = selected
+                    ? Math.Min(end, selectionEnd)
+                    : Math.Min(end, selectionStart > cursor ? selectionStart : end);
+
+                if (next <= cursor)
+                    next = end;
+
+                string text = line.Substring(cursor, next - cursor);
+                if (selected)
+                    sb.Append(B(CSelectionBg)).Append(F(CSelectionFg));
+                else
+                    sb.Append(Reset).Append(F(color));
+
+                sb.Append(EscapeText(text));
+                cursor = next;
+            }
         }
 
         private List<Token> Tokenize(string line)
@@ -1914,6 +2360,18 @@ namespace Core.DirFiles
             public int LineIndex { get; set; }
             public int WrapIndex { get; set; }
             public int StartColumn { get; set; }
+        }
+
+        private readonly struct TextPosition
+        {
+            public TextPosition(int line, int col)
+            {
+                Line = line;
+                Col = col;
+            }
+
+            public int Line { get; }
+            public int Col { get; }
         }
 
         private readonly struct Token
