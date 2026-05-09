@@ -77,7 +77,7 @@ namespace Core.DirFiles
         private const int CppSourceComment = 103;
         private const int CSharpFlow = 39;
         private const int CSharpKeyword = 81;
-        private const int CSharpType = 51;
+        private const int CSharpType = 68;
         private const int CSharpDeclaration = 214;
         private const int CSharpModifier = 117;
         private const int CSharpBcl = 159;
@@ -306,6 +306,7 @@ namespace Core.DirFiles
         private bool _bottomStatusError;
         private string _lineClipboard = string.Empty;
         private bool _hasLineClipboard;
+        private string _lastExplorerDirectory = string.Empty;
         private TermXTEditorSyntax _syntax;
         private bool _hasSelectionAnchor;
         private int _selectionAnchorLine;
@@ -1256,6 +1257,7 @@ namespace Core.DirFiles
 
             var explorer = new EditorFileExplorer(GetExplorerStartDirectory());
             string selectedFile = explorer.Run();
+            RememberExplorerDirectory(explorer.CurrentDirectory);
             ForceFullRedraw();
 
             if (string.IsNullOrWhiteSpace(selectedFile))
@@ -1269,6 +1271,9 @@ namespace Core.DirFiles
 
         private string GetExplorerStartDirectory()
         {
+            if (IsUsableDirectory(_lastExplorerDirectory))
+                return Path.GetFullPath(_lastExplorerDirectory);
+
             string currentDirectory = ReadXTerminalCurrentDirectory();
             if (IsUsableDirectory(currentDirectory))
                 return Path.GetFullPath(currentDirectory);
@@ -1278,6 +1283,14 @@ namespace Core.DirFiles
                 return Path.GetFullPath(editorDirectory);
 
             return Environment.CurrentDirectory;
+        }
+
+        private void RememberExplorerDirectory(string path)
+        {
+            if (!IsUsableDirectory(path))
+                return;
+
+            _lastExplorerDirectory = Path.GetFullPath(path);
         }
 
         private void OpenExplorerFile(string path)
@@ -3546,6 +3559,11 @@ namespace Core.DirFiles
                 LoadItems();
             }
 
+            public string CurrentDirectory
+            {
+                get { return _currentDirectory; }
+            }
+
             public string Run()
             {
                 Console.Write(HideCursor + ClearScreen);
@@ -4776,9 +4794,12 @@ namespace Core.DirFiles
                 if (extension == ".txt" || extension == ".md" || extension == ".log" || extension == ".ini" || extension == ".cfg" || extension == ".conf" || extension == ".csv")
                     return COperator;
 
-                if (extension == ".cs" || extension == ".py" || extension == ".js" || extension == ".ts" || extension == ".cpp" || extension == ".c" ||
+                if (extension == ".cs" || extension == ".csx")
+                    return CSharpType;
+
+                if (extension == ".py" || extension == ".js" || extension == ".ts" || extension == ".cpp" || extension == ".c" ||
                     extension == ".h" || extension == ".java" || extension == ".go" || extension == ".rs" || extension == ".rb" || extension == ".php")
-                    return CTitle;
+                    return CSourceFlow;
 
                 if (extension == ".zip" || extension == ".rar" || extension == ".7z" || extension == ".tar" || extension == ".gz" || extension == ".bz2")
                     return CSearch;
