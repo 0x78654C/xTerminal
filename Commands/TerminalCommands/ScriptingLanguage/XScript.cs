@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
             conditionals, loops, functions, error handling and output capture.
             Every xTerminal command works as-is inside a script.
         */
-        private static Version s_version = new(1, 0, 0);
+        private static Version s_version = new(1, 0, 1);
         public string Name => "xt";
 
         private static readonly string s_helpMessage = @"Usage of xt command:
@@ -587,17 +587,84 @@ print ""Done!""
             private void ExecPrint(string rawLine)
             {
                 string text = rawLine[5..].Trim().Trim('"');
-                text = ProcessEscapes(text);
                 text = Interpolate(text);
+                text = ProcessEscapes(text);
                 Console.WriteLine(text);
             }
 
             private static string ProcessEscapes(string text)
             {
-                return text.Replace("\\\\", "\x00")
-                           .Replace("\\n", "\n")
-                           .Replace("\\t", "\t")
-                           .Replace("\x00", "\\");
+                if (string.IsNullOrEmpty(text))
+                    return text;
+
+                var result = new System.Text.StringBuilder(text.Length);
+
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (IsWindowsPathStart(text, i))
+                    {
+                        int end = FindWindowsPathEnd(text, i);
+                        result.Append(text, i, end - i);
+                        i = end - 1;
+                        continue;
+                    }
+
+                    if (text[i] == '\\' && i + 1 < text.Length)
+                    {
+                        switch (text[i + 1])
+                        {
+                            case '\\':
+                                result.Append('\\');
+                                i++;
+                                continue;
+                            case 'n':
+                                result.Append('\n');
+                                i++;
+                                continue;
+                            case 't':
+                                result.Append('\t');
+                                i++;
+                                continue;
+                        }
+                    }
+
+                    result.Append(text[i]);
+                }
+
+                return result.ToString();
+            }
+
+            private static bool IsWindowsPathStart(string text, int index)
+            {
+                bool boundary = index == 0 ||
+                    char.IsWhiteSpace(text[index - 1]) ||
+                    text[index - 1] == '"' ||
+                    text[index - 1] == '\'' ||
+                    text[index - 1] == '(';
+
+                if (!boundary)
+                    return false;
+
+                if (index + 2 < text.Length &&
+                    char.IsLetter(text[index]) &&
+                    text[index + 1] == ':' &&
+                    (text[index + 2] == '\\' || text[index + 2] == '/'))
+                {
+                    return true;
+                }
+
+                return index + 1 < text.Length &&
+                    text[index] == '\\' &&
+                    text[index + 1] == '\\';
+            }
+
+            private static int FindWindowsPathEnd(string text, int start)
+            {
+                int end = start;
+                while (end < text.Length && !char.IsWhiteSpace(text[end]))
+                    end++;
+
+                return end;
             }
 
             private void ExecRun(string line)
