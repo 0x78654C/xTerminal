@@ -155,7 +155,7 @@ print ""Done!""
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory);
                 string rest = args.Substring(Name.Length).TrimStart();
 
-                if(rest.StartsWith("-ver"))
+                if (rest.StartsWith("-ver"))
                 {
                     FileSystem.SuccessWriteLine($"TermXT version: {s_version}");
                     return;
@@ -1073,38 +1073,38 @@ print ""Done!""
                     PrintError(_pc + 1, $"Function '{funcName}' not found.");
                     return;
                 }
-       
-                    int argCount = parts.Count - 1;
-                    var savedArgs = new Dictionary<string, string>();
 
-                    // Save and set positional args for this call.
-                    for (int a = 1; a <= argCount; a++)
-                    {
-                        string key = a.ToString();
-                        if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
-                        _vars[key] = parts[a];
-                    }
+                int argCount = parts.Count - 1;
+                var savedArgs = new Dictionary<string, string>();
 
-                    // Remove any leftover positional args beyond what we're passing
-                    // so they don't leak from a previous call.
-                    for (int a = argCount + 1; a <= 20; a++)
-                    {
-                        string key = a.ToString();
-                        if (!_vars.ContainsKey(key)) break;
-                        savedArgs[key] = _vars[key];
-                        _vars.Remove(key);
-                    }
+                // Save and set positional args for this call.
+                for (int a = 1; a <= argCount; a++)
+                {
+                    string key = a.ToString();
+                    if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
+                    _vars[key] = parts[a];
+                }
 
-                    int savedPc = _pc;
-                    _returnRequested = false;
-                    ExecuteBlock(range.Start, range.End);
-                    _returnRequested = false;
-                    _pc = savedPc;
+                // Remove any leftover positional args beyond what we're passing
+                // so they don't leak from a previous call.
+                for (int a = argCount + 1; a <= 20; a++)
+                {
+                    string key = a.ToString();
+                    if (!_vars.ContainsKey(key)) break;
+                    savedArgs[key] = _vars[key];
+                    _vars.Remove(key);
+                }
 
-                    // Restore previous positional args.
-                    foreach (var kv in savedArgs)
-                        _vars[kv.Key] = kv.Value;
-          
+                int savedPc = _pc;
+                _returnRequested = false;
+                ExecuteBlock(range.Start, range.End);
+                _returnRequested = false;
+                _pc = savedPc;
+
+                // Restore previous positional args.
+                foreach (var kv in savedArgs)
+                    _vars[kv.Key] = kv.Value;
+
             }
 
             // ── Try / catch / end ────────────────────────────────────────────
