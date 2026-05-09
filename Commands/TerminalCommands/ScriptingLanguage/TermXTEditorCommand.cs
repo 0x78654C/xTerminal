@@ -14,6 +14,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
         public string Name => "xte";
 
         private static readonly string s_helpMessage = @"Usage of xte command:
+    xte                         : Open an untitled buffer in the current directory.
     xte <file>                  : Open a file in the built-in Vim-style editor.
     xte -new <file>             : Create a template and open it.
     xte -syntax xt <file>       : Use TermXT script syntax highlighting.
@@ -25,10 +26,11 @@ namespace Commands.TerminalCommands.ScriptingLanguage
 Syntax is selected by extension by default: .xt uses TermXT, .cs/.csx use C#, .c/.h use C, and .cpp/.cc/.cxx/.hpp/.hh/.hxx use C++.
 
 Inside the editor:
-    Normal mode : h/j/k/l or arrows move, i or Insert enters insert, dd delete line, / search, n or F3 search next.
+    Normal mode : h/j/k/l or arrows move, e opens file explorer, i or Insert enters insert, dd delete line, / search, n or F3 search next.
+    Explorer    : Starts from xTerminal current directory and uses fxp controls. Enter opens the selected file in xte.
     Search      : Enter finds, empty Enter repeats the previous search.
     Insert mode : Esc returns to normal mode, Ctrl+Z undo, Ctrl+Y redo.
-    Commands    : :w save, :q quit, :q! quit without saving, :wq save and quit.
+    Commands    : :e explorer, :w save, :q quit, :q! quit without saving, :wq save and quit.
                   :42 or :goto 42 go to line, :syntax xt|cs|c|cpp switch highlight.
 ";
 
@@ -80,7 +82,7 @@ int main()
             {
                 string rest = args.Length > Name.Length ? args.Substring(Name.Length).TrimStart() : string.Empty;
 
-                if (string.Equals(rest, "-h", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(rest))
+                if (string.Equals(rest, "-h", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine(s_helpMessage);
                     return;
@@ -100,14 +102,16 @@ int main()
         {
             EditorArguments options = ParseEditorArguments(rest);
             string targetArg = options.Target;
-
-            if (string.IsNullOrWhiteSpace(targetArg))
-                throw new ArgumentException("You must provide a file path.");
-
-            string target = FileSystem.SanitizePath(TrimMatchingQuotes(targetArg), currentDir);
             TermXTEditorSyntax syntax = options.SyntaxSpecified
                 ? options.Syntax
-                : TermXTEditor.DetectSyntaxFromPath(target);
+                : TermXTEditorSyntax.TermXt;
+
+            if (string.IsNullOrWhiteSpace(targetArg))
+                targetArg = DefaultUntitledFileName(syntax);
+
+            string target = FileSystem.SanitizePath(TrimMatchingQuotes(targetArg), currentDir);
+            if (!options.SyntaxSpecified)
+                syntax = TermXTEditor.DetectSyntaxFromPath(target);
 
             if (options.CreateTemplate && !File.Exists(target))
             {
@@ -122,6 +126,21 @@ int main()
 
             var editor = new TermXTEditor(target, syntax);
             editor.Run();
+        }
+
+        private static string DefaultUntitledFileName(TermXTEditorSyntax syntax)
+        {
+            switch (syntax)
+            {
+                case TermXTEditorSyntax.CSharp:
+                    return "untitled.cs";
+                case TermXTEditorSyntax.C:
+                    return "untitled.c";
+                case TermXTEditorSyntax.Cpp:
+                    return "untitled.cpp";
+                default:
+                    return "untitled.xt";
+            }
         }
 
         private static EditorArguments ParseEditorArguments(string rest)

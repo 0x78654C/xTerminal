@@ -278,7 +278,7 @@ namespace Core.DirFiles
             "import", "include", "include_next", "line", "pragma", "undef", "warning"
         };
 
-        private readonly string _path;
+        private string _path;
         private readonly List<string> _lines = new List<string>();
         private readonly Stack<Snapshot> _undo = new Stack<Snapshot>();
         private readonly Stack<Snapshot> _redo = new Stack<Snapshot>();
@@ -624,13 +624,13 @@ namespace Core.DirFiles
                     help = " INSERT  Esc normal | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | Ctrl+Z/Y undo/redo";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp | Esc cancel";
+                    help = " COMMAND  e explorer | w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp | Esc cancel";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | i edit | dd delete | / search | : command";
+                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -904,6 +904,9 @@ namespace Core.DirFiles
                 case 'i':
                     EnterInsertMode();
                     break;
+                case 'e':
+                    OpenExplorer();
+                    break;
                 case 'x':
                     DeleteCharUnderCursor();
                     break;
@@ -1083,6 +1086,11 @@ namespace Core.DirFiles
 
             switch (command.ToLowerInvariant())
             {
+                case "e":
+                case "explorer":
+                    OpenExplorer();
+                    _mode = Mode.Normal;
+                    break;
                 case "w":
                 case "write":
                     Save();
@@ -1236,6 +1244,139 @@ namespace Core.DirFiles
             {
                 Status("Write failed: " + ex.Message, error: true);
                 BottomStatus("Save failed: " + ex.Message, error: true);
+            }
+        }
+
+        private void OpenExplorer()
+        {
+            _mode = Mode.Normal;
+            _pendingDelete = false;
+            _insertUndoStarted = false;
+            ClearSelection();
+
+            var explorer = new EditorFileExplorer(GetExplorerStartDirectory());
+            string selectedFile = explorer.Run();
+            ForceFullRedraw();
+
+            if (string.IsNullOrWhiteSpace(selectedFile))
+            {
+                Status("Explorer closed");
+                return;
+            }
+
+            OpenExplorerFile(selectedFile);
+        }
+
+        private string GetExplorerStartDirectory()
+        {
+            string currentDirectory = ReadXTerminalCurrentDirectory();
+            if (IsUsableDirectory(currentDirectory))
+                return Path.GetFullPath(currentDirectory);
+
+            string editorDirectory = Path.GetDirectoryName(_path);
+            if (IsUsableDirectory(editorDirectory))
+                return Path.GetFullPath(editorDirectory);
+
+            return Environment.CurrentDirectory;
+        }
+
+        private void OpenExplorerFile(string path)
+        {
+            string fullPath;
+            try
+            {
+                fullPath = Path.GetFullPath(path);
+            }
+            catch (Exception ex)
+            {
+                Status("Open failed: " + ex.Message, error: true);
+                return;
+            }
+
+            if (!File.Exists(fullPath))
+            {
+                Status("File does not exist: " + fullPath, error: true);
+                return;
+            }
+
+            if (_dirty && !ConfirmDiscardChanges(fullPath))
+            {
+                Status("Open cancelled");
+                BottomStatus("Unsaved changes kept");
+                return;
+            }
+
+            try
+            {
+                _path = fullPath;
+                _syntax = DetectSyntaxFromPath(_path);
+                LoadFile();
+                Status("Opened " + Path.GetFileName(_path));
+                BottomStatus(_path);
+            }
+            catch (Exception ex)
+            {
+                Status("Open failed: " + ex.Message, error: true);
+                BottomStatus("Open failed: " + ex.Message, error: true);
+            }
+        }
+
+        private bool ConfirmDiscardChanges(string path)
+        {
+            (int width, int height) = WindowSize();
+            string fileName = Path.GetFileName(path);
+            if (string.IsNullOrWhiteSpace(fileName))
+                fileName = path;
+
+            string prompt = " Unsaved changes. Open " + fileName + " and discard current edits? y/N ";
+            int row = Math.Max(0, height - 2);
+
+            Console.Write(HideCursor + At(0, row) + B(CError) + F(231) + Clip(prompt, width).PadRight(width) + Reset);
+
+            while (true)
+            {
+                ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                if (key.Key == ConsoleKey.Y)
+                    return true;
+
+                if (key.Key == ConsoleKey.N || key.Key == ConsoleKey.Escape || key.Key == ConsoleKey.Enter)
+                    return false;
+            }
+        }
+
+        private void ForceFullRedraw()
+        {
+            _lastWidth = -1;
+            _lastHeight = -1;
+            Console.Write(HideCursor + ClearScreen);
+        }
+
+        private static string ReadXTerminalCurrentDirectory()
+        {
+            try
+            {
+                if (File.Exists(GlobalVariables.currentDirectory))
+                    return File.ReadAllText(GlobalVariables.currentDirectory).Trim();
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
+        }
+
+        private static bool IsUsableDirectory(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            try
+            {
+                return Directory.Exists(path);
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -3372,6 +3513,1345 @@ namespace Core.DirFiles
         private static string Bold()
         {
             return CSI + "1m";
+        }
+
+        private sealed class EditorFileExplorer
+        {
+            private const long PreviewByteLimit = 64 * 1024;
+
+            private readonly StringBuilder _explorerFrame = new StringBuilder(1 << 15);
+            private readonly List<ExplorerItem> _items = new List<ExplorerItem>();
+            private readonly List<SearchItem> _searchResults = new List<SearchItem>();
+            private readonly Stack<ExplorerLocation> _back = new Stack<ExplorerLocation>();
+            private readonly Stack<ExplorerLocation> _forward = new Stack<ExplorerLocation>();
+
+            private string _currentDirectory;
+            private int _selectedIndex;
+            private int _scrollOffset;
+            private bool _searchMode;
+            private int _searchSelectedIndex;
+            private int _searchScrollOffset;
+            private int _lastWidth = -1;
+            private int _lastHeight = -1;
+            private string _message = string.Empty;
+            private DateTime _messageUntil = DateTime.MinValue;
+            private int _cachedDirCount;
+            private int _cachedFileCount;
+            private string _cachedDriveRoot = string.Empty;
+            private string _cachedFreeText = string.Empty;
+
+            public EditorFileExplorer(string startDirectory)
+            {
+                _currentDirectory = NormalizeDirectory(startDirectory);
+                LoadItems();
+            }
+
+            public string Run()
+            {
+                Console.Write(HideCursor + ClearScreen);
+
+                while (true)
+                {
+                    if (_searchMode)
+                        RenderSearch();
+                    else
+                        Render();
+
+                    ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                    bool close;
+                    string selectedFile = _searchMode
+                        ? HandleSearchKey(key, out close)
+                        : HandleKey(key, out close);
+
+                    if (close)
+                        return null;
+
+                    if (!string.IsNullOrWhiteSpace(selectedFile))
+                        return selectedFile;
+                }
+            }
+
+            private string HandleKey(ConsoleKeyInfo key, out bool close)
+            {
+                close = false;
+
+                switch (key.Key)
+                {
+                    case ConsoleKey.Oem3:
+                    case ConsoleKey.Escape:
+                        close = true;
+                        return null;
+                    case ConsoleKey.UpArrow:
+                        MoveSelection(-1);
+                        return null;
+                    case ConsoleKey.DownArrow:
+                        MoveSelection(1);
+                        return null;
+                    case ConsoleKey.PageUp:
+                        GoParent();
+                        return null;
+                    case ConsoleKey.PageDown:
+                        MoveSelection(PageSize());
+                        return null;
+                    case ConsoleKey.Home:
+                        MoveToStart();
+                        return null;
+                    case ConsoleKey.End:
+                        MoveToEnd();
+                        return null;
+                    case ConsoleKey.Enter:
+                        return OpenSelected();
+                    case ConsoleKey.Backspace:
+                    case ConsoleKey.LeftArrow:
+                        GoBack();
+                        return null;
+                    case ConsoleKey.RightArrow:
+                        GoForward();
+                        return null;
+                    case ConsoleKey.Oem2:
+                        DoSearch();
+                        return null;
+                    case ConsoleKey.Tab:
+                        SwitchDrive();
+                        return null;
+                    case ConsoleKey.Delete:
+                        DeleteSelectedItem();
+                        return null;
+                }
+
+                char c = char.ToLowerInvariant(key.KeyChar);
+                switch (c)
+                {
+                    //case 'q':
+                    //    close = true;
+                    //    return null;
+                    //case 'j':
+                    //    MoveSelection(1);
+                    //    return null;
+                    //case 'k':
+                    //    MoveSelection(-1);
+                    //    return null;
+                    //case 'g':
+                    //    MoveToStart();
+                    //    return null;
+                    //case 'h':
+                    //case '[':
+                    //    GoBack();
+                    //    return null;
+                    //case 'l':
+                    //    return OpenSelected();
+                    //case ']':
+                    //    GoForward();
+                    //    return null;
+                    //case '/':
+                    //    DoSearch();
+                    //    return null;
+                    //case '-':
+                    //case 'p':
+                    //case 'u':
+                    //    GoParent();
+                    //    return null;
+                    //case 'r':
+                    //    Refresh();
+                    //    return null;
+                    default:
+                        if (char.IsLetterOrDigit(c))
+                            JumpToItem(c);
+                        return null;
+                }
+            }
+
+            private void Render()
+            {
+                (int width, int height) = WindowSize();
+                width = Math.Max(width, 60);
+                height = Math.Max(height, 20);
+
+                if (width != _lastWidth || height != _lastHeight)
+                {
+                    Console.Write(HideCursor + ClearScreen);
+                    _lastWidth = width;
+                    _lastHeight = height;
+                }
+
+                if (width < 60 || height < 20)
+                {
+                    Console.Write(At(0, 0) + F(CError) + "Terminal too small. Resize to at least 60 x 20." + Reset + ClearEol);
+                    return;
+                }
+
+                ClampSelection();
+
+                int headerRows = 4;
+                int contentTop = headerRows;
+                int contentRows = Math.Max(4, height - headerRows - 1);
+                int footerRow = contentTop + contentRows;
+                int listWidth = Math.Max(20, width / 2 - 1);
+                int separatorColumn = listWidth;
+                int detailsLeft = separatorColumn + 1;
+                int detailsWidth = Math.Max(1, width - detailsLeft);
+
+                AdjustScroll(contentRows);
+
+                _explorerFrame.Clear();
+                RenderHeader(width);
+                RenderBody(contentTop, contentRows, listWidth, separatorColumn, detailsLeft, detailsWidth);
+                RenderFooter(footerRow, width);
+
+                Console.Write(_explorerFrame.ToString());
+            }
+
+            private void RenderHeader(int width)
+            {
+                string counter = _items.Count > 0 ? "[" + (_selectedIndex + 1) + "/" + _items.Count + "]" : "[0/0]";
+                string title = " \u25c8 xFile Explorer";
+                int pad = Math.Max(0, width - title.Length - counter.Length - 1);
+
+                _explorerFrame.Append(At(0, 0)).Append(F(CTitle)).Append(Clip(title + new string(' ', pad) + counter + " ", width)).Append(Reset);
+                _explorerFrame.Append(At(0, 1)).Append(F(CMuted)).Append(new string('\u2550', width)).Append(Reset);
+                _explorerFrame.Append(At(0, 2)).Append(F(COperator)).Append(Clip(" \u25b6 " + _currentDirectory, width)).Append(Reset).Append(ClearEol);
+                _explorerFrame.Append(At(0, 3)).Append(F(CMuted))
+                    .Append(Clip(" \u2191\u2193:move  \u21b5:open  \u232b:back  \u2192:forward  PgUp:up  Del:del  /:search  Tab:drives  `:quit", width))
+                    .Append(Reset).Append(ClearEol);
+            }
+
+            private void RenderBody(int top, int rows, int listWidth, int separatorColumn, int detailsLeft, int detailsWidth)
+            {
+                List<DetailLine> details = BuildDetails(rows);
+
+                for (int row = 0; row < rows; row++)
+                {
+                    int itemIndex = _scrollOffset + row;
+                    _explorerFrame.Append(At(0, top + row));
+                    RenderListCell(itemIndex, listWidth);
+                    _explorerFrame.Append(Reset).Append(F(CMuted)).Append("\u2551").Append(Reset);
+
+                    DetailLine detail = row < details.Count ? details[row] : new DetailLine(string.Empty, CNormal);
+                    _explorerFrame.Append(F(detail.Color))
+                        .Append(Clip(detail.Text, detailsWidth).PadRight(detailsWidth))
+                        .Append(Reset);
+                }
+            }
+
+            private void RenderListCell(int itemIndex, int width)
+            {
+                bool selected = itemIndex == _selectedIndex;
+                string text = "~";
+                int color = CMuted;
+
+                if (itemIndex >= 0 && itemIndex < _items.Count)
+                {
+                    ExplorerItem item = _items[itemIndex];
+                    text = (item.IsDirectory ? "\u25b6 " : "\u00b7 ") + item.Name;
+                    if (!item.IsDirectory)
+                        text += "  " + FormatSize(item.SizeBytes);
+
+                    color = item.IsDirectory ? CTitle : FileColor(item.Path);
+                }
+
+                if (selected)
+                    _explorerFrame.Append(F(45)).Append(B(24)).Append("\u258c").Append(B(23)).Append(Bold()).Append(F(253))
+                        .Append(Clip(text, Math.Max(0, width - 1)).PadRight(Math.Max(0, width - 1))).Append(Reset);
+                else
+                    _explorerFrame.Append(F(color)).Append(Clip(" " + text, width).PadRight(width)).Append(Reset);
+            }
+
+            private void RenderFooter(int row, int width)
+            {
+                string text = DateTime.UtcNow <= _messageUntil && !string.IsNullOrWhiteSpace(_message)
+                    ? _message
+                    : StatusText();
+
+                _explorerFrame.Append(At(0, row))
+                    .Append(B(CStatusBg)).Append(F(CStatusFg))
+                    .Append(Clip(" " + text, width).PadRight(width))
+                    .Append(Reset);
+            }
+
+            private List<DetailLine> BuildDetails(int maxRows)
+            {
+                var lines = new List<DetailLine>();
+
+                if (_items.Count == 0 || _selectedIndex < 0 || _selectedIndex >= _items.Count)
+                {
+                    lines.Add(new DetailLine("  (empty)", CDim));
+                    return lines;
+                }
+
+                ExplorerItem item = _items[_selectedIndex];
+                lines.Add(new DetailLine("\u2500 Details " + new string('\u2500', 64), CMuted));
+
+                if (item.IsDirectory)
+                {
+                    AddFolderDetails(lines, item.Path, maxRows);
+                }
+                else
+                {
+                    AddFileDetails(lines, item.Path, item.SizeBytes, maxRows);
+                }
+
+                return lines;
+            }
+
+            private static void AddFileDetails(List<DetailLine> lines, string path, long sizeBytes, int maxRows)
+            {
+                try
+                {
+                    var info = new FileInfo(path);
+                    AddInfoLine(lines, "Type", "File", FileColor(path), maxRows);
+                    AddInfoLine(lines, "Name", info.Name, CNormal, maxRows);
+                    AddInfoLine(lines, "Ext", string.IsNullOrEmpty(info.Extension) ? "(none)" : info.Extension, FileColor(path), maxRows);
+                    AddInfoLine(lines, "Size", FormatSize(info.Length), CNormal, maxRows);
+                    AddInfoLine(lines, "Modified", info.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), CNormal, maxRows);
+                    AddInfoLine(lines, "Created", info.CreationTime.ToString("yyyy-MM-dd HH:mm"), CNormal, maxRows);
+                    AddSeparator(lines, maxRows);
+                    AddLine(lines, "  " + info.FullName, CDim, maxRows);
+                    AddSeparator(lines, maxRows);
+                    AddLine(lines, "  Preview (first " + FormatSize(PreviewByteLimit) + " max):", CMuted, maxRows);
+                    AddFilePreview(lines, path, info.Length, maxRows);
+                }
+                catch (Exception ex)
+                {
+                    AddLine(lines, "  (unable to read: " + ex.Message + ")", CDim, maxRows);
+                }
+            }
+
+            private static void AddFolderDetails(List<DetailLine> lines, string path, int maxRows)
+            {
+                string[] directories = Array.Empty<string>();
+                string[] files = Array.Empty<string>();
+
+                try
+                {
+                    directories = Directory.GetDirectories(path);
+                    files = Directory.GetFiles(path);
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    var info = new DirectoryInfo(path);
+                    AddInfoLine(lines, "Type", "Folder", CTitle, maxRows);
+                    AddInfoLine(lines, "Subs", directories.Length.ToString(), CNormal, maxRows);
+                    AddInfoLine(lines, "Files", files.Length.ToString(), CNormal, maxRows);
+                    AddInfoLine(lines, "Modified", info.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), CNormal, maxRows);
+                    AddSeparator(lines, maxRows);
+                    AddLine(lines, "  Contents:", CMuted, maxRows);
+
+                    foreach (string directory in directories)
+                    {
+                        if (lines.Count >= maxRows)
+                            return;
+
+                        string name = DisplayName(directory);
+                        AddLine(lines, "  \u25b6 " + name, CTitle, maxRows);
+                    }
+
+                    foreach (string file in files)
+                    {
+                        if (lines.Count >= maxRows)
+                            return;
+
+                        AddLine(lines, "  \u00b7 " + Path.GetFileName(file), FileColor(file), maxRows);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddLine(lines, "  (unable to read: " + ex.Message + ")", CDim, maxRows);
+                }
+            }
+
+            private static void AddFilePreview(List<DetailLine> lines, string path, long totalBytes, int maxRows)
+            {
+                if (lines.Count >= maxRows)
+                    return;
+
+                try
+                {
+                    if (totalBytes == 0)
+                    {
+                        AddLine(lines, "  (empty)", CDim, maxRows);
+                        return;
+                    }
+
+                    int bytesToRead = (int)Math.Min(totalBytes, PreviewByteLimit);
+                    byte[] buffer = new byte[bytesToRead];
+                    int read = 0;
+
+                    using (var stream = File.OpenRead(path))
+                    {
+                        while (read < bytesToRead)
+                        {
+                            int chunk = stream.Read(buffer, read, bytesToRead - read);
+                            if (chunk <= 0)
+                                break;
+
+                            read += chunk;
+                        }
+                    }
+
+                    if (read == 0)
+                    {
+                        AddLine(lines, "  (empty)", CDim, maxRows);
+                        return;
+                    }
+
+                    if (LooksBinary(buffer, read))
+                    {
+                        AddLine(lines, "  (binary preview skipped)", CDim, maxRows);
+                        return;
+                    }
+
+                    string text = Encoding.UTF8.GetString(buffer, 0, read)
+                        .Replace("\r\n", "\n")
+                        .Replace('\r', '\n')
+                        .Replace('\0', ' ');
+                    string[] previewLines = text.Split('\n');
+
+                    for (int i = 0; i < previewLines.Length && lines.Count < maxRows; i++)
+                        AddLine(lines, "  " + previewLines[i].Replace("\t", "    "), CNormal, maxRows);
+
+                    if (totalBytes > read && lines.Count < maxRows)
+                        AddLine(lines, "  ... preview truncated at " + FormatSize(read) + " of " + FormatSize(totalBytes), CDim, maxRows);
+                }
+                catch (Exception ex)
+                {
+                    AddLine(lines, "  Preview unavailable: " + ex.Message, CDim, maxRows);
+                }
+            }
+
+            private static bool LooksBinary(byte[] buffer, int length)
+            {
+                int controls = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    byte value = buffer[i];
+                    if (value == 0)
+                        return true;
+
+                    bool allowed = value == 9 || value == 10 || value == 12 || value == 13;
+                    if (value < 32 && !allowed)
+                        controls++;
+                }
+
+                return controls > Math.Max(4, length / 10);
+            }
+
+            private static void AddInfoLine(List<DetailLine> lines, string label, string value, int valueColor, int maxRows)
+            {
+                AddLine(lines, "  " + label.PadRight(8) + "\u2502 " + (value ?? string.Empty), valueColor, maxRows);
+            }
+
+            private static void AddSeparator(List<DetailLine> lines, int maxRows)
+            {
+                AddLine(lines, "  " + new string('\u2500', 72), CMuted, maxRows);
+            }
+
+            private static void AddLine(List<DetailLine> lines, string text, int color, int maxRows)
+            {
+                if (lines.Count < maxRows)
+                    lines.Add(new DetailLine(text, color));
+            }
+
+            private string OpenSelected()
+            {
+                if (_items.Count == 0 || _selectedIndex < 0 || _selectedIndex >= _items.Count)
+                {
+                    Message("Directory is empty");
+                    return null;
+                }
+
+                ExplorerItem item = _items[_selectedIndex];
+                if (item.IsDirectory)
+                {
+                    NavigateTo(item.Path);
+                    return null;
+                }
+
+                return item.Path;
+            }
+
+            private void NavigateTo(string directory)
+            {
+                if (!IsUsableDirectory(directory))
+                {
+                    Message("Cannot open directory");
+                    return;
+                }
+
+                _back.Push(CaptureLocation());
+                _forward.Clear();
+                _currentDirectory = NormalizeDirectory(directory);
+                _selectedIndex = 0;
+                _scrollOffset = 0;
+                LoadItems();
+            }
+
+            private void GoBack()
+            {
+                if (_back.Count == 0)
+                {
+                    Message("No previous directory");
+                    return;
+                }
+
+                ExplorerLocation current = CaptureLocation();
+                ExplorerLocation previous = _back.Pop();
+                _forward.Push(current);
+                ApplyLocation(previous);
+            }
+
+            private void GoForward()
+            {
+                if (_forward.Count == 0)
+                {
+                    Message("No forward directory");
+                    return;
+                }
+
+                ExplorerLocation current = CaptureLocation();
+                ExplorerLocation next = _forward.Pop();
+                _back.Push(current);
+                ApplyLocation(next);
+            }
+
+            private void GoParent()
+            {
+                DirectoryInfo parent;
+                string currentDirectory = NormalizeDirectory(_currentDirectory);
+                try
+                {
+                    parent = Directory.GetParent(currentDirectory);
+                }
+                catch
+                {
+                    parent = null;
+                }
+
+                if (parent == null)
+                {
+                    Message("Already at root");
+                    return;
+                }
+
+                string previousDirectory = currentDirectory;
+                _back.Push(CaptureLocation());
+                _forward.Clear();
+                _currentDirectory = NormalizeDirectory(parent.FullName);
+                _selectedIndex = 0;
+                _scrollOffset = 0;
+                LoadItems();
+                SelectPath(previousDirectory);
+            }
+
+            private void ApplyLocation(ExplorerLocation location)
+            {
+                _currentDirectory = NormalizeDirectory(location.Path);
+                _selectedIndex = Math.Max(0, location.SelectedIndex);
+                _scrollOffset = Math.Max(0, location.ScrollOffset);
+                LoadItems();
+                ClampSelection();
+            }
+
+            private ExplorerLocation CaptureLocation()
+            {
+                return new ExplorerLocation
+                {
+                    Path = _currentDirectory,
+                    SelectedIndex = _selectedIndex,
+                    ScrollOffset = _scrollOffset
+                };
+            }
+
+            private void Refresh()
+            {
+                LoadItems();
+                ClampSelection();
+                ForceExplorerRedraw();
+                Message("Refreshed");
+            }
+
+            private void DeleteSelectedItem()
+            {
+                if (_items.Count == 0 || _selectedIndex < 0 || _selectedIndex >= _items.Count)
+                    return;
+
+                ExplorerItem item = _items[_selectedIndex];
+                if (!ConfirmDelete(item.Path, item.IsDirectory))
+                {
+                    ForceExplorerRedraw();
+                    Message("Cancelled");
+                    return;
+                }
+
+                try
+                {
+                    if (item.IsDirectory)
+                        Directory.Delete(item.Path, recursive: true);
+                    else
+                        File.Delete(item.Path);
+
+                    if (_selectedIndex >= _items.Count - 1)
+                        _selectedIndex = Math.Max(0, _selectedIndex - 1);
+
+                    LoadItems();
+                    ClampSelection();
+                    ForceExplorerRedraw();
+                    Message("Deleted");
+                }
+                catch (Exception ex)
+                {
+                    ForceExplorerRedraw();
+                    Message("Delete failed: " + ex.Message);
+                }
+            }
+
+            private void DeleteSearchSelectedItem()
+            {
+                if (_searchResults.Count == 0 || _searchSelectedIndex < 0 || _searchSelectedIndex >= _searchResults.Count)
+                    return;
+
+                SearchItem item = _searchResults[_searchSelectedIndex];
+                if (!ConfirmDelete(item.Path, item.IsDirectory))
+                {
+                    ForceExplorerRedraw();
+                    Message("Cancelled");
+                    return;
+                }
+
+                try
+                {
+                    if (item.IsDirectory)
+                        Directory.Delete(item.Path, recursive: true);
+                    else
+                        File.Delete(item.Path);
+
+                    _searchResults.RemoveAt(_searchSelectedIndex);
+                    if (_searchSelectedIndex >= _searchResults.Count)
+                        _searchSelectedIndex = Math.Max(0, _searchSelectedIndex - 1);
+
+                    LoadItems();
+                    ForceExplorerRedraw();
+                    Message("Deleted");
+                }
+                catch (Exception ex)
+                {
+                    ForceExplorerRedraw();
+                    Message("Delete failed: " + ex.Message);
+                }
+            }
+
+            private static bool ConfirmDelete(string path, bool isDirectory)
+            {
+                (int width, int height) = WindowSize();
+                Console.Write(HideCursor + ClearScreen);
+                WriteRawLine(0, 0, isDirectory ? " \u25c8 Delete Folder" : " \u25c8 Delete File", width, CError);
+                WriteRawLine(0, 1, new string('\u2550', width), width, CMuted);
+                WriteRawLine(0, 2, "  Path: " + path, width, CNormal);
+                if (isDirectory)
+                    WriteRawLine(0, 3, "  WARNING: This will delete the folder and ALL its contents.", width, CError);
+
+                int row = isDirectory ? 5 : 4;
+                row = Math.Min(row, Math.Max(0, height - 1));
+                Console.Write(At(0, row) + F(CNormal) + "  Are you sure? (y/N): " + Reset);
+                ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                return key.KeyChar == 'y' || key.KeyChar == 'Y';
+            }
+
+            private void SwitchDrive()
+            {
+                DriveInfo[] drives;
+                try
+                {
+                    var ready = new List<DriveInfo>();
+                    foreach (DriveInfo drive in DriveInfo.GetDrives())
+                    {
+                        if (drive.IsReady)
+                            ready.Add(drive);
+                    }
+
+                    drives = ready.ToArray();
+                }
+                catch
+                {
+                    Message("Unable to read drives");
+                    return;
+                }
+
+                if (drives.Length == 0)
+                {
+                    Message("No ready drives");
+                    return;
+                }
+
+                int selected = 0;
+                while (true)
+                {
+                    (int width, int height) = WindowSize();
+                    width = Math.Max(width, 60);
+                    height = Math.Max(height, 20);
+
+                    _explorerFrame.Clear();
+                    _explorerFrame.Append(HideCursor).Append(ClearScreen);
+                    _explorerFrame.Append(At(0, 0)).Append(F(CTitle)).Append(Clip(" \u25c8 Select Drive", width)).Append(Reset);
+                    _explorerFrame.Append(At(0, 1)).Append(F(CMuted)).Append(new string('\u2550', width)).Append(Reset);
+                    _explorerFrame.Append(At(0, 2)).Append(F(CMuted)).Append(Clip(" \u2191\u2193:move  \u21b5:select  Esc:cancel", width)).Append(Reset);
+                    _explorerFrame.Append(At(0, 3)).Append(F(CMuted)).Append(new string('\u2500', width)).Append(Reset);
+
+                    for (int i = 0; i < drives.Length && i + 4 < height; i++)
+                    {
+                        DriveInfo drive = drives[i];
+                        string line = "  " + drive.Name + "  (" + drive.DriveType + ")  " +
+                            FormatSize(drive.AvailableFreeSpace) + " free of " + FormatSize(drive.TotalSize);
+                        _explorerFrame.Append(At(0, 4 + i));
+                        AppendPaddedSelection(_explorerFrame, line, width, i == selected, CNormal);
+                    }
+
+                    Console.Write(_explorerFrame.ToString());
+                    ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+
+                    switch (key.Key)
+                    {
+                        case ConsoleKey.UpArrow:
+                            selected = Math.Max(0, selected - 1);
+                            break;
+                        case ConsoleKey.DownArrow:
+                            selected = Math.Min(drives.Length - 1, selected + 1);
+                            break;
+                        case ConsoleKey.Enter:
+                            NavigateTo(drives[selected].RootDirectory.FullName);
+                            _scrollOffset = 0;
+                            ForceExplorerRedraw();
+                            return;
+                        case ConsoleKey.Escape:
+                            ForceExplorerRedraw();
+                            return;
+                    }
+                }
+            }
+
+            private void DoSearch()
+            {
+                _searchResults.Clear();
+                _searchSelectedIndex = 0;
+                _searchScrollOffset = 0;
+
+                (int width, int height) = WindowSize();
+                width = Math.Max(width, 60);
+
+                Console.Write(HideCursor + ClearScreen);
+                WriteRawLine(0, 0, " \u25c8 Search", width, CTitle);
+                WriteRawLine(0, 1, new string('\u2550', width), width, CMuted);
+                WriteRawLine(0, 2, "  Base folder: " + _currentDirectory, width, COperator);
+                WriteRawLine(0, 3, new string('\u2500', width), width, CMuted);
+                Console.Write(At(0, 4) + F(COperator) + "  Search term: " + Reset + F(CNormal));
+                Console.Write(ShowCursor);
+
+                string term = ReadSearchTerm(15, 4, Math.Max(1, width - 15));
+                Console.Write(HideCursor);
+
+                if (string.IsNullOrWhiteSpace(term))
+                {
+                    ForceExplorerRedraw();
+                    return;
+                }
+
+                term = term.Trim();
+                WriteRawLine(0, 5, "  Searching...", width, CMuted);
+
+                var pending = new Stack<string>();
+                pending.Push(_currentDirectory);
+
+                while (pending.Count > 0)
+                {
+                    string directory = pending.Pop();
+                    try
+                    {
+                        foreach (string childDirectory in Directory.GetDirectories(directory))
+                        {
+                            string name = Path.GetFileName(childDirectory);
+                            if (!string.IsNullOrEmpty(name) &&
+                                name.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                _searchResults.Add(new SearchItem { Path = childDirectory, IsDirectory = true });
+                            }
+
+                            pending.Push(childDirectory);
+                        }
+
+                        foreach (string file in Directory.GetFiles(directory))
+                        {
+                            string name = Path.GetFileName(file);
+                            if (!string.IsNullOrEmpty(name) &&
+                                name.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                _searchResults.Add(new SearchItem { Path = file, IsDirectory = false });
+                            }
+                        }
+                    }
+                    catch (UnauthorizedAccessException) { }
+                    catch (PathTooLongException) { }
+                    catch (IOException) { }
+                }
+
+                _searchMode = true;
+                ForceExplorerRedraw();
+            }
+
+            private string HandleSearchKey(ConsoleKeyInfo key, out bool close)
+            {
+                close = false;
+
+                switch (key.Key)
+                {
+                    case ConsoleKey.Q:
+                    case ConsoleKey.Escape:
+                        _searchMode = false;
+                        ForceExplorerRedraw();
+                        return null;
+                    case ConsoleKey.UpArrow:
+                        if (_searchResults.Count > 0)
+                            _searchSelectedIndex = ClampValue(_searchSelectedIndex - 1, 0, _searchResults.Count - 1);
+                        return null;
+                    case ConsoleKey.DownArrow:
+                        if (_searchResults.Count > 0)
+                            _searchSelectedIndex = ClampValue(_searchSelectedIndex + 1, 0, _searchResults.Count - 1);
+                        return null;
+                    case ConsoleKey.Home:
+                        if (_searchResults.Count > 0)
+                            _searchSelectedIndex = 0;
+                        return null;
+                    case ConsoleKey.End:
+                        if (_searchResults.Count > 0)
+                            _searchSelectedIndex = _searchResults.Count - 1;
+                        return null;
+                    case ConsoleKey.Enter:
+                        return OpenSearchSelected();
+                    case ConsoleKey.Backspace:
+                        GoBack();
+                        _searchMode = false;
+                        ForceExplorerRedraw();
+                        return null;
+                    case ConsoleKey.U:
+                        GoParent();
+                        _searchMode = false;
+                        ForceExplorerRedraw();
+                        return null;
+                    case ConsoleKey.Delete:
+                        DeleteSearchSelectedItem();
+                        return null;
+                    default:
+                        if (char.IsLetterOrDigit(key.KeyChar))
+                            JumpToSearchItem(char.ToLowerInvariant(key.KeyChar));
+                        return null;
+                }
+            }
+
+            private string OpenSearchSelected()
+            {
+                if (_searchResults.Count == 0 || _searchSelectedIndex < 0 || _searchSelectedIndex >= _searchResults.Count)
+                    return null;
+
+                SearchItem item = _searchResults[_searchSelectedIndex];
+                if (item.IsDirectory)
+                {
+                    NavigateTo(item.Path);
+                    _selectedIndex = 0;
+                    _scrollOffset = 0;
+                    _searchMode = false;
+                    ForceExplorerRedraw();
+                    return null;
+                }
+
+                return item.Path;
+            }
+
+            private void RenderSearch()
+            {
+                (int width, int height) = WindowSize();
+                width = Math.Max(width, 60);
+                height = Math.Max(height, 20);
+
+                int headerRows = 4;
+                int contentTop = headerRows;
+                int contentRows = Math.Max(4, height - headerRows - 1);
+                int footerRow = contentTop + contentRows;
+
+                if (_searchResults.Count > 0)
+                    _searchSelectedIndex = ClampValue(_searchSelectedIndex, 0, _searchResults.Count - 1);
+                else
+                    _searchSelectedIndex = 0;
+
+                int maxOffset = Math.Max(0, _searchResults.Count - contentRows);
+                if (_searchSelectedIndex < _searchScrollOffset)
+                    _searchScrollOffset = _searchSelectedIndex;
+                else if (_searchSelectedIndex >= _searchScrollOffset + contentRows)
+                    _searchScrollOffset = _searchSelectedIndex - contentRows + 1;
+                _searchScrollOffset = ClampValue(_searchScrollOffset, 0, maxOffset);
+
+                string counter = _searchResults.Count > 0 ? "[" + (_searchSelectedIndex + 1) + "/" + _searchResults.Count + "]" : "[0/0]";
+                string title = " \u25c8 Search Results";
+                int pad = Math.Max(0, width - title.Length - counter.Length - 1);
+
+                _explorerFrame.Clear();
+                _explorerFrame.Append(HideCursor).Append(ClearScreen);
+                _explorerFrame.Append(At(0, 0)).Append(F(CTitle)).Append(Clip(title + new string(' ', pad) + counter + " ", width)).Append(Reset);
+                _explorerFrame.Append(At(0, 1)).Append(F(CMuted)).Append(new string('\u2550', width)).Append(Reset);
+                _explorerFrame.Append(At(0, 2)).Append(F(COperator)).Append(Clip("  Base: " + _currentDirectory, width)).Append(Reset);
+                _explorerFrame.Append(At(0, 3)).Append(F(CMuted)).Append(Clip(" \u2191\u2193:move  \u21b5:open  Del:del  Esc/Q:exit  \u232b:back  U:up", width)).Append(Reset);
+
+                for (int row = 0; row < contentRows; row++)
+                {
+                    int index = _searchScrollOffset + row;
+                    string text = string.Empty;
+                    int color = CNormal;
+
+                    if (index >= 0 && index < _searchResults.Count)
+                    {
+                        SearchItem item = _searchResults[index];
+                        text = (item.IsDirectory ? "\u25b6 " : "\u00b7 ") + item.Path;
+                        color = item.IsDirectory ? CTitle : FileColor(item.Path);
+                    }
+
+                    _explorerFrame.Append(At(0, contentTop + row));
+                    AppendPaddedSelection(_explorerFrame, text, width, index == _searchSelectedIndex, color);
+                }
+
+                int directoryCount = 0;
+                for (int i = 0; i < _searchResults.Count; i++)
+                {
+                    if (_searchResults[i].IsDirectory)
+                        directoryCount++;
+                }
+
+                int fileCount = _searchResults.Count - directoryCount;
+                string status = "  " + directoryCount + " folder" + (directoryCount == 1 ? "" : "s") +
+                    " \u00b7 " + fileCount + " file" + (fileCount == 1 ? "" : "s") + " matched";
+                _explorerFrame.Append(At(0, footerRow)).Append(B(CStatusBg)).Append(F(CStatusFg))
+                    .Append(Clip(status, width).PadRight(width)).Append(Reset);
+
+                Console.Write(_explorerFrame.ToString());
+            }
+
+            private void JumpToSearchItem(char firstCharacter)
+            {
+                if (_searchResults.Count == 0)
+                    return;
+
+                int start = _searchSelectedIndex + 1;
+                if (start >= _searchResults.Count)
+                    start = 0;
+
+                for (int i = start; i < _searchResults.Count; i++)
+                {
+                    string name = Path.GetFileName(_searchResults[i].Path);
+                    if (StartsWith(name, firstCharacter))
+                    {
+                        _searchSelectedIndex = i;
+                        return;
+                    }
+                }
+
+                for (int i = 0; i <= _searchSelectedIndex; i++)
+                {
+                    string name = Path.GetFileName(_searchResults[i].Path);
+                    if (StartsWith(name, firstCharacter))
+                    {
+                        _searchSelectedIndex = i;
+                        return;
+                    }
+                }
+            }
+
+            private static string ReadSearchTerm(int left, int top, int width)
+            {
+                var term = new StringBuilder();
+                int inputWidth = Math.Max(1, width);
+
+                while (true)
+                {
+                    ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+
+                    switch (key.Key)
+                    {
+                        case ConsoleKey.Enter:
+                            return term.ToString();
+                        case ConsoleKey.Escape:
+                            return null;
+                        case ConsoleKey.Backspace:
+                            if (term.Length == 0)
+                                return null;
+
+                            term.Remove(term.Length - 1, 1);
+                            RenderSearchTermInput(term.ToString(), left, top, inputWidth);
+                            break;
+                        default:
+                            if (!char.IsControl(key.KeyChar))
+                            {
+                                term.Append(key.KeyChar);
+                                RenderSearchTermInput(term.ToString(), left, top, inputWidth);
+                            }
+                            break;
+                    }
+                }
+            }
+
+            private static void RenderSearchTermInput(string term, int left, int top, int width)
+            {
+                string visible = term.Length > width ? term.Substring(term.Length - width) : term;
+                Console.Write(At(left, top) + Clip(visible, width).PadRight(width));
+                int cursorOffset = Math.Min(visible.Length, Math.Max(0, width - 1));
+                Console.Write(At(left + cursorOffset, top));
+            }
+
+            private void ForceExplorerRedraw()
+            {
+                _lastWidth = -1;
+                _lastHeight = -1;
+                Console.Write(HideCursor + ClearScreen);
+            }
+
+            private string StatusText()
+            {
+                if (!string.Equals(_cachedDriveRoot, _currentDirectory, StringComparison.OrdinalIgnoreCase))
+                {
+                    _cachedDriveRoot = _currentDirectory;
+                    _cachedFreeText = string.Empty;
+
+                    try
+                    {
+                        string root = Path.GetPathRoot(_currentDirectory);
+                        if (!string.IsNullOrWhiteSpace(root))
+                        {
+                            var drive = new DriveInfo(root);
+                            if (drive.IsReady)
+                                _cachedFreeText = "  \u2502  Free: " + FormatSize(drive.AvailableFreeSpace);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                return "  " + _cachedDirCount + " folder" + (_cachedDirCount == 1 ? "" : "s") +
+                    " \u00b7 " + _cachedFileCount + " file" + (_cachedFileCount == 1 ? "" : "s") +
+                    _cachedFreeText;
+            }
+
+            private void LoadItems()
+            {
+                _items.Clear();
+                _cachedDirCount = 0;
+                _cachedFileCount = 0;
+                _cachedDriveRoot = string.Empty;
+                _cachedFreeText = string.Empty;
+
+                try
+                {
+                    var directories = new List<string>(Directory.GetDirectories(_currentDirectory));
+                    directories.Sort(StringComparer.OrdinalIgnoreCase);
+                    foreach (string directory in directories)
+                    {
+                        _items.Add(new ExplorerItem
+                        {
+                            Path = directory,
+                            Name = DisplayName(directory),
+                            IsDirectory = true
+                        });
+                        _cachedDirCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Message("Directory read failed: " + ex.Message);
+                }
+
+                try
+                {
+                    var files = new List<string>(Directory.GetFiles(_currentDirectory));
+                    files.Sort(StringComparer.OrdinalIgnoreCase);
+                    foreach (string file in files)
+                    {
+                        long size = 0;
+                        try
+                        {
+                            size = new FileInfo(file).Length;
+                        }
+                        catch
+                        {
+                        }
+
+                        _items.Add(new ExplorerItem
+                        {
+                            Path = file,
+                            Name = Path.GetFileName(file),
+                            IsDirectory = false,
+                            SizeBytes = size
+                        });
+                        _cachedFileCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Message("File read failed: " + ex.Message);
+                }
+            }
+
+            private void MoveSelection(int delta)
+            {
+                if (_items.Count == 0)
+                    return;
+
+                _selectedIndex = ClampValue(_selectedIndex + delta, 0, _items.Count - 1);
+            }
+
+            private void MoveToStart()
+            {
+                if (_items.Count > 0)
+                    _selectedIndex = 0;
+            }
+
+            private void MoveToEnd()
+            {
+                if (_items.Count > 0)
+                    _selectedIndex = _items.Count - 1;
+            }
+
+            private void JumpToItem(char firstCharacter)
+            {
+                if (_items.Count == 0)
+                    return;
+
+                int start = _selectedIndex + 1;
+                for (int i = start; i < _items.Count; i++)
+                {
+                    if (StartsWith(_items[i].Name, firstCharacter))
+                    {
+                        _selectedIndex = i;
+                        return;
+                    }
+                }
+
+                for (int i = 0; i <= _selectedIndex; i++)
+                {
+                    if (StartsWith(_items[i].Name, firstCharacter))
+                    {
+                        _selectedIndex = i;
+                        return;
+                    }
+                }
+            }
+
+            private void SelectPath(string path)
+            {
+                for (int i = 0; i < _items.Count; i++)
+                {
+                    if (string.Equals(_items[i].Path, path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _selectedIndex = i;
+                        return;
+                    }
+                }
+            }
+
+            private void ClampSelection()
+            {
+                if (_items.Count == 0)
+                {
+                    _selectedIndex = 0;
+                    _scrollOffset = 0;
+                    return;
+                }
+
+                _selectedIndex = ClampValue(_selectedIndex, 0, _items.Count - 1);
+            }
+
+            private void AdjustScroll(int rows)
+            {
+                int maxScroll = Math.Max(0, _items.Count - rows);
+                if (_selectedIndex < _scrollOffset)
+                    _scrollOffset = _selectedIndex;
+                else if (_selectedIndex >= _scrollOffset + rows)
+                    _scrollOffset = _selectedIndex - rows + 1;
+
+                _scrollOffset = ClampValue(_scrollOffset, 0, maxScroll);
+            }
+
+            private int PageSize()
+            {
+                (int width, int height) = WindowSize();
+                return Math.Max(1, height - 6);
+            }
+
+            private void Message(string message)
+            {
+                _message = message;
+                _messageUntil = DateTime.UtcNow.AddMilliseconds(2200);
+            }
+
+            private static bool StartsWith(string value, char firstCharacter)
+            {
+                return !string.IsNullOrEmpty(value) &&
+                    char.ToLowerInvariant(value[0]) == firstCharacter;
+            }
+
+            private static int ClampValue(int value, int min, int max)
+            {
+                if (value < min)
+                    return min;
+
+                if (value > max)
+                    return max;
+
+                return value;
+            }
+
+            private static string NormalizeDirectory(string path)
+            {
+                try
+                {
+                    if (File.Exists(path))
+                    {
+                        string fileDirectory = Path.GetDirectoryName(path);
+                        if (IsUsableDirectory(fileDirectory))
+                            return TrimTrailingDirectorySeparator(Path.GetFullPath(fileDirectory));
+                    }
+
+                    if (IsUsableDirectory(path))
+                        return TrimTrailingDirectorySeparator(Path.GetFullPath(path));
+                }
+                catch
+                {
+                }
+
+                return TrimTrailingDirectorySeparator(Environment.CurrentDirectory);
+            }
+
+            private static string TrimTrailingDirectorySeparator(string path)
+            {
+                if (string.IsNullOrWhiteSpace(path))
+                    return path;
+
+                string fullPath = Path.GetFullPath(path);
+                string root = Path.GetPathRoot(fullPath);
+                if (string.Equals(fullPath, root, StringComparison.OrdinalIgnoreCase))
+                    return fullPath;
+
+                return fullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+
+            private static string DisplayName(string path)
+            {
+                string trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string name = Path.GetFileName(trimmed);
+                return string.IsNullOrEmpty(name) ? path : name;
+            }
+
+            private static string FormatSize(long bytes)
+            {
+                string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+                double size = bytes;
+                int suffix = 0;
+
+                while (size >= 1024 && suffix < suffixes.Length - 1)
+                {
+                    size /= 1024;
+                    suffix++;
+                }
+
+                return suffix == 0
+                    ? bytes + " " + suffixes[suffix]
+                    : size.ToString("0.##") + " " + suffixes[suffix];
+            }
+
+            private static int FileColor(string path)
+            {
+                string extension = Path.GetExtension(path).ToLowerInvariant();
+
+                if (extension == ".exe" || extension == ".msi" || extension == ".bat" || extension == ".cmd" || extension == ".ps1" || extension == ".sh")
+                    return CError;
+
+                if (extension == ".txt" || extension == ".md" || extension == ".log" || extension == ".ini" || extension == ".cfg" || extension == ".conf" || extension == ".csv")
+                    return COperator;
+
+                if (extension == ".cs" || extension == ".py" || extension == ".js" || extension == ".ts" || extension == ".cpp" || extension == ".c" ||
+                    extension == ".h" || extension == ".java" || extension == ".go" || extension == ".rs" || extension == ".rb" || extension == ".php")
+                    return CTitle;
+
+                if (extension == ".zip" || extension == ".rar" || extension == ".7z" || extension == ".tar" || extension == ".gz" || extension == ".bz2")
+                    return CSearch;
+
+                if (extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".gif" || extension == ".bmp" ||
+                    extension == ".svg" || extension == ".ico" || extension == ".webp")
+                    return CVariable;
+
+                if (extension == ".mp3" || extension == ".mp4" || extension == ".avi" || extension == ".mkv" || extension == ".mov" ||
+                    extension == ".wav" || extension == ".flac")
+                    return CPreprocessor;
+
+                if (extension == ".pdf" || extension == ".doc" || extension == ".docx" || extension == ".xls" || extension == ".xlsx" ||
+                    extension == ".ppt" || extension == ".pptx")
+                    return COperator;
+
+                if (extension == ".dll" || extension == ".sys" || extension == ".lib" || extension == ".pdb")
+                    return CError;
+
+                return CNormal;
+            }
+
+            private static void AppendPaddedSelection(StringBuilder sb, string text, int width, bool selected, int normalColor)
+            {
+                text = text ?? string.Empty;
+                if (selected)
+                {
+                    string body = Clip(text, Math.Max(0, width - 1)).PadRight(Math.Max(0, width - 1));
+                    sb.Append(F(45)).Append(B(24)).Append("\u258c")
+                        .Append(B(23)).Append(Bold()).Append(F(253)).Append(body).Append(Reset);
+                    return;
+                }
+
+                sb.Append(F(normalColor)).Append(Clip(text, width).PadRight(width)).Append(Reset);
+            }
+
+            private static void WriteRawLine(int left, int top, string text, int width, int color)
+            {
+                Console.Write(At(left, top) + F(color) + Clip(text ?? string.Empty, width).PadRight(width) + Reset);
+            }
+
+            private readonly struct DetailLine
+            {
+                public DetailLine(string text, int color)
+                {
+                    Text = text;
+                    Color = color;
+                }
+
+                public string Text { get; }
+                public int Color { get; }
+            }
+
+            private sealed class ExplorerItem
+            {
+                public string Path { get; set; }
+                public string Name { get; set; }
+                public bool IsDirectory { get; set; }
+                public long SizeBytes { get; set; }
+            }
+
+            private sealed class SearchItem
+            {
+                public string Path { get; set; }
+                public bool IsDirectory { get; set; }
+            }
+
+            private sealed class ExplorerLocation
+            {
+                public string Path { get; set; }
+                public int SelectedIndex { get; set; }
+                public int ScrollOffset { get; set; }
+            }
         }
 
         private enum Mode
