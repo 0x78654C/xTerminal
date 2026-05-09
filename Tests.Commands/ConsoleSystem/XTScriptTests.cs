@@ -115,6 +115,25 @@ public class XTScriptTests : IDisposable
     }
 
     [Fact]
+    public void Print_SetVariableWithEscapedNewline_PrintsNewLine()
+    {
+        var path = CreateScript(
+            @"set msg = ""line1\nline2""",
+            @"print ""{msg}""");
+        RunScriptLines(path).Should().BeEquivalentTo(
+            new[] { "line1", "line2" }, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Print_SetWindowsPathVariable_KeepsBackslashes()
+    {
+        var path = CreateScript(
+            @"set folder = ""c:\users\mrx\downloads\test\""",
+            @"print ""{folder}""");
+        RunScript(path).Should().Be(@"c:\users\mrx\downloads\test\");
+    }
+
+    [Fact]
     public void Set_OverwriteVariable()
     {
         var path = CreateScript(
