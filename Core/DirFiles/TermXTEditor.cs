@@ -26,6 +26,7 @@ namespace Core.DirFiles
         private const string Reset = "\x1b[0m";
         private const string ClearEol = "\x1b[K";
         private const string ClearScreen = "\x1b[2J";
+        private const string IndentText = "    ";
 
         private const int CTitle = 45;
         private const int CTitleDim = 250;
@@ -622,7 +623,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | Ctrl+Z/Y undo/redo";
+                    help = " INSERT  Esc normal | Tab indent | Shift+Tab outdent | Shift+arrows select | Ctrl+C/V copy/paste | Ctrl+Z/Y undo/redo";
                     break;
                 case Mode.Command:
                     help = " COMMAND  e explorer | w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp | Esc cancel";
@@ -860,6 +861,10 @@ namespace Core.DirFiles
                 case ConsoleKey.Insert:
                     EnterInsertMode();
                     break;
+                case ConsoleKey.Tab:
+                    if (HasSelection())
+                        ChangeLineIndent(!IsShiftPressed(key), includeCurrentLineWhenNoSelection: false);
+                    break;
                 case ConsoleKey.F3:
                     SearchNext();
                     break;
@@ -1004,7 +1009,7 @@ namespace Core.DirFiles
                     DeleteForward();
                     break;
                 case ConsoleKey.Tab:
-                    InsertText("    ");
+                    HandleInsertTab(key);
                     break;
                 default:
                     if (TryGetInputText(key, out string insertText))
@@ -1441,14 +1446,174 @@ namespace Core.DirFiles
             PushInsertUndo();
             DeleteSelectionWithoutUndo();
             string line = CurrentLine();
+            string indent = LeadingWhitespace(line);
             string left = line.Substring(0, _cursorCol);
             string right = line.Substring(_cursorCol);
             _lines[_cursorLine] = left;
-            _lines.Insert(_cursorLine + 1, right);
+            _lines.Insert(_cursorLine + 1, indent + right);
             _cursorLine++;
-            _cursorCol = 0;
+            _cursorCol = indent.Length;
             InvalidateDocumentCaches();
             MarkDirty();
+        }
+
+        private void HandleInsertTab(ConsoleKeyInfo key)
+        {
+            bool shift = IsShiftPressed(key);
+
+            if (HasSelection())
+            {
+                ChangeLineIndent(!shift, includeCurrentLineWhenNoSelection: false);
+                return;
+            }
+
+            if (shift)
+            {
+                ChangeLineIndent(indent: false, includeCurrentLineWhenNoSelection: true);
+                return;
+            }
+
+            InsertText(IndentText);
+        }
+
+        private bool ChangeLineIndent(bool indent, bool includeCurrentLineWhenNoSelection)
+        {
+            if (!TryGetLineRangeForIndent(includeCurrentLineWhenNoSelection, out int startLine, out int endLine))
+                return false;
+
+            if (indent)
+                return IndentLines(startLine, endLine);
+
+            return UnindentLines(startLine, endLine);
+        }
+
+        private bool TryGetLineRangeForIndent(bool includeCurrentLineWhenNoSelection, out int startLine, out int endLine)
+        {
+            if (TryGetSelectionRange(out TextPosition start, out TextPosition end))
+            {
+                startLine = start.Line;
+                endLine = end.Line;
+
+                if (end.Col == 0 && endLine > startLine)
+                    endLine--;
+
+                startLine = Math.Max(0, Math.Min(_lines.Count - 1, startLine));
+                endLine = Math.Max(0, Math.Min(_lines.Count - 1, endLine));
+                return startLine <= endLine;
+            }
+
+            if (includeCurrentLineWhenNoSelection)
+            {
+                startLine = _cursorLine;
+                endLine = _cursorLine;
+                return true;
+            }
+
+            startLine = 0;
+            endLine = 0;
+            return false;
+        }
+
+        private bool IndentLines(int startLine, int endLine)
+        {
+            PushUndo();
+
+            for (int lineIndex = startLine; lineIndex <= endLine; lineIndex++)
+                _lines[lineIndex] = IndentText + _lines[lineIndex];
+
+            AdjustColumnAfterIndent(_cursorLine, ref _cursorCol, startLine, endLine);
+            if (_hasSelectionAnchor)
+                AdjustColumnAfterIndent(_selectionAnchorLine, ref _selectionAnchorCol, startLine, endLine);
+
+            _insertUndoStarted = false;
+            InvalidateDocumentCaches();
+            MarkDirty();
+            Status("Indented");
+            return true;
+        }
+
+        private bool UnindentLines(int startLine, int endLine)
+        {
+            int[] removeWidths = new int[endLine - startLine + 1];
+            bool changed = false;
+
+            for (int lineIndex = startLine; lineIndex <= endLine; lineIndex++)
+            {
+                int removeWidth = GetOutdentWidth(_lines[lineIndex]);
+                removeWidths[lineIndex - startLine] = removeWidth;
+                changed |= removeWidth > 0;
+            }
+
+            if (!changed)
+            {
+                Status("No indentation");
+                return false;
+            }
+
+            PushUndo();
+
+            for (int lineIndex = startLine; lineIndex <= endLine; lineIndex++)
+            {
+                int removeWidth = removeWidths[lineIndex - startLine];
+                if (removeWidth > 0)
+                    _lines[lineIndex] = _lines[lineIndex].Remove(0, removeWidth);
+            }
+
+            AdjustColumnAfterUnindent(_cursorLine, ref _cursorCol, startLine, removeWidths);
+            if (_hasSelectionAnchor)
+                AdjustColumnAfterUnindent(_selectionAnchorLine, ref _selectionAnchorCol, startLine, removeWidths);
+
+            _insertUndoStarted = false;
+            InvalidateDocumentCaches();
+            MarkDirty();
+            Status("Outdented");
+            return true;
+        }
+
+        private static void AdjustColumnAfterIndent(int lineIndex, ref int column, int startLine, int endLine)
+        {
+            if (lineIndex >= startLine && lineIndex <= endLine && column > 0)
+                column += IndentText.Length;
+        }
+
+        private static void AdjustColumnAfterUnindent(int lineIndex, ref int column, int startLine, int[] removeWidths)
+        {
+            int offset = lineIndex - startLine;
+            if (offset < 0 || offset >= removeWidths.Length)
+                return;
+
+            int removeWidth = removeWidths[offset];
+            if (removeWidth <= 0)
+                return;
+
+            column = column <= removeWidth ? 0 : column - removeWidth;
+        }
+
+        private static int GetOutdentWidth(string line)
+        {
+            if (string.IsNullOrEmpty(line))
+                return 0;
+
+            if (line[0] == '\t')
+                return 1;
+
+            int spaces = 0;
+            while (spaces < line.Length && spaces < IndentText.Length && line[spaces] == ' ')
+                spaces++;
+
+            return spaces;
+        }
+
+        private static string LeadingWhitespace(string line)
+        {
+            if (string.IsNullOrEmpty(line))
+                return string.Empty;
+
+            int length = 0;
+            while (length < line.Length && (line[length] == ' ' || line[length] == '\t'))
+                length++;
+
+            return length == 0 ? string.Empty : line.Substring(0, length);
         }
 
         private void Backspace()
