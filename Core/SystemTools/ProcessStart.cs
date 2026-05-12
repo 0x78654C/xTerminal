@@ -246,6 +246,61 @@ namespace Core.SystemTools
         }
 
         /// <summary>
+        /// Execute a command the same way cmd.exe resolves PATH/PATHEXT commands.
+        /// </summary>
+        /// <param name="commandLine"></param>
+        /// <returns>Process exit code.</returns>
+        public static int ExecuteEnvironmentCommand(string commandLine)
+        {
+            try
+            {
+                s_currentDirectory = File.Exists(GlobalVariables.currentDirectory)
+                    ? File.ReadAllText(GlobalVariables.currentDirectory)
+                    : Directory.GetCurrentDirectory();
+
+                if (string.IsNullOrWhiteSpace(s_currentDirectory))
+                    s_currentDirectory = Directory.GetCurrentDirectory();
+
+                bool captureOutput = GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0;
+                var processStartInfo = new ProcessStartInfo(_cmdPath)
+                {
+                    UseShellExecute = false,
+                    WorkingDirectory = s_currentDirectory,
+                    Arguments = $"/d /c {commandLine}",
+                    RedirectStandardOutput = captureOutput
+                };
+
+                var process = Process.Start(processStartInfo);
+                if (process == null)
+                {
+                    GlobalVariables.isErrorCommand = true;
+                    return 1;
+                }
+
+                string output = captureOutput ? process.StandardOutput.ReadToEnd() : string.Empty;
+                process.WaitForExit();
+
+                if (captureOutput)
+                    GlobalVariables.pipeCmdOutput = output;
+
+                GlobalVariables.isErrorCommand = process.ExitCode != 0;
+                return process.ExitCode;
+            }
+            catch (System.ComponentModel.Win32Exception win)
+            {
+                FileSystem.ErrorWriteLine(win.Message);
+                GlobalVariables.isErrorCommand = true;
+                return 1;
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine(e.Message);
+                GlobalVariables.isErrorCommand = true;
+                return 1;
+            }
+        }
+
+        /// <summary>
         /// Function for execute cmd and powershell commands.
         /// </summary>
         /// <param name="processName"></param>
