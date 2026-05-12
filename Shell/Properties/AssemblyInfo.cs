@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("xTerminal")]
-[assembly: AssemblyCopyright("Copyright © 2020-2025 0x078654c")]
+[assembly: AssemblyCopyright("Copyright © 2020-2026 0x078654c")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
