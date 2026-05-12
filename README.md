@@ -101,6 +101,7 @@ Example:
                  Example: ps <ps_command_>
     cmd       -- Opens Windows Command Prompt. It can use Command Prompt commands:
                  Example: ps <cmd_commmand>
+    ver       -- Displays the xTerminal version.
     reboot    -- Reboot the Windows OS. Use -h for additional parameters.
                  reboot    : reboots system normaly.
                  reboot -f : force reboots system.

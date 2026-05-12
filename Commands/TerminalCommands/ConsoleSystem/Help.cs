@@ -36,6 +36,7 @@ This is the full list of commands that can be used in xTerminal:
     odir      -- Open current directory or other directory path provided with Windows Explorer.
     ps        -- Opens Windows Powershell.
     cmd       -- Opens Windows Command Prompt.
+    ver       -- Displays the xTerminal version.
     reboot    -- Reboot the Windows OS. Use -h for additional parameters.
     shutdown  -- Shutdown the Windows OS. Use -h for additional parameters.
     sleep     -- Sleep/Hibernate the Windows OS.
