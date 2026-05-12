@@ -58,6 +58,7 @@ This is the full list of commands that can be used in xTerminal:
     ln        -- Create shortcut of a file/folder. Use -h for additional help.
     zip       -- Create Zip archive files. Use -h for additional help.
     tee       -- Stores previous pipe command stdout to a file. Use -h for additional help. 
+    xclip     -- Copies previous pipe command stdout to the clipboard and passes it through. Use -h for additional help.
     bc        -- Display running background commands. Use -h for additional help.
     hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
     wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
