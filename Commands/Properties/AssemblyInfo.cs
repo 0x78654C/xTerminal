@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Commands")]
-[assembly: AssemblyCopyright("Copyright ©  2020-2025 0x78654c")]
+[assembly: AssemblyCopyright("Copyright ©  2020-2026 0x78654c")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 // Setting ComVisible to false makes the types in this assembly not visible
