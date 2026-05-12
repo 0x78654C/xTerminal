@@ -243,6 +243,10 @@ Example:
                   tee <file_name>     : Writes previous command output to a file.
                   tee -a <file_name>  : Appends previous command output to an existing file.
                   Example: ls | cat -t 10 | tee data.txt | cat -s exe
+    xclip     -- Copies previous pipe command stdout to the clipboard and passes it through.
+                  xclip                : Copies previous command output to the clipboard.
+                  xclip <text>         : Copies the provided text to the clipboard.
+                  Example: ls | xclip | cat -s .txt
     bc        -- Display running background commands.
     hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
                   hash <file_path>         : display the MD5 hash for the file.
@@ -544,6 +548,7 @@ Example:
                    xt <script.xt>              : Run an TermXT Script file.
                    xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
                    xt -new <script.xt>         : Create an empty script template.
+                   xt -edit <script.xt>        : Open script in the built-in Vim-style TermXT editor.
                    xt -check <script.xt>       : Validate syntax without running.
                    xt -ver                     : Display TermXT version.
 
@@ -585,7 +590,9 @@ Example:
                      each f in lines:{exeFiles}
                          print "Found: {f}"
                      end
-    
+    xte       -- Built-in Vim-style TermXT code editor with syntax highlighting.
+                xte <script.xt>             : Open a TermXT script.
+                xte -new <script.xt>        : Create a template and open it.
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
                     ::Predefined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
@@ -724,6 +731,7 @@ Full manual: [Documents/TermXT_Scripting_Language_User_Manual_v1.0.0.pdf](Docume
 xt script.xt
 xt script.xt -p production 8080
 xt -new script.xt
+xt -edit script.xt
 xt -check script.xt
 xt -h
 ```
