@@ -9,6 +9,8 @@
 #  Defaults to scanning 8.8.8.8 on ports 53,80,443
 #  when no parameters are supplied.
 # ═══════════════════════════════════════════════════════════════
+
+# Print first argument.
 print {1}
 # ── Parameters (with defaults) ───────────────────────────────
 if {1} != null
@@ -37,15 +39,6 @@ print "  Ports : {ports}"
 print "{div}"
 print ""
 
-# ── Resolve external IP for context ──────────────────────────
-try
-    capture my_ip = extip
-    print "  My IP : {my_ip}"
-    print ""
-catch
-    print "  (could not resolve external IP)"
-    print ""
-end
 
 # ── Scan each port ────────────────────────────────────────────
 print "{thin}"
@@ -54,14 +47,14 @@ each port in {ports}
         capture result = cport {host} -p {port}
         set result_up = upper {result}
         if {result_up} contains OPEN
-            print "  Port {port:5}  →  🟢 OPEN"
+            print "  Port {port}  →  🟢 OPEN"
             set open_count = eval {open_count} + 1
         else
-            print "  Port {port:5}  →  🔴 CLOSED"
+            print "  Port {port}  →  🔴 CLOSED"
             set closed_count = eval {closed_count} + 1
         end
     catch
-        print "  Port {port:5}  →  ⚠️  ERROR — {error_message}"
+        print "  Port {port}  →  ⚠️  ERROR — {error_message}"
         set closed_count = eval {closed_count} + 1
     end
 end
