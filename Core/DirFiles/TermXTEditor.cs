@@ -12,7 +12,8 @@ namespace Core.DirFiles
         TermXt,
         CSharp,
         C,
-        Cpp
+        Cpp,
+        Rust
     }
 
     [SupportedOSPlatform("windows")]
@@ -88,6 +89,19 @@ namespace Core.DirFiles
         private const int CSharpNumber = 209;
         private const int CSharpOperator = 220;
         private const int CSharpComment = 108;
+        private const int CRustFlow = 39;
+        private const int CRustKeyword = 81;
+        private const int CRustType = 179;
+        private const int CRustDeclaration = 214;
+        private const int CRustModifier = 117;
+        private const int CRustStd = 159;
+        private const int CRustAttribute = 213;
+        private const int CRustMacro = 183;
+        private const int CRustLifetime = 219;
+        private const int CRustString = 150;
+        private const int CRustNumber = 209;
+        private const int CRustOperator = 220;
+        private const int CRustComment = 108;
 
         private static readonly HashSet<string> s_flowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -279,6 +293,56 @@ namespace Core.DirFiles
             "import", "include", "include_next", "line", "pragma", "undef", "warning"
         };
 
+        private static readonly HashSet<string> s_rustFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "await", "break", "continue", "else", "for", "if", "loop", "match",
+            "return", "while"
+        };
+
+        private static readonly HashSet<string> s_rustDeclarationKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "enum", "fn", "impl", "mod", "struct", "trait", "type", "union"
+        };
+
+        private static readonly HashSet<string> s_rustModifierKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "async", "const", "crate", "dyn", "extern", "move", "mut", "pub",
+            "ref", "self", "Self", "static", "super", "unsafe", "use", "where"
+        };
+
+        private static readonly HashSet<string> s_rustKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "as", "in", "let"
+        };
+
+        private static readonly HashSet<string> s_rustReservedKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "abstract", "become", "box", "do", "final", "macro", "override",
+            "priv", "try", "typeof", "unsized", "virtual", "yield"
+        };
+
+        private static readonly HashSet<string> s_rustTypeKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "bool", "char", "f32", "f64", "i8", "i16", "i32", "i64", "i128",
+            "isize", "str", "u8", "u16", "u32", "u64", "u128", "usize"
+        };
+
+        private static readonly HashSet<string> s_rustLiteralKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "false", "true"
+        };
+
+        private static readonly HashSet<string> s_rustStdIdentifiers = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Arc", "BTreeMap", "BTreeSet", "Box", "Cell", "Clone", "Copy",
+            "Debug", "Default", "Display", "Drop", "Eq", "Err", "From", "HashMap",
+            "HashSet", "Into", "IntoIterator", "Iterator", "None", "Ok", "Option",
+            "Ord", "PartialEq", "PartialOrd", "Rc", "RefCell", "Result", "Send",
+            "Sized", "Some", "String", "Sync", "ToString", "Vec", "assert",
+            "assert_eq", "assert_ne", "format", "panic", "println", "todo",
+            "unimplemented", "unreachable", "vec"
+        };
+
         private string _path;
         private readonly List<string> _lines = new List<string>();
         private readonly Stack<Snapshot> _undo = new Stack<Snapshot>();
@@ -317,6 +381,8 @@ namespace Core.DirFiles
         private bool _wrapCacheDirty = true;
         private bool[] _csharpBlockCommentLineStarts = Array.Empty<bool>();
         private bool _csharpBlockCommentCacheDirty = true;
+        private int[] _rustBlockCommentDepthLineStarts = Array.Empty<int>();
+        private bool _rustBlockCommentCacheDirty = true;
 
         public TermXTEditor(string path)
             : this(path, DetectSyntaxFromPath(path))
@@ -355,6 +421,11 @@ namespace Core.DirFiles
                 string.Equals(extension, ".ixx", StringComparison.OrdinalIgnoreCase))
             {
                 return TermXTEditorSyntax.Cpp;
+            }
+
+            if (string.Equals(extension, ".rs", StringComparison.OrdinalIgnoreCase))
+            {
+                return TermXTEditorSyntax.Rust;
             }
 
             return TermXTEditorSyntax.TermXt;
@@ -396,6 +467,10 @@ namespace Core.DirFiles
                 case "cc":
                     syntax = TermXTEditorSyntax.Cpp;
                     return true;
+                case "rs":
+                case "rust":
+                    syntax = TermXTEditorSyntax.Rust;
+                    return true;
                 default:
                     return false;
             }
@@ -411,6 +486,8 @@ namespace Core.DirFiles
                     return "C";
                 case TermXTEditorSyntax.Cpp:
                     return "C++";
+                case TermXTEditorSyntax.Rust:
+                    return "Rust";
                 default:
                     return "TermXT";
             }
@@ -526,11 +603,13 @@ namespace Core.DirFiles
         {
             _wrapCacheDirty = true;
             _csharpBlockCommentCacheDirty = true;
+            _rustBlockCommentCacheDirty = true;
         }
 
         private void InvalidateSyntaxStateCache()
         {
             _csharpBlockCommentCacheDirty = true;
+            _rustBlockCommentCacheDirty = true;
         }
 
         private void EnsureWrapCache(int textWidth)
@@ -626,7 +705,7 @@ namespace Core.DirFiles
                     help = " INSERT  Esc normal | Tab indent | Shift+Tab outdent | Shift+arrows select | Ctrl+C/V copy/paste | Ctrl+Z/Y undo/redo";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  e explorer | w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp | Esc cancel";
+                    help = " COMMAND  e explorer | w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp|rust | Esc cancel";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
@@ -1220,7 +1299,7 @@ namespace Core.DirFiles
             string value = command.Length > prefix.Length ? command.Substring(prefix.Length).Trim() : string.Empty;
             if (!TryParseSyntax(value, out TermXTEditorSyntax syntax))
             {
-                Status("Unknown syntax. Use :syntax xt, cs, c, or cpp.", error: true);
+                Status("Unknown syntax. Use :syntax xt, cs, c, cpp, or rust.", error: true);
                 _mode = Mode.Normal;
                 return true;
             }
@@ -2570,6 +2649,8 @@ namespace Core.DirFiles
                     return TokenizeCStyle(line, cpp: false);
                 case TermXTEditorSyntax.Cpp:
                     return TokenizeCStyle(line, cpp: true);
+                case TermXTEditorSyntax.Rust:
+                    return TokenizeRust(line, RustBlockCommentDepthAtLineStart(lineIndex));
                 default:
                     return TokenizeTermXt(line);
             }
@@ -2647,6 +2728,89 @@ namespace Core.DirFiles
             }
 
             return inBlockComment;
+        }
+
+        private int RustBlockCommentDepthAtLineStart(int lineIndex)
+        {
+            EnsureRustBlockCommentCache();
+            if (lineIndex < 0 || lineIndex >= _rustBlockCommentDepthLineStarts.Length)
+                return 0;
+
+            return _rustBlockCommentDepthLineStarts[lineIndex];
+        }
+
+        private void EnsureRustBlockCommentCache()
+        {
+            if (!_rustBlockCommentCacheDirty &&
+                _rustBlockCommentDepthLineStarts.Length == _lines.Count)
+            {
+                return;
+            }
+
+            var lineStarts = new int[_lines.Count];
+            int blockCommentDepth = 0;
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                lineStarts[i] = blockCommentDepth;
+                blockCommentDepth = ScanRustBlockCommentDepth(_lines[i], blockCommentDepth);
+            }
+
+            _rustBlockCommentDepthLineStarts = lineStarts;
+            _rustBlockCommentCacheDirty = false;
+        }
+
+        private static int ScanRustBlockCommentDepth(string line, int blockCommentDepth)
+        {
+            int i = 0;
+
+            while (i < line.Length)
+            {
+                if (blockCommentDepth > 0)
+                {
+                    if (StartsWithAt(line, i, "/*"))
+                    {
+                        blockCommentDepth++;
+                        i += 2;
+                        continue;
+                    }
+
+                    if (StartsWithAt(line, i, "*/"))
+                    {
+                        blockCommentDepth = Math.Max(0, blockCommentDepth - 1);
+                        i += 2;
+                        continue;
+                    }
+
+                    i++;
+                    continue;
+                }
+
+                if (StartsWithAt(line, i, "//"))
+                    return blockCommentDepth;
+
+                if (StartsWithAt(line, i, "/*"))
+                {
+                    blockCommentDepth++;
+                    i += 2;
+                    continue;
+                }
+
+                if (TryReadRustString(line, i, out int stringLength))
+                {
+                    i += Math.Max(1, stringLength);
+                    continue;
+                }
+
+                if (TryReadRustChar(line, i, out int charLength))
+                {
+                    i += Math.Max(1, charLength);
+                    continue;
+                }
+
+                i++;
+            }
+
+            return blockCommentDepth;
         }
 
         private static List<Token> TokenizeTermXt(string line)
@@ -3122,6 +3286,161 @@ namespace Core.DirFiles
             return tokens;
         }
 
+        private static List<Token> TokenizeRust(string line, int blockCommentDepth)
+        {
+            var tokens = new List<Token>();
+            int i = 0;
+
+            while (i < line.Length)
+            {
+                if (blockCommentDepth > 0)
+                {
+                    int start = i;
+                    while (i < line.Length)
+                    {
+                        if (StartsWithAt(line, i, "/*"))
+                        {
+                            blockCommentDepth++;
+                            i += 2;
+                            continue;
+                        }
+
+                        if (StartsWithAt(line, i, "*/"))
+                        {
+                            blockCommentDepth = Math.Max(0, blockCommentDepth - 1);
+                            i += 2;
+                            if (blockCommentDepth == 0)
+                                break;
+
+                            continue;
+                        }
+
+                        i++;
+                    }
+
+                    tokens.Add(new Token(start, i - start, CRustComment));
+                    continue;
+                }
+
+                char c = line[i];
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                {
+                    tokens.Add(new Token(i, line.Length - i, CRustComment));
+                    break;
+                }
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '*')
+                {
+                    int start = i;
+                    blockCommentDepth = 1;
+                    i += 2;
+
+                    while (i < line.Length)
+                    {
+                        if (StartsWithAt(line, i, "/*"))
+                        {
+                            blockCommentDepth++;
+                            i += 2;
+                            continue;
+                        }
+
+                        if (StartsWithAt(line, i, "*/"))
+                        {
+                            blockCommentDepth = Math.Max(0, blockCommentDepth - 1);
+                            i += 2;
+                            if (blockCommentDepth == 0)
+                                break;
+
+                            continue;
+                        }
+
+                        i++;
+                    }
+
+                    tokens.Add(new Token(start, i - start, CRustComment));
+                    continue;
+                }
+
+                if (TryReadRustAttribute(line, i, out int attributeLength))
+                {
+                    tokens.Add(new Token(i, attributeLength, CRustAttribute));
+                    i += attributeLength;
+                    continue;
+                }
+
+                if (TryReadRustString(line, i, out int stringLength))
+                {
+                    tokens.Add(new Token(i, stringLength, CRustString));
+                    i += stringLength;
+                    continue;
+                }
+
+                if (TryReadRustChar(line, i, out int charLength))
+                {
+                    tokens.Add(new Token(i, charLength, CRustString));
+                    i += charLength;
+                    continue;
+                }
+
+                if (TryReadRustLifetime(line, i, out int lifetimeLength))
+                {
+                    tokens.Add(new Token(i, lifetimeLength, CRustLifetime));
+                    i += lifetimeLength;
+                    continue;
+                }
+
+                if (char.IsDigit(c))
+                {
+                    int start = i;
+                    i = ReadRustNumberEnd(line, i);
+
+                    tokens.Add(new Token(start, i - start, CRustNumber));
+                    continue;
+                }
+
+                if (TryReadRustRawIdentifier(line, i, out int rawIdentifierLength))
+                {
+                    tokens.Add(new Token(i, rawIdentifierLength, CNormal));
+                    i += rawIdentifierLength;
+                    continue;
+                }
+
+                if (IsRustWordStart(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsRustWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(start, i - start);
+                    if (i < line.Length && line[i] == '!' && (i + 1 >= line.Length || line[i + 1] != '='))
+                    {
+                        i++;
+                        tokens.Add(new Token(start, i - start, CRustMacro));
+                        continue;
+                    }
+
+                    tokens.Add(new Token(start, i - start, RustWordColor(word)));
+                    continue;
+                }
+
+                if ("{}[]()=+-*/%<>!|&^~?:;.,\\#@".IndexOf(c) >= 0)
+                {
+                    tokens.Add(new Token(i, 1, CRustOperator));
+                    i++;
+                    continue;
+                }
+
+                tokens.Add(new Token(i, 1, CNormal));
+                i++;
+            }
+
+            if (tokens.Count == 0)
+                tokens.Add(new Token(0, 0, CNormal));
+
+            return tokens;
+        }
+
         private static int TermXtWordColor(string word)
         {
             if (s_flowKeywords.Contains(word))
@@ -3222,6 +3541,38 @@ namespace Core.DirFiles
                 if (IsLikelyMacroName(word))
                     return CSourceDirective;
             }
+
+            return CNormal;
+        }
+
+        private static int RustWordColor(string word)
+        {
+            if (s_rustFlowKeywords.Contains(word))
+                return CRustFlow;
+
+            if (s_rustDeclarationKeywords.Contains(word))
+                return CRustDeclaration;
+
+            if (s_rustModifierKeywords.Contains(word))
+                return CRustModifier;
+
+            if (s_rustKeywords.Contains(word))
+                return CRustKeyword;
+
+            if (s_rustReservedKeywords.Contains(word))
+                return CRustKeyword;
+
+            if (s_rustTypeKeywords.Contains(word))
+                return CRustType;
+
+            if (s_rustLiteralKeywords.Contains(word))
+                return CRustNumber;
+
+            if (s_rustStdIdentifiers.Contains(word))
+                return CRustStd;
+
+            if (IsLikelyMacroName(word))
+                return CRustMacro;
 
             return CNormal;
         }
@@ -3342,6 +3693,35 @@ namespace Core.DirFiles
         private static bool IsCStyleNumberPart(char c)
         {
             return char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '\'';
+        }
+
+        private static bool IsRustWordStart(char c)
+        {
+            return char.IsLetter(c) || c == '_';
+        }
+
+        private static bool IsRustWordPart(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_';
+        }
+
+        private static bool IsRustRadixPrefix(char c)
+        {
+            return c == 'b' || c == 'B' || c == 'o' || c == 'O' || c == 'x' || c == 'X';
+        }
+
+        private static bool StartsWithAt(string line, int index, string value)
+        {
+            if (index < 0 || string.IsNullOrEmpty(value) || index + value.Length > line.Length)
+                return false;
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (line[index + i] != value[i])
+                    return false;
+            }
+
+            return true;
         }
 
         private static bool IsOnlyWhitespaceBefore(string line, int index)
@@ -3626,6 +4006,285 @@ namespace Core.DirFiles
                 ? end + terminator.Length - tokenStart
                 : line.Length - tokenStart;
             return true;
+        }
+
+        private static bool TryReadRustAttribute(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || line[index] != '#')
+                return false;
+
+            int i = index + 1;
+            if (i < line.Length && line[i] == '!')
+                i++;
+
+            if (i >= line.Length || line[i] != '[')
+                return false;
+
+            int depth = 0;
+            while (i < line.Length)
+            {
+                if (TryReadRustString(line, i, out int stringLength))
+                {
+                    i += stringLength;
+                    continue;
+                }
+
+                if (TryReadRustChar(line, i, out int charLength))
+                {
+                    i += charLength;
+                    continue;
+                }
+
+                if (line[i] == '[')
+                    depth++;
+                else if (line[i] == ']')
+                {
+                    depth--;
+                    i++;
+                    if (depth == 0)
+                    {
+                        length = i - index;
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                i++;
+            }
+
+            length = line.Length - index;
+            return true;
+        }
+
+        private static bool TryReadRustString(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length)
+                return false;
+
+            if (line[index] == '"')
+                return TryReadRustQuotedString(line, index, index, out length);
+
+            if (line[index] == 'r')
+                return TryReadRustRawString(line, index, index, out length);
+
+            if ((line[index] == 'b' || line[index] == 'c') && index + 1 < line.Length)
+            {
+                if (line[index + 1] == '"')
+                    return TryReadRustQuotedString(line, index, index + 1, out length);
+
+                if (line[index + 1] == 'r')
+                    return TryReadRustRawString(line, index, index + 1, out length);
+            }
+
+            return false;
+        }
+
+        private static bool TryReadRustQuotedString(string line, int tokenStart, int quoteIndex, out int length)
+        {
+            length = 0;
+
+            if (quoteIndex >= line.Length || line[quoteIndex] != '"')
+                return false;
+
+            int i = quoteIndex + 1;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == '"')
+                {
+                    i++;
+                    break;
+                }
+
+                i++;
+            }
+
+            length = i - tokenStart;
+            return true;
+        }
+
+        private static bool TryReadRustRawString(string line, int tokenStart, int rawStart, out int length)
+        {
+            length = 0;
+
+            if (rawStart >= line.Length || line[rawStart] != 'r')
+                return false;
+
+            int i = rawStart + 1;
+            int hashCount = 0;
+            while (i < line.Length && line[i] == '#')
+            {
+                hashCount++;
+                i++;
+            }
+
+            if (i >= line.Length || line[i] != '"')
+                return false;
+
+            i++;
+            string terminator = "\"" + new string('#', hashCount);
+            int end = line.IndexOf(terminator, i, StringComparison.Ordinal);
+            length = end >= 0
+                ? end + terminator.Length - tokenStart
+                : line.Length - tokenStart;
+            return true;
+        }
+
+        private static bool TryReadRustChar(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length)
+                return false;
+
+            int quoteIndex = index;
+            if (line[index] == 'b')
+            {
+                if (index + 1 >= line.Length || line[index + 1] != '\'')
+                    return false;
+
+                quoteIndex = index + 1;
+            }
+            else if (line[index] != '\'')
+            {
+                return false;
+            }
+
+            int i = quoteIndex + 1;
+            if (i >= line.Length)
+                return false;
+
+            if (line[i] == '\\')
+            {
+                i++;
+                if (i >= line.Length)
+                    return false;
+
+                if (line[i] == 'u' && i + 1 < line.Length && line[i + 1] == '{')
+                {
+                    i += 2;
+                    while (i < line.Length && line[i] != '}')
+                        i++;
+
+                    if (i < line.Length)
+                        i++;
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            else
+            {
+                if (char.IsHighSurrogate(line[i]) && i + 1 < line.Length && char.IsLowSurrogate(line[i + 1]))
+                    i += 2;
+                else
+                    i++;
+            }
+
+            if (i >= line.Length || line[i] != '\'')
+                return false;
+
+            i++;
+            length = i - index;
+            return true;
+        }
+
+        private static bool TryReadRustLifetime(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || line[index] != '\'' || index + 1 >= line.Length)
+                return false;
+
+            if (line[index + 1] == '_')
+            {
+                length = 2;
+                return true;
+            }
+
+            if (!IsRustWordStart(line[index + 1]))
+                return false;
+
+            int i = index + 2;
+            while (i < line.Length && IsRustWordPart(line[i]))
+                i++;
+
+            length = i - index;
+            return true;
+        }
+
+        private static bool TryReadRustRawIdentifier(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index + 2 >= line.Length || line[index] != 'r' || line[index + 1] != '#' || !IsRustWordStart(line[index + 2]))
+                return false;
+
+            int i = index + 3;
+            while (i < line.Length && IsRustWordPart(line[i]))
+                i++;
+
+            length = i - index;
+            return true;
+        }
+
+        private static int ReadRustNumberEnd(string line, int index)
+        {
+            int i = index;
+
+            if (line[i] == '0' && i + 1 < line.Length && IsRustRadixPrefix(line[i + 1]))
+            {
+                i += 2;
+                while (i < line.Length && (char.IsLetterOrDigit(line[i]) || line[i] == '_'))
+                    i++;
+
+                return i;
+            }
+
+            while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                i++;
+
+            if (i < line.Length && line[i] == '.' &&
+                i + 1 < line.Length && char.IsDigit(line[i + 1]))
+            {
+                i++;
+                while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                    i++;
+            }
+
+            if (i < line.Length && (line[i] == 'e' || line[i] == 'E'))
+            {
+                int exponent = i + 1;
+                if (exponent < line.Length && (line[exponent] == '+' || line[exponent] == '-'))
+                    exponent++;
+
+                if (exponent < line.Length && char.IsDigit(line[exponent]))
+                {
+                    i = exponent + 1;
+                    while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                        i++;
+                }
+            }
+
+            if (i < line.Length && (char.IsLetter(line[i]) || line[i] == '_'))
+            {
+                i++;
+                while (i < line.Length && (char.IsLetterOrDigit(line[i]) || line[i] == '_'))
+                    i++;
+            }
+
+            return i;
         }
 
         private static int CountConsecutive(string line, int index, char value)
@@ -4962,8 +5621,11 @@ namespace Core.DirFiles
                 if (extension == ".cs" || extension == ".csx")
                     return CSharpType;
 
+                if (extension == ".rs")
+                    return CRustKeyword;
+
                 if (extension == ".py" || extension == ".js" || extension == ".ts" || extension == ".cpp" || extension == ".c" ||
-                    extension == ".h" || extension == ".java" || extension == ".go" || extension == ".rs" || extension == ".rb" || extension == ".php")
+                    extension == ".h" || extension == ".java" || extension == ".go" || extension == ".rb" || extension == ".php")
                     return CSourceFlow;
 
                 if (extension == ".zip" || extension == ".rar" || extension == ".7z" || extension == ".tar" || extension == ".gz" || extension == ".bz2")
