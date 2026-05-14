@@ -594,6 +594,7 @@ Example:
     xte       -- Built-in Vim-style TermXT code editor with syntax highlighting.
                 xte <script.xt>             : Open a TermXT script.
                 xte -new <script.xt>        : Create a template and open it.
+                Detects disk-side changes when returning to the editor; use :e! to reload or :w! to overwrite.
                 Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
