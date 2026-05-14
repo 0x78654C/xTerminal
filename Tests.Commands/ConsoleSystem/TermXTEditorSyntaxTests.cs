@@ -71,6 +71,43 @@ public class TermXTEditorSyntaxTests
         dots.Should().OnlyContain(token => token.Color == Color("CRustOperator"));
     }
 
+    [Fact]
+    public void InsertTextWithoutUndo_MultilinePaste_PreservesPastedIndentation()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllText(path, "    start");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+            SetPrivateField(editor, "_cursorLine", 0);
+            SetPrivateField(editor, "_cursorCol", "    start".Length);
+
+            InvokePrivate(editor, "InsertTextWithoutUndo", "\n        nested\n    done");
+
+            Lines(editor).Should().Equal(
+                "    start",
+                "        nested",
+                "    done");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void TryGetQueuedPasteTextFragment_PasteKeys_ReturnsExactText()
+    {
+        PasteFragment(new ConsoleKeyInfo('\r', ConsoleKey.Enter, shift: false, alt: false, control: false))
+            .Should().Be("\n");
+        PasteFragment(new ConsoleKeyInfo('\t', ConsoleKey.Tab, shift: false, alt: false, control: false))
+            .Should().Be("\t");
+        PasteFragment(new ConsoleKeyInfo('x', ConsoleKey.X, shift: false, alt: false, control: false))
+            .Should().Be("x");
+    }
+
     private static List<TokenInfo> TokenizeRust(string line, int blockCommentDepth)
     {
         MethodInfo method = typeof(TermXTEditor).GetMethod(
@@ -89,6 +126,44 @@ public class TermXTEditorSyntaxTests
         }
 
         return tokens;
+    }
+
+    private static string PasteFragment(ConsoleKeyInfo key)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TryGetQueuedPasteTextFragment",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        object?[] arguments = { key, null };
+        ((bool)method.Invoke(null, arguments)!).Should().BeTrue();
+        return (string)arguments[1]!;
+    }
+
+    private static void InvokePrivate(object target, string methodName, params object[] arguments)
+    {
+        MethodInfo method = target.GetType().GetMethod(
+            methodName,
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        method.Invoke(target, arguments);
+    }
+
+    private static void SetPrivateField(object target, string fieldName, object value)
+    {
+        FieldInfo field = target.GetType().GetField(
+            fieldName,
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        field.SetValue(target, value);
+    }
+
+    private static List<string> Lines(TermXTEditor editor)
+    {
+        FieldInfo field = typeof(TermXTEditor).GetField(
+            "_lines",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        return (List<string>)field.GetValue(editor)!;
     }
 
     private static TokenInfo TokenForText(List<TokenInfo> tokens, string line, string text)

@@ -345,6 +345,7 @@ namespace Core.DirFiles
 
         private string _path;
         private readonly List<string> _lines = new List<string>();
+        private readonly Queue<ConsoleKeyInfo> _queuedKeys = new Queue<ConsoleKeyInfo>();
         private readonly Stack<Snapshot> _undo = new Stack<Snapshot>();
         private readonly Stack<Snapshot> _redo = new Stack<Snapshot>();
         private readonly StringBuilder _frame = new StringBuilder(1 << 16);
@@ -535,6 +536,12 @@ namespace Core.DirFiles
 
             while (_running)
             {
+                if (_queuedKeys.Count > 0)
+                {
+                    key = _queuedKeys.Dequeue();
+                    return true;
+                }
+
                 if (Console.KeyAvailable)
                 {
                     key = Console.ReadKey(intercept: true);
@@ -846,6 +853,13 @@ namespace Core.DirFiles
 
         private void HandleKey(ConsoleKeyInfo key)
         {
+            if (_mode == Mode.Insert && TryReadQueuedInsertText(key, out string queuedInsertText))
+            {
+                InsertText(queuedInsertText);
+                Status("Pasted");
+                return;
+            }
+
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
                 if (key.Key == ConsoleKey.C)
@@ -1506,16 +1520,16 @@ namespace Core.DirFiles
             string right = line.Substring(_cursorCol);
             _lines[_cursorLine] = left + parts[0];
 
-            int insertLine = _cursorLine + 1;
+            var insertedLines = new List<string>(parts.Length - 1);
             for (int i = 1; i < parts.Length - 1; i++)
-            {
-                _lines.Insert(insertLine, parts[i]);
-                insertLine++;
-            }
+                insertedLines.Add(parts[i]);
 
             string last = parts[parts.Length - 1];
-            _lines.Insert(insertLine, last + right);
-            _cursorLine = insertLine;
+            insertedLines.Add(last + right);
+
+            int insertLine = _cursorLine + 1;
+            _lines.InsertRange(insertLine, insertedLines);
+            _cursorLine = insertLine + insertedLines.Count - 1;
             _cursorCol = last.Length;
             InvalidateDocumentCaches();
         }
@@ -2450,6 +2464,94 @@ namespace Core.DirFiles
         private static string ToSingleLine(string text)
         {
             return NormalizeNewlines(text).Replace('\n', ' ');
+        }
+
+        private bool TryReadQueuedInsertText(ConsoleKeyInfo firstKey, out string text)
+        {
+            text = string.Empty;
+
+            if (!TryGetQueuedPasteTextFragment(firstKey, out string firstFragment))
+                return false;
+
+            if (!WaitForQueuedConsoleInput())
+                return false;
+
+            var builder = new StringBuilder(firstFragment.Length + 256);
+            builder.Append(firstFragment);
+            bool consumedQueuedText = false;
+
+            while (TryReadQueuedConsoleKey(out ConsoleKeyInfo queuedKey))
+            {
+                if (!TryGetQueuedPasteTextFragment(queuedKey, out string fragment))
+                {
+                    _queuedKeys.Enqueue(queuedKey);
+                    break;
+                }
+
+                builder.Append(fragment);
+                consumedQueuedText = true;
+
+                if (!WaitForQueuedConsoleInput())
+                    break;
+            }
+
+            if (!consumedQueuedText)
+                return false;
+
+            text = builder.ToString();
+            return true;
+        }
+
+        private static bool WaitForQueuedConsoleInput()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (Console.KeyAvailable)
+                    return true;
+
+                Thread.Sleep(1);
+            }
+
+            return false;
+        }
+
+        private static bool TryReadQueuedConsoleKey(out ConsoleKeyInfo key)
+        {
+            key = default;
+
+            if (!Console.KeyAvailable)
+                return false;
+
+            key = Console.ReadKey(intercept: true);
+            return true;
+        }
+
+        private static bool TryGetQueuedPasteTextFragment(ConsoleKeyInfo key, out string text)
+        {
+            text = string.Empty;
+
+            if ((key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) != 0)
+                return false;
+
+            if (key.Key == ConsoleKey.Enter || key.KeyChar == '\r' || key.KeyChar == '\n')
+            {
+                text = "\n";
+                return true;
+            }
+
+            if (key.Key == ConsoleKey.Tab || key.KeyChar == '\t')
+            {
+                text = "\t";
+                return true;
+            }
+
+            if (key.KeyChar != '\0' && !char.IsControl(key.KeyChar))
+            {
+                text = key.KeyChar.ToString();
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryGetInputText(ConsoleKeyInfo key, out string text)
