@@ -33,7 +33,7 @@ Inside the editor:
     Explorer    : Starts from xTerminal current directory and uses fxp controls. Enter opens the selected file in xte.
     Search      : Enter finds, empty Enter repeats the previous search.
     Insert mode : Esc returns to normal mode, Ctrl+Z undo, Ctrl+Y redo.
-    Commands    : :e explorer, :w save, :q quit, :q! quit without saving, :wq save and quit.
+    Commands    : :e explorer, :w save, :w! overwrite changed disk file, :e! reload, :q quit, :q! quit without saving, :wq save and quit.
                   :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py switch highlight.
 ";
 

@@ -196,6 +196,51 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CheckExternalFileChange_WhenDiskFileChanges_SetsPendingDiskWarning()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "print \"old\"");
+            var editor = new TermXTEditor(path);
+
+            WriteExternalChange(path, "print \"new\"");
+
+            InvokePrivate<bool>(editor, "CheckExternalFileChange").Should().BeTrue();
+            GetPrivateField<bool>(editor, "_externalChangePending").Should().BeTrue();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Save_WithoutForce_WhenDiskFileChanged_DoesNotOverwriteExternalChange()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "print \"old\"");
+            var editor = new TermXTEditor(path);
+            WriteExternalChange(path, "print \"changed by other app\"");
+
+            InvokePrivate<bool>(editor, "CheckExternalFileChange").Should().BeTrue();
+
+            InvokePrivate<bool>(editor, "Save", false).Should().BeFalse();
+            File.ReadAllText(path).Should().Be("print \"changed by other app\"");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void TryGetQueuedPasteTextFragment_PasteKeys_ReturnsExactText()
     {
         PasteFragment(new ConsoleKeyInfo('\r', ConsoleKey.Enter, shift: false, alt: false, control: false))
@@ -277,6 +322,12 @@ public class TermXTEditorSyntaxTests
         return (string)arguments[1]!;
     }
 
+    private static void WriteExternalChange(string path, string text)
+    {
+        File.WriteAllText(path, text);
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(2));
+    }
+
     private static void InvokePrivate(object target, string methodName, params object[] arguments)
     {
         MethodInfo method = target.GetType().GetMethod(
@@ -286,6 +337,15 @@ public class TermXTEditorSyntaxTests
         method.Invoke(target, arguments);
     }
 
+    private static T InvokePrivate<T>(object target, string methodName, params object[] arguments)
+    {
+        MethodInfo method = target.GetType().GetMethod(
+            methodName,
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        return (T)method.Invoke(target, arguments)!;
+    }
+
     private static void SetPrivateField(object target, string fieldName, object value)
     {
         FieldInfo field = target.GetType().GetField(
@@ -293,6 +353,15 @@ public class TermXTEditorSyntaxTests
             BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         field.SetValue(target, value);
+    }
+
+    private static T GetPrivateField<T>(object target, string fieldName)
+    {
+        FieldInfo field = target.GetType().GetField(
+            fieldName,
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        return (T)field.GetValue(target)!;
     }
 
     private static List<string> Lines(TermXTEditor editor)

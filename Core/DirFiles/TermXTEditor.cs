@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
@@ -30,6 +31,7 @@ namespace Core.DirFiles
         private const string ClearEol = "\x1b[K";
         private const string ClearScreen = "\x1b[2J";
         private const string IndentText = "    ";
+        private const int ExternalChangeCheckIntervalMs = 750;
 
         private const int CTitle = 45;
         private const int CTitleDim = 250;
@@ -123,6 +125,12 @@ namespace Core.DirFiles
         private const int CPythonNumber = 209;
         private const int CPythonOperator = 220;
         private const int CPythonComment = 108;
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetForegroundWindow();
 
         private static readonly HashSet<string> s_flowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -442,10 +450,13 @@ namespace Core.DirFiles
         private readonly Stack<Snapshot> _redo = new Stack<Snapshot>();
         private readonly StringBuilder _frame = new StringBuilder(1 << 16);
         private string[] _savedLines = Array.Empty<string>();
+        private FileState _knownFileState;
 
         private Mode _mode = Mode.Normal;
         private bool _running = true;
         private bool _dirty;
+        private bool _externalChangePending;
+        private bool _consoleWindowWasActive;
         private bool _insertUndoStarted;
         private int _cursorLine;
         private int _cursorCol;
@@ -462,6 +473,7 @@ namespace Core.DirFiles
         private string _bottomStatus = string.Empty;
         private DateTime _bottomStatusUntil = DateTime.MinValue;
         private bool _bottomStatusError;
+        private DateTime _nextExternalChangeCheckUtc = DateTime.MinValue;
         private string _lineClipboard = string.Empty;
         private bool _hasLineClipboard;
         private string _lastExplorerDirectory = string.Empty;
@@ -628,6 +640,7 @@ namespace Core.DirFiles
             Console.OutputEncoding = Encoding.UTF8;
             Console.TreatControlCAsInput = true;
             Console.Write(AltScreen + HideCursor + ClearScreen);
+            _consoleWindowWasActive = IsConsoleWindowActive();
 
             try
             {
@@ -681,6 +694,9 @@ namespace Core.DirFiles
                 if (ClearExpiredMessages())
                     return false;
 
+                if (CheckExternalFileChangeOnIdle())
+                    return false;
+
                 Thread.Sleep(30);
             }
 
@@ -709,6 +725,66 @@ namespace Core.DirFiles
             return redraw;
         }
 
+        private bool CheckExternalFileChangeOnIdle()
+        {
+            DateTime now = DateTime.UtcNow;
+            bool consoleWindowIsActive = IsConsoleWindowActive();
+            bool focusReturned = consoleWindowIsActive && !_consoleWindowWasActive;
+            _consoleWindowWasActive = consoleWindowIsActive;
+
+            if (!focusReturned && now < _nextExternalChangeCheckUtc)
+                return false;
+
+            _nextExternalChangeCheckUtc = now.AddMilliseconds(ExternalChangeCheckIntervalMs);
+            return CheckExternalFileChange();
+        }
+
+        private bool CheckExternalFileChange()
+        {
+            FileState currentState = GetFileState(_path);
+            if (currentState.Equals(_knownFileState))
+                return false;
+
+            if (currentState.Exists)
+            {
+                if (!TryReadDiskLines(out string[] diskLines, out string error))
+                {
+                    Status("Unable to check disk file: " + error, error: true);
+                    BottomStatus(_path, error: true);
+                    return true;
+                }
+
+                if (LinesEqual(diskLines, _savedLines))
+                {
+                    _knownFileState = currentState;
+                    if (!_externalChangePending)
+                        return false;
+
+                    _externalChangePending = false;
+                    Status("Disk file matches editor buffer");
+                    BottomStatus(_path);
+                    return true;
+                }
+            }
+
+            _knownFileState = currentState;
+            _externalChangePending = true;
+            _pendingDelete = false;
+
+            if (currentState.Exists)
+            {
+                Status("File changed on disk. Use :e! to reload or :w! to overwrite.", error: true);
+                BottomStatus(_path, error: true);
+            }
+            else
+            {
+                Status("File deleted on disk. Use :w! to recreate or :q! to quit.", error: true);
+                BottomStatus(_path, error: true);
+            }
+
+            return true;
+        }
+
         private void LoadFile()
         {
             _lines.Clear();
@@ -724,12 +800,63 @@ namespace Core.DirFiles
             _scrollTop = 0;
             _scrollLeft = 0;
             _savedLines = _lines.ToArray();
+            _knownFileState = GetFileState(_path);
             _dirty = false;
+            _externalChangePending = false;
+            _nextExternalChangeCheckUtc = DateTime.UtcNow.AddMilliseconds(ExternalChangeCheckIntervalMs);
             _insertUndoStarted = false;
             _undo.Clear();
             _redo.Clear();
             ClearSelection();
             InvalidateDocumentCaches();
+        }
+
+        private bool TryReadDiskLines(out string[] lines, out string error)
+        {
+            lines = Array.Empty<string>();
+            error = string.Empty;
+
+            try
+            {
+                lines = File.ReadAllLines(_path, Encoding.UTF8);
+                if (lines.Length == 0)
+                    lines = new[] { string.Empty };
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+        }
+
+        private static FileState GetFileState(string path)
+        {
+            try
+            {
+                var info = new FileInfo(path);
+                return info.Exists
+                    ? new FileState(exists: true, length: info.Length, lastWriteTimeUtcTicks: info.LastWriteTimeUtc.Ticks)
+                    : FileState.Missing;
+            }
+            catch
+            {
+                return FileState.Missing;
+            }
+        }
+
+        private static bool IsConsoleWindowActive()
+        {
+            try
+            {
+                IntPtr consoleWindow = GetConsoleWindow();
+                return consoleWindow != IntPtr.Zero && GetForegroundWindow() == consoleWindow;
+            }
+            catch
+            {
+                return true;
+            }
         }
 
         private void InvalidateDocumentCaches()
@@ -823,8 +950,9 @@ namespace Core.DirFiles
                 name = _path;
 
             string dirty = _dirty ? " [+]" : "";
+            string disk = _externalChangePending ? " [disk]" : "";
             string left = " TermXT Editor ";
-            string middle = " " + name + " [" + SyntaxDisplayName(_syntax) + "]" + dirty;
+            string middle = " " + name + " [" + SyntaxDisplayName(_syntax) + "]" + dirty + disk;
             string right = " " + (_cursorLine + 1) + ":" + (_cursorCol + 1) + " ";
 
             _frame.Append(At(0, 0))
@@ -842,7 +970,7 @@ namespace Core.DirFiles
                     help = " INSERT  Esc normal | Tab indent | Shift+Tab outdent | Shift+arrows select | Ctrl+C/V copy/paste | Ctrl+Z/Y undo/redo";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  e explorer | w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp|rust|js|py | Esc cancel";
+                    help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | 42/goto 42 | syntax xt|cs|c|cpp|rust|js|py | Esc";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
@@ -1322,7 +1450,12 @@ namespace Core.DirFiles
                     break;
                 case "w":
                 case "write":
-                    Save();
+                    Save(force: false);
+                    _mode = Mode.Normal;
+                    break;
+                case "w!":
+                case "write!":
+                    Save(force: true);
                     _mode = Mode.Normal;
                     break;
                 case "q":
@@ -1343,10 +1476,29 @@ namespace Core.DirFiles
                     break;
                 case "wq":
                 case "x":
-                    Save();
-                    _running = false;
+                    if (Save(force: false))
+                        _running = false;
+                    break;
+                case "wq!":
+                case "x!":
+                    if (Save(force: true))
+                        _running = false;
+                    break;
+                case "reload":
+                    if (_dirty)
+                    {
+                        Status("Unsaved changes. Use :e! to reload.");
+                        _mode = Mode.Normal;
+                    }
+                    else
+                    {
+                        LoadFile();
+                        Status("Reloaded");
+                        _mode = Mode.Normal;
+                    }
                     break;
                 case "e!":
+                case "reload!":
                     LoadFile();
                     Status("Reloaded");
                     _mode = Mode.Normal;
@@ -1455,8 +1607,15 @@ namespace Core.DirFiles
             return true;
         }
 
-        private void Save()
+        private bool Save(bool force)
         {
+            if (_externalChangePending && !force)
+            {
+                Status("File changed on disk. Use :w! to overwrite or :e! to reload.", error: true);
+                BottomStatus(_path, error: true);
+                return false;
+            }
+
             try
             {
                 string directory = Path.GetDirectoryName(_path);
@@ -1465,14 +1624,19 @@ namespace Core.DirFiles
 
                 File.WriteAllLines(_path, _lines, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
                 _savedLines = _lines.ToArray();
+                _knownFileState = GetFileState(_path);
                 _dirty = false;
+                _externalChangePending = false;
+                _nextExternalChangeCheckUtc = DateTime.UtcNow.AddMilliseconds(ExternalChangeCheckIntervalMs);
                 _insertUndoStarted = false;
                 Status("Saved current data");
+                return true;
             }
             catch (Exception ex)
             {
                 Status("Write failed: " + ex.Message, error: true);
                 BottomStatus("Save failed: " + ex.Message, error: true);
+                return false;
             }
         }
 
@@ -2797,6 +2961,9 @@ namespace Core.DirFiles
 
             if (HasSelection())
                 return "selection";
+
+            if (_externalChangePending)
+                return "file changed on disk";
 
             if (_dirty)
                 return "modified";
@@ -6737,6 +6904,45 @@ namespace Core.DirFiles
             public int CursorCol { get; set; }
             public int ScrollTop { get; set; }
             public int ScrollLeft { get; set; }
+        }
+
+        private readonly struct FileState : IEquatable<FileState>
+        {
+            public static readonly FileState Missing = new FileState(false, 0, 0);
+
+            public FileState(bool exists, long length, long lastWriteTimeUtcTicks)
+            {
+                Exists = exists;
+                Length = length;
+                LastWriteTimeUtcTicks = lastWriteTimeUtcTicks;
+            }
+
+            public bool Exists { get; }
+            public long Length { get; }
+            public long LastWriteTimeUtcTicks { get; }
+
+            public bool Equals(FileState other)
+            {
+                return Exists == other.Exists &&
+                    Length == other.Length &&
+                    LastWriteTimeUtcTicks == other.LastWriteTimeUtcTicks;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is FileState other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hash = Exists ? 17 : 23;
+                    hash = (hash * 31) + Length.GetHashCode();
+                    hash = (hash * 31) + LastWriteTimeUtcTicks.GetHashCode();
+                    return hash;
+                }
+            }
         }
 
         private struct VisualRow
