@@ -19,6 +19,25 @@ public class TermXTEditorSyntaxTests
     }
 
     [Theory]
+    [InlineData("app.js")]
+    [InlineData("module.MJS")]
+    [InlineData("common.cjs")]
+    [InlineData("component.jsx")]
+    public void DetectSyntaxFromPath_JavaScriptFiles_ReturnsJavaScript(string path)
+    {
+        TermXTEditor.DetectSyntaxFromPath(path).Should().Be(TermXTEditorSyntax.JavaScript);
+    }
+
+    [Theory]
+    [InlineData("script.py")]
+    [InlineData("windowed.PYW")]
+    [InlineData("types.pyi")]
+    public void DetectSyntaxFromPath_PythonFiles_ReturnsPython(string path)
+    {
+        TermXTEditor.DetectSyntaxFromPath(path).Should().Be(TermXTEditorSyntax.Python);
+    }
+
+    [Theory]
     [InlineData("rust")]
     [InlineData("rs")]
     public void TryParseSyntax_RustAliases_ReturnsRust(string value)
@@ -26,6 +45,26 @@ public class TermXTEditorSyntaxTests
         TermXTEditor.TryParseSyntax(value, out TermXTEditorSyntax syntax).Should().BeTrue();
         syntax.Should().Be(TermXTEditorSyntax.Rust);
         TermXTEditor.SyntaxDisplayName(syntax).Should().Be("Rust");
+    }
+
+    [Theory]
+    [InlineData("javascript")]
+    [InlineData("js")]
+    public void TryParseSyntax_JavaScriptAliases_ReturnsJavaScript(string value)
+    {
+        TermXTEditor.TryParseSyntax(value, out TermXTEditorSyntax syntax).Should().BeTrue();
+        syntax.Should().Be(TermXTEditorSyntax.JavaScript);
+        TermXTEditor.SyntaxDisplayName(syntax).Should().Be("JavaScript");
+    }
+
+    [Theory]
+    [InlineData("python")]
+    [InlineData("py")]
+    public void TryParseSyntax_PythonAliases_ReturnsPython(string value)
+    {
+        TermXTEditor.TryParseSyntax(value, out TermXTEditorSyntax syntax).Should().BeTrue();
+        syntax.Should().Be(TermXTEditorSyntax.Python);
+        TermXTEditor.SyntaxDisplayName(syntax).Should().Be("Python");
     }
 
     [Fact]
@@ -72,6 +111,65 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void TokenizeJavaScript_HighlightsCommonJavaScriptTokens()
+    {
+        const string line = "const rx = /[a-z]+/gi; async function main() { console.log(`hi ${name}`); return null; } // note";
+        List<TokenInfo> tokens = TokenizeJavaScript(line, false);
+
+        TokenForText(tokens, line, "const").Color.Should().Be(Color("CJavaScriptDeclaration"));
+        TokenForText(tokens, line, "/[a-z]+/gi").Color.Should().Be(Color("CJavaScriptRegex"));
+        TokenForText(tokens, line, "async").Color.Should().Be(Color("CJavaScriptKeyword"));
+        TokenForText(tokens, line, "function").Color.Should().Be(Color("CJavaScriptDeclaration"));
+        TokenForText(tokens, line, "console").Color.Should().Be(Color("CJavaScriptBuiltin"));
+        TokenForText(tokens, line, "`hi ${name}`").Color.Should().Be(Color("CJavaScriptString"));
+        TokenForText(tokens, line, "return").Color.Should().Be(Color("CJavaScriptFlow"));
+        TokenForText(tokens, line, "null").Color.Should().Be(Color("CJavaScriptNumber"));
+        TokenForText(tokens, line, "// note").Color.Should().Be(Color("CJavaScriptComment"));
+    }
+
+    [Fact]
+    public void TokenizeJavaScript_ContinuesBlockCommentState()
+    {
+        const string line = "still commented */ const value = true";
+        List<TokenInfo> tokens = TokenizeJavaScript(line, true);
+
+        tokens[0].Text(line).Should().Be("still commented */");
+        tokens[0].Color.Should().Be(Color("CJavaScriptComment"));
+        TokenForText(tokens, line, "const").Color.Should().Be(Color("CJavaScriptDeclaration"));
+        TokenForText(tokens, line, "true").Color.Should().Be(Color("CJavaScriptNumber"));
+    }
+
+    [Fact]
+    public void TokenizePython_HighlightsCommonPythonTokens()
+    {
+        const string line = @"async def main(name): print(f""Hello {name}""); return None # note";
+        List<TokenInfo> tokens = TokenizePython(line, 0);
+
+        TokenForText(tokens, line, "async").Color.Should().Be(Color("CPythonKeyword"));
+        TokenForText(tokens, line, "def").Color.Should().Be(Color("CPythonDeclaration"));
+        TokenForText(tokens, line, "print").Color.Should().Be(Color("CPythonBuiltin"));
+        TokenForText(tokens, line, @"f""Hello {name}""").Color.Should().Be(Color("CPythonString"));
+        TokenForText(tokens, line, "return").Color.Should().Be(Color("CPythonFlow"));
+        TokenForText(tokens, line, "None").Color.Should().Be(Color("CPythonNumber"));
+        TokenForText(tokens, line, "# note").Color.Should().Be(Color("CPythonComment"));
+    }
+
+    [Fact]
+    public void TokenizePython_HighlightsDecoratorsAndContinuesTripleQuotedStringState()
+    {
+        const string decorator = "@click.command()";
+        List<TokenInfo> decoratorTokens = TokenizePython(decorator, 0);
+        TokenForText(decoratorTokens, decorator, "@click.command").Color.Should().Be(Color("CPythonDecorator"));
+
+        const string line = "still string''' value = 42";
+        List<TokenInfo> tokens = TokenizePython(line, '\'');
+
+        tokens[0].Text(line).Should().Be("still string'''");
+        tokens[0].Color.Should().Be(Color("CPythonString"));
+        TokenForText(tokens, line, "42").Color.Should().Be(Color("CPythonNumber"));
+    }
+
+    [Fact]
     public void InsertTextWithoutUndo_MultilinePaste_PreservesPastedIndentation()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
@@ -115,6 +213,46 @@ public class TermXTEditorSyntaxTests
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
         var result = (IEnumerable)method.Invoke(null, new object[] { line, blockCommentDepth })!;
+        var tokens = new List<TokenInfo>();
+        foreach (object token in result)
+        {
+            Type tokenType = token.GetType();
+            tokens.Add(new TokenInfo(
+                (int)tokenType.GetProperty("Start")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Length")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Color")!.GetValue(token)!));
+        }
+
+        return tokens;
+    }
+
+    private static List<TokenInfo> TokenizeJavaScript(string line, bool startsInBlockComment)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TokenizeJavaScript",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var result = (IEnumerable)method.Invoke(null, new object[] { line, startsInBlockComment })!;
+        var tokens = new List<TokenInfo>();
+        foreach (object token in result)
+        {
+            Type tokenType = token.GetType();
+            tokens.Add(new TokenInfo(
+                (int)tokenType.GetProperty("Start")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Length")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Color")!.GetValue(token)!));
+        }
+
+        return tokens;
+    }
+
+    private static List<TokenInfo> TokenizePython(string line, int multilineStringQuote)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TokenizePython",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var result = (IEnumerable)method.Invoke(null, new object[] { line, multilineStringQuote })!;
         var tokens = new List<TokenInfo>();
         foreach (object token in result)
         {
