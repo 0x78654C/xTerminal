@@ -22,9 +22,11 @@ namespace Commands.TerminalCommands.ScriptingLanguage
     xte -syntax c <file>        : Use C syntax highlighting.
     xte -syntax cpp <file>      : Use C++ syntax highlighting.
     xte -syntax rust <file>     : Use Rust syntax highlighting.
+    xte -syntax js <file>       : Use JavaScript syntax highlighting.
+    xte -syntax py <file>       : Use Python syntax highlighting.
     xte -h                      : Display this help message.
 
-Syntax is selected by extension by default: .xt uses TermXT, .cs/.csx use C#, .c/.h use C, .cpp/.cc/.cxx/.hpp/.hh/.hxx use C++, and .rs uses Rust.
+Syntax is selected by extension by default: .xt uses TermXT, .cs/.csx use C#, .c/.h use C, .cpp/.cc/.cxx/.hpp/.hh/.hxx use C++, .rs uses Rust, .js/.mjs/.cjs/.jsx use JavaScript, and .py/.pyw/.pyi use Python.
 
 Inside the editor:
     Normal mode : h/j/k/l or arrows move, e opens file explorer, i or Insert enters insert, dd delete line, / search, n or F3 search next.
@@ -32,7 +34,7 @@ Inside the editor:
     Search      : Enter finds, empty Enter repeats the previous search.
     Insert mode : Esc returns to normal mode, Ctrl+Z undo, Ctrl+Y redo.
     Commands    : :e explorer, :w save, :q quit, :q! quit without saving, :wq save and quit.
-                  :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust switch highlight.
+                  :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py switch highlight.
 ";
 
         private static readonly string s_template = @"# xTermXT Script template
@@ -78,6 +80,20 @@ int main()
         private static readonly string s_rustTemplate = @"fn main() {
     println!(""Hello from xTerminal"");
 }
+";
+
+        private static readonly string s_javaScriptTemplate = @"function main() {
+    console.log(""Hello from xTerminal"");
+}
+
+main();
+";
+
+        private static readonly string s_pythonTemplate = @"def main():
+    print(""Hello from xTerminal"")
+
+if __name__ == ""__main__"":
+    main()
 ";
 
         public void Execute(string args)
@@ -146,6 +162,10 @@ int main()
                     return "untitled.cpp";
                 case TermXTEditorSyntax.Rust:
                     return "untitled.rs";
+                case TermXTEditorSyntax.JavaScript:
+                    return "untitled.js";
+                case TermXTEditorSyntax.Python:
+                    return "untitled.py";
                 default:
                     return "untitled.xt";
             }
@@ -170,7 +190,7 @@ int main()
                 if (IsSyntaxOption(token))
                 {
                     if (i + 1 >= tokens.Count)
-                        throw new ArgumentException("Missing syntax value. Use xt, cs, c, cpp, or rust.");
+                        throw new ArgumentException("Missing syntax value. Use xt, cs, c, cpp, rust, js, or py.");
 
                     options.SetSyntax(ParseSyntax(tokens[++i]));
                     continue;
@@ -213,7 +233,7 @@ int main()
             if (TermXTEditor.TryParseSyntax(value, out TermXTEditorSyntax syntax))
                 return syntax;
 
-            throw new ArgumentException("Unknown syntax '" + value + "'. Use xt, cs, c, cpp, or rust.");
+            throw new ArgumentException("Unknown syntax '" + value + "'. Use xt, cs, c, cpp, rust, js, or py.");
         }
 
         private static string TemplateForSyntax(TermXTEditorSyntax syntax)
@@ -228,6 +248,10 @@ int main()
                     return s_cppTemplate;
                 case TermXTEditorSyntax.Rust:
                     return s_rustTemplate;
+                case TermXTEditorSyntax.JavaScript:
+                    return s_javaScriptTemplate;
+                case TermXTEditorSyntax.Python:
+                    return s_pythonTemplate;
                 default:
                     return s_template;
             }

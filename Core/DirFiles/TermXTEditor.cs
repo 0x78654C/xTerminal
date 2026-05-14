@@ -13,7 +13,9 @@ namespace Core.DirFiles
         CSharp,
         C,
         Cpp,
-        Rust
+        Rust,
+        JavaScript,
+        Python
     }
 
     [SupportedOSPlatform("windows")]
@@ -102,6 +104,25 @@ namespace Core.DirFiles
         private const int CRustNumber = 209;
         private const int CRustOperator = 220;
         private const int CRustComment = 108;
+        private const int CJavaScriptFlow = 39;
+        private const int CJavaScriptKeyword = 81;
+        private const int CJavaScriptDeclaration = 214;
+        private const int CJavaScriptBuiltin = 159;
+        private const int CJavaScriptDirective = 183;
+        private const int CJavaScriptString = 150;
+        private const int CJavaScriptNumber = 209;
+        private const int CJavaScriptOperator = 220;
+        private const int CJavaScriptComment = 108;
+        private const int CJavaScriptRegex = 213;
+        private const int CPythonFlow = 39;
+        private const int CPythonKeyword = 81;
+        private const int CPythonDeclaration = 214;
+        private const int CPythonBuiltin = 159;
+        private const int CPythonDecorator = 213;
+        private const int CPythonString = 150;
+        private const int CPythonNumber = 209;
+        private const int CPythonOperator = 220;
+        private const int CPythonComment = 108;
 
         private static readonly HashSet<string> s_flowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -343,6 +364,77 @@ namespace Core.DirFiles
             "unimplemented", "unreachable", "vec"
         };
 
+        private static readonly HashSet<string> s_javaScriptFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "await", "break", "case", "catch", "continue", "default", "do",
+            "else", "finally", "for", "if", "return", "switch", "throw",
+            "try", "while", "yield"
+        };
+
+        private static readonly HashSet<string> s_javaScriptDeclarationKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "class", "const", "export", "extends", "function", "import", "let",
+            "static", "var"
+        };
+
+        private static readonly HashSet<string> s_javaScriptKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "as", "async", "debugger", "delete", "from", "get", "in", "instanceof",
+            "new", "of", "set", "super", "this", "typeof", "void", "with"
+        };
+
+        private static readonly HashSet<string> s_javaScriptLiteralKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "false", "Infinity", "NaN", "null", "true", "undefined"
+        };
+
+        private static readonly HashSet<string> s_javaScriptBuiltinIdentifiers = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Array", "BigInt", "Boolean", "clearInterval", "clearTimeout",
+            "console", "Date", "document", "Error", "fetch", "Intl", "JSON",
+            "Map", "Math", "module", "Number", "Object", "Promise", "process",
+            "Proxy", "Reflect", "RegExp", "require", "Set", "setInterval",
+            "setTimeout", "String", "Symbol", "WeakMap", "WeakSet", "window"
+        };
+
+        private static readonly HashSet<string> s_javaScriptRegexPrefixWords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "await", "case", "delete", "else", "in", "instanceof", "of",
+            "return", "throw", "typeof", "void", "yield"
+        };
+
+        private static readonly HashSet<string> s_pythonFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "await", "break", "case", "continue", "elif", "else", "except",
+            "finally", "for", "if", "match", "raise", "return", "try",
+            "while", "with", "yield"
+        };
+
+        private static readonly HashSet<string> s_pythonDeclarationKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "class", "def", "lambda"
+        };
+
+        private static readonly HashSet<string> s_pythonKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "and", "as", "assert", "async", "del", "from", "global", "import",
+            "in", "is", "nonlocal", "not", "or", "pass"
+        };
+
+        private static readonly HashSet<string> s_pythonLiteralKeywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Ellipsis", "False", "None", "NotImplemented", "True"
+        };
+
+        private static readonly HashSet<string> s_pythonBuiltinIdentifiers = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "abs", "all", "any", "bool", "dict", "enumerate", "Exception",
+            "filter", "float", "int", "isinstance", "len", "list", "map",
+            "max", "min", "object", "open", "Path", "print", "property",
+            "range", "reversed", "RuntimeError", "set", "sorted", "str",
+            "sum", "super", "tuple", "TypeError", "ValueError", "zip"
+        };
+
         private string _path;
         private readonly List<string> _lines = new List<string>();
         private readonly Queue<ConsoleKeyInfo> _queuedKeys = new Queue<ConsoleKeyInfo>();
@@ -384,6 +476,10 @@ namespace Core.DirFiles
         private bool _csharpBlockCommentCacheDirty = true;
         private int[] _rustBlockCommentDepthLineStarts = Array.Empty<int>();
         private bool _rustBlockCommentCacheDirty = true;
+        private bool[] _javaScriptBlockCommentLineStarts = Array.Empty<bool>();
+        private bool _javaScriptBlockCommentCacheDirty = true;
+        private int[] _pythonMultilineStringQuoteLineStarts = Array.Empty<int>();
+        private bool _pythonMultilineStringCacheDirty = true;
 
         public TermXTEditor(string path)
             : this(path, DetectSyntaxFromPath(path))
@@ -429,6 +525,21 @@ namespace Core.DirFiles
                 return TermXTEditorSyntax.Rust;
             }
 
+            if (string.Equals(extension, ".js", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".mjs", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".cjs", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".jsx", StringComparison.OrdinalIgnoreCase))
+            {
+                return TermXTEditorSyntax.JavaScript;
+            }
+
+            if (string.Equals(extension, ".py", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".pyw", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".pyi", StringComparison.OrdinalIgnoreCase))
+            {
+                return TermXTEditorSyntax.Python;
+            }
+
             return TermXTEditorSyntax.TermXt;
         }
 
@@ -472,6 +583,17 @@ namespace Core.DirFiles
                 case "rust":
                     syntax = TermXTEditorSyntax.Rust;
                     return true;
+                case "js":
+                case "javascript":
+                case "ecmascript":
+                case "node":
+                    syntax = TermXTEditorSyntax.JavaScript;
+                    return true;
+                case "py":
+                case "python":
+                case "python3":
+                    syntax = TermXTEditorSyntax.Python;
+                    return true;
                 default:
                     return false;
             }
@@ -489,6 +611,10 @@ namespace Core.DirFiles
                     return "C++";
                 case TermXTEditorSyntax.Rust:
                     return "Rust";
+                case TermXTEditorSyntax.JavaScript:
+                    return "JavaScript";
+                case TermXTEditorSyntax.Python:
+                    return "Python";
                 default:
                     return "TermXT";
             }
@@ -611,12 +737,16 @@ namespace Core.DirFiles
             _wrapCacheDirty = true;
             _csharpBlockCommentCacheDirty = true;
             _rustBlockCommentCacheDirty = true;
+            _javaScriptBlockCommentCacheDirty = true;
+            _pythonMultilineStringCacheDirty = true;
         }
 
         private void InvalidateSyntaxStateCache()
         {
             _csharpBlockCommentCacheDirty = true;
             _rustBlockCommentCacheDirty = true;
+            _javaScriptBlockCommentCacheDirty = true;
+            _pythonMultilineStringCacheDirty = true;
         }
 
         private void EnsureWrapCache(int textWidth)
@@ -712,7 +842,7 @@ namespace Core.DirFiles
                     help = " INSERT  Esc normal | Tab indent | Shift+Tab outdent | Shift+arrows select | Ctrl+C/V copy/paste | Ctrl+Z/Y undo/redo";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  e explorer | w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp|rust | Esc cancel";
+                    help = " COMMAND  e explorer | w save | q quit | 42 or goto 42 go to line | syntax xt|cs|c|cpp|rust|js|py | Esc cancel";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
@@ -1313,7 +1443,7 @@ namespace Core.DirFiles
             string value = command.Length > prefix.Length ? command.Substring(prefix.Length).Trim() : string.Empty;
             if (!TryParseSyntax(value, out TermXTEditorSyntax syntax))
             {
-                Status("Unknown syntax. Use :syntax xt, cs, c, cpp, or rust.", error: true);
+                Status("Unknown syntax. Use :syntax xt, cs, c, cpp, rust, js, or py.", error: true);
                 _mode = Mode.Normal;
                 return true;
             }
@@ -2753,6 +2883,10 @@ namespace Core.DirFiles
                     return TokenizeCStyle(line, cpp: true);
                 case TermXTEditorSyntax.Rust:
                     return TokenizeRust(line, RustBlockCommentDepthAtLineStart(lineIndex));
+                case TermXTEditorSyntax.JavaScript:
+                    return TokenizeJavaScript(line, IsJavaScriptLineInBlockComment(lineIndex));
+                case TermXTEditorSyntax.Python:
+                    return TokenizePython(line, PythonMultilineStringQuoteAtLineStart(lineIndex));
                 default:
                     return TokenizeTermXt(line);
             }
@@ -2913,6 +3047,144 @@ namespace Core.DirFiles
             }
 
             return blockCommentDepth;
+        }
+
+        private bool IsJavaScriptLineInBlockComment(int lineIndex)
+        {
+            EnsureJavaScriptBlockCommentCache();
+            if (lineIndex < 0 || lineIndex >= _javaScriptBlockCommentLineStarts.Length)
+                return false;
+
+            return _javaScriptBlockCommentLineStarts[lineIndex];
+        }
+
+        private void EnsureJavaScriptBlockCommentCache()
+        {
+            if (!_javaScriptBlockCommentCacheDirty &&
+                _javaScriptBlockCommentLineStarts.Length == _lines.Count)
+            {
+                return;
+            }
+
+            var lineStarts = new bool[_lines.Count];
+            bool inBlockComment = false;
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                lineStarts[i] = inBlockComment;
+                inBlockComment = ScanJavaScriptBlockCommentState(_lines[i], inBlockComment);
+            }
+
+            _javaScriptBlockCommentLineStarts = lineStarts;
+            _javaScriptBlockCommentCacheDirty = false;
+        }
+
+        private static bool ScanJavaScriptBlockCommentState(string line, bool inBlockComment)
+        {
+            int i = 0;
+
+            while (i < line.Length)
+            {
+                if (inBlockComment)
+                {
+                    int end = line.IndexOf("*/", i, StringComparison.Ordinal);
+                    if (end < 0)
+                        return true;
+
+                    i = end + 2;
+                    inBlockComment = false;
+                    continue;
+                }
+
+                if (StartsWithAt(line, i, "//"))
+                    return false;
+
+                if (StartsWithAt(line, i, "/*"))
+                {
+                    i += 2;
+                    inBlockComment = true;
+                    continue;
+                }
+
+                if (TryReadJavaScriptString(line, i, out int stringLength))
+                {
+                    i += Math.Max(1, stringLength);
+                    continue;
+                }
+
+                if (TryReadJavaScriptRegex(line, i, out int regexLength))
+                {
+                    i += Math.Max(1, regexLength);
+                    continue;
+                }
+
+                i++;
+            }
+
+            return inBlockComment;
+        }
+
+        private int PythonMultilineStringQuoteAtLineStart(int lineIndex)
+        {
+            EnsurePythonMultilineStringCache();
+            if (lineIndex < 0 || lineIndex >= _pythonMultilineStringQuoteLineStarts.Length)
+                return 0;
+
+            return _pythonMultilineStringQuoteLineStarts[lineIndex];
+        }
+
+        private void EnsurePythonMultilineStringCache()
+        {
+            if (!_pythonMultilineStringCacheDirty &&
+                _pythonMultilineStringQuoteLineStarts.Length == _lines.Count)
+            {
+                return;
+            }
+
+            var lineStarts = new int[_lines.Count];
+            int quote = 0;
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                lineStarts[i] = quote;
+                quote = ScanPythonMultilineStringQuote(_lines[i], quote);
+            }
+
+            _pythonMultilineStringQuoteLineStarts = lineStarts;
+            _pythonMultilineStringCacheDirty = false;
+        }
+
+        private static int ScanPythonMultilineStringQuote(string line, int quote)
+        {
+            int i = 0;
+
+            while (i < line.Length)
+            {
+                if (quote != 0)
+                {
+                    int end = IndexOfTripleQuote(line, i, (char)quote);
+                    if (end < 0)
+                        return quote;
+
+                    i = end + 3;
+                    quote = 0;
+                    continue;
+                }
+
+                if (line[i] == '#')
+                    return 0;
+
+                if (TryReadPythonString(line, i, out int stringLength, out bool tripleQuoted, out bool closed, out int stringQuote))
+                {
+                    if (tripleQuoted && !closed)
+                        return stringQuote;
+
+                    i += Math.Max(1, stringLength);
+                    continue;
+                }
+
+                i++;
+            }
+
+            return quote;
         }
 
         private static List<Token> TokenizeTermXt(string line)
@@ -3543,6 +3815,209 @@ namespace Core.DirFiles
             return tokens;
         }
 
+        private static List<Token> TokenizeJavaScript(string line, bool startsInBlockComment)
+        {
+            var tokens = new List<Token>();
+            int i = 0;
+            bool inBlockComment = startsInBlockComment;
+
+            while (i < line.Length)
+            {
+                if (inBlockComment)
+                {
+                    int start = i;
+                    int end = line.IndexOf("*/", i, StringComparison.Ordinal);
+                    if (end < 0)
+                    {
+                        tokens.Add(new Token(start, line.Length - start, CJavaScriptComment));
+                        i = line.Length;
+                    }
+                    else
+                    {
+                        i = end + 2;
+                        tokens.Add(new Token(start, i - start, CJavaScriptComment));
+                        inBlockComment = false;
+                    }
+
+                    continue;
+                }
+
+                char c = line[i];
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                {
+                    tokens.Add(new Token(i, line.Length - i, CJavaScriptComment));
+                    break;
+                }
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '*')
+                {
+                    int start = i;
+                    i += 2;
+                    while (i + 1 < line.Length && !(line[i] == '*' && line[i + 1] == '/'))
+                        i++;
+
+                    if (i + 1 < line.Length)
+                    {
+                        i += 2;
+                    }
+                    else
+                    {
+                        i = line.Length;
+                        inBlockComment = true;
+                    }
+
+                    tokens.Add(new Token(start, i - start, CJavaScriptComment));
+                    continue;
+                }
+
+                if (TryReadJavaScriptString(line, i, out int stringLength))
+                {
+                    tokens.Add(new Token(i, stringLength, CJavaScriptString));
+                    i += stringLength;
+                    continue;
+                }
+
+                if (TryReadJavaScriptRegex(line, i, out int regexLength))
+                {
+                    tokens.Add(new Token(i, regexLength, CJavaScriptRegex));
+                    i += regexLength;
+                    continue;
+                }
+
+                if (char.IsDigit(c) || (c == '.' && i + 1 < line.Length && char.IsDigit(line[i + 1])))
+                {
+                    int start = i;
+                    i = ReadJavaScriptNumberEnd(line, i);
+
+                    tokens.Add(new Token(start, i - start, CJavaScriptNumber));
+                    continue;
+                }
+
+                if (TryReadJavaScriptDecorator(line, i, out int decoratorLength))
+                {
+                    tokens.Add(new Token(i, decoratorLength, CJavaScriptDirective));
+                    i += decoratorLength;
+                    continue;
+                }
+
+                if (IsJavaScriptWordStart(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsJavaScriptWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(start, i - start);
+                    tokens.Add(new Token(start, i - start, JavaScriptWordColor(word)));
+                    continue;
+                }
+
+                if ("{}[]()=+-*/%<>!|&^~?:;.,\\#@".IndexOf(c) >= 0)
+                {
+                    tokens.Add(new Token(i, 1, CJavaScriptOperator));
+                    i++;
+                    continue;
+                }
+
+                tokens.Add(new Token(i, 1, CNormal));
+                i++;
+            }
+
+            if (tokens.Count == 0)
+                tokens.Add(new Token(0, 0, CNormal));
+
+            return tokens;
+        }
+
+        private static List<Token> TokenizePython(string line, int multilineStringQuote)
+        {
+            var tokens = new List<Token>();
+            int i = 0;
+            int activeQuote = multilineStringQuote;
+
+            while (i < line.Length)
+            {
+                if (activeQuote != 0)
+                {
+                    int start = i;
+                    int end = IndexOfTripleQuote(line, i, (char)activeQuote);
+                    if (end < 0)
+                    {
+                        tokens.Add(new Token(start, line.Length - start, CPythonString));
+                        i = line.Length;
+                    }
+                    else
+                    {
+                        i = end + 3;
+                        tokens.Add(new Token(start, i - start, CPythonString));
+                        activeQuote = 0;
+                    }
+
+                    continue;
+                }
+
+                char c = line[i];
+
+                if (c == '#')
+                {
+                    tokens.Add(new Token(i, line.Length - i, CPythonComment));
+                    break;
+                }
+
+                if (TryReadPythonString(line, i, out int stringLength, out bool tripleQuoted, out bool closed, out int stringQuote))
+                {
+                    tokens.Add(new Token(i, stringLength, CPythonString));
+                    if (tripleQuoted && !closed)
+                        activeQuote = stringQuote;
+
+                    i += stringLength;
+                    continue;
+                }
+
+                if (TryReadPythonDecorator(line, i, out int decoratorLength))
+                {
+                    tokens.Add(new Token(i, decoratorLength, CPythonDecorator));
+                    i += decoratorLength;
+                    continue;
+                }
+
+                if (char.IsDigit(c) || (c == '.' && i + 1 < line.Length && char.IsDigit(line[i + 1])))
+                {
+                    int start = i;
+                    i = ReadPythonNumberEnd(line, i);
+
+                    tokens.Add(new Token(start, i - start, CPythonNumber));
+                    continue;
+                }
+
+                if (IsPythonWordStart(c))
+                {
+                    int start = i++;
+                    while (i < line.Length && IsPythonWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(start, i - start);
+                    tokens.Add(new Token(start, i - start, PythonWordColor(word)));
+                    continue;
+                }
+
+                if ("{}[]()=+-*/%<>!|&^~?:;.,\\#@".IndexOf(c) >= 0)
+                {
+                    tokens.Add(new Token(i, 1, CPythonOperator));
+                    i++;
+                    continue;
+                }
+
+                tokens.Add(new Token(i, 1, CNormal));
+                i++;
+            }
+
+            if (tokens.Count == 0)
+                tokens.Add(new Token(0, 0, CNormal));
+
+            return tokens;
+        }
+
         private static int TermXtWordColor(string word)
         {
             if (s_flowKeywords.Contains(word))
@@ -3679,6 +4154,49 @@ namespace Core.DirFiles
             return CNormal;
         }
 
+        private static int JavaScriptWordColor(string word)
+        {
+            if (s_javaScriptFlowKeywords.Contains(word))
+                return CJavaScriptFlow;
+
+            if (s_javaScriptDeclarationKeywords.Contains(word))
+                return CJavaScriptDeclaration;
+
+            if (s_javaScriptKeywords.Contains(word))
+                return CJavaScriptKeyword;
+
+            if (s_javaScriptLiteralKeywords.Contains(word))
+                return CJavaScriptNumber;
+
+            if (s_javaScriptBuiltinIdentifiers.Contains(word))
+                return CJavaScriptBuiltin;
+
+            if (IsLikelyMacroName(word))
+                return CJavaScriptDirective;
+
+            return CNormal;
+        }
+
+        private static int PythonWordColor(string word)
+        {
+            if (s_pythonFlowKeywords.Contains(word))
+                return CPythonFlow;
+
+            if (s_pythonDeclarationKeywords.Contains(word))
+                return CPythonDeclaration;
+
+            if (s_pythonKeywords.Contains(word))
+                return CPythonKeyword;
+
+            if (s_pythonLiteralKeywords.Contains(word))
+                return CPythonNumber;
+
+            if (s_pythonBuiltinIdentifiers.Contains(word) || IsPythonDunderName(word))
+                return CPythonBuiltin;
+
+            return CNormal;
+        }
+
         private static int CStylePreprocessorDirectiveColor(string word, bool cpp)
         {
             if (cpp)
@@ -3810,6 +4328,33 @@ namespace Core.DirFiles
         private static bool IsRustRadixPrefix(char c)
         {
             return c == 'b' || c == 'B' || c == 'o' || c == 'O' || c == 'x' || c == 'X';
+        }
+
+        private static bool IsJavaScriptWordStart(char c)
+        {
+            return char.IsLetter(c) || c == '_' || c == '$';
+        }
+
+        private static bool IsJavaScriptWordPart(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_' || c == '$';
+        }
+
+        private static bool IsPythonWordStart(char c)
+        {
+            return char.IsLetter(c) || c == '_';
+        }
+
+        private static bool IsPythonWordPart(char c)
+        {
+            return char.IsLetterOrDigit(c) || c == '_';
+        }
+
+        private static bool IsPythonDunderName(string word)
+        {
+            return word.Length > 4 &&
+                word.StartsWith("__", StringComparison.Ordinal) &&
+                word.EndsWith("__", StringComparison.Ordinal);
         }
 
         private static bool StartsWithAt(string line, int index, string value)
@@ -4387,6 +4932,379 @@ namespace Core.DirFiles
             }
 
             return i;
+        }
+
+        private static bool TryReadJavaScriptString(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || (line[index] != '"' && line[index] != '\'' && line[index] != '`'))
+                return false;
+
+            char quote = line[index];
+            int i = index + 1;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == quote)
+                {
+                    i++;
+                    break;
+                }
+
+                i++;
+            }
+
+            length = i - index;
+            return true;
+        }
+
+        private static bool TryReadJavaScriptRegex(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || line[index] != '/' ||
+                index + 1 >= line.Length || line[index + 1] == '/' || line[index + 1] == '*')
+            {
+                return false;
+            }
+
+            if (!CanStartJavaScriptRegex(line, index))
+                return false;
+
+            int i = index + 1;
+            bool inCharacterClass = false;
+            bool hasBody = false;
+
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    hasBody = true;
+                    continue;
+                }
+
+                if (line[i] == '[')
+                {
+                    inCharacterClass = true;
+                    hasBody = true;
+                    i++;
+                    continue;
+                }
+
+                if (line[i] == ']' && inCharacterClass)
+                {
+                    inCharacterClass = false;
+                    i++;
+                    continue;
+                }
+
+                if (line[i] == '/' && !inCharacterClass)
+                {
+                    i++;
+                    while (i < line.Length && char.IsLetter(line[i]))
+                        i++;
+
+                    length = i - index;
+                    return hasBody;
+                }
+
+                hasBody = true;
+                i++;
+            }
+
+            return false;
+        }
+
+        private static bool CanStartJavaScriptRegex(string line, int index)
+        {
+            int previous = index - 1;
+            while (previous >= 0 && char.IsWhiteSpace(line[previous]))
+                previous--;
+
+            if (previous < 0)
+                return true;
+
+            if ("=({[,!?:;|&+-*~^<>".IndexOf(line[previous]) >= 0)
+                return true;
+
+            int end = previous;
+            while (previous >= 0 && IsJavaScriptWordPart(line[previous]))
+                previous--;
+
+            if (end > previous)
+            {
+                string previousWord = line.Substring(previous + 1, end - previous);
+                return s_javaScriptRegexPrefixWords.Contains(previousWord);
+            }
+
+            return false;
+        }
+
+        private static bool TryReadJavaScriptDecorator(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || line[index] != '@' ||
+                !IsOnlyWhitespaceBefore(line, index) ||
+                index + 1 >= line.Length || !IsJavaScriptWordStart(line[index + 1]))
+            {
+                return false;
+            }
+
+            int i = index + 2;
+            while (i < line.Length && (IsJavaScriptWordPart(line[i]) || line[i] == '.'))
+                i++;
+
+            length = i - index;
+            return true;
+        }
+
+        private static int ReadJavaScriptNumberEnd(string line, int index)
+        {
+            int i = index;
+
+            if (line[i] == '.')
+            {
+                i++;
+                while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                    i++;
+
+                return ReadJavaScriptExponentAndSuffixEnd(line, i);
+            }
+
+            if (line[i] == '0' && i + 1 < line.Length &&
+                (line[i + 1] == 'x' || line[i + 1] == 'X' ||
+                 line[i + 1] == 'b' || line[i + 1] == 'B' ||
+                 line[i + 1] == 'o' || line[i + 1] == 'O'))
+            {
+                i += 2;
+                while (i < line.Length && (char.IsLetterOrDigit(line[i]) || line[i] == '_'))
+                    i++;
+
+                if (i < line.Length && line[i] == 'n')
+                    i++;
+
+                return i;
+            }
+
+            while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                i++;
+
+            if (i < line.Length && line[i] == '.' &&
+                (i + 1 >= line.Length || line[i + 1] != '.'))
+            {
+                i++;
+                while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                    i++;
+            }
+
+            return ReadJavaScriptExponentAndSuffixEnd(line, i);
+        }
+
+        private static int ReadJavaScriptExponentAndSuffixEnd(string line, int index)
+        {
+            int i = index;
+
+            if (i < line.Length && (line[i] == 'e' || line[i] == 'E'))
+            {
+                int exponent = i + 1;
+                if (exponent < line.Length && (line[exponent] == '+' || line[exponent] == '-'))
+                    exponent++;
+
+                if (exponent < line.Length && char.IsDigit(line[exponent]))
+                {
+                    i = exponent + 1;
+                    while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                        i++;
+                }
+            }
+
+            if (i < line.Length && line[i] == 'n')
+                i++;
+
+            return i;
+        }
+
+        private static bool TryReadPythonString(
+            string line,
+            int index,
+            out int length,
+            out bool tripleQuoted,
+            out bool closed,
+            out int quote)
+        {
+            length = 0;
+            tripleQuoted = false;
+            closed = false;
+            quote = 0;
+
+            if (index >= line.Length)
+                return false;
+
+            int i = index;
+            int prefixEnd = ReadPythonStringPrefixEnd(line, i);
+            if (prefixEnd > i)
+                i = prefixEnd;
+
+            if (i >= line.Length || (line[i] != '"' && line[i] != '\''))
+                return false;
+
+            quote = line[i];
+            tripleQuoted = i + 2 < line.Length && line[i + 1] == line[i] && line[i + 2] == line[i];
+
+            if (tripleQuoted)
+            {
+                int contentStart = i + 3;
+                int end = IndexOfTripleQuote(line, contentStart, (char)quote);
+                if (end < 0)
+                {
+                    length = line.Length - index;
+                    return true;
+                }
+
+                length = end + 3 - index;
+                closed = true;
+                return true;
+            }
+
+            i++;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == quote)
+                {
+                    i++;
+                    closed = true;
+                    break;
+                }
+
+                i++;
+            }
+
+            length = i - index;
+            return true;
+        }
+
+        private static int ReadPythonStringPrefixEnd(string line, int index)
+        {
+            int i = index;
+            int max = Math.Min(line.Length, index + 3);
+
+            while (i < max && IsPythonStringPrefixChar(line[i]))
+                i++;
+
+            return i < line.Length && (line[i] == '"' || line[i] == '\'') ? i : index;
+        }
+
+        private static bool IsPythonStringPrefixChar(char c)
+        {
+            return c == 'r' || c == 'R' ||
+                c == 'u' || c == 'U' ||
+                c == 'b' || c == 'B' ||
+                c == 'f' || c == 'F';
+        }
+
+        private static bool TryReadPythonDecorator(string line, int index, out int length)
+        {
+            length = 0;
+
+            if (index >= line.Length || line[index] != '@' ||
+                !IsOnlyWhitespaceBefore(line, index) ||
+                index + 1 >= line.Length || !IsPythonWordStart(line[index + 1]))
+            {
+                return false;
+            }
+
+            int i = index + 2;
+            while (i < line.Length && (IsPythonWordPart(line[i]) || line[i] == '.'))
+                i++;
+
+            length = i - index;
+            return true;
+        }
+
+        private static int ReadPythonNumberEnd(string line, int index)
+        {
+            int i = index;
+
+            if (line[i] == '.')
+            {
+                i++;
+                while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                    i++;
+
+                return ReadPythonExponentAndSuffixEnd(line, i);
+            }
+
+            if (line[i] == '0' && i + 1 < line.Length &&
+                (line[i + 1] == 'x' || line[i + 1] == 'X' ||
+                 line[i + 1] == 'b' || line[i + 1] == 'B' ||
+                 line[i + 1] == 'o' || line[i + 1] == 'O'))
+            {
+                i += 2;
+                while (i < line.Length && (char.IsLetterOrDigit(line[i]) || line[i] == '_'))
+                    i++;
+
+                if (i < line.Length && (line[i] == 'j' || line[i] == 'J'))
+                    i++;
+
+                return i;
+            }
+
+            while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                i++;
+
+            if (i < line.Length && line[i] == '.' &&
+                (i + 1 >= line.Length || line[i + 1] != '.'))
+            {
+                i++;
+                while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                    i++;
+            }
+
+            return ReadPythonExponentAndSuffixEnd(line, i);
+        }
+
+        private static int ReadPythonExponentAndSuffixEnd(string line, int index)
+        {
+            int i = index;
+
+            if (i < line.Length && (line[i] == 'e' || line[i] == 'E'))
+            {
+                int exponent = i + 1;
+                if (exponent < line.Length && (line[exponent] == '+' || line[exponent] == '-'))
+                    exponent++;
+
+                if (exponent < line.Length && char.IsDigit(line[exponent]))
+                {
+                    i = exponent + 1;
+                    while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '_'))
+                        i++;
+                }
+            }
+
+            if (i < line.Length && (line[i] == 'j' || line[i] == 'J'))
+                i++;
+
+            return i;
+        }
+
+        private static int IndexOfTripleQuote(string line, int index, char quote)
+        {
+            string tripleQuote = new string(quote, 3);
+            return line.IndexOf(tripleQuote, index, StringComparison.Ordinal);
         }
 
         private static int CountConsecutive(string line, int index, char value)
