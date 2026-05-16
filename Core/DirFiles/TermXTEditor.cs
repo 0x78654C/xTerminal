@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Core.DirFiles
 {
@@ -32,6 +35,7 @@ namespace Core.DirFiles
         private const string ClearScreen = "\x1b[2J";
         private const string IndentText = "    ";
         private const int ExternalChangeCheckIntervalMs = 750;
+        private const int CSharpSemanticDiagnosticDelayMs = 900;
 
         private const int CTitle = 45;
         private const int CTitleDim = 250;
@@ -151,6 +155,13 @@ namespace Core.DirFiles
         private static readonly HashSet<string> s_operatorWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "in", "not", "contains", "startswith", "endswith", "and", "or"
+        };
+
+        private static readonly string[] s_termXtLineKeywords =
+        {
+            "set", "print", "run", "capture", "input", "read", "write", "append",
+            "wait", "call", "if", "elif", "else", "end", "loop", "while", "each",
+            "func", "try", "catch", "break", "continue", "return", "exit"
         };
 
         private static readonly HashSet<string> s_csharpFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
@@ -443,6 +454,9 @@ namespace Core.DirFiles
             "sum", "super", "tuple", "TypeError", "ValueError", "zip"
         };
 
+        private static readonly Lazy<List<MetadataReference>> s_csharpDiagnosticReferences =
+            new Lazy<List<MetadataReference>>(Core.SystemTools.Roslyn.References);
+
         private string _path;
         private readonly List<string> _lines = new List<string>();
         private readonly Queue<ConsoleKeyInfo> _queuedKeys = new Queue<ConsoleKeyInfo>();
@@ -478,6 +492,11 @@ namespace Core.DirFiles
         private bool _hasLineClipboard;
         private string _lastExplorerDirectory = string.Empty;
         private TermXTEditorSyntax _syntax;
+        private readonly List<EditorDiagnostic> _diagnostics = new List<EditorDiagnostic>();
+        private readonly HashSet<int> _diagnosticLineIndexes = new HashSet<int>();
+        private bool _diagnosticsCacheDirty = true;
+        private bool _csharpSemanticDiagnosticsPending;
+        private DateTime _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
         private bool _hasSelectionAnchor;
         private int _selectionAnchorLine;
         private int _selectionAnchorCol;
@@ -697,10 +716,25 @@ namespace Core.DirFiles
                 if (CheckExternalFileChangeOnIdle())
                     return false;
 
+                if (CheckDiagnosticsOnIdle())
+                    return false;
+
                 Thread.Sleep(30);
             }
 
             return false;
+        }
+
+        private bool CheckDiagnosticsOnIdle()
+        {
+            if (_syntax != TermXTEditorSyntax.CSharp || !_csharpSemanticDiagnosticsPending)
+                return false;
+
+            if (DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc)
+                return false;
+
+            _diagnosticsCacheDirty = true;
+            return true;
         }
 
         private bool ClearExpiredMessages()
@@ -808,7 +842,7 @@ namespace Core.DirFiles
             _undo.Clear();
             _redo.Clear();
             ClearSelection();
-            InvalidateDocumentCaches();
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
         }
 
         private bool TryReadDiskLines(out string[] lines, out string error)
@@ -861,7 +895,13 @@ namespace Core.DirFiles
 
         private void InvalidateDocumentCaches()
         {
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: true);
+        }
+
+        private void InvalidateDocumentCaches(bool delayCSharpSemanticDiagnostics)
+        {
             _wrapCacheDirty = true;
+            InvalidateDiagnosticsCache(delayCSharpSemanticDiagnostics);
             _csharpBlockCommentCacheDirty = true;
             _rustBlockCommentCacheDirty = true;
             _javaScriptBlockCommentCacheDirty = true;
@@ -870,10 +910,28 @@ namespace Core.DirFiles
 
         private void InvalidateSyntaxStateCache()
         {
+            InvalidateDiagnosticsCache(delayCSharpSemanticDiagnostics: false);
             _csharpBlockCommentCacheDirty = true;
             _rustBlockCommentCacheDirty = true;
             _javaScriptBlockCommentCacheDirty = true;
             _pythonMultilineStringCacheDirty = true;
+        }
+
+        private void InvalidateDiagnosticsCache(bool delayCSharpSemanticDiagnostics)
+        {
+            _diagnosticsCacheDirty = true;
+
+            if (_syntax == TermXTEditorSyntax.CSharp)
+            {
+                _csharpSemanticDiagnosticsPending = true;
+                _csharpSemanticDiagnosticsReadyUtc = delayCSharpSemanticDiagnostics
+                    ? DateTime.UtcNow.AddMilliseconds(CSharpSemanticDiagnosticDelayMs)
+                    : DateTime.MinValue;
+                return;
+            }
+
+            _csharpSemanticDiagnosticsPending = false;
+            _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
         }
 
         private void EnsureWrapCache(int textWidth)
@@ -945,14 +1003,17 @@ namespace Core.DirFiles
 
         private void RenderHeader(int width)
         {
+            EnsureDiagnostics();
+
             string name = Path.GetFileName(_path);
             if (string.IsNullOrWhiteSpace(name))
                 name = _path;
 
             string dirty = _dirty ? " [+]" : "";
             string disk = _externalChangePending ? " [disk]" : "";
+            string errors = _diagnostics.Count == 0 ? "" : " [E:" + _diagnostics.Count + "]";
             string left = " TermXT Editor ";
-            string middle = " " + name + " [" + SyntaxDisplayName(_syntax) + "]" + dirty + disk;
+            string middle = " " + name + " [" + SyntaxDisplayName(_syntax) + "]" + dirty + disk + errors;
             string right = " " + (_cursorLine + 1) + ":" + (_cursorCol + 1) + " ";
 
             _frame.Append(At(0, 0))
@@ -970,7 +1031,7 @@ namespace Core.DirFiles
                     help = " INSERT  Esc normal | Tab indent | Shift+Tab outdent | Shift+arrows select | Ctrl+C/V copy/paste | Ctrl+Z/Y undo/redo";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | 42/goto 42 | syntax xt|cs|c|cpp|rust|js|py | Esc";
+                    help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | errors | next-error | syntax xt|cs|c|cpp|rust|js|py | Esc";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
@@ -994,10 +1055,15 @@ namespace Core.DirFiles
             }
 
             bool current = rowInfo.LineIndex == _cursorLine;
+            bool diagnosticLine = HasDiagnosticOnLine(rowInfo.LineIndex);
             string lineNo = rowInfo.WrapIndex == 0
-                ? (rowInfo.LineIndex + 1).ToString().PadLeft(numberWidth - 1) + " "
-                : "+".PadLeft(numberWidth - 1) + " ";
-            _frame.Append(F(current ? CCurrentLineNo : CLineNo)).Append(lineNo).Append(Reset).Append(' ');
+                ? (rowInfo.LineIndex + 1).ToString().PadLeft(numberWidth - 1) + (diagnosticLine ? "!" : " ")
+                : "+".PadLeft(numberWidth - 1) + (diagnosticLine ? "!" : " ");
+
+            if (diagnosticLine)
+                _frame.Append(B(52)).Append(Bold()).Append(F(CError)).Append(lineNo).Append(Reset).Append(' ');
+            else
+                _frame.Append(F(current ? CCurrentLineNo : CLineNo)).Append(lineNo).Append(Reset).Append(' ');
 
             string line = _lines[rowInfo.LineIndex];
             string rendered = BuildHighlightedLine(line, rowInfo.LineIndex, rowInfo.StartColumn, textWidth);
@@ -1448,6 +1514,27 @@ namespace Core.DirFiles
                     OpenExplorer();
                     _mode = Mode.Normal;
                     break;
+                case "errors":
+                case "errs":
+                case "err":
+                case "diagnostics":
+                    ShowDiagnosticsSummary();
+                    _mode = Mode.Normal;
+                    break;
+                case "next-error":
+                case "nexterror":
+                case "errnext":
+                case "cn":
+                    JumpToDiagnostic(1);
+                    _mode = Mode.Normal;
+                    break;
+                case "prev-error":
+                case "preverror":
+                case "errprev":
+                case "cp":
+                    JumpToDiagnostic(-1);
+                    _mode = Mode.Normal;
+                    break;
                 case "w":
                 case "write":
                     Save(force: false);
@@ -1580,6 +1667,104 @@ namespace Core.DirFiles
             _cursorCol = 0;
             ClampCursor();
             Status("Line " + lineNumber);
+        }
+
+        private void ShowDiagnosticsSummary()
+        {
+            EnsureFullDiagnostics();
+
+            if (_diagnostics.Count == 0)
+            {
+                Status("No errors");
+                BottomStatus("No errors in " + SyntaxDisplayName(_syntax));
+                return;
+            }
+
+            EditorDiagnostic diagnostic;
+            int diagnosticIndex;
+            if (!TryGetDiagnosticForLine(_cursorLine, out diagnostic, out diagnosticIndex))
+            {
+                diagnosticIndex = FirstDiagnosticIndexAtOrAfter(_cursorLine);
+                diagnostic = _diagnostics[diagnosticIndex];
+            }
+
+            Status(FormatDiagnosticCounter(diagnostic, diagnosticIndex, _diagnostics.Count), error: true);
+            BottomStatus(BuildDiagnosticsSummary(), error: true);
+        }
+
+        private void JumpToDiagnostic(int direction)
+        {
+            EnsureFullDiagnostics();
+
+            if (_diagnostics.Count == 0)
+            {
+                Status("No errors");
+                BottomStatus("No errors in " + SyntaxDisplayName(_syntax));
+                return;
+            }
+
+            int index = direction >= 0
+                ? FirstDiagnosticIndexAfter(_cursorLine)
+                : LastDiagnosticIndexBefore(_cursorLine);
+
+            EditorDiagnostic diagnostic = _diagnostics[index];
+            _cursorLine = diagnostic.LineIndex;
+            _cursorCol = Math.Min(CurrentLine().Length, Math.Max(0, diagnostic.StartColumn));
+            _pendingDelete = false;
+            _insertUndoStarted = false;
+            ClearSelection();
+            ClampCursor();
+
+            Status(FormatDiagnosticCounter(diagnostic, index, _diagnostics.Count), error: true);
+            BottomStatus(FormatDiagnosticLocation(diagnostic), error: true);
+        }
+
+        private int FirstDiagnosticIndexAtOrAfter(int lineIndex)
+        {
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (_diagnostics[i].LineIndex >= lineIndex)
+                    return i;
+            }
+
+            return 0;
+        }
+
+        private int FirstDiagnosticIndexAfter(int lineIndex)
+        {
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (_diagnostics[i].LineIndex > lineIndex)
+                    return i;
+            }
+
+            return 0;
+        }
+
+        private int LastDiagnosticIndexBefore(int lineIndex)
+        {
+            for (int i = _diagnostics.Count - 1; i >= 0; i--)
+            {
+                if (_diagnostics[i].LineIndex < lineIndex)
+                    return i;
+            }
+
+            return _diagnostics.Count - 1;
+        }
+
+        private string BuildDiagnosticsSummary()
+        {
+            var builder = new StringBuilder();
+            builder.Append(_diagnostics.Count).Append(' ').Append(Pluralize("error", _diagnostics.Count));
+
+            int max = Math.Min(_diagnostics.Count, 4);
+            for (int i = 0; i < max; i++)
+                builder.Append(" | ").Append(i + 1).Append(") ").Append(FormatDiagnosticLocation(_diagnostics[i]));
+
+            if (_diagnostics.Count > max)
+                builder.Append(" | +").Append(_diagnostics.Count - max).Append(" more");
+
+            return builder.ToString();
         }
 
         private bool TryExecuteSyntaxCommand(string command)
@@ -2965,10 +3150,497 @@ namespace Core.DirFiles
             if (_externalChangePending)
                 return "file changed on disk";
 
+            EnsureDiagnostics();
+            if (_diagnostics.Count > 0)
+            {
+                if (TryGetDiagnosticForLine(_cursorLine, out EditorDiagnostic currentDiagnostic, out int currentIndex))
+                    return ModifiedPrefix() + FormatDiagnosticCounter(currentDiagnostic, currentIndex, _diagnostics.Count);
+
+                return ModifiedPrefix() + _diagnostics.Count + " " + Pluralize("error", _diagnostics.Count) +
+                    " | next " + FormatDiagnosticLocation(_diagnostics[0]);
+            }
+
             if (_dirty)
                 return "modified";
 
             return "ready";
+        }
+
+        private string ModifiedPrefix()
+        {
+            return _dirty ? "modified | " : string.Empty;
+        }
+
+        private void EnsureDiagnostics()
+        {
+            if (!_diagnosticsCacheDirty)
+                return;
+
+            _diagnostics.Clear();
+            _diagnosticLineIndexes.Clear();
+
+            switch (_syntax)
+            {
+                case TermXTEditorSyntax.CSharp:
+                    CollectCSharpDiagnostics();
+                    break;
+                case TermXTEditorSyntax.TermXt:
+                    CollectTermXtDiagnostics();
+                    break;
+            }
+
+            _diagnostics.Sort(CompareDiagnostics);
+            _diagnosticsCacheDirty = false;
+        }
+
+        private void EnsureFullDiagnostics()
+        {
+            if (_syntax == TermXTEditorSyntax.CSharp && _csharpSemanticDiagnosticsPending)
+            {
+                _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
+                _diagnosticsCacheDirty = true;
+            }
+
+            EnsureDiagnostics();
+        }
+
+        private void CollectCSharpDiagnostics()
+        {
+            try
+            {
+                SourceCodeKind sourceKind = string.Equals(Path.GetExtension(_path), ".csx", StringComparison.OrdinalIgnoreCase)
+                    ? SourceCodeKind.Script
+                    : SourceCodeKind.Regular;
+
+                CSharpParseOptions parseOptions = CSharpParseOptions.Default
+                    .WithLanguageVersion(LanguageVersion.Latest)
+                    .WithKind(sourceKind);
+
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
+                bool includeSemanticDiagnostics =
+                    !_csharpSemanticDiagnosticsPending ||
+                    DateTime.UtcNow >= _csharpSemanticDiagnosticsReadyUtc;
+
+                if (!includeSemanticDiagnostics)
+                {
+                    AddCSharpDiagnostics(syntaxTree.GetDiagnostics());
+                    return;
+                }
+
+                List<MetadataReference> references = s_csharpDiagnosticReferences.Value;
+                CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+                CSharpCompilation compilation = sourceKind == SourceCodeKind.Script
+                    ? CSharpCompilation.CreateScriptCompilation(
+                        Path.GetFileNameWithoutExtension(_path),
+                        syntaxTree,
+                        references,
+                        compilationOptions)
+                    : CSharpCompilation.Create(
+                        Path.GetFileNameWithoutExtension(_path),
+                        new[] { syntaxTree },
+                        references,
+                        compilationOptions);
+
+                AddCSharpDiagnostics(compilation.GetDiagnostics());
+                _csharpSemanticDiagnosticsPending = false;
+            }
+            catch (Exception ex)
+            {
+                _csharpSemanticDiagnosticsPending = false;
+                AddDiagnostic(0, string.Empty, "C# diagnostics unavailable: " + ex.Message);
+            }
+        }
+
+        private void AddCSharpDiagnostics(IEnumerable<Diagnostic> diagnostics)
+        {
+            foreach (Diagnostic diagnostic in diagnostics)
+            {
+                if (diagnostic.Severity != DiagnosticSeverity.Error && !diagnostic.IsWarningAsError)
+                    continue;
+
+                if (!diagnostic.Location.IsInSource)
+                    continue;
+
+                AddCSharpDiagnostic(diagnostic);
+            }
+        }
+
+        private void AddCSharpDiagnostic(Diagnostic diagnostic)
+        {
+            var lineSpan = diagnostic.Location.GetLineSpan();
+            int lineIndex = ClampValue(lineSpan.StartLinePosition.Line, 0, Math.Max(0, _lines.Count - 1));
+            int lineLength = _lines[lineIndex].Length;
+            int startColumn = ClampValue(lineSpan.StartLinePosition.Character, 0, lineLength);
+            int endColumn = lineSpan.EndLinePosition.Line == lineSpan.StartLinePosition.Line
+                ? ClampValue(lineSpan.EndLinePosition.Character, 0, lineLength)
+                : lineLength;
+
+            if (endColumn <= startColumn && lineLength > 0)
+            {
+                if (startColumn >= lineLength)
+                    startColumn = lineLength - 1;
+
+                endColumn = Math.Min(lineLength, startColumn + 1);
+            }
+
+            string description = diagnostic.GetMessage(CultureInfo.CurrentCulture);
+            AddDiagnostic(lineIndex, startColumn, endColumn, diagnostic.Id, description);
+        }
+
+        private void CollectTermXtDiagnostics()
+        {
+            var blockStack = new Stack<TermXtBlock>();
+            HashSet<string> functionNames = CollectTermXtFunctionNames();
+
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                string line = _lines[i].Trim();
+                if (string.IsNullOrEmpty(line) || line.StartsWith("#", StringComparison.Ordinal))
+                    continue;
+
+                string keyword = FirstWord(line).ToLowerInvariant();
+
+                switch (keyword)
+                {
+                    case "if":
+                    case "loop":
+                    case "each":
+                    case "try":
+                    case "while":
+                        blockStack.Push(new TermXtBlock(keyword, i));
+                        break;
+                    case "end":
+                        if (blockStack.Count == 0)
+                            AddDiagnostic(i, string.Empty, "'end' without matching block opener.");
+                        else
+                            blockStack.Pop();
+                        break;
+                    case "elif":
+                    case "else":
+                        if (blockStack.Count == 0 || blockStack.Peek().Type != "if")
+                            AddDiagnostic(i, string.Empty, "'" + keyword + "' without matching 'if'.");
+                        break;
+                    case "catch":
+                        if (blockStack.Count == 0 || blockStack.Peek().Type != "try")
+                            AddDiagnostic(i, string.Empty, "'catch' without matching 'try'.");
+                        break;
+                    case "set":
+                    case "capture":
+                    case "read":
+                    case "input":
+                        if (!line.Contains("="))
+                            AddDiagnostic(i, string.Empty, "'" + keyword + "' missing '=' assignment.");
+                        break;
+                    case "func":
+                        if (string.IsNullOrWhiteSpace(GetTermXtFunctionName(line)))
+                            AddDiagnostic(i, string.Empty, "'func' missing function name.");
+                        blockStack.Push(new TermXtBlock(keyword, i));
+                        break;
+                    case "call":
+                        ValidateTermXtCall(i, line, functionNames);
+                        break;
+                    case "break":
+                    case "continue":
+                        if (!IsInsideAnyBlock(blockStack, "loop", "each", "while"))
+                            AddDiagnostic(i, string.Empty, "'" + keyword + "' outside of a loop.");
+                        break;
+                    case "return":
+                        if (!IsInsideAnyBlock(blockStack, "func"))
+                            AddDiagnostic(i, string.Empty, "'return' outside of a function.");
+                        break;
+                    default:
+                        if (TrySuggestTermXtKeyword(keyword, line, functionNames, out string suggestedKeyword))
+                        {
+                            AddDiagnostic(
+                                i,
+                                string.Empty,
+                                "Unknown TermXT keyword '" + keyword + "'. Did you mean '" + suggestedKeyword + "'?");
+                        }
+                        break;
+                }
+            }
+
+            while (blockStack.Count > 0)
+            {
+                TermXtBlock block = blockStack.Pop();
+                AddDiagnostic(block.LineIndex, string.Empty, "'" + block.Type + "' block never closed with 'end'.");
+            }
+        }
+
+        private HashSet<string> CollectTermXtFunctionNames()
+        {
+            var functionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                string line = _lines[i].Trim();
+                if (string.IsNullOrEmpty(line) || line.StartsWith("#", StringComparison.Ordinal))
+                    continue;
+
+                if (!string.Equals(FirstWord(line), "func", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                string functionName = GetTermXtFunctionName(line);
+                if (!string.IsNullOrWhiteSpace(functionName))
+                    functionNames.Add(functionName);
+            }
+
+            return functionNames;
+        }
+
+        private void ValidateTermXtCall(int lineIndex, string line, HashSet<string> functionNames)
+        {
+            string functionName = SecondWord(line);
+            if (string.IsNullOrWhiteSpace(functionName))
+            {
+                AddDiagnostic(lineIndex, string.Empty, "'call' missing function name.");
+                return;
+            }
+
+            if (functionName.IndexOf('{') >= 0 || functionName.IndexOf('}') >= 0)
+                return;
+
+            if (!functionNames.Contains(functionName))
+                AddDiagnostic(lineIndex, string.Empty, "Function '" + functionName + "' not found.");
+        }
+
+        private void AddDiagnostic(int lineIndex, string code, string description)
+        {
+            int normalizedLine = ClampValue(lineIndex, 0, Math.Max(0, _lines.Count - 1));
+            AddDiagnostic(normalizedLine, 0, _lines[normalizedLine].Length, code, description);
+        }
+
+        private void AddDiagnostic(int lineIndex, int startColumn, int endColumn, string code, string description)
+        {
+            int normalizedLine = ClampValue(lineIndex, 0, Math.Max(0, _lines.Count - 1));
+            int lineLength = _lines[normalizedLine].Length;
+            int normalizedStart = ClampValue(startColumn, 0, lineLength);
+            int normalizedEnd = ClampValue(endColumn, 0, lineLength);
+
+            _diagnostics.Add(new EditorDiagnostic(
+                normalizedLine,
+                normalizedStart,
+                normalizedEnd,
+                code ?? string.Empty,
+                string.IsNullOrWhiteSpace(description) ? "Syntax error." : description));
+            _diagnosticLineIndexes.Add(normalizedLine);
+        }
+
+        private bool HasDiagnosticOnLine(int lineIndex)
+        {
+            EnsureDiagnostics();
+            return _diagnosticLineIndexes.Contains(lineIndex);
+        }
+
+        private bool TryGetDiagnosticForLine(int lineIndex, out EditorDiagnostic diagnostic, out int diagnosticIndex)
+        {
+            EnsureDiagnostics();
+
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (_diagnostics[i].LineIndex == lineIndex)
+                {
+                    diagnostic = _diagnostics[i];
+                    diagnosticIndex = i;
+                    return true;
+                }
+            }
+
+            diagnostic = null;
+            diagnosticIndex = -1;
+            return false;
+        }
+
+        private string FormatDiagnosticCounter(EditorDiagnostic diagnostic, int diagnosticIndex, int diagnosticCount)
+        {
+            return "error " + (diagnosticIndex + 1) + "/" + diagnosticCount + " | " + FormatDiagnosticLocation(diagnostic);
+        }
+
+        private static string FormatDiagnosticLocation(EditorDiagnostic diagnostic)
+        {
+            string code = string.IsNullOrWhiteSpace(diagnostic.Code) ? string.Empty : " " + diagnostic.Code;
+            return "L" + diagnostic.LineNumber + code + ": " + diagnostic.Description;
+        }
+
+        private string BuildDocumentText()
+        {
+            var builder = new StringBuilder();
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                if (i > 0)
+                    builder.Append('\n');
+
+                builder.Append(_lines[i]);
+            }
+
+            return builder.ToString();
+        }
+
+        private static int CompareDiagnostics(EditorDiagnostic left, EditorDiagnostic right)
+        {
+            int line = left.LineIndex.CompareTo(right.LineIndex);
+            if (line != 0)
+                return line;
+
+            int column = left.StartColumn.CompareTo(right.StartColumn);
+            if (column != 0)
+                return column;
+
+            return string.Compare(left.Code, right.Code, StringComparison.Ordinal);
+        }
+
+        private static bool IsInsideAnyBlock(Stack<TermXtBlock> blocks, params string[] blockTypes)
+        {
+            foreach (TermXtBlock block in blocks)
+            {
+                for (int i = 0; i < blockTypes.Length; i++)
+                {
+                    if (block.Type == blockTypes[i])
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string FirstWord(string value)
+        {
+            int length = 0;
+            while (length < value.Length && !char.IsWhiteSpace(value[length]))
+                length++;
+
+            return length == 0 ? string.Empty : value.Substring(0, length);
+        }
+
+        private static string SecondWord(string value)
+        {
+            int index = 0;
+            while (index < value.Length && !char.IsWhiteSpace(value[index]))
+                index++;
+
+            while (index < value.Length && char.IsWhiteSpace(value[index]))
+                index++;
+
+            int start = index;
+            while (index < value.Length && !char.IsWhiteSpace(value[index]))
+                index++;
+
+            return index > start ? value.Substring(start, index - start) : string.Empty;
+        }
+
+        private static string GetTermXtFunctionName(string line)
+        {
+            if (!string.Equals(FirstWord(line), "func", StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+
+            return SecondWord(line);
+        }
+
+        private static bool TrySuggestTermXtKeyword(
+            string keyword,
+            string line,
+            HashSet<string> functionNames,
+            out string suggestedKeyword)
+        {
+            suggestedKeyword = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(keyword) || IsTermXtLineKeyword(keyword))
+                return false;
+
+            int maxDistance = keyword.Length <= 3 ? 1 : 2;
+            int bestDistance = maxDistance + 1;
+            string bestKeyword = string.Empty;
+
+            for (int i = 0; i < s_termXtLineKeywords.Length; i++)
+            {
+                string candidate = s_termXtLineKeywords[i];
+                int distance = EditDistance(keyword, candidate, maxDistance);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestKeyword = candidate;
+                }
+            }
+
+            if (bestDistance > maxDistance || string.IsNullOrWhiteSpace(bestKeyword))
+                return false;
+
+            if (string.Equals(bestKeyword, "call", StringComparison.OrdinalIgnoreCase))
+            {
+                string functionName = SecondWord(line);
+                if (string.IsNullOrWhiteSpace(functionName) || !functionNames.Contains(functionName))
+                    return false;
+            }
+
+            suggestedKeyword = bestKeyword;
+            return true;
+        }
+
+        private static bool IsTermXtLineKeyword(string keyword)
+        {
+            for (int i = 0; i < s_termXtLineKeywords.Length; i++)
+            {
+                if (string.Equals(keyword, s_termXtLineKeywords[i], StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static int EditDistance(string left, string right, int maxDistance)
+        {
+            if (Math.Abs(left.Length - right.Length) > maxDistance)
+                return maxDistance + 1;
+
+            var previous = new int[right.Length + 1];
+            var current = new int[right.Length + 1];
+
+            for (int j = 0; j <= right.Length; j++)
+                previous[j] = j;
+
+            for (int i = 1; i <= left.Length; i++)
+            {
+                current[0] = i;
+                int rowMin = current[0];
+
+                for (int j = 1; j <= right.Length; j++)
+                {
+                    int cost = char.ToLowerInvariant(left[i - 1]) == char.ToLowerInvariant(right[j - 1]) ? 0 : 1;
+                    int deletion = previous[j] + 1;
+                    int insertion = current[j - 1] + 1;
+                    int substitution = previous[j - 1] + cost;
+                    int value = Math.Min(Math.Min(deletion, insertion), substitution);
+
+                    current[j] = value;
+                    if (value < rowMin)
+                        rowMin = value;
+                }
+
+                if (rowMin > maxDistance)
+                    return maxDistance + 1;
+
+                var temp = previous;
+                previous = current;
+                current = temp;
+            }
+
+            return previous[right.Length];
+        }
+
+        private static int ClampValue(int value, int min, int max)
+        {
+            if (value < min)
+                return min;
+
+            if (value > max)
+                return max;
+
+            return value;
+        }
+
+        private static string Pluralize(string word, int count)
+        {
+            return count == 1 ? word : word + "s";
         }
 
         private string BuildHighlightedLine(string line, int lineIndex, int start, int width)
@@ -2980,6 +3652,7 @@ namespace Core.DirFiles
             var sb = new StringBuilder(width + 128);
             int end = start + width;
             int visible = 0;
+            bool diagnosticLine = HasDiagnosticOnLine(lineIndex);
             TryGetSelectionSpanForLine(lineIndex, out int selectionStart, out int selectionEnd);
 
             foreach (var token in tokens)
@@ -2993,7 +3666,8 @@ namespace Core.DirFiles
 
                 int clipStart = Math.Max(start, token.Start);
                 int clipEnd = Math.Min(end, tokenEnd);
-                AppendHighlightedSegment(sb, line, clipStart, clipEnd, token.Color, selectionStart, selectionEnd);
+                int color = diagnosticLine ? CError : token.Color;
+                AppendHighlightedSegment(sb, line, clipStart, clipEnd, color, selectionStart, selectionEnd);
 
                 visible += clipEnd - clipStart;
             }
@@ -6950,6 +7624,37 @@ namespace Core.DirFiles
             public int LineIndex { get; set; }
             public int WrapIndex { get; set; }
             public int StartColumn { get; set; }
+        }
+
+        private sealed class EditorDiagnostic
+        {
+            public EditorDiagnostic(int lineIndex, int startColumn, int endColumn, string code, string description)
+            {
+                LineIndex = lineIndex;
+                StartColumn = startColumn;
+                EndColumn = endColumn;
+                Code = code ?? string.Empty;
+                Description = description ?? string.Empty;
+            }
+
+            public int LineIndex { get; private set; }
+            public int LineNumber { get { return LineIndex + 1; } }
+            public int StartColumn { get; private set; }
+            public int EndColumn { get; private set; }
+            public string Code { get; private set; }
+            public string Description { get; private set; }
+        }
+
+        private readonly struct TermXtBlock
+        {
+            public TermXtBlock(string type, int lineIndex)
+            {
+                Type = type;
+                LineIndex = lineIndex;
+            }
+
+            public string Type { get; }
+            public int LineIndex { get; }
         }
 
         private readonly struct TextPosition

@@ -68,6 +68,125 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void TermXtDiagnostics_ReportLineAndDescription()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[]
+            {
+                "if true",
+                "  break"
+            });
+
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            List<DiagnosticInfo> diagnostics = Diagnostics(editor);
+
+            diagnostics.Should().Contain(diagnostic =>
+                diagnostic.LineNumber == 2 &&
+                diagnostic.Code == string.Empty &&
+                diagnostic.Description.Contains("outside of a loop"));
+
+            diagnostics.Should().Contain(diagnostic =>
+                diagnostic.LineNumber == 1 &&
+                diagnostic.Description.Contains("never closed"));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void TermXtDiagnostics_FlagsCallKeywordTypo()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[]
+            {
+                "func greet",
+                @"  print ""hi""",
+                "end",
+                "all greet"
+            });
+
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            List<DiagnosticInfo> diagnostics = Diagnostics(editor);
+
+            diagnostics.Should().Contain(diagnostic =>
+                diagnostic.LineNumber == 4 &&
+                diagnostic.Description.Contains("Did you mean 'call'"));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpDiagnostics_ReportLineCodeAndDescription()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllText(path, "public class C { void M() { int x = ; } }");
+
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+            List<DiagnosticInfo> diagnostics = Diagnostics(editor);
+
+            diagnostics.Should().Contain(diagnostic =>
+                diagnostic.LineNumber == 1 &&
+                diagnostic.Code.StartsWith("CS") &&
+                !string.IsNullOrWhiteSpace(diagnostic.Description));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpDiagnostics_ReportSemanticErrorsWhenUsingIsMissing()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllLines(path, new[]
+            {
+                "// using System.Text;",
+                "public class C",
+                "{",
+                "    void M()",
+                "    {",
+                "        StringBuilder sb = new StringBuilder();",
+                "    }",
+                "}"
+            });
+
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+            List<DiagnosticInfo> diagnostics = Diagnostics(editor);
+
+            diagnostics.Should().Contain(diagnostic =>
+                diagnostic.LineNumber == 6 &&
+                diagnostic.Code == "CS0246" &&
+                diagnostic.Description.Contains("StringBuilder"));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void TokenizeRust_HighlightsCommonRustTokens()
     {
         const string line = @"pub fn main<'a>() { println!(r#""hi""#); let x: i32 = 42; } // comment";
@@ -271,6 +390,27 @@ public class TermXTEditorSyntaxTests
         return tokens;
     }
 
+    private static List<DiagnosticInfo> Diagnostics(TermXTEditor editor)
+    {
+        InvokePrivate(editor, "EnsureDiagnostics");
+
+        FieldInfo field = typeof(TermXTEditor).GetField(
+            "_diagnostics",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        var result = new List<DiagnosticInfo>();
+        foreach (object diagnostic in (IEnumerable)field.GetValue(editor)!)
+        {
+            Type diagnosticType = diagnostic.GetType();
+            result.Add(new DiagnosticInfo(
+                (int)diagnosticType.GetProperty("LineNumber")!.GetValue(diagnostic)!,
+                (string)diagnosticType.GetProperty("Code")!.GetValue(diagnostic)!,
+                (string)diagnosticType.GetProperty("Description")!.GetValue(diagnostic)!));
+        }
+
+        return result;
+    }
+
     private static List<TokenInfo> TokenizeJavaScript(string line, bool startsInBlockComment)
     {
         MethodInfo method = typeof(TermXTEditor).GetMethod(
@@ -404,5 +544,19 @@ public class TermXTEditorSyntaxTests
         {
             return line.Substring(Start, Length);
         }
+    }
+
+    private readonly struct DiagnosticInfo
+    {
+        public DiagnosticInfo(int lineNumber, string code, string description)
+        {
+            LineNumber = lineNumber;
+            Code = code;
+            Description = description;
+        }
+
+        public int LineNumber { get; }
+        public string Code { get; }
+        public string Description { get; }
     }
 }
