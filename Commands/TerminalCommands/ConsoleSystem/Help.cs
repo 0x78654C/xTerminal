@@ -36,6 +36,7 @@ This is the full list of commands that can be used in xTerminal:
     odir      -- Open current directory or other directory path provided with Windows Explorer.
     ps        -- Opens Windows Powershell.
     cmd       -- Opens Windows Command Prompt.
+    ver       -- Displays the xTerminal version.
     reboot    -- Reboot the Windows OS. Use -h for additional parameters.
     shutdown  -- Shutdown the Windows OS. Use -h for additional parameters.
     sleep     -- Sleep/Hibernate the Windows OS.
@@ -58,6 +59,7 @@ This is the full list of commands that can be used in xTerminal:
     ln        -- Create shortcut of a file/folder. Use -h for additional help.
     zip       -- Create Zip archive files. Use -h for additional help.
     tee       -- Stores previous pipe command stdout to a file. Use -h for additional help. 
+    xclip     -- Copies previous pipe command stdout to the clipboard and passes it through. Use -h for additional help.
     bc        -- Display running background commands. Use -h for additional help.
     hash      -- Display the MD5, SHA256 and SHA512 hash of a file. Use -h for additional help.
     wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
@@ -112,6 +114,7 @@ This is the full list of commands that can be used in xTerminal:
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Use -h for additional help.
     !         -- Run or add custom C# code add-ons as a command. Use -h for additional help.
     xt        -- TermXT: run .xt script files with variables, loops, conditionals, pipes and more. Use -h for additional help.
+    xte       -- Built-in Vim-style code editor with TermXT/C#/C/C++/Rust/JavaScript/Python syntax highlighting. Use -h for additional help.
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.

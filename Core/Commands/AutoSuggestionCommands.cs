@@ -28,7 +28,7 @@ namespace Core.Commands
                     SendKeys.SendWait("{ENTER}");
                     SendKeys.SendWait(consoleInput);
                 }
-                if ((consoleInput.StartsWith(command) && consoleInput.Length > command.Length))
+                if (consoleInput.Split(' ')[0] == command && consoleInput.Length > command.Length)
                 {
                     consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
                     SystemTools.AutoSuggestion.FileDirCompletion(consoleInput, currentDirectory, typeSuggestions, ref addedCompletion);

@@ -550,6 +550,8 @@ namespace Shell
                         command = aliasCommands.Where(f => f.CommandName == s_input).FirstOrDefault()?.CommandName?.Trim() ?? string.Empty;
                     }
 
+                    string inputCommandName = s_input.Split().FirstOrDefault() ?? string.Empty;
+
                     //log off the machine command
                     if (s_input == "logoff")
                     {
@@ -568,11 +570,11 @@ namespace Shell
                     {
                         SystemCmd.SleepCcmd();
                     }
-                    else if (s_input.StartsWith("cmd") && !command.StartsWith("cmd"))
+                    else if (inputCommandName.Equals("cmd", StringComparison.InvariantCultureIgnoreCase) && !command.StartsWith("cmd"))
                     {
                         ProccessManage.Execute(s_input, s_input);
                     }
-                    else if (s_input.StartsWith("ps") && !command.StartsWith("ps"))
+                    else if (inputCommandName.Equals("ps", StringComparison.InvariantCultureIgnoreCase) && !command.StartsWith("ps"))
                     {
                         ProccessManage.Execute(s_input, s_input);
                     }

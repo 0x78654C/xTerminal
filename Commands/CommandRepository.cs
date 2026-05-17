@@ -14,7 +14,7 @@ namespace Commands
     [SupportedOSPlatform("Windows")]
     public static class CommandRepository
     {
-        private static string s_aliasFile = GlobalVariables.aliasFile;
+        private static string AliasFile => GlobalVariables.aliasFile;
 
         private static readonly Dictionary<string, ITerminalCommand> s_terminalCommands =
                     Assembly.GetExecutingAssembly().GetTypes()
@@ -42,11 +42,13 @@ namespace Commands
             }
 
             ITerminalCommand terminalCommandOut;
+            GlobalVariables.aliasParameters = string.Empty;
+            GlobalVariables.aliasInParameter.Clear();
 
             // Get the first word from the parameters. This should be the command name.
             string commandName = commandLine.Split().First();
 
-            bool isSingleAlias = IsSingleParam(commandName, s_aliasFile);
+            bool isSingleAlias = IsSingleParam(commandName, AliasFile);
 
             var commandLeng = commandName.Length;
 
@@ -76,19 +78,27 @@ namespace Commands
             }
 
             if (!s_terminalCommands.TryGetValue(commandName, out terminalCommandOut)
-                && !s_shellCommands.Contains(commandLine))
+                && !s_shellCommands.Contains(commandName))
             {
-                string alias = GetAliasCommand(commandName, s_aliasFile);
-                if (string.IsNullOrEmpty(alias) || !s_terminalCommands.TryGetValue(alias.Split().First(), out terminalCommandOut))
+                string alias = GetAliasCommand(commandName, AliasFile);
+                if (!string.IsNullOrWhiteSpace(alias))
                 {
-                    if (!commandLine.StartsWith("cmd") && !commandLine.StartsWith("ps") && !GlobalVariables.aliasRunFlag)
-                    {
-                        Console.WriteLine($"Unknown command: {commandLine}");
-                    }
-                    GlobalVariables.aliasParameters = " ";
+                    string aliasCommandName = alias.Split().First();
+                    if (!s_terminalCommands.TryGetValue(aliasCommandName, out terminalCommandOut))
+                        return new EnvironmentCommand(alias);
                 }
+                else if (GlobalVariables.aliasRunFlag || IsDirectShellCommand(commandName))
+                    GlobalVariables.aliasParameters = " ";
+                else
+                    return new EnvironmentCommand(commandLine);
             }
             return terminalCommandOut;
+        }
+
+        private static bool IsDirectShellCommand(string commandName)
+        {
+            return commandName.Equals("cmd", StringComparison.InvariantCultureIgnoreCase)
+                   || commandName.Equals("ps", StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
@@ -135,7 +145,7 @@ namespace Commands
             GlobalVariables.aliasParameters = !string.IsNullOrWhiteSpace(command) ? command : GlobalVariables.aliasParameters;
 
             // Usage of cmd and ps with parameters in alias commands.
-            if (command.StartsWith("cmd") || command.StartsWith("ps"))
+            if (IsDirectShellCommand(command.Split().FirstOrDefault() ?? string.Empty))
             {
                 ProcessStart.Execute(command, command);
                 GlobalVariables.aliasInParameter.Clear();
@@ -143,6 +153,25 @@ namespace Commands
             }
             GlobalVariables.aliasInParameter.Clear();
             return command.Trim();
+        }
+
+        private struct EnvironmentCommand : ITerminalCommand
+        {
+            private readonly string _commandLine;
+
+            public EnvironmentCommand(string commandLine)
+            {
+                _commandLine = commandLine;
+            }
+
+            public string Name => string.IsNullOrWhiteSpace(_commandLine)
+                ? string.Empty
+                : _commandLine.Split().First();
+
+            public void Execute(string args)
+            {
+                ProcessStart.ExecuteEnvironmentCommand(_commandLine);
+            }
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
             conditionals, loops, functions, error handling and output capture.
             Every xTerminal command works as-is inside a script.
         */
-        private static Version s_version = new(1, 0, 0);
+        private static Version s_version = new(1, 0, 1);
         public string Name => "xt";
 
         private static readonly string s_helpMessage = @"Usage of xt command:
@@ -28,6 +28,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
     xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
     xt -h                       : Display this help message.
     xt -new <script.xt>         : Create a new empty script template.
+    xt -edit <script.xt>        : Open script in the built-in Vim-style TermXT editor.
     xt -check <script.xt>       : Validate script syntax without running.
     xt -ver                     : Display TermXT version.
 
@@ -154,7 +155,7 @@ print ""Done!""
                 string currentDir = File.ReadAllText(GlobalVariables.currentDirectory);
                 string rest = args.Substring(Name.Length).TrimStart();
 
-                if(rest.StartsWith("-ver"))
+                if (rest.StartsWith("-ver"))
                 {
                     FileSystem.SuccessWriteLine($"TermXT version: {s_version}");
                     return;
@@ -166,6 +167,14 @@ print ""Done!""
                     string newFile = FileSystem.SanitizePath(rest.Substring(5).Trim(), currentDir);
                     File.WriteAllText(newFile, s_template.Replace("{DATE}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
                     FileSystem.SuccessWriteLine($"Script template created: {newFile}");
+                    return;
+                }
+
+                // xt -edit <file>
+                if (rest.StartsWith("-edit", StringComparison.OrdinalIgnoreCase))
+                {
+                    string editorArgs = rest.Length > 5 ? rest.Substring(5).TrimStart() : string.Empty;
+                    TermXTEditorCommand.OpenFromArguments(editorArgs, currentDir);
                     return;
                 }
 
@@ -578,17 +587,84 @@ print ""Done!""
             private void ExecPrint(string rawLine)
             {
                 string text = rawLine[5..].Trim().Trim('"');
-                text = ProcessEscapes(text);
                 text = Interpolate(text);
+                text = ProcessEscapes(text);
                 Console.WriteLine(text);
             }
 
             private static string ProcessEscapes(string text)
             {
-                return text.Replace("\\\\", "\x00")
-                           .Replace("\\n", "\n")
-                           .Replace("\\t", "\t")
-                           .Replace("\x00", "\\");
+                if (string.IsNullOrEmpty(text))
+                    return text;
+
+                var result = new System.Text.StringBuilder(text.Length);
+
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (IsWindowsPathStart(text, i))
+                    {
+                        int end = FindWindowsPathEnd(text, i);
+                        result.Append(text, i, end - i);
+                        i = end - 1;
+                        continue;
+                    }
+
+                    if (text[i] == '\\' && i + 1 < text.Length)
+                    {
+                        switch (text[i + 1])
+                        {
+                            case '\\':
+                                result.Append('\\');
+                                i++;
+                                continue;
+                            case 'n':
+                                result.Append('\n');
+                                i++;
+                                continue;
+                            case 't':
+                                result.Append('\t');
+                                i++;
+                                continue;
+                        }
+                    }
+
+                    result.Append(text[i]);
+                }
+
+                return result.ToString();
+            }
+
+            private static bool IsWindowsPathStart(string text, int index)
+            {
+                bool boundary = index == 0 ||
+                    char.IsWhiteSpace(text[index - 1]) ||
+                    text[index - 1] == '"' ||
+                    text[index - 1] == '\'' ||
+                    text[index - 1] == '(';
+
+                if (!boundary)
+                    return false;
+
+                if (index + 2 < text.Length &&
+                    char.IsLetter(text[index]) &&
+                    text[index + 1] == ':' &&
+                    (text[index + 2] == '\\' || text[index + 2] == '/'))
+                {
+                    return true;
+                }
+
+                return index + 1 < text.Length &&
+                    text[index] == '\\' &&
+                    text[index + 1] == '\\';
+            }
+
+            private static int FindWindowsPathEnd(string text, int start)
+            {
+                int end = start;
+                while (end < text.Length && !char.IsWhiteSpace(text[end]))
+                    end++;
+
+                return end;
             }
 
             private void ExecRun(string line)
@@ -1064,38 +1140,38 @@ print ""Done!""
                     PrintError(_pc + 1, $"Function '{funcName}' not found.");
                     return;
                 }
-       
-                    int argCount = parts.Count - 1;
-                    var savedArgs = new Dictionary<string, string>();
 
-                    // Save and set positional args for this call.
-                    for (int a = 1; a <= argCount; a++)
-                    {
-                        string key = a.ToString();
-                        if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
-                        _vars[key] = parts[a];
-                    }
+                int argCount = parts.Count - 1;
+                var savedArgs = new Dictionary<string, string>();
 
-                    // Remove any leftover positional args beyond what we're passing
-                    // so they don't leak from a previous call.
-                    for (int a = argCount + 1; a <= 20; a++)
-                    {
-                        string key = a.ToString();
-                        if (!_vars.ContainsKey(key)) break;
-                        savedArgs[key] = _vars[key];
-                        _vars.Remove(key);
-                    }
+                // Save and set positional args for this call.
+                for (int a = 1; a <= argCount; a++)
+                {
+                    string key = a.ToString();
+                    if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
+                    _vars[key] = parts[a];
+                }
 
-                    int savedPc = _pc;
-                    _returnRequested = false;
-                    ExecuteBlock(range.Start, range.End);
-                    _returnRequested = false;
-                    _pc = savedPc;
+                // Remove any leftover positional args beyond what we're passing
+                // so they don't leak from a previous call.
+                for (int a = argCount + 1; a <= 20; a++)
+                {
+                    string key = a.ToString();
+                    if (!_vars.ContainsKey(key)) break;
+                    savedArgs[key] = _vars[key];
+                    _vars.Remove(key);
+                }
 
-                    // Restore previous positional args.
-                    foreach (var kv in savedArgs)
-                        _vars[kv.Key] = kv.Value;
-          
+                int savedPc = _pc;
+                _returnRequested = false;
+                ExecuteBlock(range.Start, range.End);
+                _returnRequested = false;
+                _pc = savedPc;
+
+                // Restore previous positional args.
+                foreach (var kv in savedArgs)
+                    _vars[kv.Key] = kv.Value;
+
             }
 
             // ── Try / catch / end ────────────────────────────────────────────
