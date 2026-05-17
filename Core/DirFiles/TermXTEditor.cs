@@ -1,3 +1,14 @@
+/*
+
+TermXTEditor is a terminal-based text editor designed for Windows, supporting multiple programming languages with syntax highlighting and basic editing features. 
+It uses ANSI escape codes for rendering the interface and handles user input through the console. 
+The editor maintains an internal state to manage the file being edited, cursor position, undo/redo stacks, diagnostics, and more. 
+It also integrates with Roslyn for C# semantic analysis and code completion.
+
+Fully vibe coded with codex/gpt-5.5
+
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -591,6 +602,7 @@ namespace Core.DirFiles
         private bool _insertUndoStarted;
         private int _cursorLine;
         private int _cursorCol;
+        private int _verticalCursorCol = -1;
         private int _scrollTop;
         private int _scrollLeft;
         private int _lastWidth = -1;
@@ -994,6 +1006,7 @@ namespace Core.DirFiles
             {
                 _mouseSelecting = true;
                 DismissCompletion();
+                ResetVerticalCursorColumn();
                 _selectionAnchorLine = position.Line;
                 _selectionAnchorCol = position.Col;
                 _hasSelectionAnchor = true;
@@ -1005,6 +1018,7 @@ namespace Core.DirFiles
 
             if (_mouseSelecting && (leftDown || leftReleased))
             {
+                ResetVerticalCursorColumn();
                 _cursorLine = position.Line;
                 _cursorCol = position.Col;
                 ClampCursor();
@@ -1120,6 +1134,7 @@ namespace Core.DirFiles
 
             _cursorLine = 0;
             _cursorCol = 0;
+            ResetVerticalCursorColumn();
             _scrollTop = 0;
             _scrollLeft = 0;
             _savedLines = _lines.ToArray();
@@ -1627,6 +1642,7 @@ namespace Core.DirFiles
                     return;
                 }
 
+                ResetVerticalCursorColumn();
                 InsertText(queuedInsertText);
                 RefreshCompletionAfterEdit();
                 Status("Pasted");
@@ -1634,7 +1650,13 @@ namespace Core.DirFiles
             }
 
             if (_completionActive && TryHandleCompletionKey(key))
+            {
+                ResetVerticalCursorColumn();
                 return;
+            }
+
+            if (!IsVerticalCursorNavigationKey(key))
+                ResetVerticalCursorColumn();
 
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
@@ -1698,6 +1720,26 @@ namespace Core.DirFiles
             }
         }
 
+        private bool IsVerticalCursorNavigationKey(ConsoleKeyInfo key)
+        {
+            if (_mode != Mode.Normal && _mode != Mode.Insert)
+                return false;
+
+            if (_mode == Mode.Normal && (key.KeyChar == 'j' || key.KeyChar == 'k'))
+                return true;
+
+            switch (key.Key)
+            {
+                case ConsoleKey.UpArrow:
+                case ConsoleKey.DownArrow:
+                case ConsoleKey.PageUp:
+                case ConsoleKey.PageDown:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private void HandleNormalKey(ConsoleKeyInfo key)
         {
             if (_pendingDelete && key.KeyChar != 'd')
@@ -1725,11 +1767,13 @@ namespace Core.DirFiles
                     break;
                 case ConsoleKey.Home:
                     UpdateSelectionBeforeMove(key);
+                    ResetVerticalCursorColumn();
                     _cursorCol = 0;
                     ClearSelectionAfterMoveIfNeeded(key);
                     break;
                 case ConsoleKey.End:
                     UpdateSelectionBeforeMove(key);
+                    ResetVerticalCursorColumn();
                     _cursorCol = CurrentLine().Length;
                     ClearSelectionAfterMoveIfNeeded(key);
                     break;
@@ -1776,10 +1820,12 @@ namespace Core.DirFiles
                     break;
                 case '0':
                     ClearSelection();
+                    ResetVerticalCursorColumn();
                     _cursorCol = 0;
                     break;
                 case '$':
                     ClearSelection();
+                    ResetVerticalCursorColumn();
                     _cursorCol = CurrentLine().Length;
                     break;
                 case 'i':
@@ -1870,6 +1916,7 @@ namespace Core.DirFiles
                 case ConsoleKey.Home:
                     DismissCompletion();
                     UpdateSelectionBeforeMove(key);
+                    ResetVerticalCursorColumn();
                     _cursorCol = 0;
                     ClearSelectionAfterMoveIfNeeded(key);
                     _insertUndoStarted = false;
@@ -1877,6 +1924,7 @@ namespace Core.DirFiles
                 case ConsoleKey.End:
                     DismissCompletion();
                     UpdateSelectionBeforeMove(key);
+                    ResetVerticalCursorColumn();
                     _cursorCol = CurrentLine().Length;
                     ClearSelectionAfterMoveIfNeeded(key);
                     _insertUndoStarted = false;
@@ -3710,6 +3758,7 @@ namespace Core.DirFiles
             _pendingDelete = false;
             _insertUndoStarted = false;
             ClearSelection();
+            ResetVerticalCursorColumn();
             _cursorLine = lineNumber - 1;
             _cursorCol = 0;
             ClampCursor();
@@ -3755,6 +3804,7 @@ namespace Core.DirFiles
                 : LastDiagnosticIndexBefore(_cursorLine);
 
             EditorDiagnostic diagnostic = _diagnostics[index];
+            ResetVerticalCursorColumn();
             _cursorLine = diagnostic.LineIndex;
             _cursorCol = Math.Min(CurrentLine().Length, Math.Max(0, diagnostic.StartColumn));
             _pendingDelete = false;
@@ -4669,6 +4719,7 @@ namespace Core.DirFiles
 
             _cursorLine = snapshot.CursorLine;
             _cursorCol = snapshot.CursorCol;
+            ResetVerticalCursorColumn();
             _scrollTop = snapshot.ScrollTop;
             _scrollLeft = snapshot.ScrollLeft;
             _dirty = !LinesEqual(_lines, _savedLines);
@@ -4704,6 +4755,7 @@ namespace Core.DirFiles
                     if (idx >= 0)
                     {
                         ClearSelection();
+                        ResetVerticalCursorColumn();
                         _cursorLine = line;
                         _cursorCol = idx;
                         Status("Found: " + text);
@@ -4722,6 +4774,8 @@ namespace Core.DirFiles
 
         private void MoveLeft()
         {
+            ResetVerticalCursorColumn();
+
             if (_cursorCol > 0)
             {
                 _cursorCol--;
@@ -4737,6 +4791,8 @@ namespace Core.DirFiles
 
         private void MoveRight()
         {
+            ResetVerticalCursorColumn();
+
             int max = CurrentLine().Length;
             if (_cursorCol < max)
             {
@@ -4763,15 +4819,31 @@ namespace Core.DirFiles
 
         private void MoveVertical(int delta)
         {
-            int desiredCol = _cursorCol;
+            if (_verticalCursorCol < 0)
+                _verticalCursorCol = _cursorCol;
+
             _cursorLine = Math.Max(0, Math.Min(_lines.Count - 1, _cursorLine + delta));
-            _cursorCol = Math.Min(desiredCol, CurrentLine().Length);
-            if (_mode == Mode.Normal && CurrentLine().Length > 0)
-                _cursorCol = Math.Min(_cursorCol, CurrentLine().Length - 1);
+            _cursorCol = ClampVerticalCursorColumn(_verticalCursorCol);
+        }
+
+        private int ClampVerticalCursorColumn(int column)
+        {
+            int lineLength = CurrentLine().Length;
+            int maxColumn = lineLength;
+            if (_mode == Mode.Normal && lineLength > 0)
+                maxColumn = lineLength - 1;
+
+            return ClampValue(column, 0, maxColumn);
+        }
+
+        private void ResetVerticalCursorColumn()
+        {
+            _verticalCursorCol = -1;
         }
 
         private void MoveToDocumentStart()
         {
+            ResetVerticalCursorColumn();
             ClearSelection();
             _pendingDelete = false;
             _insertUndoStarted = false;
@@ -4785,6 +4857,7 @@ namespace Core.DirFiles
 
         private void MoveToDocumentEnd()
         {
+            ResetVerticalCursorColumn();
             ClearSelection();
             _pendingDelete = false;
             _insertUndoStarted = false;

@@ -847,6 +847,92 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void MoveDown_ThroughShortLine_RestoresPreferredColumnOnLongerLine()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "abcdef", "xy", "abcdef" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 0);
+            SetPrivateField(editor, "_cursorCol", 4);
+
+            InvokePrivate(editor, "MoveDown");
+
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(1);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be(1);
+
+            InvokePrivate(editor, "MoveDown");
+
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(2);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be(4);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void MoveUp_InInsertModeThroughShortLine_RestoresPreferredColumnOnLongerLine()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "abcdef", "xy", "abcdef" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateEnumField(editor, "_mode", "Insert");
+            SetPrivateField(editor, "_cursorLine", 2);
+            SetPrivateField(editor, "_cursorCol", 5);
+
+            InvokePrivate(editor, "MoveUp");
+
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(1);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be(2);
+
+            InvokePrivate(editor, "MoveUp");
+
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(0);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be(5);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void MoveLeft_AfterVerticalMove_ResetsPreferredColumn()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "abcdef", "xy", "abcdef" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateEnumField(editor, "_mode", "Insert");
+            SetPrivateField(editor, "_cursorLine", 0);
+            SetPrivateField(editor, "_cursorCol", 4);
+
+            InvokePrivate(editor, "MoveDown");
+            InvokePrivate(editor, "MoveLeft");
+            InvokePrivate(editor, "MoveDown");
+
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(2);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be(1);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void TryGetMouseTextPosition_InLineNumberGutter_MapsToSourceColumnZero()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
