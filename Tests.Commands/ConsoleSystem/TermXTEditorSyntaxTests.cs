@@ -435,6 +435,65 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CSharpCompletion_IncompleteMethodConsoleDot_AutoOpensMemberSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(
+                path,
+                "using System;\npublic class C\n{\n    public void M()\n    {\n        Console$$");
+            SetPrivateEnumField(editor, "_mode", "Insert");
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('.', ConsoleKey.OemPeriod, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
+            completions.Should().Contain(completion => completion.Label == "WriteLine");
+            completions.Take(4).Should().Contain(completion => completion.Label == "WriteLine");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_TermXtSyntaxWithCSharpUsing_AutoOpensMemberSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "using System;\nConsole");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateEnumField(editor, "_mode", "Insert");
+            SetPrivateField(editor, "_cursorLine", 1);
+            SetPrivateField(editor, "_cursorCol", "Console".Length);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('.', ConsoleKey.OemPeriod, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
+            completions.Should().Contain(completion => completion.Label == "WriteLine");
+            completions.Take(4).Should().Contain(completion => completion.Label == "WriteLine");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CSharpCompletion_TypingConsoleDotFromScratch_AutoOpensMemberSuggestions()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");

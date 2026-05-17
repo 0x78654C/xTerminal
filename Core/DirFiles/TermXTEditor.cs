@@ -1674,10 +1674,10 @@ namespace Core.DirFiles
 
         private bool StartCSharpCompletion(bool manual)
         {
-            if (_syntax != TermXTEditorSyntax.CSharp)
+            if (!IsCSharpCompletionContext())
             {
                 if (manual)
-                    Status("C# IntelliSense is only available in C# buffers", error: true);
+                    Status("C# IntelliSense needs a C# file or C# code", error: true);
 
                 DismissCompletion();
                 return false;
@@ -1730,7 +1730,7 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterText(string text)
         {
-            if (_syntax != TermXTEditorSyntax.CSharp)
+            if (!IsCSharpCompletionContext())
                 return;
 
             if (_completionActive)
@@ -1751,7 +1751,7 @@ namespace Core.DirFiles
                 return;
             }
 
-            if (_syntax == TermXTEditorSyntax.CSharp && ShouldStartAutomaticCSharpCompletion())
+            if (IsCSharpCompletionContext() && ShouldStartAutomaticCSharpCompletion())
                 StartCSharpCompletion(manual: false);
         }
 
@@ -1767,7 +1767,7 @@ namespace Core.DirFiles
 
         private bool IsCursorAfterCSharpWordPart()
         {
-            if (_syntax != TermXTEditorSyntax.CSharp || _lines.Count == 0)
+            if (!IsCSharpCompletionContext() || _lines.Count == 0)
                 return false;
 
             string line = CurrentLine();
@@ -1778,7 +1778,7 @@ namespace Core.DirFiles
 
         private bool ShouldStartAutomaticCSharpCompletion()
         {
-            if (_syntax != TermXTEditorSyntax.CSharp || _lines.Count == 0)
+            if (!IsCSharpCompletionContext() || _lines.Count == 0)
                 return false;
 
             if (IsCursorAfterCSharpDot())
@@ -1795,6 +1795,39 @@ namespace Core.DirFiles
             return _cursorCol > 0 &&
                 _cursorCol <= line.Length &&
                 line[_cursorCol - 1] == '.';
+        }
+
+        private bool IsCSharpCompletionContext()
+        {
+            if (_syntax == TermXTEditorSyntax.CSharp)
+                return true;
+
+            return LooksLikeCSharpCompletionBuffer();
+        }
+
+        private bool LooksLikeCSharpCompletionBuffer()
+        {
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                string text = StripCSharpLineComment(_lines[i]).Trim();
+                if (text.Length == 0)
+                    continue;
+
+                if (!string.IsNullOrWhiteSpace(TryGetCSharpUsingNamespace(text)) ||
+                    text.StartsWith("using static ", StringComparison.Ordinal) ||
+                    text.StartsWith("namespace ", StringComparison.Ordinal) ||
+                    text.StartsWith("class ", StringComparison.Ordinal) ||
+                    text.Contains(" class ") ||
+                    text.StartsWith("record ", StringComparison.Ordinal) ||
+                    text.Contains(" record ") ||
+                    text.StartsWith("struct ", StringComparison.Ordinal) ||
+                    text.Contains(" struct "))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void RefreshCSharpCompletion()
@@ -2026,7 +2059,7 @@ namespace Core.DirFiles
         {
             session = null;
 
-            if (_syntax != TermXTEditorSyntax.CSharp || _lines.Count == 0)
+            if (!IsCSharpCompletionContext() || _lines.Count == 0)
                 return false;
 
             ClampCursor();
@@ -2291,6 +2324,9 @@ namespace Core.DirFiles
             }
 
             if (typeSymbol == null)
+                typeSymbol = ResolveCSharpImportedBclType(semanticModel.Compilation, targetExpression, out staticContext);
+
+            if (typeSymbol == null)
                 return;
 
             int countBeforeLookup = items.Count;
@@ -2362,6 +2398,65 @@ namespace Core.DirFiles
                     typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     "global::System.Console",
                     StringComparison.Ordinal);
+        }
+
+        private ITypeSymbol ResolveCSharpImportedBclType(
+            Compilation compilation,
+            ExpressionSyntax targetExpression,
+            out bool staticContext)
+        {
+            staticContext = false;
+
+            if (compilation == null || targetExpression == null)
+                return null;
+
+            string metadataName = GetCSharpImportedBclMetadataName(targetExpression);
+            if (string.IsNullOrWhiteSpace(metadataName))
+                return null;
+
+            ITypeSymbol typeSymbol = NormalizeCSharpTypeSymbol(compilation.GetTypeByMetadataName(metadataName));
+            staticContext = typeSymbol != null;
+            return typeSymbol;
+        }
+
+        private string GetCSharpImportedBclMetadataName(ExpressionSyntax targetExpression)
+        {
+            string targetName = NormalizeCSharpTargetName(targetExpression.ToString());
+            if (string.IsNullOrWhiteSpace(targetName))
+                return string.Empty;
+
+            if (IsKnownCSharpBclMetadataName(targetName))
+                return targetName;
+
+            if (targetName.IndexOf('.') >= 0)
+                return string.Empty;
+
+            if (!s_csharpBclIdentifierNamespaces.TryGetValue(targetName, out string namespaceName))
+                return string.Empty;
+
+            return GetCSharpImportedNamespaces().Contains(namespaceName)
+                ? namespaceName + "." + targetName
+                : string.Empty;
+        }
+
+        private static string NormalizeCSharpTargetName(string targetName)
+        {
+            targetName = (targetName ?? string.Empty).Trim();
+            const string globalPrefix = "global::";
+            return targetName.StartsWith(globalPrefix, StringComparison.Ordinal)
+                ? targetName.Substring(globalPrefix.Length)
+                : targetName;
+        }
+
+        private static bool IsKnownCSharpBclMetadataName(string metadataName)
+        {
+            foreach (KeyValuePair<string, string> item in s_csharpBclIdentifierNamespaces)
+            {
+                if (string.Equals(item.Value + "." + item.Key, metadataName, StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
         }
 
         private static ITypeSymbol NormalizeCSharpTypeSymbol(ITypeSymbol typeSymbol)
