@@ -187,6 +187,40 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CSharpDiagnostics_TopLevelLocalFunction_DoesNotReportDllOutputError()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllLines(path, new[]
+            {
+                "using System;",
+                "using System.Diagnostics;",
+                "using System.IO;",
+                string.Empty,
+                "void Data()",
+                "{",
+                "    var fileInfo = new FileInfo(@\"c:\\users\\mrx\\downloads\\test\\picture.jpg\");",
+                "    Console.WriteLine(fileInfo.Length);",
+                "}"
+            });
+
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+            List<DiagnosticInfo> diagnostics = Diagnostics(editor);
+
+            diagnostics.Should().NotContain(diagnostic =>
+                diagnostic.LineNumber == 5 &&
+                diagnostic.Code == "CS8805");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CSharpCompletion_GlobalPrefix_SuggestsBclTypes()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
@@ -241,7 +275,9 @@ public class TermXTEditorSyntaxTests
 
             completions.Should().Contain(completion =>
                 completion.Label == "WriteLine" &&
-                completion.Kind == "method");
+                completion.Kind == "method" &&
+                completion.Detail.Contains("WriteLine(") &&
+                completion.Detail.Contains(")"));
         }
         finally
         {
@@ -330,7 +366,9 @@ public class TermXTEditorSyntaxTests
 
             completions.Should().Contain(completion =>
                 completion.Label == "Append" &&
-                completion.Kind == "method");
+                completion.Kind == "method" &&
+                completion.Detail.Contains("Append(") &&
+                completion.Detail.Contains(")"));
         }
         finally
         {
@@ -377,6 +415,90 @@ public class TermXTEditorSyntaxTests
             List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
             completions.Should().Contain(completion => completion.Label == "WriteLine");
             completions.Take(4).Should().Contain(completion => completion.Label == "WriteLine");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_UsingDirectiveDot_SuggestsNamespaceMembers()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System.$$");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "Text" &&
+                completion.Kind == "namespace" &&
+                completion.Detail == "System.Text");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_HandleKeyUsingDirectiveDot_AutoOpensNamespaceSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System$$");
+            SetPrivateEnumField(editor, "_mode", "Insert");
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('.', ConsoleKey.OemPeriod, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
+            completions.Should().Contain(completion =>
+                completion.Label == "Text" &&
+                completion.Kind == "namespace" &&
+                completion.Detail == "System.Text");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_TermXtSyntaxWithIncompleteUsingDirective_AutoOpensNamespaceSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "using System");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateEnumField(editor, "_mode", "Insert");
+            SetPrivateField(editor, "_cursorLine", 0);
+            SetPrivateField(editor, "_cursorCol", "using System".Length);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('.', ConsoleKey.OemPeriod, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
+            completions.Should().Contain(completion =>
+                completion.Label == "Text" &&
+                completion.Kind == "namespace" &&
+                completion.Detail == "System.Text");
         }
         finally
         {
@@ -650,6 +772,126 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void TryGetCopyTextForClipboard_WithSelection_ReturnsSelectedSourceOnly()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "alpha", "beta" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_hasSelectionAnchor", true);
+            SetPrivateField(editor, "_selectionAnchorLine", 0);
+            SetPrivateField(editor, "_selectionAnchorCol", 0);
+            SetPrivateField(editor, "_cursorLine", 1);
+            SetPrivateField(editor, "_cursorCol", "beta".Length);
+
+            (bool success, string text, string copiedItem) = CopyTextForClipboard(editor);
+
+            success.Should().BeTrue();
+            copiedItem.Should().Be("selection");
+            text.Should().Be("alpha" + Environment.NewLine + "beta");
+            text.Should().NotStartWith("1");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void TryGetCopyTextForClipboard_WithoutSelection_ReturnsCurrentSourceLine()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "one", "two", "three" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 1);
+            SetPrivateField(editor, "_cursorCol", 1);
+
+            (bool success, string text, string copiedItem) = CopyTextForClipboard(editor);
+
+            success.Should().BeTrue();
+            copiedItem.Should().Be("line");
+            text.Should().Be("two" + Environment.NewLine);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void DisableNativeConsoleSelectionMode_ClearsQuickEditAndKeepsExtendedFlags()
+    {
+        const int enableProcessedInput = 0x0001;
+        const int enableWindowInput = 0x0008;
+        const int enableMouseInput = 0x0010;
+        const int enableQuickEditMode = 0x0040;
+        const int enableExtendedFlags = 0x0080;
+
+        int mode = InvokePrivateStatic<int>(
+            "DisableNativeConsoleSelectionMode",
+            enableProcessedInput | enableQuickEditMode);
+
+        (mode & enableProcessedInput).Should().Be(0);
+        (mode & enableQuickEditMode).Should().Be(0);
+        (mode & enableWindowInput).Should().Be(enableWindowInput);
+        (mode & enableMouseInput).Should().Be(enableMouseInput);
+        (mode & enableExtendedFlags).Should().Be(enableExtendedFlags);
+    }
+
+    [Fact]
+    public void TryGetMouseTextPosition_InLineNumberGutter_MapsToSourceColumnZero()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "alpha", "beta" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+
+            (bool success, int line, int col) = MouseTextPosition(editor, x: 0, y: 2);
+
+            success.Should().BeTrue();
+            line.Should().Be(0);
+            col.Should().Be(0);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void TryGetMouseTextPosition_InTextArea_MapsToSourceColumn()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "alpha", "beta" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+
+            (bool success, int line, int col) = MouseTextPosition(editor, x: 7, y: 3);
+
+            success.Should().BeTrue();
+            line.Should().Be(1);
+            col.Should().Be(2);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CutSelectionOrCurrentLine_WithSelection_CutsSelectedText()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
@@ -842,6 +1084,33 @@ public class TermXTEditorSyntaxTests
         return result;
     }
 
+    private static (bool success, string text, string copiedItem) CopyTextForClipboard(TermXTEditor editor)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TryGetCopyTextForClipboard",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        object[] arguments = { string.Empty, string.Empty };
+        bool success = (bool)method.Invoke(editor, arguments)!;
+        return (success, (string)arguments[0], (string)arguments[1]);
+    }
+
+    private static (bool success, int line, int col) MouseTextPosition(TermXTEditor editor, int x, int y)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TryGetMouseTextPosition",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        object?[] arguments = { x, y, null };
+        bool success = (bool)method.Invoke(editor, arguments)!;
+        object position = arguments[2]!;
+        Type positionType = position.GetType();
+        return (
+            success,
+            (int)positionType.GetProperty("Line")!.GetValue(position)!,
+            (int)positionType.GetProperty("Col")!.GetValue(position)!);
+    }
+
     private static CompletionInfo ToCompletionInfo(object completion)
     {
         Type completionType = completion.GetType();
@@ -968,6 +1237,15 @@ public class TermXTEditorSyntaxTests
             BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         return (T)method.Invoke(target, arguments)!;
+    }
+
+    private static T InvokePrivateStatic<T>(string methodName, params object[] arguments)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            methodName,
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        return (T)method.Invoke(null, arguments)!;
     }
 
     private static void SetPrivateField(object target, string fieldName, object value)
