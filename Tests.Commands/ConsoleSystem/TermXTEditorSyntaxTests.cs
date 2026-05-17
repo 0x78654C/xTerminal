@@ -187,6 +187,282 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CSharpCompletion_GlobalPrefix_SuggestsBclTypes()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\npublic class C { void M() { Con$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "Console" &&
+                completion.Kind == "type");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_GlobalPrefixWithoutUsing_DoesNotSuggestUnimportedBclTypes()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "public class C { void M() { Con$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().NotContain(completion => completion.Label == "Console");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_StaticMemberAccess_SuggestsConsoleWriteLine()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\npublic class C { void M() { Console.Wr$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "WriteLine" &&
+                completion.Kind == "method");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_UnimportedBclType_DoesNotSuggestStaticMembers()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "public class C { void M() { Console.Wr$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().NotContain(completion => completion.Label == "WriteLine");
+            completions.Should().NotContain(completion => completion.Label == "Write");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_FullyQualifiedBclType_SuggestsStaticMembers()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "public class C { void M() { System.Console.Wr$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "WriteLine" &&
+                completion.Kind == "method");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_ImportedBclPropertyChain_SuggestsReturnedTypeMembers()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\npublic class C { void M() { DateTime.Now.To$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "ToString" &&
+                completion.Kind == "method");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_LocalVariableMemberAccess_UsesSemanticType()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(
+                path,
+                "using System.Text;\npublic class C { void M() { var sb = new StringBuilder(); sb.Ap$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "Append" &&
+                completion.Kind == "method");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_TypingIdentifierPart_AutoOpensSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\npublic class C { void M() { Co$$ } }");
+
+            InvokePrivate(editor, "InsertText", "n");
+            InvokePrivate(editor, "RefreshCompletionAfterText", "n");
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            CSharpCompletions(editor).Should().Contain(completion => completion.Label == "Console");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_TypingDot_AutoOpensMemberSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\npublic class C { void M() { Console$$ } }");
+
+            InvokePrivate(editor, "InsertText", ".");
+            InvokePrivate(editor, "RefreshCompletionAfterText", ".");
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
+            completions.Should().Contain(completion => completion.Label == "WriteLine");
+            completions.Take(4).Should().Contain(completion => completion.Label == "WriteLine");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_TopLevelConsoleWithUsing_SuggestsStaticMembers()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\nConsole.Wr$$");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "WriteLine" &&
+                completion.Kind == "method");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_HandleKeyDot_AutoOpensMemberSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\nConsole$$");
+            SetPrivateEnumField(editor, "_mode", "Insert");
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('.', ConsoleKey.OemPeriod, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
+            completions.Should().Contain(completion => completion.Label == "WriteLine");
+            completions.Take(4).Should().Contain(completion => completion.Label == "WriteLine");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_TypingConsoleDotFromScratch_AutoOpensMemberSuggestions()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, "using System;\n $$");
+            SetPrivateEnumField(editor, "_mode", "Insert");
+
+            foreach (char value in "Console.")
+                InvokePrivate(
+                    editor,
+                    "HandleKey",
+                    new ConsoleKeyInfo(value, ConsoleKeyFromChar(value), shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
+            completions.Should().Contain(completion => completion.Label == "WriteLine");
+            completions.Take(4).Should().Contain(completion => completion.Label == "WriteLine");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void TokenizeRust_HighlightsCommonRustTokens()
     {
         const string line = @"pub fn main<'a>() { println!(r#""hi""#); let x: i32 = 42; } // comment";
@@ -315,6 +591,60 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CutSelectionOrCurrentLine_WithSelection_CutsSelectedText()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "alpha beta");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_hasSelectionAnchor", true);
+            SetPrivateField(editor, "_selectionAnchorLine", 0);
+            SetPrivateField(editor, "_selectionAnchorCol", 6);
+            SetPrivateField(editor, "_cursorLine", 0);
+            SetPrivateField(editor, "_cursorCol", 10);
+
+            InvokePrivate(editor, "CutSelectionOrCurrentLine", false);
+
+            Lines(editor).Should().Equal("alpha ");
+            GetPrivateField<bool>(editor, "_hasSelectionAnchor").Should().BeFalse();
+            GetPrivateField<bool>(editor, "_dirty").Should().BeTrue();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CutSelectionOrCurrentLine_WithoutSelection_CutsCurrentLine()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "one", "two", "three" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 1);
+            SetPrivateField(editor, "_cursorCol", 1);
+
+            InvokePrivate(editor, "CutSelectionOrCurrentLine", false);
+
+            Lines(editor).Should().Equal("one", "three");
+            GetPrivateField<bool>(editor, "_hasLineClipboard").Should().BeTrue();
+            GetPrivateField<string>(editor, "_lineClipboard").Should().Be("two");
+            GetPrivateField<bool>(editor, "_dirty").Should().BeTrue();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CheckExternalFileChange_WhenDiskFileChanges_SetsPendingDiskWarning()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
@@ -388,6 +718,87 @@ public class TermXTEditorSyntaxTests
         }
 
         return tokens;
+    }
+
+    private static TermXTEditor CSharpEditorAtMarker(string path, string markedText)
+    {
+        int marker = markedText.IndexOf("$$", StringComparison.Ordinal);
+        marker.Should().BeGreaterThanOrEqualTo(0);
+
+        string text = markedText.Remove(marker, 2);
+        File.WriteAllText(path, text);
+
+        var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+        (int line, int column) = LineColumnAtPosition(text, marker);
+        SetPrivateField(editor, "_cursorLine", line);
+        SetPrivateField(editor, "_cursorCol", column);
+        return editor;
+    }
+
+    private static (int line, int column) LineColumnAtPosition(string text, int position)
+    {
+        int line = 0;
+        int column = 0;
+        int limit = Math.Min(position, text.Length);
+
+        for (int i = 0; i < limit; i++)
+        {
+            if (text[i] == '\n')
+            {
+                line++;
+                column = 0;
+            }
+            else
+            {
+                column++;
+            }
+        }
+
+        return (line, column);
+    }
+
+    private static List<CompletionInfo> CSharpCompletions(TermXTEditor editor)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "GetCSharpCompletionItems",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        var result = new List<CompletionInfo>();
+        foreach (object completion in (IEnumerable)method.Invoke(editor, Array.Empty<object>())!)
+            result.Add(ToCompletionInfo(completion));
+
+        return result;
+    }
+
+    private static List<CompletionInfo> ActiveCSharpCompletions(TermXTEditor editor)
+    {
+        FieldInfo field = typeof(TermXTEditor).GetField(
+            "_completionItems",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        var result = new List<CompletionInfo>();
+        foreach (object completion in (IEnumerable)field.GetValue(editor)!)
+            result.Add(ToCompletionInfo(completion));
+
+        return result;
+    }
+
+    private static CompletionInfo ToCompletionInfo(object completion)
+    {
+        Type completionType = completion.GetType();
+        return new CompletionInfo(
+            (string)completionType.GetProperty("Label")!.GetValue(completion)!,
+            (string)completionType.GetProperty("Kind")!.GetValue(completion)!,
+            (string)completionType.GetProperty("Detail")!.GetValue(completion)!);
+    }
+
+    private static void SetPrivateEnumField(object target, string fieldName, string value)
+    {
+        FieldInfo field = target.GetType().GetField(
+            fieldName,
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        field.SetValue(target, Enum.Parse(field.FieldType, value));
     }
 
     private static List<DiagnosticInfo> Diagnostics(TermXTEditor editor)
@@ -466,6 +877,20 @@ public class TermXTEditorSyntaxTests
     {
         File.WriteAllText(path, text);
         File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(2));
+    }
+
+    private static ConsoleKey ConsoleKeyFromChar(char value)
+    {
+        if (value >= 'A' && value <= 'Z')
+            return (ConsoleKey)((int)ConsoleKey.A + (value - 'A'));
+
+        if (value >= 'a' && value <= 'z')
+            return (ConsoleKey)((int)ConsoleKey.A + (value - 'a'));
+
+        if (value == '.')
+            return ConsoleKey.OemPeriod;
+
+        throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported test key.");
     }
 
     private static void InvokePrivate(object target, string methodName, params object[] arguments)
@@ -558,5 +983,19 @@ public class TermXTEditorSyntaxTests
         public int LineNumber { get; }
         public string Code { get; }
         public string Description { get; }
+    }
+
+    private readonly struct CompletionInfo
+    {
+        public CompletionInfo(string label, string kind, string detail)
+        {
+            Label = label;
+            Kind = kind;
+            Detail = detail;
+        }
+
+        public string Label { get; }
+        public string Kind { get; }
+        public string Detail { get; }
     }
 }

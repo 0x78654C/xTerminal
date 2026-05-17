@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Core.DirFiles
 {
@@ -36,6 +37,9 @@ namespace Core.DirFiles
         private const string IndentText = "    ";
         private const int ExternalChangeCheckIntervalMs = 750;
         private const int CSharpSemanticDiagnosticDelayMs = 900;
+        private const int CSharpCompletionMaxItems = 80;
+        private const int CSharpCompletionMaxVisibleItems = 8;
+        private const int CSharpAutomaticGlobalCompletionMinPrefixLength = 2;
 
         private const int CTitle = 45;
         private const int CTitleDim = 250;
@@ -65,6 +69,10 @@ namespace Core.DirFiles
         private const int CPreprocessor = 183;
         private const int CSelectionFg = 232;
         private const int CSelectionBg = 153;
+        private const int CCompletionBg = 236;
+        private const int CCompletionSelectedBg = 45;
+        private const int CCompletionLabel = 231;
+        private const int CCompletionDetail = 250;
         private const int CSourceFlow = 39;
         private const int CSourceKeyword = 75;
         private const int CSourceType = 179;
@@ -231,6 +239,72 @@ namespace Core.DirFiles
             "define", "elif", "else", "endif", "endregion", "error", "if", "line",
             "nullable", "pragma", "region", "undef", "warning"
         };
+
+        private static readonly string[] s_csharpCompletionKeywords =
+        {
+            "abstract", "as", "async", "await", "base", "bool", "break", "byte",
+            "case", "catch", "char", "checked", "class", "const", "continue",
+            "decimal", "default", "delegate", "do", "double", "else", "enum",
+            "event", "explicit", "extern", "false", "finally", "fixed", "float",
+            "for", "foreach", "goto", "if", "implicit", "in", "int", "interface",
+            "internal", "is", "lock", "long", "namespace", "new", "null", "object",
+            "operator", "out", "override", "params", "private", "protected",
+            "public", "readonly", "record", "ref", "return", "sbyte", "sealed",
+            "short", "sizeof", "stackalloc", "static", "string", "struct", "switch",
+            "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked",
+            "unsafe", "ushort", "using", "var", "virtual", "void", "volatile",
+            "when", "where", "while", "with", "yield"
+        };
+
+        private static readonly string[] s_csharpCompletionNamespaces =
+        {
+            "System", "System.Collections", "System.Collections.Generic",
+            "System.Globalization", "System.IO", "System.Linq", "System.Net",
+            "System.Reflection", "System.Text", "System.Text.Json",
+            "System.Text.RegularExpressions", "System.Threading",
+            "System.Threading.Tasks"
+        };
+
+        private static readonly Dictionary<string, string> s_csharpBclIdentifierNamespaces =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "Action", "System" },
+                { "ArgumentException", "System" },
+                { "Array", "System" },
+                { "Attribute", "System" },
+                { "CancellationToken", "System.Threading" },
+                { "Console", "System" },
+                { "DateTime", "System" },
+                { "Dictionary", "System.Collections.Generic" },
+                { "Directory", "System.IO" },
+                { "Enumerable", "System.Linq" },
+                { "Exception", "System" },
+                { "File", "System.IO" },
+                { "Func", "System" },
+                { "Guid", "System" },
+                { "HashSet", "System.Collections.Generic" },
+                { "IEnumerable", "System.Collections.Generic" },
+                { "IDisposable", "System" },
+                { "IList", "System.Collections.Generic" },
+                { "InvalidOperationException", "System" },
+                { "KeyValuePair", "System.Collections.Generic" },
+                { "List", "System.Collections.Generic" },
+                { "Math", "System" },
+                { "Nullable", "System" },
+                { "Object", "System" },
+                { "Path", "System.IO" },
+                { "Random", "System" },
+                { "ReadOnlySpan", "System" },
+                { "Regex", "System.Text.RegularExpressions" },
+                { "Span", "System" },
+                { "String", "System" },
+                { "StringBuilder", "System.Text" },
+                { "Task", "System.Threading.Tasks" },
+                { "Thread", "System.Threading" },
+                { "TimeSpan", "System" },
+                { "Tuple", "System" },
+                { "Uri", "System" }
+            };
 
         private static readonly HashSet<string> s_cFlowKeywords = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -494,9 +568,17 @@ namespace Core.DirFiles
         private TermXTEditorSyntax _syntax;
         private readonly List<EditorDiagnostic> _diagnostics = new List<EditorDiagnostic>();
         private readonly HashSet<int> _diagnosticLineIndexes = new HashSet<int>();
+        private readonly List<CSharpCompletionItem> _completionItems = new List<CSharpCompletionItem>();
+        private readonly List<CSharpCompletionItem> _completionAllItems = new List<CSharpCompletionItem>();
         private bool _diagnosticsCacheDirty = true;
         private bool _csharpSemanticDiagnosticsPending;
         private DateTime _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
+        private bool _completionActive;
+        private bool _completionMemberAccess;
+        private int _completionSelectedIndex;
+        private int _completionScrollOffset;
+        private int _completionStartLine;
+        private int _completionStartCol;
         private bool _hasSelectionAnchor;
         private int _selectionAnchorLine;
         private int _selectionAnchorCol;
@@ -700,7 +782,7 @@ namespace Core.DirFiles
                     return true;
                 }
 
-                if (Console.KeyAvailable)
+                if (IsConsoleKeyAvailable())
                 {
                     key = Console.ReadKey(intercept: true);
                     return true;
@@ -842,6 +924,7 @@ namespace Core.DirFiles
             _undo.Clear();
             _redo.Clear();
             ClearSelection();
+            DismissCompletion();
             InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
         }
 
@@ -919,17 +1002,17 @@ namespace Core.DirFiles
 
         private void InvalidateDiagnosticsCache(bool delayCSharpSemanticDiagnostics)
         {
-            _diagnosticsCacheDirty = true;
-
             if (_syntax == TermXTEditorSyntax.CSharp)
             {
                 _csharpSemanticDiagnosticsPending = true;
                 _csharpSemanticDiagnosticsReadyUtc = delayCSharpSemanticDiagnostics
                     ? DateTime.UtcNow.AddMilliseconds(CSharpSemanticDiagnosticDelayMs)
                     : DateTime.MinValue;
+                _diagnosticsCacheDirty = !delayCSharpSemanticDiagnostics;
                 return;
             }
 
+            _diagnosticsCacheDirty = true;
             _csharpSemanticDiagnosticsPending = false;
             _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
         }
@@ -994,6 +1077,7 @@ namespace Core.DirFiles
             for (int row = 0; row < textRows; row++)
                 RenderEditorRow(_scrollTop + row, textTop + row, numberWidth, textLeft, textWidth, width);
 
+            RenderCompletionPopup(textTop, textLeft, textRows, textWidth, width);
             RenderStatus(statusRow, width);
             RenderCommandLine(commandRow, width);
 
@@ -1028,7 +1112,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Tab indent | Shift+Tab outdent | Shift+arrows select | Ctrl+C/V copy/paste | Ctrl+Z/Y undo/redo";
+                    help = " INSERT  Esc normal | C# IntelliSense auto-opens | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
                     help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | errors | next-error | syntax xt|cs|c|cpp|rust|js|py | Esc";
@@ -1037,7 +1121,7 @@ namespace Core.DirFiles
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+V paste | i edit | dd delete | / search | : command";
+                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -1072,6 +1156,78 @@ namespace Core.DirFiles
             int used = numberWidth + 1 + Math.Min(textWidth, Math.Max(0, line.Length - rowInfo.StartColumn));
             if (used < width)
                 _frame.Append(ClearEol);
+        }
+
+        private void RenderCompletionPopup(int textTop, int textLeft, int textRows, int textWidth, int width)
+        {
+            if (!_completionActive || _completionItems.Count == 0 || _mode != Mode.Insert)
+                return;
+
+            int visibleRows = Math.Min(CSharpCompletionMaxVisibleItems, _completionItems.Count);
+            EnsureCompletionSelectionVisible(visibleRows);
+
+            int cursorVisualRow = GetCursorVisualRow(textWidth);
+            int visualLine = cursorVisualRow - _scrollTop;
+            if (visualLine < 0 || visualLine >= textRows)
+                return;
+
+            int wrapIndex = GetCursorWrapIndex(textWidth);
+            int visualCol = _cursorCol - (wrapIndex * textWidth);
+            visualCol = Math.Max(0, Math.Min(textWidth - 1, visualCol));
+
+            int popupWidth = Math.Min(56, Math.Max(24, width - textLeft));
+            int popupLeft = textLeft + visualCol;
+            if (popupLeft + popupWidth > width)
+                popupLeft = Math.Max(textLeft, width - popupWidth);
+
+            popupWidth = Math.Min(popupWidth, width - popupLeft);
+            if (popupWidth < 16)
+                return;
+
+            int popupTop = textTop + visualLine + 1;
+            if (popupTop + visibleRows > textTop + textRows)
+                popupTop = textTop + visualLine - visibleRows;
+
+            if (popupTop < textTop)
+                popupTop = textTop;
+
+            for (int row = 0; row < visibleRows; row++)
+            {
+                int itemIndex = _completionScrollOffset + row;
+                if (itemIndex >= _completionItems.Count)
+                    break;
+
+                AppendCompletionPopupRow(
+                    popupLeft,
+                    popupTop + row,
+                    popupWidth,
+                    _completionItems[itemIndex],
+                    itemIndex == _completionSelectedIndex);
+            }
+        }
+
+        private void AppendCompletionPopupRow(
+            int left,
+            int top,
+            int width,
+            CSharpCompletionItem item,
+            bool selected)
+        {
+            int bg = selected ? CCompletionSelectedBg : CCompletionBg;
+            int labelColor = selected ? CStatusFg : CCompletionLabel;
+            int detailColor = selected ? CStatusFg : CCompletionDetail;
+            int labelWidth = Math.Min(Math.Max(8, width / 2), Math.Max(8, width - 12));
+            int detailWidth = Math.Max(0, width - labelWidth - 2);
+            string detail = string.IsNullOrWhiteSpace(item.Detail)
+                ? item.Kind
+                : item.Kind + " " + item.Detail;
+
+            _frame.Append(At(left, top))
+                .Append(B(bg)).Append(F(labelColor)).Append(" ")
+                .Append(Clip(item.Label, labelWidth).PadRight(labelWidth))
+                .Append(F(detailColor)).Append(" ")
+                .Append(Clip(detail, detailWidth).PadRight(detailWidth))
+                .Append(Reset);
         }
 
         private void RenderStatus(int row, int width)
@@ -1180,15 +1336,25 @@ namespace Core.DirFiles
             if (_mode == Mode.Insert && TryReadQueuedInsertText(key, out string queuedInsertText))
             {
                 InsertText(queuedInsertText);
+                RefreshCompletionAfterEdit();
                 Status("Pasted");
                 return;
             }
+
+            if (_completionActive && TryHandleCompletionKey(key))
+                return;
 
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
                 if (key.Key == ConsoleKey.C)
                 {
                     CopySelectionToClipboard();
+                    return;
+                }
+
+                if (key.Key == ConsoleKey.X)
+                {
+                    CutSelectionOrCurrentLine();
                     return;
                 }
 
@@ -1375,6 +1541,7 @@ namespace Core.DirFiles
 
         private void ExitInsertMode()
         {
+            DismissCompletion();
             _mode = Mode.Normal;
             _insertUndoStarted = false;
             ClampCursor();
@@ -1389,48 +1556,60 @@ namespace Core.DirFiles
                     ExitInsertMode();
                     break;
                 case ConsoleKey.LeftArrow:
+                    DismissCompletion();
                     MoveWithSelection(key, MoveLeft);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.RightArrow:
+                    DismissCompletion();
                     MoveWithSelection(key, MoveRight);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.UpArrow:
+                    DismissCompletion();
                     MoveWithSelection(key, MoveUp);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.DownArrow:
+                    DismissCompletion();
                     MoveWithSelection(key, MoveDown);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.Home:
+                    DismissCompletion();
                     UpdateSelectionBeforeMove(key);
                     _cursorCol = 0;
                     ClearSelectionAfterMoveIfNeeded(key);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.End:
+                    DismissCompletion();
                     UpdateSelectionBeforeMove(key);
                     _cursorCol = CurrentLine().Length;
                     ClearSelectionAfterMoveIfNeeded(key);
                     _insertUndoStarted = false;
                     break;
                 case ConsoleKey.Enter:
+                    DismissCompletion();
                     InsertNewLine();
                     break;
                 case ConsoleKey.Backspace:
                     Backspace();
+                    RefreshCompletionAfterEdit();
                     break;
                 case ConsoleKey.Delete:
                     DeleteForward();
+                    RefreshCompletionAfterEdit();
                     break;
                 case ConsoleKey.Tab:
                     HandleInsertTab(key);
                     break;
                 default:
                     if (TryGetInputText(key, out string insertText))
+                    {
                         InsertText(insertText);
+                        RefreshCompletionAfterText(insertText);
+                    }
                     break;
             }
         }
@@ -1491,6 +1670,1083 @@ namespace Core.DirFiles
                         _searchText += searchText;
                     break;
             }
+        }
+
+        private bool StartCSharpCompletion(bool manual)
+        {
+            if (_syntax != TermXTEditorSyntax.CSharp)
+            {
+                if (manual)
+                    Status("C# IntelliSense is only available in C# buffers", error: true);
+
+                DismissCompletion();
+                return false;
+            }
+
+            if (!TryBuildCSharpCompletionSession(manual, out CSharpCompletionSession session) ||
+                session.Items.Count == 0)
+            {
+                DismissCompletion();
+                if (manual)
+                    Status("No C# completions");
+
+                return false;
+            }
+
+            SetCompletionSession(session, selectedLabel: null);
+            if (manual)
+                Status("IntelliSense " + session.Items.Count + " " + Pluralize("item", session.Items.Count));
+
+            return true;
+        }
+
+        private void SetCompletionSession(CSharpCompletionSession session, string selectedLabel)
+        {
+            _completionAllItems.Clear();
+            _completionAllItems.AddRange(session.AllItems);
+            _completionItems.Clear();
+            _completionItems.AddRange(session.Items);
+            _completionStartLine = session.StartLine;
+            _completionStartCol = session.StartColumn;
+            _completionMemberAccess = session.MemberAccess;
+            _completionActive = _completionItems.Count > 0;
+            _completionSelectedIndex = 0;
+            _completionScrollOffset = 0;
+
+            if (!string.IsNullOrWhiteSpace(selectedLabel))
+            {
+                for (int i = 0; i < _completionItems.Count; i++)
+                {
+                    if (string.Equals(_completionItems[i].Label, selectedLabel, StringComparison.Ordinal))
+                    {
+                        _completionSelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+        }
+
+        private void RefreshCompletionAfterText(string text)
+        {
+            if (_syntax != TermXTEditorSyntax.CSharp)
+                return;
+
+            if (_completionActive)
+            {
+                RefreshCSharpCompletion();
+                return;
+            }
+
+            if (IsAutomaticCSharpCompletionTrigger(text) && ShouldStartAutomaticCSharpCompletion())
+                StartCSharpCompletion(manual: false);
+        }
+
+        private void RefreshCompletionAfterEdit()
+        {
+            if (_completionActive)
+            {
+                RefreshCSharpCompletion();
+                return;
+            }
+
+            if (_syntax == TermXTEditorSyntax.CSharp && ShouldStartAutomaticCSharpCompletion())
+                StartCSharpCompletion(manual: false);
+        }
+
+        private static bool IsAutomaticCSharpCompletionTrigger(string text)
+        {
+            if (string.Equals(text, ".", StringComparison.Ordinal))
+                return true;
+
+            return text != null &&
+                text.Length == 1 &&
+                IsCSharpWordPart(text[0]);
+        }
+
+        private bool IsCursorAfterCSharpWordPart()
+        {
+            if (_syntax != TermXTEditorSyntax.CSharp || _lines.Count == 0)
+                return false;
+
+            string line = CurrentLine();
+            return _cursorCol > 0 &&
+                _cursorCol <= line.Length &&
+                IsCSharpWordPart(line[_cursorCol - 1]);
+        }
+
+        private bool ShouldStartAutomaticCSharpCompletion()
+        {
+            if (_syntax != TermXTEditorSyntax.CSharp || _lines.Count == 0)
+                return false;
+
+            if (IsCursorAfterCSharpDot())
+                return true;
+
+            return TryGetCSharpCompletionPrefixFromCursor(out string prefix, out bool memberAccess, out int startColumn) &&
+                !memberAccess &&
+                prefix.Length >= CSharpAutomaticGlobalCompletionMinPrefixLength;
+        }
+
+        private bool IsCursorAfterCSharpDot()
+        {
+            string line = CurrentLine();
+            return _cursorCol > 0 &&
+                _cursorCol <= line.Length &&
+                line[_cursorCol - 1] == '.';
+        }
+
+        private void RefreshCSharpCompletion()
+        {
+            if (!_completionActive)
+                return;
+
+            string selectedLabel = _completionSelectedIndex >= 0 && _completionSelectedIndex < _completionItems.Count
+                ? _completionItems[_completionSelectedIndex].Label
+                : string.Empty;
+
+            if (TryRefreshCSharpCompletionFromCache(selectedLabel))
+                return;
+
+            if (!TryBuildCSharpCompletionSession(allowEmptyGlobalPrefix: true, out CSharpCompletionSession session) ||
+                session.Items.Count == 0)
+            {
+                DismissCompletion();
+                return;
+            }
+
+            SetCompletionSession(session, selectedLabel);
+        }
+
+        private bool TryRefreshCSharpCompletionFromCache(string selectedLabel)
+        {
+            if (_completionAllItems.Count == 0 || _cursorLine != _completionStartLine)
+                return false;
+
+            if (!TryGetCSharpCompletionPrefixFromSession(out string prefix))
+                return false;
+
+            if (!_completionMemberAccess &&
+                prefix.Length < CSharpAutomaticGlobalCompletionMinPrefixLength)
+            {
+                DismissCompletion();
+                return true;
+            }
+
+            var filtered = FilterCSharpCompletionItems(_completionAllItems, prefix);
+            if (filtered.Count == 0)
+            {
+                DismissCompletion();
+                return true;
+            }
+
+            _completionItems.Clear();
+            _completionItems.AddRange(filtered);
+            _completionSelectedIndex = 0;
+            _completionScrollOffset = 0;
+
+            if (!string.IsNullOrWhiteSpace(selectedLabel))
+            {
+                for (int i = 0; i < _completionItems.Count; i++)
+                {
+                    if (string.Equals(_completionItems[i].Label, selectedLabel, StringComparison.Ordinal))
+                    {
+                        _completionSelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+            return true;
+        }
+
+        private bool TryGetCSharpCompletionPrefixFromSession(out string prefix)
+        {
+            prefix = string.Empty;
+
+            if (_cursorLine < 0 || _cursorLine >= _lines.Count)
+                return false;
+
+            string line = CurrentLine();
+            if (_completionStartCol < 0 ||
+                _completionStartCol > line.Length ||
+                _cursorCol < _completionStartCol ||
+                _cursorCol > line.Length)
+            {
+                return false;
+            }
+
+            for (int i = _completionStartCol; i < _cursorCol; i++)
+            {
+                if (!IsCSharpWordPart(line[i]))
+                    return false;
+            }
+
+            prefix = line.Substring(_completionStartCol, _cursorCol - _completionStartCol);
+            return true;
+        }
+
+        private bool TryHandleCompletionKey(ConsoleKeyInfo key)
+        {
+            if (!_completionActive || _mode != Mode.Insert)
+                return false;
+
+            switch (key.Key)
+            {
+                case ConsoleKey.Escape:
+                    DismissCompletion();
+                    Status("IntelliSense closed");
+                    return true;
+                case ConsoleKey.UpArrow:
+                    MoveCompletionSelection(-1);
+                    return true;
+                case ConsoleKey.DownArrow:
+                    MoveCompletionSelection(1);
+                    return true;
+                case ConsoleKey.PageUp:
+                    MoveCompletionSelection(-CSharpCompletionMaxVisibleItems);
+                    return true;
+                case ConsoleKey.PageDown:
+                    MoveCompletionSelection(CSharpCompletionMaxVisibleItems);
+                    return true;
+                case ConsoleKey.Home:
+                    _completionSelectedIndex = 0;
+                    EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+                    return true;
+                case ConsoleKey.End:
+                    _completionSelectedIndex = Math.Max(0, _completionItems.Count - 1);
+                    EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+                    return true;
+                case ConsoleKey.Enter:
+                case ConsoleKey.Tab:
+                    CommitCSharpCompletion();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private void MoveCompletionSelection(int delta)
+        {
+            if (_completionItems.Count == 0)
+            {
+                DismissCompletion();
+                return;
+            }
+
+            _completionSelectedIndex = ClampValue(
+                _completionSelectedIndex + delta,
+                0,
+                _completionItems.Count - 1);
+            EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+        }
+
+        private void EnsureCompletionSelectionVisible(int visibleRows)
+        {
+            if (_completionItems.Count == 0)
+            {
+                _completionSelectedIndex = 0;
+                _completionScrollOffset = 0;
+                return;
+            }
+
+            int rows = Math.Max(1, visibleRows);
+            _completionSelectedIndex = ClampValue(_completionSelectedIndex, 0, _completionItems.Count - 1);
+
+            if (_completionSelectedIndex < _completionScrollOffset)
+                _completionScrollOffset = _completionSelectedIndex;
+            else if (_completionSelectedIndex >= _completionScrollOffset + rows)
+                _completionScrollOffset = _completionSelectedIndex - rows + 1;
+
+            _completionScrollOffset = ClampValue(
+                _completionScrollOffset,
+                0,
+                Math.Max(0, _completionItems.Count - rows));
+        }
+
+        private bool CommitCSharpCompletion()
+        {
+            if (!_completionActive || _completionItems.Count == 0)
+                return false;
+
+            if (_completionSelectedIndex < 0 || _completionSelectedIndex >= _completionItems.Count)
+                _completionSelectedIndex = 0;
+
+            if (_completionStartLine != _cursorLine)
+            {
+                DismissCompletion();
+                return false;
+            }
+
+            string line = CurrentLine();
+            int start = ClampValue(_completionStartCol, 0, line.Length);
+            int end = ClampValue(_cursorCol, start, line.Length);
+            CSharpCompletionItem item = _completionItems[_completionSelectedIndex];
+            string replacement = item.InsertionText;
+
+            PushInsertUndo();
+            _lines[_cursorLine] =
+                line.Substring(0, start) +
+                replacement +
+                line.Substring(end);
+            _cursorCol = start + replacement.Length;
+
+            DismissCompletion();
+            InvalidateDocumentCaches();
+            MarkDirty();
+            Status("Completed " + item.Label);
+            return true;
+        }
+
+        private void DismissCompletion()
+        {
+            _completionActive = false;
+            _completionAllItems.Clear();
+            _completionItems.Clear();
+            _completionMemberAccess = false;
+            _completionSelectedIndex = 0;
+            _completionScrollOffset = 0;
+            _completionStartLine = 0;
+            _completionStartCol = 0;
+        }
+
+        private List<CSharpCompletionItem> GetCSharpCompletionItems()
+        {
+            if (TryBuildCSharpCompletionSession(allowEmptyGlobalPrefix: true, out CSharpCompletionSession session))
+                return session.Items;
+
+            return new List<CSharpCompletionItem>();
+        }
+
+        private bool TryBuildCSharpCompletionSession(
+            bool allowEmptyGlobalPrefix,
+            out CSharpCompletionSession session)
+        {
+            session = null;
+
+            if (_syntax != TermXTEditorSyntax.CSharp || _lines.Count == 0)
+                return false;
+
+            ClampCursor();
+
+            if (!TryGetCSharpCompletionPrefixFromCursor(out string prefix, out bool memberAccess, out int startCol))
+                return false;
+
+            if (!memberAccess && prefix.Length == 0 && !allowEmptyGlobalPrefix)
+                return false;
+
+            if (!memberAccess)
+                return TryBuildCSharpGlobalCompletionSession(prefix, startCol, out session);
+
+            try
+            {
+                SourceCodeKind sourceKind = GetCSharpSourceKind();
+                CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
+                int position = GetDocumentPosition(_cursorLine, _cursorCol);
+
+                if (IsCSharpCompletionSuppressed(syntaxTree, position))
+                    return false;
+
+                CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind);
+                SemanticModel semanticModel = compilation.GetSemanticModel(syntaxTree);
+                var allItems = new List<CSharpCompletionItem>();
+                var labels = new HashSet<string>(StringComparer.Ordinal);
+
+                int dotPosition = GetDocumentPosition(_cursorLine, startCol - 1);
+                ExpressionSyntax targetExpression = FindCSharpMemberTargetExpression(
+                    syntaxTree.GetRoot(),
+                    dotPosition);
+
+                if (targetExpression == null)
+                    return false;
+
+                AddCSharpMemberCompletions(
+                    semanticModel,
+                    targetExpression,
+                    position,
+                    string.Empty,
+                    allItems,
+                    labels);
+
+                SortCSharpCompletionItems(allItems, string.Empty);
+                List<CSharpCompletionItem> items = FilterCSharpCompletionItems(allItems, prefix);
+
+                session = new CSharpCompletionSession(
+                    _cursorLine,
+                    startCol,
+                    memberAccess,
+                    allItems,
+                    items);
+                return items.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                Status("C# IntelliSense unavailable: " + ex.Message, error: true);
+                return false;
+            }
+        }
+
+        private bool TryGetCSharpCompletionPrefixFromCursor(
+            out string prefix,
+            out bool memberAccess,
+            out int startColumn)
+        {
+            prefix = string.Empty;
+            memberAccess = false;
+            startColumn = 0;
+
+            if (_lines.Count == 0)
+                return false;
+
+            string line = CurrentLine();
+            int cursorCol = ClampValue(_cursorCol, 0, line.Length);
+            int startCol = cursorCol;
+            while (startCol > 0 && IsCSharpWordPart(line[startCol - 1]))
+                startCol--;
+
+            prefix = line.Substring(startCol, cursorCol - startCol);
+            startColumn = startCol;
+            memberAccess = startCol > 0 && line[startCol - 1] == '.';
+            return true;
+        }
+
+        private bool TryBuildCSharpGlobalCompletionSession(
+            string prefix,
+            int startColumn,
+            out CSharpCompletionSession session)
+        {
+            var allItems = new List<CSharpCompletionItem>();
+            var labels = new HashSet<string>(StringComparer.Ordinal);
+
+            AddCSharpGlobalCompletions(prefix: string.Empty, allItems, labels);
+            SortCSharpCompletionItems(allItems, string.Empty);
+
+            List<CSharpCompletionItem> items = FilterCSharpCompletionItems(allItems, prefix);
+            session = new CSharpCompletionSession(
+                _cursorLine,
+                startColumn,
+                memberAccess: false,
+                allItems,
+                items);
+            return items.Count > 0;
+        }
+
+        private SourceCodeKind GetCSharpSourceKind()
+        {
+            return string.Equals(Path.GetExtension(_path), ".csx", StringComparison.OrdinalIgnoreCase)
+                ? SourceCodeKind.Script
+                : SourceCodeKind.Regular;
+        }
+
+        private static CSharpParseOptions CreateCSharpParseOptions(SourceCodeKind sourceKind)
+        {
+            return CSharpParseOptions.Default
+                .WithLanguageVersion(LanguageVersion.Latest)
+                .WithKind(sourceKind);
+        }
+
+        private CSharpCompilation CreateCSharpCompilation(SyntaxTree syntaxTree, SourceCodeKind sourceKind)
+        {
+            List<MetadataReference> references = s_csharpDiagnosticReferences.Value;
+            CSharpCompilationOptions compilationOptions =
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+
+            return sourceKind == SourceCodeKind.Script
+                ? CSharpCompilation.CreateScriptCompilation(
+                    Path.GetFileNameWithoutExtension(_path),
+                    syntaxTree,
+                    references,
+                    compilationOptions)
+                : CSharpCompilation.Create(
+                    Path.GetFileNameWithoutExtension(_path),
+                    new[] { syntaxTree },
+                    references,
+                    compilationOptions);
+        }
+
+        private int GetDocumentPosition(int lineIndex, int column)
+        {
+            int line = ClampValue(lineIndex, 0, Math.Max(0, _lines.Count - 1));
+            int position = 0;
+            for (int i = 0; i < line; i++)
+                position += _lines[i].Length + 1;
+
+            return position + ClampValue(column, 0, _lines[line].Length);
+        }
+
+        private static bool IsCSharpCompletionSuppressed(SyntaxTree syntaxTree, int position)
+        {
+            SyntaxNode root = syntaxTree.GetRoot();
+            int tokenPosition = ClampValue(position - 1, 0, Math.Max(0, root.FullSpan.End - 1));
+            SyntaxToken token = root.FindToken(tokenPosition, findInsideTrivia: true);
+
+            if (IsCSharpStringLikeToken(token.Kind()) &&
+                position > token.SpanStart &&
+                position < token.Span.End)
+            {
+                return true;
+            }
+
+            return IsCSharpSuppressedTrivia(token.LeadingTrivia, position) ||
+                IsCSharpSuppressedTrivia(token.TrailingTrivia, position);
+        }
+
+        private static bool IsCSharpStringLikeToken(SyntaxKind kind)
+        {
+            return kind == SyntaxKind.StringLiteralToken ||
+                kind == SyntaxKind.CharacterLiteralToken ||
+                kind == SyntaxKind.InterpolatedStringTextToken ||
+                kind == SyntaxKind.InterpolatedStringStartToken ||
+                kind == SyntaxKind.InterpolatedStringEndToken;
+        }
+
+        private static bool IsCSharpSuppressedTrivia(SyntaxTriviaList triviaList, int position)
+        {
+            foreach (SyntaxTrivia trivia in triviaList)
+            {
+                if (position < trivia.FullSpan.Start || position > trivia.FullSpan.End)
+                    continue;
+
+                SyntaxKind kind = trivia.Kind();
+                if (kind == SyntaxKind.SingleLineCommentTrivia ||
+                    kind == SyntaxKind.MultiLineCommentTrivia ||
+                    kind == SyntaxKind.SingleLineDocumentationCommentTrivia ||
+                    kind == SyntaxKind.MultiLineDocumentationCommentTrivia ||
+                    kind == SyntaxKind.DisabledTextTrivia)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static ExpressionSyntax FindCSharpMemberTargetExpression(SyntaxNode root, int dotPosition)
+        {
+            ExpressionSyntax expression = FindCSharpMemberTargetExpressionFromToken(
+                root.FindToken(Math.Max(0, dotPosition)),
+                dotPosition);
+
+            if (expression != null)
+                return expression;
+
+            return FindCSharpMemberTargetExpressionFromToken(
+                root.FindToken(Math.Max(0, dotPosition - 1)),
+                dotPosition);
+        }
+
+        private static ExpressionSyntax FindCSharpMemberTargetExpressionFromToken(
+            SyntaxToken token,
+            int dotPosition)
+        {
+            SyntaxNode node = token.Parent;
+            while (node != null)
+            {
+                var memberAccess = node as MemberAccessExpressionSyntax;
+                if (memberAccess != null && memberAccess.OperatorToken.SpanStart == dotPosition)
+                    return memberAccess.Expression;
+
+                node = node.Parent;
+            }
+
+            return null;
+        }
+
+        private void AddCSharpMemberCompletions(
+            SemanticModel semanticModel,
+            ExpressionSyntax targetExpression,
+            int position,
+            string prefix,
+            List<CSharpCompletionItem> items,
+            HashSet<string> labels)
+        {
+            SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(targetExpression);
+            ISymbol symbol = FirstCandidateSymbol(symbolInfo);
+
+            var namespaceSymbol = symbol as INamespaceSymbol;
+            if (namespaceSymbol != null)
+            {
+                foreach (ISymbol member in namespaceSymbol.GetMembers())
+                    AddCSharpSymbolCompletion(items, labels, member, prefix, "namespace", 0, memberAccess: true, staticContext: true);
+
+                return;
+            }
+
+            bool staticContext = false;
+            ITypeSymbol typeSymbol = symbol as ITypeSymbol;
+            if (typeSymbol != null)
+            {
+                typeSymbol = NormalizeCSharpTypeSymbol(typeSymbol);
+                staticContext = true;
+            }
+            else
+            {
+                TypeInfo typeInfo = semanticModel.GetTypeInfo(targetExpression);
+                typeSymbol = NormalizeCSharpTypeSymbol(typeInfo.Type) ??
+                    NormalizeCSharpTypeSymbol(typeInfo.ConvertedType) ??
+                    NormalizeCSharpTypeSymbol(TypeFromSymbol(symbol));
+            }
+
+            if (typeSymbol == null)
+                return;
+
+            int countBeforeLookup = items.Count;
+            foreach (ISymbol member in semanticModel.LookupSymbols(position, typeSymbol))
+            {
+                AddCSharpSymbolCompletion(
+                    items,
+                    labels,
+                    member,
+                    prefix,
+                    CSharpSymbolKind(member),
+                    CSharpMemberCompletionPriority(typeSymbol, member, 0),
+                    memberAccess: true,
+                    staticContext: staticContext);
+            }
+
+            if (items.Count != countBeforeLookup)
+                return;
+
+            foreach (ISymbol member in typeSymbol.GetMembers())
+            {
+                AddCSharpSymbolCompletion(
+                    items,
+                    labels,
+                    member,
+                    prefix,
+                    CSharpSymbolKind(member),
+                    CSharpMemberCompletionPriority(typeSymbol, member, 10),
+                    memberAccess: true,
+                    staticContext: staticContext);
+            }
+        }
+
+        private static int CSharpMemberCompletionPriority(
+            ITypeSymbol targetType,
+            ISymbol member,
+            int defaultPriority)
+        {
+            if (IsCSharpConsoleType(targetType) && member != null)
+            {
+                switch (member.Name)
+                {
+                    case "WriteLine":
+                        return -100;
+                    case "Write":
+                        return -99;
+                    case "ReadLine":
+                        return -98;
+                    case "ReadKey":
+                        return -97;
+                    case "Read":
+                        return -96;
+                    case "Clear":
+                        return -95;
+                    case "ForegroundColor":
+                        return -94;
+                    case "BackgroundColor":
+                        return -93;
+                }
+            }
+
+            return defaultPriority;
+        }
+
+        private static bool IsCSharpConsoleType(ITypeSymbol typeSymbol)
+        {
+            return typeSymbol != null &&
+                string.Equals(
+                    typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    "global::System.Console",
+                    StringComparison.Ordinal);
+        }
+
+        private static ITypeSymbol NormalizeCSharpTypeSymbol(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol == null || typeSymbol.TypeKind == TypeKind.Error)
+                return null;
+
+            return typeSymbol;
+        }
+
+        private void AddCSharpGlobalCompletions(
+            string prefix,
+            List<CSharpCompletionItem> items,
+            HashSet<string> labels)
+        {
+            AddCSharpDocumentIdentifierCompletions(items, labels, prefix);
+
+            HashSet<string> importedNamespaces = GetCSharpImportedNamespaces();
+            foreach (string name in s_csharpBclIdentifiers)
+            {
+                if (!IsCSharpBclIdentifierImported(name, importedNamespaces))
+                    continue;
+
+                AddCSharpWordCompletion(items, labels, name, prefix, "type", string.Empty, 20);
+            }
+
+            foreach (string name in s_csharpCompletionNamespaces)
+                AddCSharpWordCompletion(items, labels, name, prefix, "namespace", string.Empty, 30);
+
+            foreach (string keyword in s_csharpCompletionKeywords)
+                AddCSharpWordCompletion(items, labels, keyword, prefix, "keyword", string.Empty, 40);
+        }
+
+        private HashSet<string> GetCSharpImportedNamespaces()
+        {
+            var namespaces = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string line in _lines)
+            {
+                string namespaceName = TryGetCSharpUsingNamespace(line);
+                if (!string.IsNullOrWhiteSpace(namespaceName))
+                    namespaces.Add(namespaceName);
+            }
+
+            return namespaces;
+        }
+
+        private static string TryGetCSharpUsingNamespace(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+                return string.Empty;
+
+            string text = StripCSharpLineComment(line).Trim();
+            if (text.StartsWith("global ", StringComparison.Ordinal))
+                text = text.Substring("global ".Length).TrimStart();
+
+            if (!text.StartsWith("using ", StringComparison.Ordinal))
+                return string.Empty;
+
+            string value = text.Substring("using ".Length).Trim();
+            if (value.StartsWith("static ", StringComparison.Ordinal) ||
+                value.Contains("=") ||
+                value.StartsWith("(", StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            int semicolonIndex = value.IndexOf(';');
+            if (semicolonIndex >= 0)
+                value = value.Substring(0, semicolonIndex);
+
+            value = value.Trim();
+            return IsCSharpNamespaceName(value) ? value : string.Empty;
+        }
+
+        private static string StripCSharpLineComment(string line)
+        {
+            int commentIndex = line.IndexOf("//", StringComparison.Ordinal);
+            return commentIndex >= 0 ? line.Substring(0, commentIndex) : line;
+        }
+
+        private static bool IsCSharpNamespaceName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            string[] parts = value.Split('.');
+            foreach (string part in parts)
+            {
+                if (part.Length == 0 || !IsCSharpWordStart(part[0]))
+                    return false;
+
+                for (int i = 1; i < part.Length; i++)
+                {
+                    if (!IsCSharpWordPart(part[i]))
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsCSharpBclIdentifierImported(string name, HashSet<string> importedNamespaces)
+        {
+            return s_csharpBclIdentifierNamespaces.TryGetValue(name, out string namespaceName) &&
+                importedNamespaces.Contains(namespaceName);
+        }
+
+        private void AddCSharpDocumentIdentifierCompletions(
+            List<CSharpCompletionItem> items,
+            HashSet<string> labels,
+            string prefix)
+        {
+            for (int lineIndex = 0; lineIndex < _lines.Count; lineIndex++)
+            {
+                string line = _lines[lineIndex];
+                int i = 0;
+                while (i < line.Length)
+                {
+                    if (!IsCSharpWordStart(line[i]))
+                    {
+                        i++;
+                        continue;
+                    }
+
+                    int start = i;
+                    i++;
+                    while (i < line.Length && IsCSharpWordPart(line[i]))
+                        i++;
+
+                    string word = line.Substring(start, i - start);
+                    if (!s_csharpKeywords.Contains(word) &&
+                        !s_csharpFlowKeywords.Contains(word) &&
+                        !s_csharpTypeKeywords.Contains(word) &&
+                        !s_csharpLiteralKeywords.Contains(word) &&
+                        !s_csharpContextualKeywords.Contains(word))
+                    {
+                        AddCSharpWordCompletion(items, labels, word, prefix, "identifier", string.Empty, 5);
+                    }
+                }
+            }
+        }
+
+        private static ISymbol FirstCandidateSymbol(SymbolInfo symbolInfo)
+        {
+            if (symbolInfo.Symbol != null)
+                return symbolInfo.Symbol;
+
+            foreach (ISymbol symbol in symbolInfo.CandidateSymbols)
+                return symbol;
+
+            return null;
+        }
+
+        private static ITypeSymbol TypeFromSymbol(ISymbol symbol)
+        {
+            var local = symbol as ILocalSymbol;
+            if (local != null)
+                return local.Type;
+
+            var parameter = symbol as IParameterSymbol;
+            if (parameter != null)
+                return parameter.Type;
+
+            var field = symbol as IFieldSymbol;
+            if (field != null)
+                return field.Type;
+
+            var property = symbol as IPropertySymbol;
+            if (property != null)
+                return property.Type;
+
+            var eventSymbol = symbol as IEventSymbol;
+            if (eventSymbol != null)
+                return eventSymbol.Type;
+
+            var method = symbol as IMethodSymbol;
+            if (method != null)
+                return method.ReturnType;
+
+            return null;
+        }
+
+        private static void AddCSharpSymbolCompletion(
+            List<CSharpCompletionItem> items,
+            HashSet<string> labels,
+            ISymbol symbol,
+            string prefix,
+            string kind,
+            int priority,
+            bool memberAccess,
+            bool staticContext)
+        {
+            if (!ShouldIncludeCSharpSymbol(symbol, memberAccess, staticContext))
+                return;
+
+            string label = CSharpSymbolLabel(symbol);
+            if (!MatchesCSharpCompletionPrefix(label, prefix))
+                return;
+
+            AddCSharpCompletionItem(
+                items,
+                labels,
+                label,
+                label,
+                kind,
+                CSharpSymbolDetail(symbol),
+                priority);
+        }
+
+        private static bool ShouldIncludeCSharpSymbol(ISymbol symbol, bool memberAccess, bool staticContext)
+        {
+            if (symbol == null || symbol.IsImplicitlyDeclared)
+                return false;
+
+            string name = symbol.Name;
+            if (string.IsNullOrWhiteSpace(name) || name[0] == '<')
+                return false;
+
+            if (memberAccess)
+            {
+                if (staticContext)
+                {
+                    if (!symbol.IsStatic &&
+                        symbol.Kind != SymbolKind.NamedType &&
+                        symbol.Kind != SymbolKind.Namespace)
+                    {
+                        return false;
+                    }
+                }
+                else if (symbol.IsStatic && symbol.Kind != SymbolKind.NamedType)
+                {
+                    return false;
+                }
+            }
+
+            var method = symbol as IMethodSymbol;
+            if (method != null)
+            {
+                return method.MethodKind == MethodKind.Ordinary ||
+                    method.MethodKind == MethodKind.LocalFunction;
+            }
+
+            return symbol.Kind == SymbolKind.NamedType ||
+                symbol.Kind == SymbolKind.Namespace ||
+                symbol.Kind == SymbolKind.Property ||
+                symbol.Kind == SymbolKind.Field ||
+                symbol.Kind == SymbolKind.Event ||
+                symbol.Kind == SymbolKind.Local ||
+                symbol.Kind == SymbolKind.Parameter;
+        }
+
+        private static string CSharpSymbolLabel(ISymbol symbol)
+        {
+            return symbol.Name ?? string.Empty;
+        }
+
+        private static string CSharpSymbolKind(ISymbol symbol)
+        {
+            if (symbol == null)
+                return string.Empty;
+
+            switch (symbol.Kind)
+            {
+                case SymbolKind.NamedType:
+                    return "type";
+                case SymbolKind.Namespace:
+                    return "namespace";
+                case SymbolKind.Method:
+                    return "method";
+                case SymbolKind.Property:
+                    return "property";
+                case SymbolKind.Field:
+                    return "field";
+                case SymbolKind.Event:
+                    return "event";
+                case SymbolKind.Local:
+                    return "local";
+                case SymbolKind.Parameter:
+                    return "parameter";
+                default:
+                    return symbol.Kind.ToString().ToLowerInvariant();
+            }
+        }
+
+        private static string CSharpSymbolDetail(ISymbol symbol)
+        {
+            try
+            {
+                return symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static void AddCSharpWordCompletion(
+            List<CSharpCompletionItem> items,
+            HashSet<string> labels,
+            string label,
+            string prefix,
+            string kind,
+            string detail,
+            int priority)
+        {
+            if (!MatchesCSharpCompletionPrefix(label, prefix))
+                return;
+
+            AddCSharpCompletionItem(items, labels, label, label, kind, detail, priority);
+        }
+
+        private static void AddCSharpCompletionItem(
+            List<CSharpCompletionItem> items,
+            HashSet<string> labels,
+            string label,
+            string insertionText,
+            string kind,
+            string detail,
+            int priority)
+        {
+            if (string.IsNullOrWhiteSpace(label) || labels.Contains(label))
+                return;
+
+            labels.Add(label);
+            items.Add(new CSharpCompletionItem(label, insertionText, kind, detail, priority));
+        }
+
+        private static bool MatchesCSharpCompletionPrefix(string label, string prefix)
+        {
+            return string.IsNullOrEmpty(prefix) ||
+                (!string.IsNullOrEmpty(label) && label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static List<CSharpCompletionItem> FilterCSharpCompletionItems(
+            List<CSharpCompletionItem> allItems,
+            string prefix)
+        {
+            var items = new List<CSharpCompletionItem>();
+            foreach (CSharpCompletionItem item in allItems)
+            {
+                if (MatchesCSharpCompletionPrefix(item.Label, prefix))
+                    items.Add(item);
+            }
+
+            SortCSharpCompletionItems(items, prefix);
+            if (items.Count > CSharpCompletionMaxItems)
+                items.RemoveRange(CSharpCompletionMaxItems, items.Count - CSharpCompletionMaxItems);
+
+            return items;
+        }
+
+        private static void SortCSharpCompletionItems(List<CSharpCompletionItem> items, string prefix)
+        {
+            items.Sort((left, right) => CompareCSharpCompletionItems(left, right, prefix));
+        }
+
+        private static int CompareCSharpCompletionItems(
+            CSharpCompletionItem left,
+            CSharpCompletionItem right,
+            string prefix)
+        {
+            int rank = CSharpCompletionMatchRank(left.Label, prefix)
+                .CompareTo(CSharpCompletionMatchRank(right.Label, prefix));
+            if (rank != 0)
+                return rank;
+
+            int priority = left.Priority.CompareTo(right.Priority);
+            if (priority != 0)
+                return priority;
+
+            return string.Compare(left.Label, right.Label, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static int CSharpCompletionMatchRank(string label, string prefix)
+        {
+            if (string.IsNullOrEmpty(prefix))
+                return 2;
+
+            if (string.Equals(label, prefix, StringComparison.Ordinal))
+                return 0;
+
+            if (!string.IsNullOrEmpty(label) && label.StartsWith(prefix, StringComparison.Ordinal))
+                return 1;
+
+            return 2;
         }
 
         private void ExecuteEditorCommand(string command)
@@ -1786,6 +3042,7 @@ namespace Core.DirFiles
             }
 
             _syntax = syntax;
+            DismissCompletion();
             InvalidateSyntaxStateCache();
             Status("Syntax: " + SyntaxDisplayName(_syntax));
             _mode = Mode.Normal;
@@ -1831,6 +3088,7 @@ namespace Core.DirFiles
             _pendingDelete = false;
             _insertUndoStarted = false;
             ClearSelection();
+            DismissCompletion();
 
             var explorer = new EditorFileExplorer(GetExplorerStartDirectory());
             string selectedFile = explorer.Run();
@@ -2332,6 +3590,49 @@ namespace Core.DirFiles
             }
         }
 
+        private void CutSelectionOrCurrentLine(bool copyToSystemClipboard = true)
+        {
+            if (_mode == Mode.Command || _mode == Mode.Search)
+            {
+                Status("Cut unavailable", error: true);
+                return;
+            }
+
+            if (TryGetSelectedText(out string text))
+            {
+                if (copyToSystemClipboard && !TrySetClipboardText(text, out string error))
+                {
+                    Status("Cut failed", error: true);
+                    BottomStatus(error, error: true);
+                    return;
+                }
+
+                DismissCompletion();
+                PushUndo();
+                DeleteSelectionWithoutUndo();
+                MarkDirty();
+                _insertUndoStarted = false;
+                Status("Cut selection");
+                BottomStatus("Cut " + text.Length + " characters");
+                return;
+            }
+
+            string line = CurrentLine();
+            if (copyToSystemClipboard && !TrySetClipboardText(line + Environment.NewLine, out string lineError))
+            {
+                Status("Cut failed", error: true);
+                BottomStatus(lineError, error: true);
+                return;
+            }
+
+            int lineNumber = _cursorLine + 1;
+            DismissCompletion();
+            DeleteCurrentLine();
+            _insertUndoStarted = false;
+            Status("Cut line");
+            BottomStatus("Cut line " + lineNumber);
+        }
+
         private void PasteFromClipboard()
         {
             if (!TryGetClipboardText(out string text, out string error))
@@ -2362,9 +3663,11 @@ namespace Core.DirFiles
             if (_mode == Mode.Insert)
             {
                 InsertText(text);
+                RefreshCompletionAfterEdit();
             }
             else
             {
+                DismissCompletion();
                 PushUndo();
                 DeleteSelectionWithoutUndo();
                 InsertTextWithoutUndo(text);
@@ -2385,6 +3688,7 @@ namespace Core.DirFiles
 
             _redo.Push(TakeSnapshot());
             RestoreSnapshot(_undo.Pop());
+            DismissCompletion();
             _insertUndoStarted = false;
             ClearSelection();
             Status("Undo");
@@ -2400,6 +3704,7 @@ namespace Core.DirFiles
 
             _undo.Push(TakeSnapshot());
             RestoreSnapshot(_redo.Pop());
+            DismissCompletion();
             _insertUndoStarted = false;
             ClearSelection();
             Status("Redo");
@@ -2985,7 +4290,7 @@ namespace Core.DirFiles
         {
             for (int i = 0; i < 3; i++)
             {
-                if (Console.KeyAvailable)
+                if (IsConsoleKeyAvailable())
                     return true;
 
                 Thread.Sleep(1);
@@ -2998,11 +4303,27 @@ namespace Core.DirFiles
         {
             key = default;
 
-            if (!Console.KeyAvailable)
+            if (!IsConsoleKeyAvailable())
                 return false;
 
             key = Console.ReadKey(intercept: true);
             return true;
+        }
+
+        private static bool IsConsoleKeyAvailable()
+        {
+            try
+            {
+                return Console.KeyAvailable;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+            catch (IOException)
+            {
+                return false;
+            }
         }
 
         private static bool TryGetQueuedPasteTextFragment(ConsoleKeyInfo key, out string text)
@@ -7643,6 +8964,52 @@ namespace Core.DirFiles
             public int EndColumn { get; private set; }
             public string Code { get; private set; }
             public string Description { get; private set; }
+        }
+
+        private sealed class CSharpCompletionSession
+        {
+            public CSharpCompletionSession(
+                int startLine,
+                int startColumn,
+                bool memberAccess,
+                List<CSharpCompletionItem> allItems,
+                List<CSharpCompletionItem> items)
+            {
+                StartLine = startLine;
+                StartColumn = startColumn;
+                MemberAccess = memberAccess;
+                AllItems = allItems ?? new List<CSharpCompletionItem>();
+                Items = items ?? new List<CSharpCompletionItem>();
+            }
+
+            public int StartLine { get; private set; }
+            public int StartColumn { get; private set; }
+            public bool MemberAccess { get; private set; }
+            public List<CSharpCompletionItem> AllItems { get; private set; }
+            public List<CSharpCompletionItem> Items { get; private set; }
+        }
+
+        private sealed class CSharpCompletionItem
+        {
+            public CSharpCompletionItem(
+                string label,
+                string insertionText,
+                string kind,
+                string detail,
+                int priority)
+            {
+                Label = label ?? string.Empty;
+                InsertionText = string.IsNullOrEmpty(insertionText) ? Label : insertionText;
+                Kind = kind ?? string.Empty;
+                Detail = detail ?? string.Empty;
+                Priority = priority;
+            }
+
+            public string Label { get; private set; }
+            public string InsertionText { get; private set; }
+            public string Kind { get; private set; }
+            public string Detail { get; private set; }
+            public int Priority { get; private set; }
         }
 
         private readonly struct TermXtBlock
