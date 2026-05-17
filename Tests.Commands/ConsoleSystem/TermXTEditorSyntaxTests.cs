@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Core.DirFiles;
 using FluentAssertions;
@@ -1001,6 +1002,78 @@ public class TermXTEditorSyntaxTests
             .Should().Be("x");
     }
 
+    [Fact]
+    public void Clip_RemovesTerminalControlCharacters()
+    {
+        string clipped = InvokePrivateStatic<string>(
+            "Clip",
+            "safe\u001b[31m\u0007red\ttext",
+            100);
+
+        clipped.Should().Be("safe[31mred text");
+        clipped.Any(char.IsControl).Should().BeFalse();
+    }
+
+    [Fact]
+    public void TryReadEditorLines_RejectsOversizedFileBeforeReading()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+        long maxBytes = Constant<long>("MaxEditorFileBytes");
+
+        try
+        {
+            using (FileStream stream = File.Create(path))
+                stream.SetLength(maxBytes + 1);
+
+            object[] arguments = { path, Array.Empty<string>(), string.Empty };
+
+            bool success = InvokePrivateStatic<bool>("TryReadEditorLines", arguments);
+
+            success.Should().BeFalse();
+            ((string)arguments[2]).Should().Contain("too large");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void TryValidatePasteText_RejectsOversizedPaste()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "line");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            int maxPasteCharacters = Constant<int>("MaxPasteCharacters");
+            string oversizedPaste = new string('x', maxPasteCharacters + 1);
+            object[] arguments = { oversizedPaste, string.Empty };
+
+            bool success = InvokePrivate<bool>(editor, "TryValidatePasteText", arguments);
+
+            success.Should().BeFalse();
+            ((string)arguments[1]).Should().Contain("too large");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ConsoleInputInteropStructs_MatchWindowsRecordSizes()
+    {
+        Marshal.SizeOf(NestedType("InputRecord")).Should().Be(20);
+        Marshal.SizeOf(NestedType("KeyEventRecord")).Should().Be(16);
+        Marshal.SizeOf(NestedType("MouseEventRecord")).Should().Be(16);
+        Marshal.SizeOf(NestedType("WindowBufferSizeRecord")).Should().Be(4);
+        Marshal.SizeOf(NestedType("Coord")).Should().Be(4);
+    }
+
     private static List<TokenInfo> TokenizeRust(string line, int blockCommentDepth)
     {
         MethodInfo method = typeof(TermXTEditor).GetMethod(
@@ -1282,11 +1355,23 @@ public class TermXTEditorSyntaxTests
 
     private static int Color(string name)
     {
+        return Constant<int>(name);
+    }
+
+    private static T Constant<T>(string name)
+    {
         FieldInfo field = typeof(TermXTEditor).GetField(
             name,
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
-        return (int)field.GetRawConstantValue()!;
+        return (T)field.GetRawConstantValue()!;
+    }
+
+    private static Type NestedType(string name)
+    {
+        return typeof(TermXTEditor).GetNestedType(
+            name,
+            BindingFlags.NonPublic)!;
     }
 
     private readonly struct TokenInfo

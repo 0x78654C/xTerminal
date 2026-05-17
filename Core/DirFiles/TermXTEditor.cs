@@ -40,6 +40,11 @@ namespace Core.DirFiles
         private const int CSharpCompletionMaxItems = 80;
         private const int CSharpCompletionMaxVisibleItems = 8;
         private const int CSharpAutomaticGlobalCompletionMinPrefixLength = 2;
+        private const long MaxEditorFileBytes = 50L * 1024 * 1024;
+        private const int MaxEditorLineCount = 500000;
+        private const int MaxPasteCharacters = 2 * 1024 * 1024;
+        private const int MaxCommandTextLength = 4096;
+        private const int MaxSearchTextLength = 4096;
         private const int StdInputHandle = -10;
         private const int EnableProcessedInput = 0x0001;
         private const int EnableWindowInput = 0x0008;
@@ -159,19 +164,23 @@ namespace Core.DirFiles
         private static extern IntPtr GetStdHandle(int nStdHandle);
 
         [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetConsoleMode(IntPtr hConsoleHandle, out int lpMode);
 
         [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool SetConsoleMode(IntPtr hConsoleHandle, int dwMode);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool PeekConsoleInput(
             IntPtr hConsoleInput,
             [Out] InputRecord[] lpBuffer,
             int nLength,
             out int lpNumberOfEventsRead);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool ReadConsoleInput(
             IntPtr hConsoleInput,
             [Out] InputRecord[] lpBuffer,
@@ -816,9 +825,7 @@ namespace Core.DirFiles
         private static bool TryGetConsoleInputMode(IntPtr inputHandle, out int mode)
         {
             mode = 0;
-            return inputHandle != IntPtr.Zero &&
-                inputHandle.ToInt64() != -1 &&
-                GetConsoleMode(inputHandle, out mode);
+            return IsValidConsoleHandle(inputHandle) && GetConsoleMode(inputHandle, out mode);
         }
 
         private static int DisableNativeConsoleSelectionMode(int mode)
@@ -1105,13 +1112,11 @@ namespace Core.DirFiles
 
         private void LoadFile()
         {
+            if (!TryReadEditorLines(_path, out string[] loadedLines, out string error))
+                throw new IOException(error);
+
             _lines.Clear();
-
-            if (File.Exists(_path))
-                _lines.AddRange(File.ReadAllLines(_path, Encoding.UTF8));
-
-            if (_lines.Count == 0)
-                _lines.Add(string.Empty);
+            _lines.AddRange(loadedLines);
 
             _cursorLine = 0;
             _cursorCol = 0;
@@ -1137,10 +1142,56 @@ namespace Core.DirFiles
 
             try
             {
-                lines = File.ReadAllLines(_path, Encoding.UTF8);
-                if (lines.Length == 0)
-                    lines = new[] { string.Empty };
+                return TryReadEditorLines(_path, out lines, out error);
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+        }
 
+        private static bool TryReadEditorLines(string path, out string[] lines, out string error)
+        {
+            lines = Array.Empty<string>();
+            error = string.Empty;
+
+            try
+            {
+                var info = new FileInfo(path);
+                if (!info.Exists)
+                {
+                    lines = new[] { string.Empty };
+                    return true;
+                }
+
+                if (info.Length > MaxEditorFileBytes)
+                {
+                    error = "File is too large for xte (" + FormatSize(info.Length) +
+                        "). Limit is " + FormatSize(MaxEditorFileBytes) + ".";
+                    return false;
+                }
+
+                var loaded = new List<string>();
+                using (var reader = new StreamReader(path, Encoding.UTF8, detectEncodingFromByteOrderMarks: true))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (loaded.Count >= MaxEditorLineCount)
+                        {
+                            error = "File has too many lines for xte. Limit is " + MaxEditorLineCount + ".";
+                            return false;
+                        }
+
+                        loaded.Add(line);
+                    }
+                }
+
+                if (loaded.Count == 0)
+                    loaded.Add(string.Empty);
+
+                lines = loaded.ToArray();
                 return true;
             }
             catch (Exception ex)
@@ -1566,8 +1617,16 @@ namespace Core.DirFiles
 
         private void HandleKey(ConsoleKeyInfo key)
         {
-            if (_mode == Mode.Insert && TryReadQueuedInsertText(key, out string queuedInsertText))
+            if (_mode == Mode.Insert && TryReadQueuedInsertText(key, out string queuedInsertText, out string queuedPasteError))
             {
+                if (!string.IsNullOrEmpty(queuedPasteError) ||
+                    !TryValidatePasteText(queuedInsertText, out queuedPasteError))
+                {
+                    Status("Paste blocked", error: true);
+                    BottomStatus(queuedPasteError, error: true);
+                    return;
+                }
+
                 InsertText(queuedInsertText);
                 RefreshCompletionAfterEdit();
                 Status("Pasted");
@@ -1868,7 +1927,7 @@ namespace Core.DirFiles
                     break;
                 default:
                     if (TryGetInputText(key, out string commandText))
-                        _commandText += commandText;
+                        TryAppendLimitedText(ref _commandText, commandText, MaxCommandTextLength, "Command");
                     break;
             }
         }
@@ -1900,7 +1959,7 @@ namespace Core.DirFiles
                     break;
                 default:
                     if (TryGetInputText(key, out string searchText))
-                        _searchText += searchText;
+                        TryAppendLimitedText(ref _searchText, searchText, MaxSearchTextLength, "Search");
                     break;
             }
         }
@@ -3553,21 +3612,35 @@ namespace Core.DirFiles
                     }
                     else
                     {
-                        LoadFile();
-                        Status("Reloaded");
+                        TryReloadFile();
                         _mode = Mode.Normal;
                     }
                     break;
                 case "e!":
                 case "reload!":
-                    LoadFile();
-                    Status("Reloaded");
+                    TryReloadFile();
                     _mode = Mode.Normal;
                     break;
                 default:
                     Status("Unknown command: " + command);
                     _mode = Mode.Normal;
                     break;
+            }
+        }
+
+        private bool TryReloadFile()
+        {
+            try
+            {
+                LoadFile();
+                Status("Reloaded");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Status("Reload failed", error: true);
+                BottomStatus(ex.Message, error: true);
+                return false;
             }
         }
 
@@ -3959,6 +4032,10 @@ namespace Core.DirFiles
 
         private void InsertTextWithoutUndo(string text)
         {
+            int insertedLineBreaks = CountInsertedLineBreaks(text);
+            if (insertedLineBreaks > 0 && !TryEnsureCanAddLines(insertedLineBreaks, "Insert"))
+                return;
+
             string normalized = NormalizeNewlines(text);
             string[] parts = normalized.Split('\n');
             string line = CurrentLine();
@@ -3991,6 +4068,9 @@ namespace Core.DirFiles
 
         private void InsertNewLine()
         {
+            if (!TryEnsureCanAddLines(1, "Insert"))
+                return;
+
             PushInsertUndo();
             DeleteSelectionWithoutUndo();
             string line = CurrentLine();
@@ -4279,6 +4359,9 @@ namespace Core.DirFiles
             if (!_hasLineClipboard)
                 return;
 
+            if (!TryEnsureCanAddLines(1, "Paste"))
+                return;
+
             PushUndo();
             ClearSelection();
             _lines.Insert(_cursorLine + 1, _lineClipboard);
@@ -4286,6 +4369,16 @@ namespace Core.DirFiles
             _cursorCol = 0;
             InvalidateDocumentCaches();
             MarkDirty();
+        }
+
+        private bool TryEnsureCanAddLines(int addedLines, string action)
+        {
+            if (addedLines <= 0 || _lines.Count + addedLines <= MaxEditorLineCount)
+                return true;
+
+            Status(action + " blocked", error: true);
+            BottomStatus("xte is limited to " + MaxEditorLineCount + " lines.", error: true);
+            return false;
         }
 
         private void CopySelectionToClipboard()
@@ -4387,15 +4480,29 @@ namespace Core.DirFiles
                 return;
             }
 
+            if (!TryValidatePasteCharacterCount(text, out string pasteError))
+            {
+                Status("Paste blocked", error: true);
+                BottomStatus(pasteError, error: true);
+                return;
+            }
+
             if (_mode == Mode.Command)
             {
-                _commandText += ToSingleLine(text);
+                TryAppendLimitedText(ref _commandText, ToSingleLine(text), MaxCommandTextLength, "Command");
                 return;
             }
 
             if (_mode == Mode.Search)
             {
-                _searchText += ToSingleLine(text);
+                TryAppendLimitedText(ref _searchText, ToSingleLine(text), MaxSearchTextLength, "Search");
+                return;
+            }
+
+            if (!TryValidatePasteText(text, out pasteError))
+            {
+                Status("Paste blocked", error: true);
+                BottomStatus(pasteError, error: true);
                 return;
             }
 
@@ -4415,6 +4522,75 @@ namespace Core.DirFiles
             }
 
             Status("Pasted");
+        }
+
+        private bool TryAppendLimitedText(ref string target, string text, int maxLength, string label)
+        {
+            text = EscapeText(text);
+            if (string.IsNullOrEmpty(text))
+                return true;
+
+            if (target.Length + text.Length > maxLength)
+            {
+                Status(label + " text limit reached", error: true);
+                BottomStatus(label + " text is limited to " + maxLength + " characters.", error: true);
+                return false;
+            }
+
+            target += text;
+            return true;
+        }
+
+        private bool TryValidatePasteText(string text, out string error)
+        {
+            if (!TryValidatePasteCharacterCount(text, out error))
+                return false;
+
+            int insertedLineBreaks = CountInsertedLineBreaks(text);
+            if (_lines.Count + insertedLineBreaks > MaxEditorLineCount)
+            {
+                error = "Paste would exceed the xte line limit of " + MaxEditorLineCount + ".";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryValidatePasteCharacterCount(string text, out string error)
+        {
+            error = string.Empty;
+            int length = text == null ? 0 : text.Length;
+            if (length > MaxPasteCharacters)
+            {
+                error = "Paste is too large for xte (" + FormatSize(length) +
+                    "). Limit is " + FormatSize(MaxPasteCharacters) + ".";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static int CountInsertedLineBreaks(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return 0;
+
+            int count = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '\r')
+                {
+                    count++;
+                    if (i + 1 < text.Length && text[i + 1] == '\n')
+                        i++;
+                }
+                else if (text[i] == '\n')
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private void Undo()
@@ -4990,9 +5166,10 @@ namespace Core.DirFiles
             return NormalizeNewlines(text).Replace('\n', ' ');
         }
 
-        private bool TryReadQueuedInsertText(ConsoleKeyInfo firstKey, out string text)
+        private bool TryReadQueuedInsertText(ConsoleKeyInfo firstKey, out string text, out string error)
         {
             text = string.Empty;
+            error = string.Empty;
 
             if (!TryGetQueuedPasteTextFragment(firstKey, out string firstFragment))
                 return false;
@@ -5014,6 +5191,13 @@ namespace Core.DirFiles
 
                 builder.Append(fragment);
                 consumedQueuedText = true;
+                if (builder.Length > MaxPasteCharacters)
+                {
+                    text = string.Empty;
+                    error = "Paste is too large for xte (" + FormatSize(builder.Length) +
+                        "). Limit is " + FormatSize(MaxPasteCharacters) + ".";
+                    return true;
+                }
 
                 if (!WaitForQueuedConsoleInput())
                     break;
@@ -8201,7 +8385,33 @@ namespace Core.DirFiles
 
         private static string EscapeText(string text)
         {
-            return text.Replace("\x1b", string.Empty).Replace("\t", " ");
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
+            StringBuilder builder = null;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char value = text[i];
+                bool replaceWithSpace = value == '\t';
+                bool remove = char.IsControl(value) && !replaceWithSpace;
+
+                if (builder == null)
+                {
+                    if (!replaceWithSpace && !remove)
+                        continue;
+
+                    builder = new StringBuilder(text.Length);
+                    if (i > 0)
+                        builder.Append(text, 0, i);
+                }
+
+                if (replaceWithSpace)
+                    builder.Append(' ');
+                else if (!remove)
+                    builder.Append(value);
+            }
+
+            return builder == null ? text : builder.ToString();
         }
 
         private static (int width, int height) WindowSize()
@@ -8221,8 +8431,7 @@ namespace Core.DirFiles
             if (width <= 0)
                 return string.Empty;
 
-            if (text == null)
-                return string.Empty;
+            text = EscapeText(text);
 
             if (text.Length <= width)
                 return text;
@@ -8232,7 +8441,24 @@ namespace Core.DirFiles
 
         private static int VisibleLength(string text)
         {
-            return text == null ? 0 : text.Length;
+            return EscapeText(text).Length;
+        }
+
+        private static string FormatSize(long bytes)
+        {
+            string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+            double size = bytes;
+            int suffix = 0;
+
+            while (size >= 1024 && suffix < suffixes.Length - 1)
+            {
+                size /= 1024;
+                suffix++;
+            }
+
+            return suffix == 0
+                ? bytes + " " + suffixes[suffix]
+                : size.ToString("0.##", CultureInfo.InvariantCulture) + " " + suffixes[suffix];
         }
 
         private static string At(int col, int row)
@@ -9668,7 +9894,7 @@ namespace Core.DirFiles
             public int StartColumn { get; set; }
         }
 
-        [StructLayout(LayoutKind.Explicit)]
+        [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode, Size = 20)]
         private struct InputRecord
         {
             [FieldOffset(0)]
@@ -9684,7 +9910,7 @@ namespace Core.DirFiles
             public WindowBufferSizeRecord WindowBufferSizeEvent;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Size = 16)]
         private struct KeyEventRecord
         {
             [MarshalAs(UnmanagedType.Bool)]
@@ -9692,11 +9918,12 @@ namespace Core.DirFiles
             public short RepeatCount;
             public short VirtualKeyCode;
             public short VirtualScanCode;
+            [MarshalAs(UnmanagedType.U2)]
             public char UnicodeChar;
             public int ControlKeyState;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, Size = 16)]
         private struct MouseEventRecord
         {
             public Coord MousePosition;
@@ -9705,13 +9932,13 @@ namespace Core.DirFiles
             public int EventFlags;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, Size = 4)]
         private struct WindowBufferSizeRecord
         {
             public Coord Size;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, Size = 4)]
         private struct Coord
         {
             public short X;
