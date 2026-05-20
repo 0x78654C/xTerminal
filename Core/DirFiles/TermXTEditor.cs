@@ -2121,6 +2121,9 @@ namespace Core.DirFiles
             if (!IsCSharpCompletionContext() || _lines.Count == 0)
                 return false;
 
+            if (IsCSharpCompletionSuppressedAtCursor())
+                return false;
+
             if (IsCursorAfterCSharpDot())
                 return true;
 
@@ -2135,6 +2138,405 @@ namespace Core.DirFiles
             return _cursorCol > 0 &&
                 _cursorCol <= line.Length &&
                 line[_cursorCol - 1] == '.';
+        }
+
+        private bool IsCSharpCompletionSuppressedAtCursor()
+        {
+            return IsCSharpLexicalCompletionSuppressedAtCursor() ||
+                IsCSharpDeclarationNameCompletionSuppressedAtCursor();
+        }
+
+        private bool IsCSharpLexicalCompletionSuppressedAtCursor()
+        {
+            if (_lines.Count == 0 || _cursorLine < 0 || _cursorLine >= _lines.Count)
+                return false;
+
+            return IsCSharpLexicalCompletionSuppressed(_lines, _cursorLine, _cursorCol);
+        }
+
+        private bool IsCSharpDeclarationNameCompletionSuppressedAtCursor()
+        {
+            if (_lines.Count == 0 || _cursorLine < 0 || _cursorLine >= _lines.Count)
+                return false;
+
+            string line = CurrentLine();
+            int cursorCol = ClampValue(_cursorCol, 0, line.Length);
+            if (cursorCol <= 0 || !IsCSharpWordPart(line[cursorCol - 1]))
+                return false;
+
+            try
+            {
+                SourceCodeKind sourceKind = GetCSharpSourceKind();
+                CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
+                int position = GetDocumentPosition(_cursorLine, cursorCol);
+                return IsCSharpDeclarationNameCompletionSuppressed(syntaxTree, position);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsCSharpLexicalCompletionSuppressed(
+            IReadOnlyList<string> lines,
+            int cursorLine,
+            int cursorCol)
+        {
+            if (lines == null || cursorLine < 0 || cursorLine >= lines.Count)
+                return false;
+
+            var state = new CSharpCompletionLexicalState();
+            for (int lineIndex = 0; lineIndex <= cursorLine; lineIndex++)
+            {
+                string line = lines[lineIndex] ?? string.Empty;
+                int cursor = lineIndex == cursorLine
+                    ? ClampValue(cursorCol, 0, line.Length)
+                    : line.Length;
+
+                if (lineIndex == cursorLine && IsCSharpPreprocessorLineAtCursor(line, cursor))
+                    return true;
+
+                if (ScanCSharpLineForSuppressedCursor(line, lineIndex == cursorLine, cursor, ref state))
+                    return true;
+
+                if (lineIndex == cursorLine)
+                    return state.IsSuppressed;
+            }
+
+            return false;
+        }
+
+        private static bool IsCSharpPreprocessorLineAtCursor(string line, int cursorCol)
+        {
+            int first = 0;
+            while (first < line.Length && char.IsWhiteSpace(line[first]))
+                first++;
+
+            return first < line.Length &&
+                line[first] == '#' &&
+                cursorCol > first;
+        }
+
+        private static bool ScanCSharpLineForSuppressedCursor(
+            string line,
+            bool isCursorLine,
+            int cursorCol,
+            ref CSharpCompletionLexicalState state)
+        {
+            int i = 0;
+            while (i < line.Length)
+            {
+                if (isCursorLine && cursorCol <= i)
+                    return state.IsSuppressed;
+
+                if (state.InBlockComment)
+                {
+                    int end = line.IndexOf("*/", i, StringComparison.Ordinal);
+                    if (end < 0)
+                    {
+                        if (isCursorLine && cursorCol >= i)
+                            return true;
+
+                        return false;
+                    }
+
+                    int endExclusive = end + 2;
+                    if (isCursorLine && cursorCol < endExclusive)
+                        return true;
+
+                    state.InBlockComment = false;
+                    i = endExclusive;
+                    continue;
+                }
+
+                if (state.InRawString)
+                {
+                    int end = IndexOfCSharpRawStringDelimiter(line, i, state.RawStringQuoteCount);
+                    if (end < 0)
+                    {
+                        if (isCursorLine && cursorCol >= i)
+                            return true;
+
+                        return false;
+                    }
+
+                    int endExclusive = end + state.RawStringQuoteCount;
+                    if (isCursorLine && cursorCol < endExclusive)
+                        return true;
+
+                    state.InRawString = false;
+                    state.RawStringQuoteCount = 0;
+                    i = endExclusive;
+                    continue;
+                }
+
+                if (state.InVerbatimString)
+                {
+                    int endExclusive;
+                    bool closed = TryFindCSharpVerbatimStringEnd(line, i, out endExclusive);
+                    if (isCursorLine && (closed ? cursorCol < endExclusive : cursorCol <= line.Length))
+                        return true;
+
+                    if (!closed)
+                        return false;
+
+                    state.InVerbatimString = false;
+                    i = endExclusive;
+                    continue;
+                }
+
+                char c = line[i];
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '/')
+                    return isCursorLine && cursorCol > i;
+
+                if (c == '/' && i + 1 < line.Length && line[i + 1] == '*')
+                {
+                    int end = line.IndexOf("*/", i + 2, StringComparison.Ordinal);
+                    if (end < 0)
+                    {
+                        if (isCursorLine && cursorCol > i)
+                            return true;
+
+                        state.InBlockComment = true;
+                        return false;
+                    }
+
+                    int endExclusive = end + 2;
+                    if (isCursorLine && cursorCol > i && cursorCol < endExclusive)
+                        return true;
+
+                    i = endExclusive;
+                    continue;
+                }
+
+                if (TryScanCSharpStringForSuppressedCursor(
+                    line,
+                    i,
+                    isCursorLine,
+                    cursorCol,
+                    ref state,
+                    out int stringEnd))
+                {
+                    return true;
+                }
+
+                if (stringEnd > i)
+                {
+                    i = stringEnd;
+                    continue;
+                }
+
+                if (TryScanCSharpCharForSuppressedCursor(line, i, isCursorLine, cursorCol, out int charEnd))
+                    return true;
+
+                if (charEnd > i)
+                {
+                    i = charEnd;
+                    continue;
+                }
+
+                if (IsCSharpWordStart(c) || (c == '@' && i + 1 < line.Length && IsCSharpWordStart(line[i + 1])))
+                {
+                    i++;
+                    while (i < line.Length && IsCSharpWordPart(line[i]))
+                        i++;
+
+                    continue;
+                }
+
+                if (char.IsDigit(c))
+                {
+                    int start = i++;
+
+                    if (c == '0' && i < line.Length && (line[i] == 'x' || line[i] == 'X' || line[i] == 'b' || line[i] == 'B'))
+                        i++;
+
+                    while (i < line.Length && IsCSharpNumberPart(line[i]))
+                        i++;
+
+                    if (isCursorLine && cursorCol > start && cursorCol <= i)
+                        return true;
+
+                    continue;
+                }
+
+                i++;
+            }
+
+            return isCursorLine && state.IsSuppressed;
+        }
+
+        private static bool TryScanCSharpStringForSuppressedCursor(
+            string line,
+            int index,
+            bool isCursorLine,
+            int cursorCol,
+            ref CSharpCompletionLexicalState state,
+            out int endColumn)
+        {
+            endColumn = index;
+            int quoteIndex;
+            bool verbatim;
+            if (!TryGetCSharpStringStart(line, index, out quoteIndex, out verbatim))
+                return false;
+
+            int quoteCount = CountConsecutive(line, quoteIndex, '"');
+            if (quoteCount >= 3)
+            {
+                int contentStart = quoteIndex + quoteCount;
+                int closeIndex = IndexOfCSharpRawStringDelimiter(line, contentStart, quoteCount);
+                bool closed = closeIndex >= 0;
+                endColumn = closed ? closeIndex + quoteCount : line.Length;
+
+                if (isCursorLine && cursorCol > index && (closed ? cursorCol < endColumn : cursorCol <= endColumn))
+                    return true;
+
+                if (!closed)
+                {
+                    state.InRawString = true;
+                    state.RawStringQuoteCount = quoteCount;
+                }
+
+                return false;
+            }
+
+            bool closedString = verbatim
+                ? TryFindCSharpVerbatimStringEnd(line, quoteIndex + 1, out endColumn)
+                : TryFindCSharpRegularStringEnd(line, quoteIndex + 1, out endColumn);
+
+            if (isCursorLine && cursorCol > index && (closedString ? cursorCol < endColumn : cursorCol <= endColumn))
+                return true;
+
+            if (verbatim && !closedString)
+                state.InVerbatimString = true;
+
+            return false;
+        }
+
+        private static bool TryGetCSharpStringStart(
+            string line,
+            int index,
+            out int quoteIndex,
+            out bool verbatim)
+        {
+            quoteIndex = index;
+            verbatim = false;
+
+            int i = index;
+            while (i < line.Length && (line[i] == '@' || line[i] == '$'))
+            {
+                if (line[i] == '@')
+                    verbatim = true;
+
+                i++;
+            }
+
+            if (i >= line.Length || line[i] != '"')
+                return false;
+
+            quoteIndex = i;
+            return true;
+        }
+
+        private static bool TryFindCSharpRegularStringEnd(string line, int index, out int endColumn)
+        {
+            int i = index;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == '"')
+                {
+                    endColumn = i + 1;
+                    return true;
+                }
+
+                i++;
+            }
+
+            endColumn = line.Length;
+            return false;
+        }
+
+        private static bool TryFindCSharpVerbatimStringEnd(string line, int index, out int endColumn)
+        {
+            int i = index;
+            while (i < line.Length)
+            {
+                if (line[i] == '"' && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    i += 2;
+                    continue;
+                }
+
+                if (line[i] == '"')
+                {
+                    endColumn = i + 1;
+                    return true;
+                }
+
+                i++;
+            }
+
+            endColumn = line.Length;
+            return false;
+        }
+
+        private static int IndexOfCSharpRawStringDelimiter(string line, int index, int quoteCount)
+        {
+            int i = Math.Max(0, index);
+            while (i < line.Length)
+            {
+                if (line[i] == '"' && CountConsecutive(line, i, '"') >= quoteCount)
+                    return i;
+
+                i++;
+            }
+
+            return -1;
+        }
+
+        private static bool TryScanCSharpCharForSuppressedCursor(
+            string line,
+            int index,
+            bool isCursorLine,
+            int cursorCol,
+            out int endColumn)
+        {
+            endColumn = index;
+
+            if (index >= line.Length || line[index] != '\'')
+                return false;
+
+            int i = index + 1;
+            bool closed = false;
+            while (i < line.Length)
+            {
+                if (line[i] == '\\')
+                {
+                    i = Math.Min(line.Length, i + 2);
+                    continue;
+                }
+
+                if (line[i] == '\'')
+                {
+                    i++;
+                    closed = true;
+                    break;
+                }
+
+                i++;
+            }
+
+            endColumn = i;
+            return isCursorLine &&
+                cursorCol > index &&
+                (closed ? cursorCol < endColumn : cursorCol <= endColumn);
         }
 
         private bool IsCSharpCompletionContext()
@@ -2191,6 +2593,12 @@ namespace Core.DirFiles
         {
             if (!_completionActive)
                 return;
+
+            if (IsCSharpCompletionSuppressedAtCursor())
+            {
+                DismissCompletion();
+                return;
+            }
 
             string selectedLabel = _completionSelectedIndex >= 0 && _completionSelectedIndex < _completionItems.Count
                 ? _completionItems[_completionSelectedIndex].Label
@@ -2422,6 +2830,9 @@ namespace Core.DirFiles
             ClampCursor();
 
             if (!TryGetCSharpCompletionPrefixFromCursor(out string prefix, out bool memberAccess, out int startCol))
+                return false;
+
+            if (IsCSharpCompletionSuppressedAtCursor())
                 return false;
 
             if (!memberAccess && prefix.Length == 0 && !allowEmptyGlobalPrefix)
@@ -2858,6 +3269,56 @@ namespace Core.DirFiles
 
             return IsCSharpSuppressedTrivia(token.LeadingTrivia, position) ||
                 IsCSharpSuppressedTrivia(token.TrailingTrivia, position);
+        }
+
+        private static bool IsCSharpDeclarationNameCompletionSuppressed(SyntaxTree syntaxTree, int position)
+        {
+            SyntaxNode root = syntaxTree.GetRoot();
+            int tokenPosition = ClampValue(position - 1, 0, Math.Max(0, root.FullSpan.End - 1));
+            SyntaxToken token = root.FindToken(tokenPosition);
+
+            if (token.Kind() != SyntaxKind.IdentifierToken ||
+                position <= token.SpanStart ||
+                position > token.Span.End)
+            {
+                return false;
+            }
+
+            return IsCSharpDeclarationIdentifier(token);
+        }
+
+        private static bool IsCSharpDeclarationIdentifier(SyntaxToken token)
+        {
+            SyntaxNode parent = token.Parent;
+            if (parent == null)
+                return false;
+
+            var variableDeclarator = parent as VariableDeclaratorSyntax;
+            if (variableDeclarator != null && SameSyntaxToken(variableDeclarator.Identifier, token))
+                return true;
+
+            var parameter = parent as ParameterSyntax;
+            if (parameter != null && SameSyntaxToken(parameter.Identifier, token))
+                return true;
+
+            var foreachStatement = parent as ForEachStatementSyntax;
+            if (foreachStatement != null && SameSyntaxToken(foreachStatement.Identifier, token))
+                return true;
+
+            var catchDeclaration = parent as CatchDeclarationSyntax;
+            if (catchDeclaration != null && SameSyntaxToken(catchDeclaration.Identifier, token))
+                return true;
+
+            var singleVariableDesignation = parent as SingleVariableDesignationSyntax;
+            return singleVariableDesignation != null &&
+                SameSyntaxToken(singleVariableDesignation.Identifier, token);
+        }
+
+        private static bool SameSyntaxToken(SyntaxToken left, SyntaxToken right)
+        {
+            return left.SpanStart == right.SpanStart &&
+                left.Span.End == right.Span.End &&
+                left.Kind() == right.Kind();
         }
 
         private static bool IsCSharpStringLikeToken(SyntaxKind kind)
@@ -10058,6 +10519,19 @@ namespace Core.DirFiles
             public bool MemberAccess { get; private set; }
             public List<CSharpCompletionItem> AllItems { get; private set; }
             public List<CSharpCompletionItem> Items { get; private set; }
+        }
+
+        private struct CSharpCompletionLexicalState
+        {
+            public bool InBlockComment;
+            public bool InVerbatimString;
+            public bool InRawString;
+            public int RawStringQuoteCount;
+
+            public bool IsSuppressed
+            {
+                get { return InBlockComment || InVerbatimString || InRawString; }
+            }
         }
 
         private sealed class CSharpCompletionItem

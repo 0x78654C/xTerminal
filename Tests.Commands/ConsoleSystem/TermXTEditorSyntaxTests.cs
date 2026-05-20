@@ -644,6 +644,95 @@ public class TermXTEditorSyntaxTests
         }
     }
 
+    [Theory]
+    [InlineData("using System;\npublic class C { void M() { var s = \"Co$$\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = $\"Co$$ {value}\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = @\"Co$$\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = $@\"Co$$\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var c = 'C$$'; } }")]
+    [InlineData("using System;\npublic class C { void M() { // Co$$\n} }")]
+    [InlineData("using System;\npublic class C { void M() { /* Co$$ */ } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = \"\"\"Co$$\"\"\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = $\"\"\"Co$$ {value}\"\"\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = \"\"\"\nCo$$\n\"\"\"; } }")]
+    [InlineData("#if CO$$\n#endif\nusing System;\npublic class C { }")]
+    [InlineData("using System;\npublic class C { void M() { 12$$ } }")]
+    [InlineData("using System;\npublic class C { void M() { 1.$$ } }")]
+    public void CSharpCompletion_SuppressedInNonExpressionContexts(string markedText)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, markedText);
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().BeEmpty();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("using System;\npublic class C { void M() { var da$$ } }", "t")]
+    [InlineData("using System;\npublic class C { void M() { int cou$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { string na$$ } }", "m")]
+    [InlineData("using System.Collections.Generic;\npublic class C { void M() { List<string> ite$$ } }", "m")]
+    [InlineData("public class MyClass { }\npublic class C { void M() { MyClass insta$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { using var strea$$ } }", "m")]
+    [InlineData("using System;\npublic class C { void M() { const int ma$$ } }", "x")]
+    [InlineData("using System;\npublic class C { void M() { int first, seco$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { int first = 1, seco$$ = 2; } }", "n")]
+    public void CSharpCompletion_TypingDeclarationName_DoesNotAutoOpen(string markedText, string typedText)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, markedText);
+
+            InvokePrivate(editor, "InsertText", typedText);
+            InvokePrivate(editor, "RefreshCompletionAfterText", typedText);
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeFalse();
+            CSharpCompletions(editor).Should().BeEmpty();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("using System;\npublic class C { void M() { var data = Co$$ } }", "n")]
+    [InlineData("using System;\npublic class C { object M() { return Co$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { Console.WriteLine(Co$$); } }", "n")]
+    public void CSharpCompletion_TypingExpressionName_AutoOpens(string markedText, string typedText)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, markedText);
+
+            InvokePrivate(editor, "InsertText", typedText);
+            InvokePrivate(editor, "RefreshCompletionAfterText", typedText);
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            ActiveCSharpCompletions(editor).Should().Contain(completion => completion.Label == "Console");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
     [Fact]
     public void TokenizeRust_HighlightsCommonRustTokens()
     {
