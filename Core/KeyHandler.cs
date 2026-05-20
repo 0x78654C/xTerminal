@@ -403,6 +403,7 @@ namespace Core
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "md5", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "sort", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "cat", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "xcel", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "ln", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "exif", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "zip", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);

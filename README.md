@@ -21,7 +21,7 @@ Runs get-disk command from Powershell.
 
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
-cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, start, cp, del, ccs, sort, ln, exif
+cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, start, cp, del, ccs, sort, xcel, ln, exif
 
 Example:
  ```
@@ -453,6 +453,11 @@ Example:
                  Example 4: diff first_file_name*second_file_name -f save_to_file_name -verbose : Saves to file the entire second file with the marked difference in comparison to first file.
     exif      -- Extracts image metadata.
                  Example  : exif <path_to_iamge_file>. 
+    xcel      -- Opens spreadsheet files in a terminal grid editor.
+                 Supported: .xlsx, .xlsm, .xltx, .xltm, .xls, .csv, .tsv, .txt
+                 Example  : xcel <spreadsheet_file>
+                 Keys     : Arrows move, mouse wheel scrolls, Shift+wheel scrolls columns, Shift+Arrows/mouse select, column click selects a column, Ctrl+C copy, Ctrl+S save.
+                 Note     : .xls save uses Excel XML format with the .xls extension.
     pjson     -- Prettify the JSON data.
                  Example 1: pjson <file_path>                    : Will prettify the JSON data and stores back in file.
                  Example 2: pjson <file_path> -o <new_file_path> : Stores the prettified JSON in new file.

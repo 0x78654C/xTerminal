@@ -90,6 +90,7 @@ This is the full list of commands that can be used in xTerminal:
     echo      -- Write/append data to a file. Use -h for additional help.
     diff      -- Outputs the difference between two files. Use -h for additional help.
     exif      -- Extracts image metadata. Use -h for additional help.
+    xcel      -- Opens .xlsx, .xls, .csv, .tsv and .txt spreadsheets in a terminal grid editor. Use -h for additional help.
     pjson     -- Prettify the JSON data. Use -h for additional help.
     attr      -- Displays/Sets/Removes the current attributes of a file or directory. Use -h for additional help.
     cmp       -- Check if two files are identical by comparing MD5 hash. Use -h for additional help.
