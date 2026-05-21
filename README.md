@@ -601,6 +601,7 @@ Example:
 	                xte -new <script.xt>        : Create a template and open it.
 	                Detects disk-side changes when returning to the editor; use :e! to reload or :w! to overwrite.
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
+	                Shows editor diagnostics with red error and yellow warning notifications; use :errors, :warnings, :next-error, and :next-warning.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
 	                Ctrl+X cuts the selection, or the current line when nothing is selected.
     -------------------- UI Customization -------------------

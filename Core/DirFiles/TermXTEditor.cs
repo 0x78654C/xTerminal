@@ -92,6 +92,7 @@ namespace Core.DirFiles
         private const int COperator = 220;
         private const int CComment = 108;
         private const int CError = 203;
+        private const int CWarning = 214;
         private const int CSearch = 227;
         private const int CPreprocessor = 183;
         private const int CSelectionFg = 232;
@@ -616,6 +617,7 @@ namespace Core.DirFiles
         private string _bottomStatus = string.Empty;
         private DateTime _bottomStatusUntil = DateTime.MinValue;
         private bool _bottomStatusError;
+        private bool _bottomStatusWarning;
         private DateTime _nextExternalChangeCheckUtc = DateTime.MinValue;
         private string _lineClipboard = string.Empty;
         private bool _hasLineClipboard;
@@ -623,6 +625,7 @@ namespace Core.DirFiles
         private TermXTEditorSyntax _syntax;
         private readonly List<EditorDiagnostic> _diagnostics = new List<EditorDiagnostic>();
         private readonly HashSet<int> _diagnosticLineIndexes = new HashSet<int>();
+        private readonly Dictionary<int, EditorDiagnosticSeverity> _diagnosticLineSeverities = new Dictionary<int, EditorDiagnosticSeverity>();
         private readonly List<CSharpCompletionItem> _completionItems = new List<CSharpCompletionItem>();
         private readonly List<CSharpCompletionItem> _completionAllItems = new List<CSharpCompletionItem>();
         private bool _diagnosticsCacheDirty = true;
@@ -914,6 +917,7 @@ namespace Core.DirFiles
                 _bottomStatus = string.Empty;
                 _bottomStatusUntil = DateTime.MinValue;
                 _bottomStatusError = false;
+                _bottomStatusWarning = false;
                 redraw = true;
             }
 
@@ -1112,13 +1116,13 @@ namespace Core.DirFiles
 
             if (currentState.Exists)
             {
-                Status("File changed on disk. Use :e! to reload or :w! to overwrite.", error: true);
-                BottomStatus(_path, error: true);
+                Status("File changed on disk. Use :e! to reload or :w! to overwrite.", warning: true);
+                BottomStatus(_path, warning: true);
             }
             else
             {
-                Status("File deleted on disk. Use :w! to recreate or :q! to quit.", error: true);
-                BottomStatus(_path, error: true);
+                Status("File deleted on disk. Use :w! to recreate or :q! to quit.", warning: true);
+                BottomStatus(_path, warning: true);
             }
 
             return true;
@@ -1363,9 +1367,9 @@ namespace Core.DirFiles
 
             string dirty = _dirty ? " [+]" : "";
             string disk = _externalChangePending ? " [disk]" : "";
-            string errors = _diagnostics.Count == 0 ? "" : " [E:" + _diagnostics.Count + "]";
+            string diagnostics = BuildHeaderDiagnosticBadge();
             string left = " TermXT Editor ";
-            string middle = " " + name + " [" + SyntaxDisplayName(_syntax) + "]" + dirty + disk + errors;
+            string middle = " " + name + " [" + SyntaxDisplayName(_syntax) + "]" + dirty + disk + diagnostics;
             string right = " " + (_cursorLine + 1) + ":" + (_cursorCol + 1) + " ";
 
             _frame.Append(At(0, 0))
@@ -1383,7 +1387,7 @@ namespace Core.DirFiles
                     help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | errors | next-error | syntax xt|cs|c|cpp|rust|js|py | Esc";
+                    help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
@@ -1407,13 +1411,14 @@ namespace Core.DirFiles
             }
 
             bool current = rowInfo.LineIndex == _cursorLine;
-            bool diagnosticLine = HasDiagnosticOnLine(rowInfo.LineIndex);
+            bool diagnosticLine = TryGetDiagnosticSeverityForLine(rowInfo.LineIndex, out EditorDiagnosticSeverity diagnosticSeverity);
+            char diagnosticIndicator = diagnosticLine ? DiagnosticIndicator(diagnosticSeverity) : ' ';
             string lineNo = rowInfo.WrapIndex == 0
-                ? (rowInfo.LineIndex + 1).ToString().PadLeft(numberWidth - 1) + (diagnosticLine ? "!" : " ")
-                : "+".PadLeft(numberWidth - 1) + (diagnosticLine ? "!" : " ");
+                ? (rowInfo.LineIndex + 1).ToString().PadLeft(numberWidth - 1) + diagnosticIndicator
+                : "+".PadLeft(numberWidth - 1) + diagnosticIndicator;
 
             if (diagnosticLine)
-                _frame.Append(B(52)).Append(Bold()).Append(F(CError)).Append(lineNo).Append(Reset).Append(' ');
+                _frame.Append(B(DiagnosticGutterBackground(diagnosticSeverity))).Append(Bold()).Append(F(DiagnosticColor(diagnosticSeverity))).Append(lineNo).Append(Reset).Append(' ');
             else
                 _frame.Append(F(current ? CCurrentLineNo : CLineNo)).Append(lineNo).Append(Reset).Append(' ');
 
@@ -1564,6 +1569,26 @@ namespace Core.DirFiles
             }
         }
 
+        private void GetBottomStatusColors(out int fg, out int bg)
+        {
+            if (_bottomStatusError)
+            {
+                fg = 231;
+                bg = CError;
+                return;
+            }
+
+            if (_bottomStatusWarning)
+            {
+                fg = 232;
+                bg = CWarning;
+                return;
+            }
+
+            fg = CStatusFg;
+            bg = CStatusBg;
+        }
+
         private void RenderCommandLine(int row, int width)
         {
             _frame.Append(At(0, row));
@@ -1582,8 +1607,7 @@ namespace Core.DirFiles
 
             if (DateTime.UtcNow <= _bottomStatusUntil && !string.IsNullOrWhiteSpace(_bottomStatus))
             {
-                int bg = _bottomStatusError ? CError : CStatusBg;
-                int fg = _bottomStatusError ? 231 : CStatusFg;
+                GetBottomStatusColors(out int fg, out int bg);
                 string message = " " + _bottomStatus;
                 _frame.Append(B(bg)).Append(F(fg)).Append(Clip(message, width).PadRight(width)).Append(Reset);
                 return;
@@ -4059,6 +4083,16 @@ namespace Core.DirFiles
                 case "errors":
                 case "errs":
                 case "err":
+                    ShowDiagnosticsSummary(EditorDiagnosticSeverity.Error);
+                    _mode = Mode.Normal;
+                    break;
+                case "warnings":
+                case "warns":
+                case "warning":
+                case "warn":
+                    ShowDiagnosticsSummary(EditorDiagnosticSeverity.Warning);
+                    _mode = Mode.Normal;
+                    break;
                 case "diagnostics":
                     ShowDiagnosticsSummary();
                     _mode = Mode.Normal;
@@ -4067,14 +4101,26 @@ namespace Core.DirFiles
                 case "nexterror":
                 case "errnext":
                 case "cn":
-                    JumpToDiagnostic(1);
+                    JumpToDiagnostic(1, EditorDiagnosticSeverity.Error);
                     _mode = Mode.Normal;
                     break;
                 case "prev-error":
                 case "preverror":
                 case "errprev":
                 case "cp":
-                    JumpToDiagnostic(-1);
+                    JumpToDiagnostic(-1, EditorDiagnosticSeverity.Error);
+                    _mode = Mode.Normal;
+                    break;
+                case "next-warning":
+                case "nextwarning":
+                case "warnnext":
+                    JumpToDiagnostic(1, EditorDiagnosticSeverity.Warning);
+                    _mode = Mode.Normal;
+                    break;
+                case "prev-warning":
+                case "prevwarning":
+                case "warnprev":
+                    JumpToDiagnostic(-1, EditorDiagnosticSeverity.Warning);
                     _mode = Mode.Normal;
                     break;
                 case "w":
@@ -4228,41 +4274,63 @@ namespace Core.DirFiles
 
         private void ShowDiagnosticsSummary()
         {
-            EnsureFullDiagnostics();
+            ShowDiagnosticsSummary(null);
+        }
 
-            if (_diagnostics.Count == 0)
+        private void ShowDiagnosticsSummary(EditorDiagnosticSeverity? severity)
+        {
+            EnsureFullDiagnostics();
+            int diagnosticCount = DiagnosticCount(severity);
+
+            if (diagnosticCount == 0)
             {
-                Status("No errors");
-                BottomStatus("No errors in " + SyntaxDisplayName(_syntax));
+                string message = NoDiagnosticsMessage(severity);
+                Status(message);
+                BottomStatus(message + " in " + SyntaxDisplayName(_syntax));
                 return;
             }
 
             EditorDiagnostic diagnostic;
             int diagnosticIndex;
-            if (!TryGetDiagnosticForLine(_cursorLine, out diagnostic, out diagnosticIndex))
+            if (!TryGetDiagnosticForLine(_cursorLine, severity, out diagnostic, out diagnosticIndex))
             {
-                diagnosticIndex = FirstDiagnosticIndexAtOrAfter(_cursorLine);
+                diagnosticIndex = FirstDiagnosticIndexAtOrAfter(_cursorLine, severity);
                 diagnostic = _diagnostics[diagnosticIndex];
             }
 
-            Status(FormatDiagnosticCounter(diagnostic, diagnosticIndex, _diagnostics.Count), error: true);
-            BottomStatus(BuildDiagnosticsSummary(), error: true);
+            int ordinal = DiagnosticOrdinal(diagnosticIndex, severity);
+            Status(
+                FormatDiagnosticCounter(diagnostic, ordinal, diagnosticCount),
+                error: diagnostic.Severity == EditorDiagnosticSeverity.Error,
+                warning: diagnostic.Severity == EditorDiagnosticSeverity.Warning);
+            BottomStatus(
+                BuildDiagnosticsSummary(severity),
+                error: HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, severity),
+                warning: !HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, severity) &&
+                    HasDiagnosticSeverity(EditorDiagnosticSeverity.Warning, severity));
         }
 
         private void JumpToDiagnostic(int direction)
         {
-            EnsureFullDiagnostics();
+            JumpToDiagnostic(direction, null);
+        }
 
-            if (_diagnostics.Count == 0)
+        private void JumpToDiagnostic(int direction, EditorDiagnosticSeverity? severity)
+        {
+            EnsureFullDiagnostics();
+            int diagnosticCount = DiagnosticCount(severity);
+
+            if (diagnosticCount == 0)
             {
-                Status("No errors");
-                BottomStatus("No errors in " + SyntaxDisplayName(_syntax));
+                string message = NoDiagnosticsMessage(severity);
+                Status(message);
+                BottomStatus(message + " in " + SyntaxDisplayName(_syntax));
                 return;
             }
 
             int index = direction >= 0
-                ? FirstDiagnosticIndexAfter(_cursorLine)
-                : LastDiagnosticIndexBefore(_cursorLine);
+                ? FirstDiagnosticIndexAfter(_cursorLine, severity)
+                : LastDiagnosticIndexBefore(_cursorLine, severity);
 
             EditorDiagnostic diagnostic = _diagnostics[index];
             ResetVerticalCursorColumn();
@@ -4273,56 +4341,214 @@ namespace Core.DirFiles
             ClearSelection();
             ClampCursor();
 
-            Status(FormatDiagnosticCounter(diagnostic, index, _diagnostics.Count), error: true);
-            BottomStatus(FormatDiagnosticLocation(diagnostic), error: true);
+            int ordinal = DiagnosticOrdinal(index, severity);
+            Status(
+                FormatDiagnosticCounter(diagnostic, ordinal, diagnosticCount),
+                error: diagnostic.Severity == EditorDiagnosticSeverity.Error,
+                warning: diagnostic.Severity == EditorDiagnosticSeverity.Warning);
+            BottomStatus(
+                FormatDiagnosticLocation(diagnostic),
+                error: diagnostic.Severity == EditorDiagnosticSeverity.Error,
+                warning: diagnostic.Severity == EditorDiagnosticSeverity.Warning);
         }
 
         private int FirstDiagnosticIndexAtOrAfter(int lineIndex)
         {
+            return FirstDiagnosticIndexAtOrAfter(lineIndex, null);
+        }
+
+        private int FirstDiagnosticIndexAtOrAfter(int lineIndex, EditorDiagnosticSeverity? severity)
+        {
             for (int i = 0; i < _diagnostics.Count; i++)
             {
-                if (_diagnostics[i].LineIndex >= lineIndex)
+                if (_diagnostics[i].LineIndex >= lineIndex && DiagnosticMatches(_diagnostics[i], severity))
                     return i;
             }
 
-            return 0;
+            return FirstDiagnosticIndex(severity);
         }
 
         private int FirstDiagnosticIndexAfter(int lineIndex)
         {
+            return FirstDiagnosticIndexAfter(lineIndex, null);
+        }
+
+        private int FirstDiagnosticIndexAfter(int lineIndex, EditorDiagnosticSeverity? severity)
+        {
             for (int i = 0; i < _diagnostics.Count; i++)
             {
-                if (_diagnostics[i].LineIndex > lineIndex)
+                if (_diagnostics[i].LineIndex > lineIndex && DiagnosticMatches(_diagnostics[i], severity))
                     return i;
             }
 
-            return 0;
+            return FirstDiagnosticIndex(severity);
         }
 
         private int LastDiagnosticIndexBefore(int lineIndex)
         {
+            return LastDiagnosticIndexBefore(lineIndex, null);
+        }
+
+        private int LastDiagnosticIndexBefore(int lineIndex, EditorDiagnosticSeverity? severity)
+        {
             for (int i = _diagnostics.Count - 1; i >= 0; i--)
             {
-                if (_diagnostics[i].LineIndex < lineIndex)
+                if (_diagnostics[i].LineIndex < lineIndex && DiagnosticMatches(_diagnostics[i], severity))
                     return i;
             }
 
-            return _diagnostics.Count - 1;
+            return LastDiagnosticIndex(severity);
         }
 
         private string BuildDiagnosticsSummary()
         {
+            return BuildDiagnosticsSummary(null);
+        }
+
+        private string BuildDiagnosticsSummary(EditorDiagnosticSeverity? severity)
+        {
             var builder = new StringBuilder();
-            builder.Append(_diagnostics.Count).Append(' ').Append(Pluralize("error", _diagnostics.Count));
+            int diagnosticCount = DiagnosticCount(severity);
+            builder.Append(FormatDiagnosticTotals(severity));
 
-            int max = Math.Min(_diagnostics.Count, 4);
-            for (int i = 0; i < max; i++)
-                builder.Append(" | ").Append(i + 1).Append(") ").Append(FormatDiagnosticLocation(_diagnostics[i]));
+            int shown = 0;
+            for (int i = 0; i < _diagnostics.Count && shown < 4; i++)
+            {
+                if (!DiagnosticMatches(_diagnostics[i], severity))
+                    continue;
 
-            if (_diagnostics.Count > max)
-                builder.Append(" | +").Append(_diagnostics.Count - max).Append(" more");
+                builder.Append(" | ").Append(shown + 1).Append(") ").Append(FormatDiagnosticLocation(_diagnostics[i]));
+                shown++;
+            }
+
+            if (diagnosticCount > shown)
+                builder.Append(" | +").Append(diagnosticCount - shown).Append(" more");
 
             return builder.ToString();
+        }
+
+        private string BuildHeaderDiagnosticBadge()
+        {
+            int errorCount = DiagnosticCount(EditorDiagnosticSeverity.Error);
+            int warningCount = DiagnosticCount(EditorDiagnosticSeverity.Warning);
+
+            if (errorCount == 0 && warningCount == 0)
+                return string.Empty;
+
+            var builder = new StringBuilder();
+            if (errorCount > 0)
+                builder.Append(" [E:").Append(errorCount).Append(']');
+
+            if (warningCount > 0)
+                builder.Append(" [W:").Append(warningCount).Append(']');
+
+            return builder.ToString();
+        }
+
+        private string FormatDiagnosticTotals(EditorDiagnosticSeverity? severity)
+        {
+            if (severity == EditorDiagnosticSeverity.Error)
+            {
+                int errorCount = DiagnosticCount(EditorDiagnosticSeverity.Error);
+                return errorCount + " " + Pluralize("error", errorCount);
+            }
+
+            if (severity == EditorDiagnosticSeverity.Warning)
+            {
+                int warningCount = DiagnosticCount(EditorDiagnosticSeverity.Warning);
+                return warningCount + " " + Pluralize("warning", warningCount);
+            }
+
+            int totalErrors = DiagnosticCount(EditorDiagnosticSeverity.Error);
+            int totalWarnings = DiagnosticCount(EditorDiagnosticSeverity.Warning);
+
+            if (totalErrors > 0 && totalWarnings > 0)
+            {
+                return totalErrors + " " + Pluralize("error", totalErrors) + ", " +
+                    totalWarnings + " " + Pluralize("warning", totalWarnings);
+            }
+
+            if (totalErrors > 0)
+                return totalErrors + " " + Pluralize("error", totalErrors);
+
+            return totalWarnings + " " + Pluralize("warning", totalWarnings);
+        }
+
+        private static string NoDiagnosticsMessage(EditorDiagnosticSeverity? severity)
+        {
+            if (severity == EditorDiagnosticSeverity.Error)
+                return "No errors";
+
+            if (severity == EditorDiagnosticSeverity.Warning)
+                return "No warnings";
+
+            return "No diagnostics";
+        }
+
+        private int DiagnosticCount(EditorDiagnosticSeverity? severity)
+        {
+            int count = 0;
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (DiagnosticMatches(_diagnostics[i], severity))
+                    count++;
+            }
+
+            return count;
+        }
+
+        private bool HasDiagnosticSeverity(EditorDiagnosticSeverity target, EditorDiagnosticSeverity? severity)
+        {
+            if (severity.HasValue)
+                return severity.Value == target && DiagnosticCount(severity) > 0;
+
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (_diagnostics[i].Severity == target)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool DiagnosticMatches(EditorDiagnostic diagnostic, EditorDiagnosticSeverity? severity)
+        {
+            return !severity.HasValue || diagnostic.Severity == severity.Value;
+        }
+
+        private int DiagnosticOrdinal(int diagnosticIndex, EditorDiagnosticSeverity? severity)
+        {
+            int ordinal = -1;
+
+            for (int i = 0; i <= diagnosticIndex && i < _diagnostics.Count; i++)
+            {
+                if (DiagnosticMatches(_diagnostics[i], severity))
+                    ordinal++;
+            }
+
+            return Math.Max(0, ordinal);
+        }
+
+        private int FirstDiagnosticIndex(EditorDiagnosticSeverity? severity)
+        {
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (DiagnosticMatches(_diagnostics[i], severity))
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private int LastDiagnosticIndex(EditorDiagnosticSeverity? severity)
+        {
+            for (int i = _diagnostics.Count - 1; i >= 0; i--)
+            {
+                if (DiagnosticMatches(_diagnostics[i], severity))
+                    return i;
+            }
+
+            return -1;
         }
 
         private bool TryExecuteSyntaxCommand(string command)
@@ -4355,8 +4581,8 @@ namespace Core.DirFiles
         {
             if (_externalChangePending && !force)
             {
-                Status("File changed on disk. Use :w! to overwrite or :e! to reload.", error: true);
-                BottomStatus(_path, error: true);
+                Status("File changed on disk. Use :w! to overwrite or :e! to reload.", warning: true);
+                BottomStatus(_path, warning: true);
                 return false;
             }
 
@@ -5602,17 +5828,54 @@ namespace Core.DirFiles
             _pendingDelete = false;
         }
 
-        private void Status(string message, bool error = false)
+        private void Status(string message, bool error = false, bool warning = false)
         {
             _status = message;
-            _statusUntil = DateTime.UtcNow.AddMilliseconds(error ? 4000 : 2500);
+            EditorNotificationSeverity severity = NotificationSeverity(error, warning);
+            _statusUntil = DateTime.UtcNow.AddMilliseconds(StatusDurationMs(severity));
         }
 
-        private void BottomStatus(string message, bool error = false)
+        private void BottomStatus(string message, bool error = false, bool warning = false)
         {
+            EditorNotificationSeverity severity = NotificationSeverity(error, warning);
             _bottomStatus = message;
-            _bottomStatusError = error;
-            _bottomStatusUntil = DateTime.UtcNow.AddMilliseconds(error ? 4000 : 2200);
+            _bottomStatusError = severity == EditorNotificationSeverity.Error;
+            _bottomStatusWarning = severity == EditorNotificationSeverity.Warning;
+            _bottomStatusUntil = DateTime.UtcNow.AddMilliseconds(BottomStatusDurationMs(severity));
+        }
+
+        private static EditorNotificationSeverity NotificationSeverity(bool error, bool warning)
+        {
+            if (error)
+                return EditorNotificationSeverity.Error;
+
+            return warning ? EditorNotificationSeverity.Warning : EditorNotificationSeverity.Normal;
+        }
+
+        private static int StatusDurationMs(EditorNotificationSeverity severity)
+        {
+            switch (severity)
+            {
+                case EditorNotificationSeverity.Error:
+                    return 4000;
+                case EditorNotificationSeverity.Warning:
+                    return 3500;
+                default:
+                    return 2500;
+            }
+        }
+
+        private static int BottomStatusDurationMs(EditorNotificationSeverity severity)
+        {
+            switch (severity)
+            {
+                case EditorNotificationSeverity.Error:
+                    return 4000;
+                case EditorNotificationSeverity.Warning:
+                    return 3500;
+                default:
+                    return 2200;
+            }
         }
 
         private static bool TrySetClipboardText(string text, out string error)
@@ -5933,9 +6196,12 @@ namespace Core.DirFiles
             if (_diagnostics.Count > 0)
             {
                 if (TryGetDiagnosticForLine(_cursorLine, out EditorDiagnostic currentDiagnostic, out int currentIndex))
-                    return ModifiedPrefix() + FormatDiagnosticCounter(currentDiagnostic, currentIndex, _diagnostics.Count);
+                {
+                    int currentOrdinal = DiagnosticOrdinal(currentIndex, null);
+                    return ModifiedPrefix() + FormatDiagnosticCounter(currentDiagnostic, currentOrdinal, _diagnostics.Count);
+                }
 
-                return ModifiedPrefix() + _diagnostics.Count + " " + Pluralize("error", _diagnostics.Count) +
+                return ModifiedPrefix() + FormatDiagnosticTotals(null) +
                     " | next " + FormatDiagnosticLocation(_diagnostics[0]);
             }
 
@@ -5957,6 +6223,7 @@ namespace Core.DirFiles
 
             _diagnostics.Clear();
             _diagnosticLineIndexes.Clear();
+            _diagnosticLineSeverities.Clear();
 
             switch (_syntax)
             {
@@ -6015,17 +6282,35 @@ namespace Core.DirFiles
         {
             foreach (Diagnostic diagnostic in diagnostics)
             {
-                if (diagnostic.Severity != DiagnosticSeverity.Error && !diagnostic.IsWarningAsError)
+                if (!TryGetCSharpDiagnosticSeverity(diagnostic, out EditorDiagnosticSeverity severity))
                     continue;
 
                 if (!diagnostic.Location.IsInSource)
                     continue;
 
-                AddCSharpDiagnostic(diagnostic);
+                AddCSharpDiagnostic(diagnostic, severity);
             }
         }
 
-        private void AddCSharpDiagnostic(Diagnostic diagnostic)
+        private static bool TryGetCSharpDiagnosticSeverity(Diagnostic diagnostic, out EditorDiagnosticSeverity severity)
+        {
+            if (diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError)
+            {
+                severity = EditorDiagnosticSeverity.Error;
+                return true;
+            }
+
+            if (diagnostic.Severity == DiagnosticSeverity.Warning)
+            {
+                severity = EditorDiagnosticSeverity.Warning;
+                return true;
+            }
+
+            severity = EditorDiagnosticSeverity.Error;
+            return false;
+        }
+
+        private void AddCSharpDiagnostic(Diagnostic diagnostic, EditorDiagnosticSeverity severity)
         {
             var lineSpan = diagnostic.Location.GetLineSpan();
             int lineIndex = ClampValue(lineSpan.StartLinePosition.Line, 0, Math.Max(0, _lines.Count - 1));
@@ -6044,7 +6329,7 @@ namespace Core.DirFiles
             }
 
             string description = diagnostic.GetMessage(CultureInfo.CurrentCulture);
-            AddDiagnostic(lineIndex, startColumn, endColumn, diagnostic.Id, description);
+            AddDiagnostic(lineIndex, startColumn, endColumn, diagnostic.Id, description, severity);
         }
 
         private void CollectTermXtDiagnostics()
@@ -6167,10 +6452,21 @@ namespace Core.DirFiles
         private void AddDiagnostic(int lineIndex, string code, string description)
         {
             int normalizedLine = ClampValue(lineIndex, 0, Math.Max(0, _lines.Count - 1));
-            AddDiagnostic(normalizedLine, 0, _lines[normalizedLine].Length, code, description);
+            AddDiagnostic(normalizedLine, 0, _lines[normalizedLine].Length, code, description, EditorDiagnosticSeverity.Error);
         }
 
         private void AddDiagnostic(int lineIndex, int startColumn, int endColumn, string code, string description)
+        {
+            AddDiagnostic(lineIndex, startColumn, endColumn, code, description, EditorDiagnosticSeverity.Error);
+        }
+
+        private void AddDiagnostic(
+            int lineIndex,
+            int startColumn,
+            int endColumn,
+            string code,
+            string description,
+            EditorDiagnosticSeverity severity)
         {
             int normalizedLine = ClampValue(lineIndex, 0, Math.Max(0, _lines.Count - 1));
             int lineLength = _lines[normalizedLine].Length;
@@ -6182,8 +6478,10 @@ namespace Core.DirFiles
                 normalizedStart,
                 normalizedEnd,
                 code ?? string.Empty,
-                string.IsNullOrWhiteSpace(description) ? "Syntax error." : description));
+                string.IsNullOrWhiteSpace(description) ? "Syntax error." : description,
+                severity));
             _diagnosticLineIndexes.Add(normalizedLine);
+            SetDiagnosticLineSeverity(normalizedLine, severity);
         }
 
         private bool HasDiagnosticOnLine(int lineIndex)
@@ -6192,13 +6490,37 @@ namespace Core.DirFiles
             return _diagnosticLineIndexes.Contains(lineIndex);
         }
 
+        private bool TryGetDiagnosticSeverityForLine(int lineIndex, out EditorDiagnosticSeverity severity)
+        {
+            EnsureDiagnostics();
+            return _diagnosticLineSeverities.TryGetValue(lineIndex, out severity);
+        }
+
+        private void SetDiagnosticLineSeverity(int lineIndex, EditorDiagnosticSeverity severity)
+        {
+            if (!_diagnosticLineSeverities.TryGetValue(lineIndex, out EditorDiagnosticSeverity existing) ||
+                DiagnosticSeverityRank(severity) < DiagnosticSeverityRank(existing))
+            {
+                _diagnosticLineSeverities[lineIndex] = severity;
+            }
+        }
+
         private bool TryGetDiagnosticForLine(int lineIndex, out EditorDiagnostic diagnostic, out int diagnosticIndex)
+        {
+            return TryGetDiagnosticForLine(lineIndex, null, out diagnostic, out diagnosticIndex);
+        }
+
+        private bool TryGetDiagnosticForLine(
+            int lineIndex,
+            EditorDiagnosticSeverity? severity,
+            out EditorDiagnostic diagnostic,
+            out int diagnosticIndex)
         {
             EnsureDiagnostics();
 
             for (int i = 0; i < _diagnostics.Count; i++)
             {
-                if (_diagnostics[i].LineIndex == lineIndex)
+                if (_diagnostics[i].LineIndex == lineIndex && DiagnosticMatches(_diagnostics[i], severity))
                 {
                     diagnostic = _diagnostics[i];
                     diagnosticIndex = i;
@@ -6213,13 +6535,39 @@ namespace Core.DirFiles
 
         private string FormatDiagnosticCounter(EditorDiagnostic diagnostic, int diagnosticIndex, int diagnosticCount)
         {
-            return "error " + (diagnosticIndex + 1) + "/" + diagnosticCount + " | " + FormatDiagnosticLocation(diagnostic);
+            return DiagnosticSeverityName(diagnostic.Severity) + " " + (diagnosticIndex + 1) +
+                "/" + diagnosticCount + " | " + FormatDiagnosticLocation(diagnostic);
         }
 
         private static string FormatDiagnosticLocation(EditorDiagnostic diagnostic)
         {
             string code = string.IsNullOrWhiteSpace(diagnostic.Code) ? string.Empty : " " + diagnostic.Code;
             return "L" + diagnostic.LineNumber + code + ": " + diagnostic.Description;
+        }
+
+        private static string DiagnosticSeverityName(EditorDiagnosticSeverity severity)
+        {
+            return severity == EditorDiagnosticSeverity.Warning ? "warning" : "error";
+        }
+
+        private static char DiagnosticIndicator(EditorDiagnosticSeverity severity)
+        {
+            return severity == EditorDiagnosticSeverity.Warning ? '?' : '!';
+        }
+
+        private static int DiagnosticColor(EditorDiagnosticSeverity severity)
+        {
+            return severity == EditorDiagnosticSeverity.Warning ? CWarning : CError;
+        }
+
+        private static int DiagnosticGutterBackground(EditorDiagnosticSeverity severity)
+        {
+            return severity == EditorDiagnosticSeverity.Warning ? 58 : 52;
+        }
+
+        private static int DiagnosticSeverityRank(EditorDiagnosticSeverity severity)
+        {
+            return severity == EditorDiagnosticSeverity.Error ? 0 : 1;
         }
 
         private string BuildDocumentText()
@@ -6245,6 +6593,10 @@ namespace Core.DirFiles
             int column = left.StartColumn.CompareTo(right.StartColumn);
             if (column != 0)
                 return column;
+
+            int severity = DiagnosticSeverityRank(left.Severity).CompareTo(DiagnosticSeverityRank(right.Severity));
+            if (severity != 0)
+                return severity;
 
             return string.Compare(left.Code, right.Code, StringComparison.Ordinal);
         }
@@ -6412,7 +6764,7 @@ namespace Core.DirFiles
             var sb = new StringBuilder(width + 128);
             int end = start + width;
             int visible = 0;
-            bool diagnosticLine = HasDiagnosticOnLine(lineIndex);
+            bool diagnosticLine = TryGetDiagnosticSeverityForLine(lineIndex, out EditorDiagnosticSeverity diagnosticSeverity);
             TryGetSelectionSpanForLine(lineIndex, out int selectionStart, out int selectionEnd);
 
             foreach (var token in tokens)
@@ -6426,7 +6778,7 @@ namespace Core.DirFiles
 
                 int clipStart = Math.Max(start, token.Start);
                 int clipEnd = Math.Min(end, tokenEnd);
-                int color = diagnosticLine ? CError : token.Color;
+                int color = diagnosticLine ? DiagnosticColor(diagnosticSeverity) : token.Color;
                 AppendHighlightedSegment(sb, line, clipStart, clipEnd, color, selectionStart, selectionEnd);
 
                 visible += clipEnd - clipStart;
@@ -10373,6 +10725,19 @@ namespace Core.DirFiles
             Search
         }
 
+        private enum EditorNotificationSeverity
+        {
+            Normal,
+            Warning,
+            Error
+        }
+
+        private enum EditorDiagnosticSeverity
+        {
+            Error,
+            Warning
+        }
+
         private sealed class Snapshot
         {
             public string[] Lines { get; set; }
@@ -10481,13 +10846,20 @@ namespace Core.DirFiles
 
         private sealed class EditorDiagnostic
         {
-            public EditorDiagnostic(int lineIndex, int startColumn, int endColumn, string code, string description)
+            public EditorDiagnostic(
+                int lineIndex,
+                int startColumn,
+                int endColumn,
+                string code,
+                string description,
+                EditorDiagnosticSeverity severity)
             {
                 LineIndex = lineIndex;
                 StartColumn = startColumn;
                 EndColumn = endColumn;
                 Code = code ?? string.Empty;
                 Description = description ?? string.Empty;
+                Severity = severity;
             }
 
             public int LineIndex { get; private set; }
@@ -10496,6 +10868,7 @@ namespace Core.DirFiles
             public int EndColumn { get; private set; }
             public string Code { get; private set; }
             public string Description { get; private set; }
+            public EditorDiagnosticSeverity Severity { get; private set; }
         }
 
         private sealed class CSharpCompletionSession

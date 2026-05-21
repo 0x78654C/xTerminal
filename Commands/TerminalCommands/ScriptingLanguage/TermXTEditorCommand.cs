@@ -35,7 +35,7 @@ Inside the editor:
     Insert mode : Esc returns to normal mode, C# IntelliSense opens automatically, Enter/Tab accepts a completion, Ctrl+X cuts selection/line, Ctrl+Z undo, Ctrl+Y redo.
     Commands    : :e explorer, :w save, :w! overwrite changed disk file, :e! reload, :q quit, :q! quit without saving, :wq save and quit.
                   :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py switch highlight.
-                  :errors show diagnostics, :next-error/:prev-error jump between .xt/.cs errors.
+                  :errors/:warnings show diagnostics, :next-error/:prev-error and :next-warning/:prev-warning jump between .xt/.cs diagnostics.
 ";
 
         private static readonly string s_template = @"# xTermXT Script template

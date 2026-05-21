@@ -154,6 +154,30 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CSharpDiagnostics_ReportWarnings()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllText(path, "public class C { void M() { int x = 1; } }");
+
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+            List<DiagnosticInfo> diagnostics = Diagnostics(editor);
+
+            diagnostics.Should().Contain(diagnostic =>
+                diagnostic.LineNumber == 1 &&
+                diagnostic.Code == "CS0219" &&
+                diagnostic.Severity == "Warning");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CSharpDiagnostics_ReportSemanticErrorsWhenUsingIsMissing()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
@@ -1135,6 +1159,8 @@ public class TermXTEditorSyntaxTests
 
             InvokePrivate<bool>(editor, "CheckExternalFileChange").Should().BeTrue();
             GetPrivateField<bool>(editor, "_externalChangePending").Should().BeTrue();
+            GetPrivateField<bool>(editor, "_bottomStatusWarning").Should().BeTrue();
+            GetPrivateField<bool>(editor, "_bottomStatusError").Should().BeFalse();
         }
         finally
         {
@@ -1392,7 +1418,8 @@ public class TermXTEditorSyntaxTests
             result.Add(new DiagnosticInfo(
                 (int)diagnosticType.GetProperty("LineNumber")!.GetValue(diagnostic)!,
                 (string)diagnosticType.GetProperty("Code")!.GetValue(diagnostic)!,
-                (string)diagnosticType.GetProperty("Description")!.GetValue(diagnostic)!));
+                (string)diagnosticType.GetProperty("Description")!.GetValue(diagnostic)!,
+                diagnosticType.GetProperty("Severity")!.GetValue(diagnostic)!.ToString()!));
         }
 
         return result;
@@ -1570,16 +1597,18 @@ public class TermXTEditorSyntaxTests
 
     private readonly struct DiagnosticInfo
     {
-        public DiagnosticInfo(int lineNumber, string code, string description)
+        public DiagnosticInfo(int lineNumber, string code, string description, string severity)
         {
             LineNumber = lineNumber;
             Code = code;
             Description = description;
+            Severity = severity;
         }
 
         public int LineNumber { get; }
         public string Code { get; }
         public string Description { get; }
+        public string Severity { get; }
     }
 
     private readonly struct CompletionInfo
