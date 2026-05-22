@@ -154,6 +154,30 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CSharpDiagnostics_ReportWarnings()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllText(path, "public class C { void M() { int x = 1; } }");
+
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+            List<DiagnosticInfo> diagnostics = Diagnostics(editor);
+
+            diagnostics.Should().Contain(diagnostic =>
+                diagnostic.LineNumber == 1 &&
+                diagnostic.Code == "CS0219" &&
+                diagnostic.Severity == "Warning");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CSharpDiagnostics_ReportSemanticErrorsWhenUsingIsMissing()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
@@ -644,6 +668,95 @@ public class TermXTEditorSyntaxTests
         }
     }
 
+    [Theory]
+    [InlineData("using System;\npublic class C { void M() { var s = \"Co$$\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = $\"Co$$ {value}\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = @\"Co$$\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = $@\"Co$$\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var c = 'C$$'; } }")]
+    [InlineData("using System;\npublic class C { void M() { // Co$$\n} }")]
+    [InlineData("using System;\npublic class C { void M() { /* Co$$ */ } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = \"\"\"Co$$\"\"\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = $\"\"\"Co$$ {value}\"\"\"; } }")]
+    [InlineData("using System;\npublic class C { void M() { var s = \"\"\"\nCo$$\n\"\"\"; } }")]
+    [InlineData("#if CO$$\n#endif\nusing System;\npublic class C { }")]
+    [InlineData("using System;\npublic class C { void M() { 12$$ } }")]
+    [InlineData("using System;\npublic class C { void M() { 1.$$ } }")]
+    public void CSharpCompletion_SuppressedInNonExpressionContexts(string markedText)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, markedText);
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().BeEmpty();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("using System;\npublic class C { void M() { var da$$ } }", "t")]
+    [InlineData("using System;\npublic class C { void M() { int cou$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { string na$$ } }", "m")]
+    [InlineData("using System.Collections.Generic;\npublic class C { void M() { List<string> ite$$ } }", "m")]
+    [InlineData("public class MyClass { }\npublic class C { void M() { MyClass insta$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { using var strea$$ } }", "m")]
+    [InlineData("using System;\npublic class C { void M() { const int ma$$ } }", "x")]
+    [InlineData("using System;\npublic class C { void M() { int first, seco$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { int first = 1, seco$$ = 2; } }", "n")]
+    public void CSharpCompletion_TypingDeclarationName_DoesNotAutoOpen(string markedText, string typedText)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, markedText);
+
+            InvokePrivate(editor, "InsertText", typedText);
+            InvokePrivate(editor, "RefreshCompletionAfterText", typedText);
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeFalse();
+            CSharpCompletions(editor).Should().BeEmpty();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("using System;\npublic class C { void M() { var data = Co$$ } }", "n")]
+    [InlineData("using System;\npublic class C { object M() { return Co$$ } }", "n")]
+    [InlineData("using System;\npublic class C { void M() { Console.WriteLine(Co$$); } }", "n")]
+    public void CSharpCompletion_TypingExpressionName_AutoOpens(string markedText, string typedText)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(path, markedText);
+
+            InvokePrivate(editor, "InsertText", typedText);
+            InvokePrivate(editor, "RefreshCompletionAfterText", typedText);
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            ActiveCSharpCompletions(editor).Should().Contain(completion => completion.Label == "Console");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
     [Fact]
     public void TokenizeRust_HighlightsCommonRustTokens()
     {
@@ -1046,6 +1159,8 @@ public class TermXTEditorSyntaxTests
 
             InvokePrivate<bool>(editor, "CheckExternalFileChange").Should().BeTrue();
             GetPrivateField<bool>(editor, "_externalChangePending").Should().BeTrue();
+            GetPrivateField<bool>(editor, "_bottomStatusWarning").Should().BeTrue();
+            GetPrivateField<bool>(editor, "_bottomStatusError").Should().BeFalse();
         }
         finally
         {
@@ -1303,7 +1418,8 @@ public class TermXTEditorSyntaxTests
             result.Add(new DiagnosticInfo(
                 (int)diagnosticType.GetProperty("LineNumber")!.GetValue(diagnostic)!,
                 (string)diagnosticType.GetProperty("Code")!.GetValue(diagnostic)!,
-                (string)diagnosticType.GetProperty("Description")!.GetValue(diagnostic)!));
+                (string)diagnosticType.GetProperty("Description")!.GetValue(diagnostic)!,
+                diagnosticType.GetProperty("Severity")!.GetValue(diagnostic)!.ToString()!));
         }
 
         return result;
@@ -1481,16 +1597,18 @@ public class TermXTEditorSyntaxTests
 
     private readonly struct DiagnosticInfo
     {
-        public DiagnosticInfo(int lineNumber, string code, string description)
+        public DiagnosticInfo(int lineNumber, string code, string description, string severity)
         {
             LineNumber = lineNumber;
             Code = code;
             Description = description;
+            Severity = severity;
         }
 
         public int LineNumber { get; }
         public string Code { get; }
         public string Description { get; }
+        public string Severity { get; }
     }
 
     private readonly struct CompletionInfo
