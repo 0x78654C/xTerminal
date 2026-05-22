@@ -236,10 +236,16 @@ namespace Core.Spreadsheets
                     MoveTo(_selectedRow + VisibleRowCount(), _selectedColumn, shift);
                     break;
                 case ConsoleKey.Home:
-                    MoveTo(_selectedRow, 0, shift);
+                    if (shift)
+                        MoveTo(0, _selectedColumn);
+                    else
+                        MoveTo(_selectedRow, 0);
                     break;
                 case ConsoleKey.End:
-                    MoveTo(_selectedRow, Math.Max(0, ActiveSheet.UsedColumnCount - 1), shift);
+                    if (shift)
+                        MoveTo(Math.Max(0, ActiveSheet.UsedRowCount - 1), _selectedColumn);
+                    else
+                        MoveTo(_selectedRow, Math.Max(0, ActiveSheet.UsedColumnCount - 1));
                     break;
                 case ConsoleKey.Tab:
                     SwitchSheet(shift ? -1 : 1);
@@ -349,7 +355,7 @@ namespace Core.Spreadsheets
         private void AppendHelpBar(StringBuilder buf, int width)
         {
             buf.Append(BgHelp + FgHelp);
-            const string hint = "  Wheel-scroll  │  Shift+wheel-columns  │  Mouse-select  │  Ctrl+C-copy  │  Column header-select column  │  Ctrl+S-save  │  Esc-quit";
+            const string hint = "  Wheel-scroll  │  Shift+wheel-columns  │  Shift+Home/End top/bottom  │  Mouse-select  │  Ctrl+C-copy  │  Ctrl+S-save  │  Esc-quit";
             // Hint string is longer than narrow terminals — must truncate to prevent line wrapping.
             AppendFilledLine(buf, Trim(hint, width), width, BgHelp);
         }
