@@ -646,12 +646,16 @@ namespace Core.DirFiles
         private bool _wrapCacheDirty = true;
         private bool[] _csharpBlockCommentLineStarts = Array.Empty<bool>();
         private bool _csharpBlockCommentCacheDirty = true;
+        private bool _csharpBlockCommentStateAfterCachedLines;
         private int[] _rustBlockCommentDepthLineStarts = Array.Empty<int>();
         private bool _rustBlockCommentCacheDirty = true;
+        private int _rustBlockCommentDepthAfterCachedLines;
         private bool[] _javaScriptBlockCommentLineStarts = Array.Empty<bool>();
         private bool _javaScriptBlockCommentCacheDirty = true;
+        private bool _javaScriptBlockCommentStateAfterCachedLines;
         private int[] _pythonMultilineStringQuoteLineStarts = Array.Empty<int>();
         private bool _pythonMultilineStringCacheDirty = true;
+        private int _pythonMultilineStringQuoteAfterCachedLines;
 
         public TermXTEditor(string path)
             : this(path, DetectSyntaxFromPath(path))
@@ -1141,7 +1145,7 @@ namespace Core.DirFiles
             ResetVerticalCursorColumn();
             _scrollTop = 0;
             _scrollLeft = 0;
-            _savedLines = _lines.ToArray();
+            _savedLines = loadedLines;
             _knownFileState = GetFileState(_path);
             _dirty = false;
             _externalChangePending = false;
@@ -1151,7 +1155,7 @@ namespace Core.DirFiles
             _redo.Clear();
             ClearSelection();
             DismissCompletion();
-            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: true);
         }
 
         private bool TryReadDiskLines(out string[] lines, out string error)
@@ -1191,7 +1195,10 @@ namespace Core.DirFiles
                     return false;
                 }
 
-                var loaded = new List<string>();
+                int estimatedLineCount = (int)Math.Min(
+                    MaxEditorLineCount,
+                    Math.Max(1L, (info.Length / 80L) + 1L));
+                var loaded = new List<string>(estimatedLineCount);
                 using (var reader = new StreamReader(path, Encoding.UTF8, detectEncodingFromByteOrderMarks: true))
                 {
                     string line;
@@ -1257,19 +1264,25 @@ namespace Core.DirFiles
         {
             _wrapCacheDirty = true;
             InvalidateDiagnosticsCache(delayCSharpSemanticDiagnostics);
-            _csharpBlockCommentCacheDirty = true;
-            _rustBlockCommentCacheDirty = true;
-            _javaScriptBlockCommentCacheDirty = true;
-            _pythonMultilineStringCacheDirty = true;
+            InvalidateSyntaxLineStateCaches();
         }
 
         private void InvalidateSyntaxStateCache()
         {
             InvalidateDiagnosticsCache(delayCSharpSemanticDiagnostics: false);
+            InvalidateSyntaxLineStateCaches();
+        }
+
+        private void InvalidateSyntaxLineStateCaches()
+        {
             _csharpBlockCommentCacheDirty = true;
+            _csharpBlockCommentStateAfterCachedLines = false;
             _rustBlockCommentCacheDirty = true;
+            _rustBlockCommentDepthAfterCachedLines = 0;
             _javaScriptBlockCommentCacheDirty = true;
+            _javaScriptBlockCommentStateAfterCachedLines = false;
             _pythonMultilineStringCacheDirty = true;
+            _pythonMultilineStringQuoteAfterCachedLines = 0;
         }
 
         private void InvalidateDiagnosticsCache(bool delayCSharpSemanticDiagnostics)
@@ -1281,6 +1294,8 @@ namespace Core.DirFiles
                     ? DateTime.UtcNow.AddMilliseconds(CSharpSemanticDiagnosticDelayMs)
                     : DateTime.MinValue;
                 _diagnosticsCacheDirty = !delayCSharpSemanticDiagnostics;
+                if (delayCSharpSemanticDiagnostics)
+                    ClearDiagnostics();
                 return;
             }
 
@@ -1359,7 +1374,7 @@ namespace Core.DirFiles
 
         private void RenderHeader(int width)
         {
-            EnsureDiagnostics();
+            EnsureDiagnosticsForRender();
 
             string name = Path.GetFileName(_path);
             if (string.IsNullOrWhiteSpace(name))
@@ -6192,7 +6207,7 @@ namespace Core.DirFiles
             if (_externalChangePending)
                 return "file changed on disk";
 
-            EnsureDiagnostics();
+            EnsureDiagnosticsForRender();
             if (_diagnostics.Count > 0)
             {
                 if (TryGetDiagnosticForLine(_cursorLine, out EditorDiagnostic currentDiagnostic, out int currentIndex))
@@ -6219,11 +6234,40 @@ namespace Core.DirFiles
         private void EnsureDiagnostics()
         {
             if (!_diagnosticsCacheDirty)
+            {
+                if (_syntax == TermXTEditorSyntax.CSharp && _csharpSemanticDiagnosticsPending)
+                {
+                    _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
+                    _diagnosticsCacheDirty = true;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            CollectDiagnostics();
+        }
+
+        private void EnsureDiagnosticsForRender()
+        {
+            if (_syntax == TermXTEditorSyntax.CSharp &&
+                _csharpSemanticDiagnosticsPending &&
+                DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc &&
+                !_diagnosticsCacheDirty)
+            {
+                return;
+            }
+
+            if (!_diagnosticsCacheDirty)
                 return;
 
-            _diagnostics.Clear();
-            _diagnosticLineIndexes.Clear();
-            _diagnosticLineSeverities.Clear();
+            CollectDiagnostics();
+        }
+
+        private void CollectDiagnostics()
+        {
+            ClearDiagnostics();
 
             switch (_syntax)
             {
@@ -6237,6 +6281,13 @@ namespace Core.DirFiles
 
             _diagnostics.Sort(CompareDiagnostics);
             _diagnosticsCacheDirty = false;
+        }
+
+        private void ClearDiagnostics()
+        {
+            _diagnostics.Clear();
+            _diagnosticLineIndexes.Clear();
+            _diagnosticLineSeverities.Clear();
         }
 
         private void EnsureFullDiagnostics()
@@ -6492,7 +6543,7 @@ namespace Core.DirFiles
 
         private bool TryGetDiagnosticSeverityForLine(int lineIndex, out EditorDiagnosticSeverity severity)
         {
-            EnsureDiagnostics();
+            EnsureDiagnosticsForRender();
             return _diagnosticLineSeverities.TryGetValue(lineIndex, out severity);
         }
 
@@ -6847,31 +6898,45 @@ namespace Core.DirFiles
 
         private bool IsCSharpLineInBlockComment(int lineIndex)
         {
-            EnsureCSharpBlockCommentCache();
-            if (lineIndex < 0 || lineIndex >= _csharpBlockCommentLineStarts.Length)
+            if (lineIndex < 0 || lineIndex >= _lines.Count)
                 return false;
 
+            EnsureCSharpBlockCommentCache(lineIndex);
             return _csharpBlockCommentLineStarts[lineIndex];
         }
 
-        private void EnsureCSharpBlockCommentCache()
+        private void EnsureCSharpBlockCommentCache(int lineIndex)
         {
-            if (!_csharpBlockCommentCacheDirty &&
-                _csharpBlockCommentLineStarts.Length == _lines.Count)
+            int targetCount = Math.Min(_lines.Count, lineIndex + 1);
+            if (targetCount <= 0)
+                return;
+
+            if (_csharpBlockCommentCacheDirty || _csharpBlockCommentLineStarts.Length > _lines.Count)
+            {
+                _csharpBlockCommentLineStarts = Array.Empty<bool>();
+                _csharpBlockCommentStateAfterCachedLines = false;
+                _csharpBlockCommentCacheDirty = false;
+            }
+
+            if (_csharpBlockCommentLineStarts.Length >= targetCount)
             {
                 return;
             }
 
-            var lineStarts = new bool[_lines.Count];
-            bool inBlockComment = false;
-            for (int i = 0; i < _lines.Count; i++)
+            int start = _csharpBlockCommentLineStarts.Length;
+            var lineStarts = new bool[targetCount];
+            if (start > 0)
+                Array.Copy(_csharpBlockCommentLineStarts, lineStarts, start);
+
+            bool inBlockComment = _csharpBlockCommentStateAfterCachedLines;
+            for (int i = start; i < targetCount; i++)
             {
                 lineStarts[i] = inBlockComment;
                 inBlockComment = ScanCSharpBlockCommentState(_lines[i], inBlockComment);
             }
 
             _csharpBlockCommentLineStarts = lineStarts;
-            _csharpBlockCommentCacheDirty = false;
+            _csharpBlockCommentStateAfterCachedLines = inBlockComment;
         }
 
         private static bool ScanCSharpBlockCommentState(string line, bool inBlockComment)
@@ -6921,31 +6986,45 @@ namespace Core.DirFiles
 
         private int RustBlockCommentDepthAtLineStart(int lineIndex)
         {
-            EnsureRustBlockCommentCache();
-            if (lineIndex < 0 || lineIndex >= _rustBlockCommentDepthLineStarts.Length)
+            if (lineIndex < 0 || lineIndex >= _lines.Count)
                 return 0;
 
+            EnsureRustBlockCommentCache(lineIndex);
             return _rustBlockCommentDepthLineStarts[lineIndex];
         }
 
-        private void EnsureRustBlockCommentCache()
+        private void EnsureRustBlockCommentCache(int lineIndex)
         {
-            if (!_rustBlockCommentCacheDirty &&
-                _rustBlockCommentDepthLineStarts.Length == _lines.Count)
+            int targetCount = Math.Min(_lines.Count, lineIndex + 1);
+            if (targetCount <= 0)
+                return;
+
+            if (_rustBlockCommentCacheDirty || _rustBlockCommentDepthLineStarts.Length > _lines.Count)
+            {
+                _rustBlockCommentDepthLineStarts = Array.Empty<int>();
+                _rustBlockCommentDepthAfterCachedLines = 0;
+                _rustBlockCommentCacheDirty = false;
+            }
+
+            if (_rustBlockCommentDepthLineStarts.Length >= targetCount)
             {
                 return;
             }
 
-            var lineStarts = new int[_lines.Count];
-            int blockCommentDepth = 0;
-            for (int i = 0; i < _lines.Count; i++)
+            int start = _rustBlockCommentDepthLineStarts.Length;
+            var lineStarts = new int[targetCount];
+            if (start > 0)
+                Array.Copy(_rustBlockCommentDepthLineStarts, lineStarts, start);
+
+            int blockCommentDepth = _rustBlockCommentDepthAfterCachedLines;
+            for (int i = start; i < targetCount; i++)
             {
                 lineStarts[i] = blockCommentDepth;
                 blockCommentDepth = ScanRustBlockCommentDepth(_lines[i], blockCommentDepth);
             }
 
             _rustBlockCommentDepthLineStarts = lineStarts;
-            _rustBlockCommentCacheDirty = false;
+            _rustBlockCommentDepthAfterCachedLines = blockCommentDepth;
         }
 
         private static int ScanRustBlockCommentDepth(string line, int blockCommentDepth)
@@ -7004,31 +7083,45 @@ namespace Core.DirFiles
 
         private bool IsJavaScriptLineInBlockComment(int lineIndex)
         {
-            EnsureJavaScriptBlockCommentCache();
-            if (lineIndex < 0 || lineIndex >= _javaScriptBlockCommentLineStarts.Length)
+            if (lineIndex < 0 || lineIndex >= _lines.Count)
                 return false;
 
+            EnsureJavaScriptBlockCommentCache(lineIndex);
             return _javaScriptBlockCommentLineStarts[lineIndex];
         }
 
-        private void EnsureJavaScriptBlockCommentCache()
+        private void EnsureJavaScriptBlockCommentCache(int lineIndex)
         {
-            if (!_javaScriptBlockCommentCacheDirty &&
-                _javaScriptBlockCommentLineStarts.Length == _lines.Count)
+            int targetCount = Math.Min(_lines.Count, lineIndex + 1);
+            if (targetCount <= 0)
+                return;
+
+            if (_javaScriptBlockCommentCacheDirty || _javaScriptBlockCommentLineStarts.Length > _lines.Count)
+            {
+                _javaScriptBlockCommentLineStarts = Array.Empty<bool>();
+                _javaScriptBlockCommentStateAfterCachedLines = false;
+                _javaScriptBlockCommentCacheDirty = false;
+            }
+
+            if (_javaScriptBlockCommentLineStarts.Length >= targetCount)
             {
                 return;
             }
 
-            var lineStarts = new bool[_lines.Count];
-            bool inBlockComment = false;
-            for (int i = 0; i < _lines.Count; i++)
+            int start = _javaScriptBlockCommentLineStarts.Length;
+            var lineStarts = new bool[targetCount];
+            if (start > 0)
+                Array.Copy(_javaScriptBlockCommentLineStarts, lineStarts, start);
+
+            bool inBlockComment = _javaScriptBlockCommentStateAfterCachedLines;
+            for (int i = start; i < targetCount; i++)
             {
                 lineStarts[i] = inBlockComment;
                 inBlockComment = ScanJavaScriptBlockCommentState(_lines[i], inBlockComment);
             }
 
             _javaScriptBlockCommentLineStarts = lineStarts;
-            _javaScriptBlockCommentCacheDirty = false;
+            _javaScriptBlockCommentStateAfterCachedLines = inBlockComment;
         }
 
         private static bool ScanJavaScriptBlockCommentState(string line, bool inBlockComment)
@@ -7078,31 +7171,45 @@ namespace Core.DirFiles
 
         private int PythonMultilineStringQuoteAtLineStart(int lineIndex)
         {
-            EnsurePythonMultilineStringCache();
-            if (lineIndex < 0 || lineIndex >= _pythonMultilineStringQuoteLineStarts.Length)
+            if (lineIndex < 0 || lineIndex >= _lines.Count)
                 return 0;
 
+            EnsurePythonMultilineStringCache(lineIndex);
             return _pythonMultilineStringQuoteLineStarts[lineIndex];
         }
 
-        private void EnsurePythonMultilineStringCache()
+        private void EnsurePythonMultilineStringCache(int lineIndex)
         {
-            if (!_pythonMultilineStringCacheDirty &&
-                _pythonMultilineStringQuoteLineStarts.Length == _lines.Count)
+            int targetCount = Math.Min(_lines.Count, lineIndex + 1);
+            if (targetCount <= 0)
+                return;
+
+            if (_pythonMultilineStringCacheDirty || _pythonMultilineStringQuoteLineStarts.Length > _lines.Count)
+            {
+                _pythonMultilineStringQuoteLineStarts = Array.Empty<int>();
+                _pythonMultilineStringQuoteAfterCachedLines = 0;
+                _pythonMultilineStringCacheDirty = false;
+            }
+
+            if (_pythonMultilineStringQuoteLineStarts.Length >= targetCount)
             {
                 return;
             }
 
-            var lineStarts = new int[_lines.Count];
-            int quote = 0;
-            for (int i = 0; i < _lines.Count; i++)
+            int start = _pythonMultilineStringQuoteLineStarts.Length;
+            var lineStarts = new int[targetCount];
+            if (start > 0)
+                Array.Copy(_pythonMultilineStringQuoteLineStarts, lineStarts, start);
+
+            int quote = _pythonMultilineStringQuoteAfterCachedLines;
+            for (int i = start; i < targetCount; i++)
             {
                 lineStarts[i] = quote;
                 quote = ScanPythonMultilineStringQuote(_lines[i], quote);
             }
 
             _pythonMultilineStringQuoteLineStarts = lineStarts;
-            _pythonMultilineStringCacheDirty = false;
+            _pythonMultilineStringQuoteAfterCachedLines = quote;
         }
 
         private static int ScanPythonMultilineStringQuote(string line, int quote)
