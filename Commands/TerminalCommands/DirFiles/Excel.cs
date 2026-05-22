@@ -22,6 +22,8 @@ Supported files:
 Editor keys:
   Arrows       Move through rows and columns.
   Shift+Arrows Select a cell range.
+  Shift+Home   Move to the top row.
+  Shift+End    Move to the last used row.
   Mouse drag   Select cells or row headers.
   Mouse wheel  Scroll rows. Shift+wheel scrolls columns.
   Column click Select the entire column.
