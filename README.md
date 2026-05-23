@@ -3,15 +3,7 @@
 </p>
 
 # xTerminal
-A Linux like shell for windows with some extras. The goal was to have a almost like exprience how the bash shell works on linux, a bit modified, but with same simplicity. And works perfect as a layer over Powershell and CMD. Every Powershell and CMD command can be run from xTerminal by prefixing it:.
- ```
- ~> cmd whoami
- ```
-Runs whoami command from CMD.
- ```
- ~> ps get-disk
- ```
-Runs get-disk command from Powershell.
+A Linux like shell for windows with some extras. The goal was to have a almost like exprience how the bash shell works on linux, a bit modified, but with same simplicity. And works perfect as a layer over Powershell and CMD.
 
 ![alt text](https://github.com/0x78654C/xTerminal/blob/main/media/1.bmp?raw=true)
 
