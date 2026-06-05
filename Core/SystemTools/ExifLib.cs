@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Collections.Generic;
-using System.Text;
-using System.Runtime.Versioning;
+using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
+using System.Text;
 
 /*
  Library for exif information getter.
@@ -13,7 +14,404 @@ using System.Linq;
 namespace Core.SystemTools
 {
     [SupportedOSPlatform("windows")]
+    public sealed class AiDetectionResult
+    {
+        public bool IsLikelyAiGenerated { get; set; }
+        public int Score { get; set; }
+        public List<string> Evidence { get; } = new List<string>();
 
+        public string Verdict
+        {
+            get
+            {
+                if (Score >= 3) return "LIKELY AI-GENERATED";
+                if (Score >= 1) return "POSSIBLY AI-GENERATED";
+                return "NO AI METADATA FOUND / UNKNOWN";
+            }
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    public static class AiFileDetector
+    {
+        private sealed class Marker
+        {
+            public string Text { get; }
+            public int Weight { get; }
+            public string Kind { get; }
+
+            public Marker(string text, int weight, string kind)
+            {
+                Text = text;
+                Weight = weight;
+                Kind = kind;
+            }
+        }
+
+        private static readonly Marker[] Markers = new Marker[]
+        {
+            // Strong AI tool / generator markers
+            new Marker("stable diffusion", 3, "AI tool"),
+            new Marker("stable-diffusion", 3, "AI tool"),
+            new Marker("stability ai", 3, "AI tool"),
+            new Marker("sdxl", 3, "AI model"),
+            new Marker("comfyui", 3, "AI tool"),
+            new Marker("automatic1111", 3, "AI tool"),
+            new Marker("a1111", 3, "AI tool"),
+            new Marker("novelai", 3, "AI tool"),
+            new Marker("midjourney", 3, "AI tool"),
+            new Marker("dall-e", 3, "AI tool"),
+            new Marker("dall·e", 3, "AI tool"),
+            new Marker("dalle", 3, "AI tool"),
+            new Marker("openai", 3, "AI tool"),
+            new Marker("adobe firefly", 3, "AI tool"),
+            new Marker("firefly", 3, "AI tool"),
+            new Marker("bing image creator", 3, "AI tool"),
+            new Marker("microsoft designer", 3, "AI tool"),
+            new Marker("imagen", 3, "AI tool"),
+            new Marker("ideogram", 3, "AI tool"),
+            new Marker("leonardo.ai", 3, "AI tool"),
+            new Marker("runway", 3, "AI tool"),
+            new Marker("recraft", 3, "AI tool"),
+            new Marker("invokeai", 3, "AI tool"),
+            new Marker("fooocus", 3, "AI tool"),
+            new Marker("dreamstudio", 3, "AI tool"),
+            new Marker("civitai", 3, "AI tool"),
+            new Marker("black forest labs", 3, "AI tool"),
+            new Marker("flux", 2, "Possible AI model"),
+            new Marker("grok", 2, "Possible AI tool"),
+
+            // Prompt / generation-parameter markers commonly saved by AI image tools
+            new Marker("negative prompt", 2, "Generation parameter"),
+            new Marker("cfg scale", 2, "Generation parameter"),
+            new Marker("sampler:", 2, "Generation parameter"),
+            new Marker("seed:", 2, "Generation parameter"),
+            new Marker("steps:", 2, "Generation parameter"),
+            new Marker("model hash", 2, "Generation parameter"),
+            new Marker("model:", 2, "Generation parameter"),
+            new Marker("scheduler:", 2, "Generation parameter"),
+            new Marker("clip skip", 2, "Generation parameter"),
+            new Marker("denoising strength", 2, "Generation parameter"),
+            new Marker("hires upscale", 2, "Generation parameter"),
+            new Marker("lora:", 2, "Generation parameter"),
+            new Marker("loras", 2, "Generation parameter"),
+            new Marker("workflow", 1, "Possible AI workflow metadata"),
+            new Marker("prompt:", 1, "Possible prompt metadata"),
+
+            // C2PA / content credential / provenance markers
+            new Marker("trainedalgorithmicmedia", 4, "AI provenance marker"),
+            new Marker("algorithmically generated", 4, "AI provenance marker"),
+            new Marker("synthetic media", 3, "AI provenance marker"),
+            new Marker("created with ai", 3, "AI provenance marker"),
+            new Marker("generated with ai", 3, "AI provenance marker"),
+            new Marker("ai-generated", 3, "AI provenance marker"),
+            new Marker("ai generated", 3, "AI provenance marker"),
+            new Marker("com.adobe.firefly", 4, "AI provenance marker"),
+            new Marker("digitalSourceType", 1, "Content credential field"),
+            new Marker("c2pa.actions.created", 1, "Content credential field"),
+            new Marker("content credentials", 1, "Content credential field")
+        };
+
+        public static AiDetectionResult Detect(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException("File path is empty.", nameof(filePath));
+
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("File not found.", filePath);
+
+            byte[] bytes = File.ReadAllBytes(filePath);
+            var result = new AiDetectionResult();
+            var seenEvidence = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (MetadataText metadata in ExtractMetadataTexts(bytes, filePath))
+            {
+                ScanText(metadata.Source, metadata.Text, result, seenEvidence);
+            }
+
+            result.IsLikelyAiGenerated = result.Score >= 3;
+            return result;
+        }
+
+        private sealed class MetadataText
+        {
+            public string Source { get; }
+            public string Text { get; }
+
+            public MetadataText(string source, string text)
+            {
+                Source = source;
+                Text = text ?? string.Empty;
+            }
+        }
+
+        private static IEnumerable<MetadataText> ExtractMetadataTexts(byte[] bytes, string filePath)
+        {
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+
+            // Raw strings catch many metadata formats: EXIF, XMP, PNG text chunks, PDF metadata, etc.
+            yield return new MetadataText("raw ASCII/UTF-8 strings", ExtractPrintableAsciiStrings(bytes));
+            yield return new MetadataText("raw UTF-16 little-endian strings", ExtractUtf16Strings(bytes, bigEndian: false));
+            yield return new MetadataText("raw UTF-16 big-endian strings", ExtractUtf16Strings(bytes, bigEndian: true));
+
+            if (LooksLikePng(bytes) || extension == ".png")
+            {
+                foreach (MetadataText item in ExtractPngTextChunks(bytes))
+                    yield return item;
+            }
+
+            if (LooksLikeJpeg(bytes) || extension == ".jpg" || extension == ".jpeg")
+            {
+                foreach (MetadataText item in ExtractJpegMetadataSegments(bytes))
+                    yield return item;
+            }
+        }
+
+        private static void ScanText(string source, string text, AiDetectionResult result, HashSet<string> seenEvidence)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            string lower = text.ToLowerInvariant();
+
+            foreach (Marker marker in Markers)
+            {
+                string markerLower = marker.Text.ToLowerInvariant();
+                int index = lower.IndexOf(markerLower, StringComparison.Ordinal);
+                if (index < 0)
+                    continue;
+
+                string evidenceKey = source + "|" + marker.Text;
+                if (seenEvidence.Contains(evidenceKey))
+                    continue;
+
+                seenEvidence.Add(evidenceKey);
+                result.Score += marker.Weight;
+
+                string snippet = MakeSnippet(text, index, marker.Text.Length, 130);
+                result.Evidence.Add($"{marker.Kind}: found '{marker.Text}' in {source}. Snippet: \"{snippet}\"");
+            }
+        }
+
+        private static string MakeSnippet(string text, int index, int length, int maxLength)
+        {
+            int start = Math.Max(0, index - 45);
+            int end = Math.Min(text.Length, index + length + 45);
+            string snippet = text.Substring(start, end - start);
+
+            snippet = snippet.Replace('\r', ' ')
+                             .Replace('\n', ' ')
+                             .Replace('\t', ' ')
+                             .Replace("\0", " ");
+
+            while (snippet.Contains("  "))
+                snippet = snippet.Replace("  ", " ");
+
+            if (snippet.Length > maxLength)
+                snippet = snippet.Substring(0, maxLength - 1) + "…";
+
+            return snippet.Trim();
+        }
+
+        private static bool LooksLikePng(byte[] bytes)
+        {
+            return bytes.Length >= 8 &&
+                   bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47 &&
+                   bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A;
+        }
+
+        private static bool LooksLikeJpeg(byte[] bytes)
+        {
+            return bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xD8;
+        }
+
+        private static IEnumerable<MetadataText> ExtractPngTextChunks(byte[] bytes)
+        {
+            if (!LooksLikePng(bytes))
+                yield break;
+
+            int pos = 8;
+            while (pos + 12 <= bytes.Length)
+            {
+                uint length = ReadUInt32BigEndian(bytes, pos);
+                pos += 4;
+
+                if (pos + 4 > bytes.Length)
+                    yield break;
+
+                string type = Encoding.ASCII.GetString(bytes, pos, 4);
+                pos += 4;
+
+                if (length > int.MaxValue || pos + length + 4 > bytes.Length)
+                    yield break;
+
+                int dataStart = pos;
+                int dataLength = (int)length;
+
+                if (type == "tEXt" || type == "iTXt")
+                {
+                    string text = Encoding.UTF8.GetString(bytes, dataStart, dataLength).Replace('\0', ' ');
+                    yield return new MetadataText("PNG " + type + " chunk", text);
+                }
+                else if (type == "zTXt")
+                {
+                    // zTXt is compressed. We do not decompress it here to keep this file dependency-free.
+                    string text = Encoding.UTF8.GetString(bytes, dataStart, dataLength).Replace('\0', ' ');
+                    yield return new MetadataText("PNG zTXt chunk name/compressed bytes", text);
+                }
+                else if (type == "eXIf" || type == "iCCP")
+                {
+                    string text = ExtractPrintableAsciiStrings(SubArray(bytes, dataStart, dataLength));
+                    yield return new MetadataText("PNG " + type + " chunk", text);
+                }
+
+                pos += dataLength;
+                pos += 4; // CRC
+
+                if (type == "IEND")
+                    yield break;
+            }
+        }
+
+        private static IEnumerable<MetadataText> ExtractJpegMetadataSegments(byte[] bytes)
+        {
+            if (!LooksLikeJpeg(bytes))
+                yield break;
+
+            int pos = 2;
+            while (pos + 4 <= bytes.Length)
+            {
+                if (bytes[pos] != 0xFF)
+                {
+                    pos++;
+                    continue;
+                }
+
+                while (pos < bytes.Length && bytes[pos] == 0xFF)
+                    pos++;
+
+                if (pos >= bytes.Length)
+                    yield break;
+
+                byte marker = bytes[pos++];
+
+                // Start of Scan or End of Image: compressed image data starts/ends here.
+                if (marker == 0xDA || marker == 0xD9)
+                    yield break;
+
+                // Markers without length field.
+                if (marker == 0x01 || (marker >= 0xD0 && marker <= 0xD7))
+                    continue;
+
+                if (pos + 2 > bytes.Length)
+                    yield break;
+
+                int segmentLength = (bytes[pos] << 8) | bytes[pos + 1];
+                pos += 2;
+
+                if (segmentLength < 2)
+                    yield break;
+
+                int dataLength = segmentLength - 2;
+                if (pos + dataLength > bytes.Length)
+                    yield break;
+
+                bool isMetadataSegment =
+                    marker == 0xE1 || // APP1: EXIF/XMP
+                    marker == 0xED || // APP13: Photoshop/IPTC
+                    marker == 0xFE;   // COM: comment
+
+                if (isMetadataSegment)
+                {
+                    byte[] segment = SubArray(bytes, pos, dataLength);
+                    string text = ExtractPrintableAsciiStrings(segment);
+                    yield return new MetadataText("JPEG marker 0x" + marker.ToString("X2"), text);
+                }
+
+                pos += dataLength;
+            }
+        }
+
+        private static uint ReadUInt32BigEndian(byte[] data, int index)
+        {
+            return ((uint)data[index] << 24) |
+                   ((uint)data[index + 1] << 16) |
+                   ((uint)data[index + 2] << 8) |
+                   data[index + 3];
+        }
+
+        private static byte[] SubArray(byte[] data, int index, int length)
+        {
+            byte[] output = new byte[length];
+            Buffer.BlockCopy(data, index, output, 0, length);
+            return output;
+        }
+
+        private static string ExtractPrintableAsciiStrings(byte[] bytes, int minLength = 4)
+        {
+            var output = new StringBuilder();
+            var current = new StringBuilder();
+
+            foreach (byte b in bytes)
+            {
+                bool printable = b == 9 || b == 10 || b == 13 || (b >= 32 && b <= 126);
+
+                if (printable)
+                {
+                    current.Append((char)b);
+                }
+                else
+                {
+                    FlushString(current, output, minLength);
+                }
+            }
+
+            FlushString(current, output, minLength);
+            return output.ToString();
+        }
+
+        private static string ExtractUtf16Strings(byte[] bytes, bool bigEndian, int minLength = 4)
+        {
+            var output = new StringBuilder();
+            var current = new StringBuilder();
+
+            for (int i = 0; i + 1 < bytes.Length; i += 2)
+            {
+                ushort value;
+                if (bigEndian)
+                    value = (ushort)((bytes[i] << 8) | bytes[i + 1]);
+                else
+                    value = (ushort)((bytes[i + 1] << 8) | bytes[i]);
+
+                char c = (char)value;
+                bool printable = c == '\t' || c == '\n' || c == '\r' || (c >= 32 && c <= 126);
+
+                if (printable)
+                {
+                    current.Append(c);
+                }
+                else
+                {
+                    FlushString(current, output, minLength);
+                }
+            }
+
+            FlushString(current, output, minLength);
+            return output.ToString();
+        }
+
+        private static void FlushString(StringBuilder current, StringBuilder output, int minLength)
+        {
+            if (current.Length >= minLength)
+            {
+                output.AppendLine(current.ToString());
+            }
+
+            current.Clear();
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
     public class ExifLib
     {
         private static string s_outData = string.Empty;
@@ -257,7 +655,7 @@ namespace Core.SystemTools
         /// </summary>
         /// <param name="hexID"></param>
         /// <param name="enc"></param>
-        private static void PrintInfo(string hexID, string enc)
+        private static void PrintInfo(string hexID, string enc, string filePath="")
         {
 
             if (s_offset.ContainsKey(hexID))
@@ -324,6 +722,22 @@ namespace Core.SystemTools
                             PrintInfo(hexID, enc);
                             break;
                     }
+                }
+                AiDetectionResult result = AiFileDetector.Detect(pathJPEGFile);
+                if (result.IsLikelyAiGenerated)
+                {
+                    var aiData = @$"Verdict: {result.Verdict}
+Score: {result.Score}
+Likely AI generated: {result.IsLikelyAiGenerated}";
+                    if (result.Evidence.Count > 0)
+                    {
+                        aiData += "\nEvidence:";
+                        foreach (string evidence in result.Evidence)
+                        {
+                            aiData += "\n- " + evidence;
+                        }
+                    }
+                    s_outData += aiData + "\n";
                 }
                 if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0 && GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp)
                     GlobalVariables.pipeCmdOutput = s_outData;
