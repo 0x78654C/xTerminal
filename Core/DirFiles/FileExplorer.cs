@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Core.SystemTools;
 
 namespace Core.DirFiles
 {
@@ -85,28 +86,35 @@ namespace Core.DirFiles
 
         public void Run()
         {
+            using var virtualTerminalOutput = VirtualTerminalOutput.Enable();
             bool running = true;
-            Console.CursorVisible = false;
+            bool oldCursorVisible = Console.CursorVisible;
             Console.Write("\x1b[?1049h"); // alternate screen
-            while (running)
+            Console.CursorVisible = false;
+
+            try
             {
-                if (_searchMode)
+                while (running)
                 {
-                    RenderSearchScreen();
-                    var key = Console.ReadKey(intercept: true);
-                    running = HandleSearchKey(key);
-                }
-                else
-                {
-                    RenderMainScreen();
-                    var key = Console.ReadKey(intercept: true);
-                    running = HandleMainKey(key);
+                    if (_searchMode)
+                    {
+                        RenderSearchScreen();
+                        var key = Console.ReadKey(intercept: true);
+                        running = HandleSearchKey(key);
+                    }
+                    else
+                    {
+                        RenderMainScreen();
+                        var key = Console.ReadKey(intercept: true);
+                        running = HandleMainKey(key);
+                    }
                 }
             }
-
-            Console.CursorVisible = true;
-            //Console.Clear();
-            Console.Write("\x1b[?1049l"); // restore normal screen
+            finally
+            {
+                try { Console.Write("\x1b[?1049l"); } catch { } // restore normal screen
+                try { Console.CursorVisible = oldCursorVisible; } catch { }
+            }
         }
 
         public static void ColorConsoleTextLine(ConsoleColor color, string text)
