@@ -1,0 +1,285 @@
+NetAudit Log - 2026-05-04 17:24:54
+Host: MrX@DESKTOP-49FLQR2
+════════════════════════════════════════════════════
+
+
+════════════════════════════════════════════════════
+  ◆  NetAudit v2.1 — Network Diagnostics Toolkit
+  ◆  Host: MrX@DESKTOP-49FLQR2
+  ◆  Date: 2026-05-04  Time: 17:24:54
+════════════════════════════════════════════════════
+
+
+────────────────────────────────────────────────────
+  ▶ PHASE 1: Local Network Interfaces
+────────────────────────────────────────────────────
+  Querying NIC configuration...
+
+-------------- Ethernet 2 --------------
+
+Description:   Realtek PCIe 2.5GbE Family Controller
+IPv4:          192.168.100.86 
+IPv6:          2a02:2f08:b502:1b00:ec73:df8e:35a5:3750
+               2a02:2f08:b502:1b00:30a6:b73d:ef6d:83f0
+               fe80::222a:f6bf:100e:5bdc%14 
+MASK:          255.255.255.0
+Gateway:       192.168.100.1
+MAC Address:   30:56:0F:7D:6B:B1
+DNS:           192.168.100.1
+
+-------------------------------------
+
+
+-------------- Ethernet 2-WFP Native MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Realtek PCIe 2.5GbE Family Controller-WFP Native MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   30:56:0F:7D:6B:B1
+DNS:           
+
+-------------------------------------
+
+
+-------------- Ethernet 2-Npcap Packet Driver (NPCAP)-0000 --------------
+
+Description:   Realtek PCIe 2.5GbE Family Controller-Npcap Packet Driver (NPCAP)-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   30:56:0F:7D:6B:B1
+DNS:           
+
+-------------------------------------
+
+
+-------------- Ethernet 2-QoS Packet Scheduler-0000 --------------
+
+Description:   Realtek PCIe 2.5GbE Family Controller-QoS Packet Scheduler-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   30:56:0F:7D:6B:B1
+DNS:           
+
+-------------------------------------
+
+
+-------------- Ethernet 2-WFP 802.3 MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Realtek PCIe 2.5GbE Family Controller-WFP 802.3 MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   30:56:0F:7D:6B:B1
+DNS:           
+
+-------------------------------------
+
+
+-------------- Ethernet (Kernel Debugger) --------------
+
+Description:   Microsoft Kernel Debug Network Adapter
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Ethernet --------------
+
+Description:   Intel(R) Ethernet Connection (2) I219-V
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   E0:D5:5E:4E:81:13
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 6 --------------
+
+Description:   WAN Miniport (IP)
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 7 --------------
+
+Description:   WAN Miniport (IPv6)
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 8 --------------
+
+Description:   WAN Miniport (Network Monitor)
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+  PASS: Network interface query succeeded
+
+────────────────────────────────────────────────────
+  ▶ PHASE 2: External Connectivity
+────────────────────────────────────────────────────
+  Resolving public IP address...
+  PASS: Public IP resolved: Your external IP address is: 79.118.65.22
+
+────────────────────────────────────────────────────
+  ▶ PHASE 3: DNS & Reachability Sweep
+────────────────────────────────────────────────────
+
+  ── Pinging 8.8.8.8 ──
+Status: Success | Buffer: 32 | Time: 16 ms | TTL: 64 | Adress: 8.8.8.8
+Status: Success | Buffer: 32 | Time: 16 ms | TTL: 64 | Adress: 8.8.8.8
+Status: Success | Buffer: 32 | Time: 16 ms | TTL: 64 | Adress: 8.8.8.8
+Status: Success | Buffer: 32 | Time: 16 ms | TTL: 64 | Adress: 8.8.8.8
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: 8.8.8.8 responded
+
+  ── Pinging 1.1.1.1 ──
+Status: Success | Buffer: 32 | Time: 13 ms | TTL: 64 | Adress: 1.1.1.1
+Status: Success | Buffer: 32 | Time: 14 ms | TTL: 64 | Adress: 1.1.1.1
+Status: Success | Buffer: 32 | Time: 13 ms | TTL: 64 | Adress: 1.1.1.1
+Status: Success | Buffer: 32 | Time: 14 ms | TTL: 64 | Adress: 1.1.1.1
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: 1.1.1.1 responded
+
+  ── Pinging 208.67.222.222 ──
+Status: Success | Buffer: 32 | Time: 21 ms | TTL: 64 | Adress: 208.67.222.222
+Status: Success | Buffer: 32 | Time: 21 ms | TTL: 64 | Adress: 208.67.222.222
+Status: Success | Buffer: 32 | Time: 20 ms | TTL: 64 | Adress: 208.67.222.222
+Status: Success | Buffer: 32 | Time: 21 ms | TTL: 64 | Adress: 208.67.222.222
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: 208.67.222.222 responded
+
+  ── Pinging google.com ──
+Status: Success | Buffer: 32 | Time: 18 ms | TTL: 64 | Adress: 2a00:1450:400d:814::200e
+Status: Success | Buffer: 32 | Time: 18 ms | TTL: 64 | Adress: 2a00:1450:400d:814::200e
+Status: Success | Buffer: 32 | Time: 18 ms | TTL: 64 | Adress: 2a00:1450:400d:814::200e
+Status: Success | Buffer: 32 | Time: 18 ms | TTL: 64 | Adress: 2a00:1450:400d:814::200e
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: google.com responded
+
+  ── Pinging github.com ──
+Status: Success | Buffer: 32 | Time: 41 ms | TTL: 64 | Adress: 140.82.121.3
+Status: Success | Buffer: 32 | Time: 41 ms | TTL: 64 | Adress: 140.82.121.3
+Status: Success | Buffer: 32 | Time: 40 ms | TTL: 64 | Adress: 140.82.121.3
+Status: Success | Buffer: 32 | Time: 41 ms | TTL: 64 | Adress: 140.82.121.3
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: github.com responded
+
+  Reachable: 5 hosts
+  Unreachable:
+
+────────────────────────────────────────────────────
+  ▶ PHASE 4: Port Scan
+────────────────────────────────────────────────────
+  Target : PHASE 1: Local Network Interfaces
+  Ports  : {2}
+
+    Port {2} : CLOSED
+
+  Open: 0  |  Closed: 1
+  FAIL: No open ports detected on PHASE 1: Local Network Interfaces
+
+────────────────────────────────────────────────────
+  ▶ PHASE 5: Traceroute to google.com
+────────────────────────────────────────────────────
+  Tracing route to google.com (max 15 hops)...
+
+Starting traceroute for: google.com, Hops: 15, TimeOut: 100, IPv6: Enabled
+Hop 1 - Host: N/A (2a02:2f08:b5ff:ffff::4f76:4116), RoundTrip: 0 ms, Status: Forwarded
+Hop 2 - Host: N/A (2a02:2f08:b5ff:ff00::2), RoundTrip: 0 ms, Status: Forwarded
+Hop 3 - Host: N/A (::), RoundTrip: 0 ms, Status: TimedOut
+Hop 4 - Host: N/A (::), RoundTrip: 0 ms, Status: TimedOut
+Hop 5 - Host: N/A (2a02:2f00:8708:2:2:0:6:0), RoundTrip: 0 ms, Status: Forwarded
+Hop 6 - Host: N/A (2a02:2f00:8708::ac), RoundTrip: 0 ms, Status: Forwarded
+Hop 7 - Host: N/A (2a00:1450:81e2:140::1), RoundTrip: 0 ms, Status: Forwarded
+Hop 8 - Host: N/A (2a00:1450:81e2:140::1), RoundTrip: 0 ms, Status: Forwarded
+Hop 9 - Host: N/A (2001:4860:0:1::6288), RoundTrip: 0 ms, Status: Forwarded
+Hop 10 - Host: N/A (2001:4860:0:1::e91), RoundTrip: 0 ms, Status: Forwarded
+Hop 11 - Host: lcbuda-ag-in-x0e.1e100.net (2a00:1450:400d:814::200e), RoundTrip: 19 ms, Status: Success
+Trace completed successfully to google.com.
+
+  Hops with response: 11
+  PASS: Traceroute completed (11 responsive hops)
+
+────────────────────────────────────────────────────
+  ▶ PHASE 6: DNS Resolution Benchmark
+────────────────────────────────────────────────────
+  ✓ google.com — resolved
+  ✓ github.com — resolved
+  ✓ cloudflare.com — resolved
+  ✓ amazone.com — resolved
+
+  Resolved: 4  |  Failed: 0
+  PASS: All DNS lookups succeeded
+
+────────────────────────────────────────────────────
+  ▶ PHASE 7: ARP Spoof Detection
+────────────────────────────────────────────────────
+-------------------------------------
+Gateway IP: 192.168.100.1
+Gateway MAC: 1c:43:63:8a:bb:e9
+-------------------------------------
+[+] Seems all good!
+  PASS: Spoof check completed
+
+────────────────────────────────────────────────────
+  ▶ PHASE 8: Audit Summary
+────────────────────────────────────────────────────
+
+  ════════════════════════════════════════════════════
+  ◆  NETWORK AUDIT COMPLETE
+  ════════════════════════════════════════════════════
+  Total checks : 11
+  Results: 10/11 passed (90.9090909090909%)  |  1 failed
+
+  Status: MINOR ISSUES DETECTED
+  ════════════════════════════════════════════════════
+  Completed at 17:25:54 on 2026-05-04
+════════════════════════════════════════════════════

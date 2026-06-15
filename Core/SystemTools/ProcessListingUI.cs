@@ -122,6 +122,7 @@ namespace Core.SystemTools
             if (!OperatingSystem.IsWindows())
                 throw new PlatformNotSupportedException("Windows only.");
 
+            using var virtualTerminalOutput = VirtualTerminalOutput.Enable();
             Console.OutputEncoding = Encoding.UTF8;
             Console.TreatControlCAsInput = true;
             Console.Write(AltScreen + HideCursor);

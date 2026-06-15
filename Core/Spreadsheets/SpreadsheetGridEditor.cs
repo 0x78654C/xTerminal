@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
+using Core.SystemTools;
 
 namespace Core.Spreadsheets
 {
@@ -19,6 +20,8 @@ namespace Core.Spreadsheets
         private const string HideCursor  = "\x1b[?25l";
         private const string ShowCursor  = "\x1b[?25h";
         private const string Reset       = "\x1b[0m";
+        private const string DisableWrap = "\x1b[?7l";
+        private const string EnableWrap  = "\x1b[?7h";
         // Synchronized-output mode: buffer the whole frame, then display atomically.
         // Terminals that don't support this safely ignore the sequences.
         private const string BeginSync   = "\x1b[?2026h";
@@ -140,6 +143,7 @@ namespace Core.Spreadsheets
         private bool _keepSelectionInView = true;
         private bool _saveAfterPrompt;
         private bool _saveShortcutDown;
+        private string[] _lastFrameRows = Array.Empty<string>();
 
         public SpreadsheetGridEditor(SpreadsheetWorkbook workbook, string path)
         {
@@ -152,6 +156,7 @@ namespace Core.Spreadsheets
 
         public void Run()
         {
+            using var virtualTerminalOutput = VirtualTerminalOutput.Enable();
             Console.OutputEncoding = Encoding.UTF8;
             var oldFg = Console.ForegroundColor;
             var oldBg = Console.BackgroundColor;
@@ -186,7 +191,7 @@ namespace Core.Spreadsheets
                     SetConsoleMode(inputHandle, oldInputMode);
 
                 Console.TreatControlCAsInput = oldTreatControlCAsInput;
-                Console.Write(ShowCursor + Reset + NormalScreen);
+                Console.Write(EnableWrap + ShowCursor + Reset + NormalScreen);
             }
         }
 
@@ -275,12 +280,17 @@ namespace Core.Spreadsheets
 
         private void Render()
         {
-            int width  = Math.Max(Console.WindowWidth,  60);
-            int height = Math.Max(Console.WindowHeight, 18);
+            (int width, int height) = WindowSize();
 
             bool sizeChanged = (width != _lastWidth) || (height != _lastHeight);
             _lastWidth  = width;
             _lastHeight = height;
+
+            if (width < 60 || height < 18)
+            {
+                RenderTooSmall(width, height, sizeChanged);
+                return;
+            }
 
             var sheet = ActiveSheet;
             int rowHeaderWidth = Math.Max(6,
@@ -292,28 +302,69 @@ namespace Core.Spreadsheets
 
             ClampOffsets(visibleRows, visibleCols);
 
-            // Pre-allocate enough capacity to avoid reallocs during one frame
-            var buf = new StringBuilder(width * height * 32);
+            var frame = new StringBuilder(width * height * 32);
 
-            // Tell the terminal to buffer this entire frame and display atomically.
-            buf.Append(BeginSync);
+            AppendTitleBar(frame, width);
+            AppendInfoBar(frame, width);
+            AppendHelpBar(frame, width);
+            AppendColumnHeaders(frame, width, rowHeaderWidth, cellWidth, visibleCols);
+            AppendRows(frame, width, rowHeaderWidth, cellWidth, visibleRows, visibleCols);
+            AppendStatusBar(frame, width, height);
+            AppendFormulaBar(frame, width, height);
+
+            WriteChangedFrameRows(frame.ToString(), height, sizeChanged);
+        }
+
+        private void RenderTooSmall(int width, int height, bool sizeChanged)
+        {
+            var output = new StringBuilder();
+            output.Append(BeginSync).Append(HideCursor).Append(DisableWrap);
+            if (sizeChanged)
+                output.Append(ClearAll);
+
+            output.Append(CursorHome)
+                .Append(Reset)
+                .Append("xcel: resize the console to at least 60 x 18.")
+                .Append(EnableWrap)
+                .Append(EndSync);
+
+            _lastFrameRows = Array.Empty<string>();
+            Console.Write(output.ToString());
+        }
+
+        private void WriteChangedFrameRows(string frame, int height, bool sizeChanged)
+        {
+            string[] rows = frame.Split(new[] { "\r\n" }, StringSplitOptions.None);
+            if (rows.Length > height)
+                Array.Resize(ref rows, height);
+
+            var output = new StringBuilder(frame.Length);
+            output.Append(BeginSync).Append(HideCursor).Append(DisableWrap);
 
             if (sizeChanged)
-                buf.Append(ClearAll);
+            {
+                output.Append(ClearAll);
+                _lastFrameRows = Array.Empty<string>();
+            }
 
-            buf.Append(CursorHome);
+            for (int row = 0; row < rows.Length; row++)
+            {
+                if (row < _lastFrameRows.Length &&
+                    string.Equals(rows[row], _lastFrameRows[row], StringComparison.Ordinal))
+                {
+                    continue;
+                }
 
-            AppendTitleBar(buf, width);
-            AppendInfoBar(buf, width);
-            AppendHelpBar(buf, width);
-            AppendColumnHeaders(buf, width, rowHeaderWidth, cellWidth, visibleCols);
-            AppendRows(buf, width, rowHeaderWidth, cellWidth, visibleRows, visibleCols);
-            AppendStatusBar(buf, width, height);
-            AppendFormulaBar(buf, width, height);
+                output.Append("\x1b[")
+                    .Append(row + 1)
+                    .Append(";1H")
+                    .Append(rows[row])
+                    .Append(Reset);
+            }
 
-            buf.Append(Reset);
-            buf.Append(EndSync);
-            Console.Write(buf.ToString());
+            output.Append(EnableWrap).Append(EndSync);
+            _lastFrameRows = rows;
+            Console.Write(output.ToString());
         }
 
         private void AppendTitleBar(StringBuilder buf, int width)
@@ -533,7 +584,7 @@ namespace Core.Spreadsheets
             _columnOffset = Math.Max(0, _columnOffset);
         }
 
-        private int VisibleRowCount() => Math.Max(1, Console.WindowHeight - 6);
+        private int VisibleRowCount() => Math.Max(1, (_lastHeight > 0 ? _lastHeight : WindowSize().height) - 6);
 
         private void EditSelectedCell()
         {
@@ -763,7 +814,7 @@ namespace Core.Spreadsheets
 
         private void DrawPrompt(string prompt, string text, int cursor)
         {
-            int width     = Math.Max(_lastWidth  > 0 ? _lastWidth  : Console.WindowWidth,  20);
+            int width     = Math.Max(_lastWidth  > 0 ? _lastWidth  : WindowSize().width, 1);
             int rowAnsi   = Math.Max(_lastHeight > 0 ? _lastHeight : Console.WindowHeight, 1);
             int available = Math.Max(1, width - prompt.Length - 1);
 
@@ -960,8 +1011,8 @@ namespace Core.Spreadsheets
         {
             position = default(GridPosition);
 
-            int width = Math.Max(_lastWidth > 0 ? _lastWidth : Console.WindowWidth, 60);
-            int height = Math.Max(_lastHeight > 0 ? _lastHeight : Console.WindowHeight, 18);
+            int width = Math.Max(_lastWidth > 0 ? _lastWidth : WindowSize().width, 1);
+            int height = Math.Max(_lastHeight > 0 ? _lastHeight : WindowSize().height, 1);
             int rowHeaderWidth = GetRowHeaderWidth(ActiveSheet);
             int cellWidth = GetCellWidth(width);
             int visibleCols = GetVisibleColumnCount(width, rowHeaderWidth, cellWidth);
@@ -1559,6 +1610,18 @@ namespace Core.Spreadsheets
             text = Trim(text ?? string.Empty, width);
             int left = Math.Max(0, (width - text.Length) / 2);
             return new string(' ', left) + text.PadRight(width - left);
+        }
+
+        private static (int width, int height) WindowSize()
+        {
+            try
+            {
+                return (Math.Max(1, Console.WindowWidth), Math.Max(1, Console.WindowHeight));
+            }
+            catch
+            {
+                return (80, 25);
+            }
         }
 
         // ── Native console input ─────────────────────────────────────────────

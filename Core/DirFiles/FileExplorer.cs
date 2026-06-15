@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Core.SystemTools;
 
 namespace Core.DirFiles
 {
@@ -42,6 +43,19 @@ namespace Core.DirFiles
         private static readonly ConsoleColor ClrInfoValue = ConsoleColor.White;
         private static readonly ConsoleColor ClrStatusFg  = ConsoleColor.Black;
         private static readonly ConsoleColor ClrStatusBg  = ConsoleColor.DarkGray;
+
+        // Match the XTE explorer's 256-color file palette.
+        private const int CTitle = 45;
+        private const int CNormal = 252;
+        private const int CError = 203;
+        private const int COperator = 220;
+        private const int CSharpType = 68;
+        private const int CRustKeyword = 81;
+        private const int CSourceFlow = 39;
+        private const int CSearch = 227;
+        private const int CVariable = 219;
+        private const int CPreprocessor = 183;
+        private const string Reset = "\x1b[0m";
 
         private string _currentRoot;
         private readonly Stack<HistoryEntry> _historyBack = new Stack<HistoryEntry>();
@@ -85,28 +99,35 @@ namespace Core.DirFiles
 
         public void Run()
         {
+            using var virtualTerminalOutput = VirtualTerminalOutput.Enable();
             bool running = true;
-            Console.CursorVisible = false;
+            bool oldCursorVisible = Console.CursorVisible;
             Console.Write("\x1b[?1049h"); // alternate screen
-            while (running)
+            Console.CursorVisible = false;
+
+            try
             {
-                if (_searchMode)
+                while (running)
                 {
-                    RenderSearchScreen();
-                    var key = Console.ReadKey(intercept: true);
-                    running = HandleSearchKey(key);
-                }
-                else
-                {
-                    RenderMainScreen();
-                    var key = Console.ReadKey(intercept: true);
-                    running = HandleMainKey(key);
+                    if (_searchMode)
+                    {
+                        RenderSearchScreen();
+                        var key = Console.ReadKey(intercept: true);
+                        running = HandleSearchKey(key);
+                    }
+                    else
+                    {
+                        RenderMainScreen();
+                        var key = Console.ReadKey(intercept: true);
+                        running = HandleMainKey(key);
+                    }
                 }
             }
-
-            Console.CursorVisible = true;
-            //Console.Clear();
-            Console.Write("\x1b[?1049l"); // restore normal screen
+            finally
+            {
+                try { Console.Write("\x1b[?1049l"); } catch { } // restore normal screen
+                try { Console.CursorVisible = oldCursorVisible; } catch { }
+            }
         }
 
         public static void ColorConsoleTextLine(ConsoleColor color, string text)
@@ -164,9 +185,14 @@ namespace Core.DirFiles
         {
             EnsureItemsLoaded();
 
-            int width  = Math.Max(Console.WindowWidth, 60);
-            int height = Math.Max(Console.WindowHeight, 20);
+            (int width, int height) = WindowSize();
             bool fullClear = ConditionalClear(width, height);
+
+            if (width < 60 || height < 20)
+            {
+                RenderTooSmall(width, height);
+                return;
+            }
 
             int headerLines   = 4;
             int contentTop    = headerLines;
@@ -250,7 +276,7 @@ namespace Core.DirFiles
         private void RenderLeftRow(int idx, int y, int leftWidth, int separatorCol)
         {
             string       text  = "";
-            ConsoleColor color = ConsoleColor.Gray;
+            int color = CNormal;
 
             if (idx >= 0 && idx < _items.Count)
             {
@@ -261,7 +287,7 @@ namespace Core.DirFiles
                 if (item.IsDirectory)
                 {
                     text  = "▶ " + name;
-                    color = ClrDirItem;
+                    color = CTitle;
                 }
                 else
                 {
@@ -269,7 +295,7 @@ namespace Core.DirFiles
                         ? "  " + FormatSize(item.SizeBytes.Value)
                         : "";
                     text  = "· " + name + sz;
-                    color = GetFileColor(item.Path);
+                    color = FileColor(item.Path);
                 }
             }
 
@@ -546,7 +572,7 @@ namespace Core.DirFiles
 
             while (running)
             {
-                int width = Math.Max(Console.WindowWidth, 60);
+                (int width, int height) = WindowSize();
                 if (width != lastWidth)
                 {
                     Console.Clear();
@@ -568,11 +594,11 @@ namespace Core.DirFiles
                     string line = $"  {d.Name}  ({d.DriveType})  " +
                                   $"{FormatSize(d.AvailableFreeSpace)} free of {FormatSize(d.TotalSize)}";
                     Console.SetCursorPosition(0, 4 + i);
-                    WritePadded(line, width, i == selected, ConsoleColor.White);
+                    WritePadded(line, width, i == selected, CNormal);
                 }
 
                 int clearFrom = 4 + drives.Length;
-                int totalRows = Math.Max(Console.WindowHeight, 20);
+                int totalRows = height;
                 for (int r = clearFrom; r < totalRows; r++)
                 {
                     Console.SetCursorPosition(0, r);
@@ -623,7 +649,7 @@ namespace Core.DirFiles
             _searchSelectedIndex = 0;
             _searchScrollOffset  = 0;
 
-            int width = Math.Max(Console.WindowWidth, 60);
+            int width = WindowSize().width;
             Console.Clear();
 
             WriteTrimmedAtColor(0, 0, " ◈ Search", width, ClrTitle);
@@ -738,9 +764,14 @@ namespace Core.DirFiles
 
         private void RenderSearchScreen()
         {
-            int width  = Math.Max(Console.WindowWidth, 60);
-            int height = Math.Max(Console.WindowHeight, 20);
+            (int width, int height) = WindowSize();
             ConditionalClear(width, height);
+
+            if (width < 60 || height < 20)
+            {
+                RenderTooSmall(width, height);
+                return;
+            }
 
             int headerLines   = 4;
             int contentTop    = headerLines;
@@ -780,13 +811,13 @@ namespace Core.DirFiles
 
                 int idx = _searchScrollOffset + row;
                 string       text  = "";
-                ConsoleColor color = ConsoleColor.Gray;
+                int color = CNormal;
 
                 if (idx >= 0 && idx < _searchResults.Count)
                 {
                     var item = _searchResults[idx];
                     text  = (item.IsDirectory ? "▶ " : "· ") + item.Path;
-                    color = item.IsDirectory ? ClrDirItem : GetFileColor(item.Path);
+                    color = item.IsDirectory ? CTitle : FileColor(item.Path);
                 }
 
                 WritePadded(text, width, idx == _searchSelectedIndex, color);
@@ -1011,16 +1042,16 @@ namespace Core.DirFiles
                 if (!File.Exists(filePath)) return;
 
                 var info  = new FileInfo(filePath);
-                int width = Math.Max(Console.WindowWidth, 60);
+                int width = WindowSize().width;
                 Console.Clear();
 
                 WriteTrimmedAtColor(0, 0, " ◈ File Details", width, ClrTitle);
                 WriteTrimmedAtColor(0, 1, new string('═', width), width, ClrBorder);
 
                 int          row = 2;
-                ConsoleColor fc  = GetFileColor(filePath);
+                int fc = FileColor(filePath);
 
-                void WriteInfoRow(string label, string value, ConsoleColor vc)
+                void WriteInfoRow(string label, string value, int valueColor)
                 {
                     string lp = $"  {label,-12}│ ";
                     Console.SetCursorPosition(0, row);
@@ -1030,10 +1061,9 @@ namespace Core.DirFiles
                     int rem = width - lp.Length;
                     if (rem > 0)
                     {
-                        Console.ForegroundColor = vc;
                         string v = value ?? "";
                         if (v.Length > rem) v = v.Substring(0, rem);
-                        Console.Write(v);
+                        Console.Write(F(valueColor) + v + Reset);
                     }
                     Console.ForegroundColor = old;
                     row++;
@@ -1041,9 +1071,9 @@ namespace Core.DirFiles
 
                 WriteInfoRow("Name",      info.Name, fc);
                 WriteInfoRow("Extension", string.IsNullOrEmpty(info.Extension) ? "(none)" : info.Extension, fc);
-                WriteInfoRow("Size",      FormatSize(info.Length) + $"  ({info.Length:N0} B)", ClrInfoValue);
-                WriteInfoRow("Modified",  info.LastWriteTime.ToString("yyyy-MM-dd  HH:mm:ss"), ClrInfoValue);
-                WriteInfoRow("Created",   info.CreationTime.ToString("yyyy-MM-dd  HH:mm:ss"), ClrInfoValue);
+                WriteInfoRow("Size",      FormatSize(info.Length) + $"  ({info.Length:N0} B)", CNormal);
+                WriteInfoRow("Modified",  info.LastWriteTime.ToString("yyyy-MM-dd  HH:mm:ss"), CNormal);
+                WriteInfoRow("Created",   info.CreationTime.ToString("yyyy-MM-dd  HH:mm:ss"), CNormal);
 
                 WriteTrimmedAtColor(0, row++, new string('─', width), width, ClrBorder);
                 WriteTrimmedAtColor(0, row++, "  " + info.FullName, width, ConsoleColor.DarkGray);
@@ -1077,7 +1107,7 @@ namespace Core.DirFiles
         {
             int line = 0;
 
-            void WriteRow(string label, string value, ConsoleColor vc)
+            void WriteRow(string label, string value, int valueColor)
             {
                 if (line >= maxLines) return;
                 ClearLineAt(left, top + line, width);
@@ -1090,10 +1120,9 @@ namespace Core.DirFiles
                 int rem = width - lp.Length;
                 if (rem > 0)
                 {
-                    Console.ForegroundColor = vc;
                     string v = value ?? "";
                     if (v.Length > rem) v = v.Substring(0, rem);
-                    Console.Write(v);
+                    Console.Write(F(valueColor) + v + Reset);
                 }
                 Console.ForegroundColor = old;
                 line++;
@@ -1113,13 +1142,13 @@ namespace Core.DirFiles
             {
                 if (info == null) throw new Exception();
 
-                ConsoleColor fc = GetFileColor(filePath);
+                int fc = FileColor(filePath);
                 WriteRow("Type",     "File", fc);
-                WriteRow("Name",     info.Name, ClrInfoValue);
+                WriteRow("Name",     info.Name, CNormal);
                 WriteRow("Ext",      string.IsNullOrEmpty(info.Extension) ? "(none)" : info.Extension, fc);
-                WriteRow("Size",     FormatSize(info.Length), ClrInfoValue);
-                WriteRow("Modified", info.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), ClrInfoValue);
-                WriteRow("Created",  info.CreationTime.ToString("yyyy-MM-dd HH:mm"), ClrInfoValue);
+                WriteRow("Size",     FormatSize(info.Length), CNormal);
+                WriteRow("Modified", info.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), CNormal);
+                WriteRow("Created",  info.CreationTime.ToString("yyyy-MM-dd HH:mm"), CNormal);
 
                 if (line < maxLines)
                 {
@@ -1147,7 +1176,7 @@ namespace Core.DirFiles
         {
             int line = 0;
 
-            void WriteRow(string label, string value, ConsoleColor vc)
+            void WriteRow(string label, string value, int valueColor)
             {
                 if (line >= maxLines) return;
                 ClearLineAt(left, top + line, width);
@@ -1160,10 +1189,9 @@ namespace Core.DirFiles
                 int rem = width - lp.Length;
                 if (rem > 0)
                 {
-                    Console.ForegroundColor = vc;
                     string v = value ?? "";
                     if (v.Length > rem) v = v.Substring(0, rem);
-                    Console.Write(v);
+                    Console.Write(F(valueColor) + v + Reset);
                 }
                 Console.ForegroundColor = old;
                 line++;
@@ -1191,10 +1219,10 @@ namespace Core.DirFiles
             string[] files = _cachedFolderFiles;
 
             var dirInfo = new DirectoryInfo(folderPath);
-            WriteRow("Type",     "Folder", ClrDirItem);
-            WriteRow("Subs",     dirs.Length.ToString(), ClrInfoValue);
-            WriteRow("Files",    files.Length.ToString(), ClrInfoValue);
-            WriteRow("Modified", dirInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), ClrInfoValue);
+            WriteRow("Type",     "Folder", CTitle);
+            WriteRow("Subs",     dirs.Length.ToString(), CNormal);
+            WriteRow("Files",    files.Length.ToString(), CNormal);
+            WriteRow("Modified", dirInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), CNormal);
 
             if (line < maxLines)
             {
@@ -1215,7 +1243,7 @@ namespace Core.DirFiles
                 string name = Path.GetFileName(d);
                 if (string.IsNullOrEmpty(name)) name = d;
                 ClearLineAt(left, top + line, width);
-                WriteTrimmedAtColor(left, top + line, "  ▶ " + name, width, ClrDirItem);
+                WriteTrimmedAtAnsiColor(left, top + line, "  ▶ " + name, width, CTitle);
                 line++;
             }
 
@@ -1225,7 +1253,7 @@ namespace Core.DirFiles
                 string name = Path.GetFileName(f);
                 if (string.IsNullOrEmpty(name)) name = f;
                 ClearLineAt(left, top + line, width);
-                WriteTrimmedAtColor(left, top + line, "  · " + name, width, GetFileColor(f));
+                WriteTrimmedAtAnsiColor(left, top + line, "  · " + name, width, FileColor(f));
                 line++;
             }
 
@@ -1240,7 +1268,7 @@ namespace Core.DirFiles
 
         private void RenderModal(string title, string line1, string line2, ConsoleColor accentColor)
         {
-            int width = Math.Max(Console.WindowWidth, 60);
+            int width = WindowSize().width;
             Console.Clear();
             WriteTrimmedAtColor(0, 0, title, width, accentColor);
             WriteTrimmedAtColor(0, 1, new string('═', width), width, ClrBorder);
@@ -1255,42 +1283,55 @@ namespace Core.DirFiles
             Console.SetCursorPosition(0, divRow + 1);
         }
 
-        private static ConsoleColor GetFileColor(string path)
+        private void RenderTooSmall(int width, int height)
+        {
+            WriteTrimmedAtColor(0, 0, "xFile Explorer", width, ClrTitle);
+            if (height > 1)
+                WriteTrimmedAtColor(0, 1, "Resize the console to at least 60 x 20.", width, ClrHelp);
+        }
+
+        private static int FileColor(string path)
         {
             string ext = Path.GetExtension(path).ToLowerInvariant();
 
             if (ext == ".exe" || ext == ".msi" || ext == ".bat" || ext == ".cmd" || ext == ".ps1" || ext == ".sh")
-                return ConsoleColor.Red;
+                return CError;
 
             if (ext == ".txt" || ext == ".md" || ext == ".log" || ext == ".ini" || ext == ".cfg" || ext == ".conf" || ext == ".csv")
-                return ConsoleColor.DarkYellow;
+                return COperator;
 
-            if (ext == ".cs" || ext == ".py" || ext == ".js" || ext == ".ts" || ext == ".cpp" || ext == ".c" ||
-                ext == ".h" || ext == ".java" || ext == ".go" || ext == ".rs" || ext == ".rb" || ext == ".php")
-                return ConsoleColor.Cyan;
+            if (ext == ".cs" || ext == ".csx")
+                return CSharpType;
+
+            if (ext == ".rs")
+                return CRustKeyword;
+
+            if (ext == ".py" || ext == ".js" || ext == ".ts" || ext == ".cpp" || ext == ".c" ||
+                ext == ".h" || ext == ".java" || ext == ".go" || ext == ".rb" || ext == ".php")
+                return CSourceFlow;
 
             if (ext == ".zip" || ext == ".rar" || ext == ".7z" || ext == ".tar" || ext == ".gz" || ext == ".bz2")
-                return ConsoleColor.Yellow;
+                return CSearch;
 
             if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".bmp" ||
                 ext == ".svg" || ext == ".ico" || ext == ".webp")
-                return ConsoleColor.Magenta;
+                return CVariable;
 
             if (ext == ".mp3" || ext == ".mp4" || ext == ".avi" || ext == ".mkv" || ext == ".mov" ||
                 ext == ".wav" || ext == ".flac")
-                return ConsoleColor.DarkMagenta;
+                return CPreprocessor;
 
             if (ext == ".pdf" || ext == ".doc" || ext == ".docx" || ext == ".xls" || ext == ".xlsx" ||
                 ext == ".ppt" || ext == ".pptx")
-                return ConsoleColor.DarkYellow;
+                return COperator;
 
             if (ext == ".dll" || ext == ".sys" || ext == ".lib" || ext == ".pdb")
-                return ConsoleColor.DarkRed;
+                return CError;
 
-            return ConsoleColor.White;
+            return CNormal;
         }
 
-        private static void WritePadded(string text, int width, bool selected, ConsoleColor normalColor)
+        private static void WritePadded(string text, int width, bool selected, int normalColor)
         {
             if (text == null) text = "";
             if (text.Length > width)
@@ -1310,15 +1351,15 @@ namespace Core.DirFiles
             }
             else
             {
-                var oldFg = Console.ForegroundColor;
-                Console.ForegroundColor = normalColor;
-                Console.Write(text);
-                Console.ForegroundColor = oldFg;
+                Console.Write(F(normalColor) + text + Reset);
             }
         }
 
         private static void WriteTrimmedAt(int left, int top, string text, int width)
         {
+            if (top < 0 || top >= Console.WindowHeight)
+                return;
+
             if (text == null) text = "";
             int maxWidth = Math.Max(0, Math.Min(width, Console.WindowWidth - left));
             if (maxWidth <= 0) return;
@@ -1336,12 +1377,51 @@ namespace Core.DirFiles
             Console.ForegroundColor = old;
         }
 
+        private static void WriteTrimmedAtAnsiColor(int left, int top, string text, int width, int color)
+        {
+            if (top < 0 || top >= Console.WindowHeight)
+                return;
+
+            text = text ?? string.Empty;
+            int maxWidth = Math.Max(0, Math.Min(width, Console.WindowWidth - left));
+            if (maxWidth <= 0)
+                return;
+
+            if (text.Length > maxWidth)
+                text = text.Substring(0, maxWidth);
+            else if (text.Length < maxWidth)
+                text = text.PadRight(maxWidth);
+
+            Console.SetCursorPosition(left, top);
+            Console.Write(F(color) + text + Reset);
+        }
+
+        private static string F(int color)
+        {
+            return "\x1b[38;5;" + color + "m";
+        }
+
         private static void ClearLineAt(int left, int top, int width)
         {
+            if (top < 0 || top >= Console.WindowHeight)
+                return;
+
             int maxWidth = Math.Max(0, Math.Min(width, Console.WindowWidth - left));
             if (maxWidth <= 0) return;
             Console.SetCursorPosition(left, top);
             Console.Write(new string(' ', maxWidth));
+        }
+
+        private static (int width, int height) WindowSize()
+        {
+            try
+            {
+                return (Math.Max(1, Console.WindowWidth), Math.Max(1, Console.WindowHeight));
+            }
+            catch
+            {
+                return (80, 25);
+            }
         }
 
         private static int Clamp(int value, int min, int max)
