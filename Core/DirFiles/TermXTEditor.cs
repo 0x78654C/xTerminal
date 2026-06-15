@@ -17,6 +17,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
+using Core.SystemTools;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -798,6 +799,7 @@ namespace Core.DirFiles
 
         public void Run()
         {
+            using var virtualTerminalOutput = VirtualTerminalOutput.Enable();
             bool oldTreatControlCAsInput = Console.TreatControlCAsInput;
             bool oldCursorVisible = Console.CursorVisible;
             IntPtr inputHandle = GetStdHandle(StdInputHandle);
