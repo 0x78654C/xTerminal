@@ -1146,6 +1146,35 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void HandleKey_CtrlD_DuplicatesCurrentLine()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "one", "two", "three" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 1);
+            SetPrivateField(editor, "_cursorCol", 2);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\u0004', ConsoleKey.D, shift: false, alt: false, control: true));
+
+            Lines(editor).Should().Equal("one", "two", "two", "three");
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(2);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be(2);
+            GetPrivateField<bool>(editor, "_dirty").Should().BeTrue();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CheckExternalFileChange_WhenDiskFileChanges_SetsPendingDiskWarning()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");

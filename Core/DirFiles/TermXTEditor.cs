@@ -1401,7 +1401,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+Z/Y";
+                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
                     help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
@@ -1410,7 +1410,7 @@ namespace Core.DirFiles
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | i edit | dd delete | / search | : command";
+                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -1716,6 +1716,12 @@ namespace Core.DirFiles
                 if (key.Key == ConsoleKey.V)
                 {
                     PasteFromClipboard();
+                    return;
+                }
+
+                if (key.Key == ConsoleKey.D)
+                {
+                    DuplicateCurrentLine();
                     return;
                 }
 
@@ -5123,6 +5129,36 @@ namespace Core.DirFiles
             _cursorCol = 0;
             InvalidateDocumentCaches();
             MarkDirty();
+        }
+
+        private void DuplicateCurrentLine()
+        {
+            if (_mode == Mode.Command || _mode == Mode.Search)
+            {
+                Status("Duplicate unavailable", error: true);
+                return;
+            }
+
+            if (!TryEnsureCanAddLines(1, "Duplicate"))
+                return;
+
+            DismissCompletion();
+            PushUndo();
+            ClearSelection();
+
+            int duplicatedLineNumber = _cursorLine + 1;
+            string line = CurrentLine();
+            int column = _cursorCol;
+
+            _lines.Insert(_cursorLine + 1, line);
+            _cursorLine++;
+            _cursorCol = Math.Min(column, line.Length);
+            _insertUndoStarted = false;
+
+            InvalidateDocumentCaches();
+            MarkDirty();
+            Status("Duplicated line");
+            BottomStatus("Duplicated line " + duplicatedLineNumber);
         }
 
         private bool TryEnsureCanAddLines(int addedLines, string action)
