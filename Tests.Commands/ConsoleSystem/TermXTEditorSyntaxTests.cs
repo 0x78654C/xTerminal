@@ -758,6 +758,50 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void TokenizeTermXt_HighlightsFunctionDeclarationsAndCalls()
+    {
+        const string declaration = "func greet";
+        List<TokenInfo> declarationTokens = TokenizeTermXt(declaration);
+
+        TokenForText(declarationTokens, declaration, "func").Color.Should().Be(Color("CFlow"));
+        TokenForText(declarationTokens, declaration, "greet").Color.Should().Be(Color("CFunction"));
+
+        const string call = "call greet eval";
+        List<TokenInfo> callTokens = TokenizeTermXt(call);
+
+        TokenForText(callTokens, call, "call").Color.Should().Be(Color("CKeyword"));
+        TokenForText(callTokens, call, "greet").Color.Should().Be(Color("CFunction"));
+        TokenForText(callTokens, call, "eval").Color.Should().Be(Color("CFunction"));
+    }
+
+    [Fact]
+    public void TokenizeCSharp_HighlightsMethodNames()
+    {
+        const string line = "public class C { void Render() { Console.WriteLine(Render()); } }";
+        List<TokenInfo> tokens = TokenizeCSharp(line, false);
+
+        tokens.Where(token => token.Text(line) == "Render")
+            .Should()
+            .HaveCount(2)
+            .And.OnlyContain(token => token.Color == Color("CSharpFunction"));
+        TokenForText(tokens, line, "WriteLine").Color.Should().Be(Color("CSharpFunction"));
+        TokenForText(tokens, line, "Console").Color.Should().Be(Color("CSharpBcl"));
+    }
+
+    [Fact]
+    public void TokenizeCStyle_HighlightsFunctionNames()
+    {
+        const string line = @"int sum(int value) { return printf(""%d"", sum(value)); }";
+        List<TokenInfo> tokens = TokenizeCStyle(line, cpp: false);
+
+        tokens.Where(token => token.Text(line) == "sum")
+            .Should()
+            .HaveCount(2)
+            .And.OnlyContain(token => token.Color == Color("CSourceFunction"));
+        TokenForText(tokens, line, "printf").Color.Should().Be(Color("CSourceFunction"));
+    }
+
+    [Fact]
     public void TokenizeRust_HighlightsCommonRustTokens()
     {
         const string line = @"pub fn main<'a>() { println!(r#""hi""#); let x: i32 = 42; } // comment";
@@ -765,6 +809,7 @@ public class TermXTEditorSyntaxTests
 
         TokenForText(tokens, line, "pub").Color.Should().Be(Color("CRustModifier"));
         TokenForText(tokens, line, "fn").Color.Should().Be(Color("CRustDeclaration"));
+        TokenForText(tokens, line, "main").Color.Should().Be(Color("CRustFunction"));
         TokenForText(tokens, line, "'a").Color.Should().Be(Color("CRustLifetime"));
         TokenForText(tokens, line, "println!").Color.Should().Be(Color("CRustMacro"));
         TokenForText(tokens, line, @"r#""hi""#").Color.Should().Be(Color("CRustString"));
@@ -810,7 +855,9 @@ public class TermXTEditorSyntaxTests
         TokenForText(tokens, line, "/[a-z]+/gi").Color.Should().Be(Color("CJavaScriptRegex"));
         TokenForText(tokens, line, "async").Color.Should().Be(Color("CJavaScriptKeyword"));
         TokenForText(tokens, line, "function").Color.Should().Be(Color("CJavaScriptDeclaration"));
+        TokenForText(tokens, line, "main").Color.Should().Be(Color("CJavaScriptFunction"));
         TokenForText(tokens, line, "console").Color.Should().Be(Color("CJavaScriptBuiltin"));
+        TokenForText(tokens, line, "log").Color.Should().Be(Color("CJavaScriptFunction"));
         TokenForText(tokens, line, "`hi ${name}`").Color.Should().Be(Color("CJavaScriptString"));
         TokenForText(tokens, line, "return").Color.Should().Be(Color("CJavaScriptFlow"));
         TokenForText(tokens, line, "null").Color.Should().Be(Color("CJavaScriptNumber"));
@@ -837,7 +884,8 @@ public class TermXTEditorSyntaxTests
 
         TokenForText(tokens, line, "async").Color.Should().Be(Color("CPythonKeyword"));
         TokenForText(tokens, line, "def").Color.Should().Be(Color("CPythonDeclaration"));
-        TokenForText(tokens, line, "print").Color.Should().Be(Color("CPythonBuiltin"));
+        TokenForText(tokens, line, "main").Color.Should().Be(Color("CPythonFunction"));
+        TokenForText(tokens, line, "print").Color.Should().Be(Color("CPythonFunction"));
         TokenForText(tokens, line, @"f""Hello {name}""").Color.Should().Be(Color("CPythonString"));
         TokenForText(tokens, line, "return").Color.Should().Be(Color("CPythonFlow"));
         TokenForText(tokens, line, "None").Color.Should().Be(Color("CPythonNumber"));
@@ -1302,6 +1350,66 @@ public class TermXTEditorSyntaxTests
         Marshal.SizeOf(NestedType("MouseEventRecord")).Should().Be(16);
         Marshal.SizeOf(NestedType("WindowBufferSizeRecord")).Should().Be(4);
         Marshal.SizeOf(NestedType("Coord")).Should().Be(4);
+    }
+
+    private static List<TokenInfo> TokenizeTermXt(string line)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TokenizeTermXt",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var result = (IEnumerable)method.Invoke(null, new object[] { line })!;
+        var tokens = new List<TokenInfo>();
+        foreach (object token in result)
+        {
+            Type tokenType = token.GetType();
+            tokens.Add(new TokenInfo(
+                (int)tokenType.GetProperty("Start")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Length")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Color")!.GetValue(token)!));
+        }
+
+        return tokens;
+    }
+
+    private static List<TokenInfo> TokenizeCSharp(string line, bool startsInBlockComment)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TokenizeCSharp",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var result = (IEnumerable)method.Invoke(null, new object[] { line, startsInBlockComment })!;
+        var tokens = new List<TokenInfo>();
+        foreach (object token in result)
+        {
+            Type tokenType = token.GetType();
+            tokens.Add(new TokenInfo(
+                (int)tokenType.GetProperty("Start")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Length")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Color")!.GetValue(token)!));
+        }
+
+        return tokens;
+    }
+
+    private static List<TokenInfo> TokenizeCStyle(string line, bool cpp)
+    {
+        MethodInfo method = typeof(TermXTEditor).GetMethod(
+            "TokenizeCStyle",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var result = (IEnumerable)method.Invoke(null, new object[] { line, cpp })!;
+        var tokens = new List<TokenInfo>();
+        foreach (object token in result)
+        {
+            Type tokenType = token.GetType();
+            tokens.Add(new TokenInfo(
+                (int)tokenType.GetProperty("Start")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Length")!.GetValue(token)!,
+                (int)tokenType.GetProperty("Color")!.GetValue(token)!));
+        }
+
+        return tokens;
     }
 
     private static List<TokenInfo> TokenizeRust(string line, int blockCommentDepth)

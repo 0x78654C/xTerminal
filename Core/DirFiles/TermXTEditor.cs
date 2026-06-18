@@ -86,7 +86,7 @@ namespace Core.DirFiles
         private const int CCurrentLineNo = 45;
         private const int CKeyword = 81;
         private const int CFlow = 111;
-        private const int CFunction = 214;
+        private const int CFunction = 121;
         private const int CString = 150;
         private const int CVariable = 219;
         private const int CNumber = 209;
@@ -107,6 +107,7 @@ namespace Core.DirFiles
         private const int CSourceType = 179;
         private const int CSourceStd = 117;
         private const int CSourceDirective = 208;
+        private const int CSourceFunction = CFunction;
         private const int CSourceInclude = 159;
         private const int CSourceString = 186;
         private const int CSourceNumber = 203;
@@ -117,6 +118,7 @@ namespace Core.DirFiles
         private const int CppSourceType = 111;
         private const int CppSourceStd = 219;
         private const int CppSourceDirective = 105;
+        private const int CppSourceFunction = CFunction;
         private const int CppSourceInclude = 183;
         private const int CppSourceString = 150;
         private const int CppSourceNumber = 214;
@@ -126,6 +128,7 @@ namespace Core.DirFiles
         private const int CSharpKeyword = 81;
         private const int CSharpType = 68;
         private const int CSharpDeclaration = 214;
+        private const int CSharpFunction = CFunction;
         private const int CSharpModifier = 117;
         private const int CSharpBcl = 159;
         private const int CSharpDirective = 183;
@@ -138,6 +141,7 @@ namespace Core.DirFiles
         private const int CRustKeyword = 81;
         private const int CRustType = 179;
         private const int CRustDeclaration = 214;
+        private const int CRustFunction = CFunction;
         private const int CRustModifier = 117;
         private const int CRustStd = 159;
         private const int CRustAttribute = 213;
@@ -150,6 +154,7 @@ namespace Core.DirFiles
         private const int CJavaScriptFlow = 39;
         private const int CJavaScriptKeyword = 81;
         private const int CJavaScriptDeclaration = 214;
+        private const int CJavaScriptFunction = CFunction;
         private const int CJavaScriptBuiltin = 159;
         private const int CJavaScriptDirective = 183;
         private const int CJavaScriptString = 150;
@@ -160,6 +165,7 @@ namespace Core.DirFiles
         private const int CPythonFlow = 39;
         private const int CPythonKeyword = 81;
         private const int CPythonDeclaration = 214;
+        private const int CPythonFunction = CFunction;
         private const int CPythonBuiltin = 159;
         private const int CPythonDecorator = 213;
         private const int CPythonString = 150;
@@ -7289,6 +7295,7 @@ namespace Core.DirFiles
         {
             var tokens = new List<Token>();
             int i = 0;
+            bool expectFunctionName = false;
 
             while (i < line.Length)
             {
@@ -7313,6 +7320,7 @@ namespace Core.DirFiles
                         i++;
                     }
                     tokens.Add(new Token(start, i - start, CString));
+                    expectFunctionName = false;
                     continue;
                 }
 
@@ -7324,6 +7332,7 @@ namespace Core.DirFiles
                     if (i < line.Length)
                         i++;
                     tokens.Add(new Token(start, i - start, CVariable));
+                    expectFunctionName = false;
                     continue;
                 }
 
@@ -7333,6 +7342,7 @@ namespace Core.DirFiles
                     while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '.'))
                         i++;
                     tokens.Add(new Token(start, i - start, CNumber));
+                    expectFunctionName = false;
                     continue;
                 }
 
@@ -7343,7 +7353,8 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, TermXtWordColor(word)));
+                    tokens.Add(new Token(start, i - start, TermXtWordColor(word, expectFunctionName)));
+                    expectFunctionName = IsTermXtFunctionNameKeyword(word);
                     continue;
                 }
 
@@ -7351,10 +7362,13 @@ namespace Core.DirFiles
                 {
                     tokens.Add(new Token(i, 1, COperator));
                     i++;
+                    expectFunctionName = false;
                     continue;
                 }
 
                 tokens.Add(new Token(i, 1, CNormal));
+                if (!char.IsWhiteSpace(c))
+                    expectFunctionName = false;
                 i++;
             }
 
@@ -7494,7 +7508,10 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(wordStart, i - wordStart);
-                    tokens.Add(new Token(start, i - start, CSharpWordColor(word, escapedIdentifier)));
+                    tokens.Add(new Token(
+                        start,
+                        i - start,
+                        CSharpWordColor(word, escapedIdentifier, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -7646,7 +7663,7 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, CStyleWordColor(word, cpp)));
+                    tokens.Add(new Token(start, i - start, CStyleWordColor(word, cpp, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -7892,7 +7909,7 @@ namespace Core.DirFiles
                         continue;
                     }
 
-                    tokens.Add(new Token(start, i - start, RustWordColor(word)));
+                    tokens.Add(new Token(start, i - start, RustWordColor(word, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -8006,7 +8023,7 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, JavaScriptWordColor(word)));
+                    tokens.Add(new Token(start, i - start, JavaScriptWordColor(word, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -8095,7 +8112,7 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, PythonWordColor(word)));
+                    tokens.Add(new Token(start, i - start, PythonWordColor(word, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -8116,8 +8133,11 @@ namespace Core.DirFiles
             return tokens;
         }
 
-        private static int TermXtWordColor(string word)
+        private static int TermXtWordColor(string word, bool functionName)
         {
+            if (functionName)
+                return CFunction;
+
             if (s_flowKeywords.Contains(word))
                 return CFlow;
 
@@ -8133,10 +8153,10 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int CSharpWordColor(string word, bool escapedIdentifier)
+        private static int CSharpWordColor(string word, bool escapedIdentifier, bool callable)
         {
             if (escapedIdentifier)
-                return CNormal;
+                return callable ? CSharpFunction : CNormal;
 
             if (s_csharpFlowKeywords.Contains(word))
                 return CSharpFlow;
@@ -8159,6 +8179,9 @@ namespace Core.DirFiles
             if (s_csharpContextualKeywords.Contains(word))
                 return CSharpKeyword;
 
+            if (callable)
+                return CSharpFunction;
+
             if (s_csharpBclIdentifiers.Contains(word))
                 return CSharpBcl;
 
@@ -8168,7 +8191,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int CStyleWordColor(string word, bool cpp)
+        private static int CStyleWordColor(string word, bool cpp, bool callable)
         {
             if (cpp)
             {
@@ -8186,6 +8209,9 @@ namespace Core.DirFiles
 
                 if (s_cppLiteralKeywords.Contains(word))
                     return CppSourceNumber;
+
+                if (callable)
+                    return CppSourceFunction;
 
                 if (s_cppStdIdentifiers.Contains(word))
                     return CppSourceStd;
@@ -8210,6 +8236,9 @@ namespace Core.DirFiles
                 if (s_cLiteralKeywords.Contains(word))
                     return CSourceNumber;
 
+                if (callable)
+                    return CSourceFunction;
+
                 if (s_cStdIdentifiers.Contains(word))
                     return CSourceStd;
 
@@ -8220,7 +8249,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int RustWordColor(string word)
+        private static int RustWordColor(string word, bool callable)
         {
             if (s_rustFlowKeywords.Contains(word))
                 return CRustFlow;
@@ -8243,6 +8272,9 @@ namespace Core.DirFiles
             if (s_rustLiteralKeywords.Contains(word))
                 return CRustNumber;
 
+            if (callable)
+                return CRustFunction;
+
             if (s_rustStdIdentifiers.Contains(word))
                 return CRustStd;
 
@@ -8252,7 +8284,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int JavaScriptWordColor(string word)
+        private static int JavaScriptWordColor(string word, bool callable)
         {
             if (s_javaScriptFlowKeywords.Contains(word))
                 return CJavaScriptFlow;
@@ -8266,6 +8298,9 @@ namespace Core.DirFiles
             if (s_javaScriptLiteralKeywords.Contains(word))
                 return CJavaScriptNumber;
 
+            if (callable)
+                return CJavaScriptFunction;
+
             if (s_javaScriptBuiltinIdentifiers.Contains(word))
                 return CJavaScriptBuiltin;
 
@@ -8275,7 +8310,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int PythonWordColor(string word)
+        private static int PythonWordColor(string word, bool callable)
         {
             if (s_pythonFlowKeywords.Contains(word))
                 return CPythonFlow;
@@ -8288,6 +8323,9 @@ namespace Core.DirFiles
 
             if (s_pythonLiteralKeywords.Contains(word))
                 return CPythonNumber;
+
+            if (callable)
+                return CPythonFunction;
 
             if (s_pythonBuiltinIdentifiers.Contains(word) || IsPythonDunderName(word))
                 return CPythonBuiltin;
@@ -8371,6 +8409,21 @@ namespace Core.DirFiles
             }
 
             return hasLetter;
+        }
+
+        private static bool IsTermXtFunctionNameKeyword(string word)
+        {
+            return string.Equals(word, "func", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(word, "call", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsCallableIdentifier(string line, int index)
+        {
+            int next = index;
+            while (next < line.Length && char.IsWhiteSpace(line[next]))
+                next++;
+
+            return next < line.Length && line[next] == '(';
         }
 
         private static bool IsWordStart(char c)
