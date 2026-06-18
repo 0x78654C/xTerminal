@@ -596,6 +596,8 @@ Example:
 	                Shows editor diagnostics with red error and yellow warning notifications; use :errors, :warnings, :next-error, and :next-warning.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
 	                Ctrl+X cuts the selection, or the current line when nothing is selected.
+	                Ctrl+D duplicates the current line.
+
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
                     ::Predefined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
