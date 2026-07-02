@@ -34,6 +34,12 @@ namespace Commands.TerminalCommands.Roslyn
 
         public void Execute(string args)
         {
+            bool hasPipeInput = GlobalVariables.isPipeCommand &&
+                      GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp;
+
+            bool hasPipeOutput = GlobalVariables.isPipeCommand &&
+                                 GlobalVariables.pipeCmdCount > 0;
+
             GlobalVariables.isErrorCommand = false;
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
@@ -50,28 +56,28 @@ namespace Commands.TerminalCommands.Roslyn
                 return;
             }
 
-            args = args.Replace("ccs ", "");
+            args = args.Replace("ccs ", "").Trim();
+
             if (args.ContainsText("-p"))
             {
-                if(GlobalVariables.isPipeCommand)
-                    fileName = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
-                else
-                    fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
-                param = args.SplitByText("-p", 1);
-                CompileAndRun(fileName, param.Trim());
-                GC.Collect();
-                return;
+                fileName = hasPipeInput
+                    ? FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation)
+                    : FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
+                param = args.SplitByText("-p", 1).Trim();
             }
-            if (GlobalVariables.isPipeCommand)
-                args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
             else
-                args = FileSystem.SanitizePath(args, _currentLocation);
-            CompileAndRun(args, param);
+            {
+                fileName = hasPipeInput
+                    ? FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation)
+                    : FileSystem.SanitizePath(args, _currentLocation);
+            }
+
+            CompileAndRun(fileName, param, hasPipeOutput);
             GC.Collect();
         }
 
 
-        private void CompileAndRun(string fileName, string param)
+        private void CompileAndRun(string fileName, string param, bool capturePipeOutput)
         {
             try
             {
@@ -112,8 +118,32 @@ namespace Commands.TerminalCommands.Roslyn
 
                     ms.Close();
                 }
+
+                if (assembly == null)
+                    return;
                 MethodInfo myMethod = assembly.EntryPoint;
-                myMethod.Invoke(null, new object[] { _commandLineArgs });
+                if (!capturePipeOutput)
+                {
+                    myMethod.Invoke(null, new object[] { _commandLineArgs });
+                    return;
+                }
+
+                var originalOut = Console.Out;
+                GlobalVariables.pipeCmdOutput = string.Empty;
+
+                using var writer = new StringWriter();
+
+                try
+                {
+                    Console.SetOut(writer);
+                    myMethod.Invoke(null, new object[] { _commandLineArgs });
+                }
+                finally
+                {
+                    Console.SetOut(originalOut);
+                    GlobalVariables.pipeCmdOutput = writer.ToString();
+                    GlobalVariables.isErrorCommand = true;
+                }
             }
             catch (Exception e)
             {
