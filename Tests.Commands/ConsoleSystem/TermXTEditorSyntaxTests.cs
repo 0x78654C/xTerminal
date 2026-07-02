@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Core.DirFiles;
+using Core.SystemTools;
 using FluentAssertions;
 using Xunit;
 
@@ -925,6 +926,62 @@ public class TermXTEditorSyntaxTests
                 "    start",
                 "        nested",
                 "    done");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void UpsertNuGetPackageDirective_InsertsDirectiveAtTopOfCSharpBuffer()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllText(path, "using System;");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+            object[] arguments =
+            {
+                new NuGetPackageReference("Example.Package", "1.2.0"),
+                false,
+                string.Empty
+            };
+
+            bool success = InvokePrivate<bool>(editor, "UpsertNuGetPackageDirective", arguments);
+
+            success.Should().BeTrue();
+            ((bool)arguments[1]).Should().BeTrue();
+            Lines(editor).Take(3).Should().Equal(
+                "// nuget: Example.Package 1.2.0",
+                string.Empty,
+                "using System;");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("nuget packages")]
+    [InlineData("nuget list packages")]
+    public void ExecuteEditorCommand_NuGetPackages_ListsExistingPackageDirectives(string command)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "// nuget: Example.Package 1.2.0", "using System;" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+
+            InvokePrivate(editor, "ExecuteEditorCommand", command);
+
+            GetPrivateField<string>(editor, "_status").Should().Be("1 NuGet package");
+            GetPrivateField<string>(editor, "_bottomStatus").Should().Contain("Example.Package 1.2.0");
         }
         finally
         {
