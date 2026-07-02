@@ -36,6 +36,7 @@ Inside the editor:
     Commands    : :e explorer, :w save, :w! overwrite changed disk file, :e! reload, :q quit, :q! quit without saving, :wq save and quit.
                   :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py switch highlight.
                   :errors/:warnings show diagnostics, :next-error/:prev-error and :next-warning/:prev-warning jump between .xt/.cs diagnostics.
+                  :nuget <package> adds latest stable. :nuget list packages, add <package> [version], remove, and restore manage C# package usage.
 ";
 
         private static readonly string s_template = @"# xTermXT Script template

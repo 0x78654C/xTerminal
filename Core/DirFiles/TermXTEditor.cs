@@ -590,9 +590,6 @@ namespace Core.DirFiles
             "sum", "super", "tuple", "TypeError", "ValueError", "zip"
         };
 
-        private static readonly Lazy<List<MetadataReference>> s_csharpDiagnosticReferences =
-            new Lazy<List<MetadataReference>>(Core.SystemTools.Roslyn.References);
-
         private string _path;
         private readonly List<string> _lines = new List<string>();
         private readonly Queue<ConsoleKeyInfo> _queuedKeys = new Queue<ConsoleKeyInfo>();
@@ -3252,7 +3249,7 @@ namespace Core.DirFiles
 
         private CSharpCompilation CreateCSharpCompilation(SyntaxTree syntaxTree, SourceCodeKind sourceKind)
         {
-            List<MetadataReference> references = s_csharpDiagnosticReferences.Value;
+            List<MetadataReference> references = Core.SystemTools.Roslyn.References(_path, BuildDocumentText());
             CSharpCompilationOptions compilationOptions =
                 new CSharpCompilationOptions(GetCSharpOutputKind(syntaxTree, sourceKind));
 
@@ -4102,6 +4099,9 @@ namespace Core.DirFiles
             if (TryExecuteSyntaxCommand(command))
                 return;
 
+            if (TryExecuteNuGetCommand(command))
+                return;
+
             switch (command.ToLowerInvariant())
             {
                 case "e":
@@ -4578,6 +4578,474 @@ namespace Core.DirFiles
             }
 
             return -1;
+        }
+
+        private bool TryExecuteNuGetCommand(string command)
+        {
+            if (!TryGetCommandRemainder(command, "nuget", out string rest) &&
+                !TryGetCommandRemainder(command, "nugget", out rest) &&
+                !TryGetCommandRemainder(command, "pkg", out rest) &&
+                !TryGetCommandRemainder(command, "package", out rest))
+            {
+                return false;
+            }
+
+            _mode = Mode.Normal;
+
+            if (_syntax != TermXTEditorSyntax.CSharp && !LooksLikeCSharpCompletionBuffer())
+            {
+                Status("NuGet packages are available in C# buffers.", error: true);
+                return true;
+            }
+
+            List<string> tokens = SplitCommandTokens(rest);
+            if (tokens.Count == 0)
+            {
+                Status("Use :nuget <package> for latest stable, or add <package> [version].");
+                return true;
+            }
+
+            string action = tokens[0].ToLowerInvariant();
+            switch (action)
+            {
+                case "add":
+                case "install":
+                    ExecuteNuGetAdd(tokens);
+                    return true;
+                case "list":
+                case "ls":
+                    ExecuteNuGetList(tokens);
+                    return true;
+                case "packages":
+                case "refs":
+                case "references":
+                    ExecuteNuGetList(tokens);
+                    return true;
+                case "remove":
+                case "rm":
+                case "delete":
+                case "del":
+                    ExecuteNuGetRemove(tokens);
+                    return true;
+                case "restore":
+                    ExecuteNuGetRestore();
+                    return true;
+                default:
+                    ExecuteNuGetAddWithArguments(tokens, packageIndex: 0);
+                    return true;
+            }
+        }
+
+        private void ExecuteNuGetAdd(List<string> tokens)
+        {
+            ExecuteNuGetAddWithArguments(tokens, packageIndex: 1);
+        }
+
+        private void ExecuteNuGetAddWithArguments(List<string> tokens, int packageIndex)
+        {
+            if (tokens.Count <= packageIndex)
+            {
+                Status("Missing package id. Use :nuget add <package> [version].", error: true);
+                return;
+            }
+
+            string packageId = tokens[packageIndex];
+            if (!TryGetNuGetVersionArgument(tokens, packageIndex + 1, out string version, out string error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            if (!Core.SystemTools.Roslyn.TryCreateNuGetPackageDirective(packageId, version, out _, out error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            Status(string.IsNullOrWhiteSpace(version)
+                ? "Restoring latest stable NuGet package..."
+                : "Restoring NuGet package...");
+            string workingDirectory = Path.GetDirectoryName(_path);
+            var package = new NuGetPackageReference(packageId, version);
+            if (!Core.SystemTools.Roslyn.TryRestoreNuGetPackage(
+                package,
+                workingDirectory,
+                out NuGetPackageReference restoredPackage,
+                out string message))
+            {
+                if (Core.SystemTools.Roslyn.IsNuGetCertificateValidationError(message))
+                {
+                    AddNuGetDirectiveAfterRestoreFailure(package, message);
+                    return;
+                }
+
+                Status("NuGet restore failed", error: true);
+                BottomStatus(message, error: true);
+                return;
+            }
+
+            if (!UpsertNuGetPackageDirective(restoredPackage, out bool changed, out error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            Status(changed ? "NuGet added: " + restoredPackage.DisplayName : "NuGet already added: " + restoredPackage.DisplayName);
+            BottomStatus(message);
+        }
+
+        private void AddNuGetDirectiveAfterRestoreFailure(
+            NuGetPackageReference package,
+            string restoreMessage)
+        {
+            if (!UpsertNuGetPackageDirective(package, out bool changed, out string error))
+            {
+                Status("NuGet restore failed", error: true);
+                BottomStatus(error, error: true);
+                return;
+            }
+
+            Status(
+                changed
+                    ? "NuGet directive added; restore failed"
+                    : "NuGet directive kept; restore failed",
+                warning: true);
+            BottomStatus(restoreMessage, warning: true);
+        }
+
+        private void ExecuteNuGetList(List<string> tokens)
+        {
+            if (!IsNuGetListCommand(tokens))
+            {
+                Status("Use :nuget list or :nuget list packages.", error: true);
+                return;
+            }
+
+            IReadOnlyList<NuGetPackageReference> packages =
+                Core.SystemTools.Roslyn.GetNuGetPackageReferences(BuildDocumentText());
+
+            if (packages.Count == 0)
+            {
+                Status("No NuGet packages in this buffer.");
+                BottomStatus("Add with :nuget add <package> [version].");
+                return;
+            }
+
+            var names = new List<string>();
+            foreach (NuGetPackageReference package in packages)
+                names.Add(package.DisplayName);
+
+            Status(packages.Count + " NuGet package" + (packages.Count == 1 ? "" : "s"));
+            BottomStatus(string.Join(", ", names));
+        }
+
+        private static bool IsNuGetListCommand(List<string> tokens)
+        {
+            if (tokens == null || tokens.Count == 0)
+                return false;
+
+            string action = tokens[0].ToLowerInvariant();
+            if (action == "packages" || action == "refs" || action == "references")
+                return tokens.Count == 1;
+
+            if (action != "list" && action != "ls")
+                return false;
+
+            if (tokens.Count == 1)
+                return true;
+
+            if (tokens.Count == 2)
+            {
+                string target = tokens[1].ToLowerInvariant();
+                return target == "packages" ||
+                    target == "package" ||
+                    target == "refs" ||
+                    target == "references";
+            }
+
+            return false;
+        }
+
+        private void ExecuteNuGetRemove(List<string> tokens)
+        {
+            if (tokens.Count < 2)
+            {
+                Status("Missing package id. Use :nuget remove <package>.", error: true);
+                return;
+            }
+
+            string packageId = tokens[1];
+            if (!Core.SystemTools.Roslyn.TryCreateNuGetPackageDirective(packageId, string.Empty, out _, out string error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            int lineIndex = FindNuGetPackageDirectiveLine(packageId);
+            if (lineIndex < 0)
+            {
+                Status("NuGet package not found: " + packageId, warning: true);
+                return;
+            }
+
+            PushUndo();
+            _insertUndoStarted = false;
+            ClearSelection();
+            DismissCompletion();
+            _lines.RemoveAt(lineIndex);
+            if (_lines.Count == 0)
+                _lines.Add(string.Empty);
+
+            _cursorLine = Math.Min(lineIndex, _lines.Count - 1);
+            _cursorCol = 0;
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+            MarkDirty();
+            Status("NuGet removed: " + packageId);
+        }
+
+        private void ExecuteNuGetRestore()
+        {
+            IReadOnlyList<NuGetPackageReference> packages =
+                Core.SystemTools.Roslyn.GetNuGetPackageReferences(BuildDocumentText());
+
+            if (packages.Count == 0)
+            {
+                Status("No NuGet packages to restore.");
+                return;
+            }
+
+            string workingDirectory = Path.GetDirectoryName(_path);
+            string lastMessage = string.Empty;
+            foreach (NuGetPackageReference package in packages)
+            {
+                Status("Restoring " + package.DisplayName + "...");
+                if (!Core.SystemTools.Roslyn.TryRestoreNuGetPackage(
+                    package,
+                    workingDirectory,
+                    out _,
+                    out lastMessage))
+                {
+                    Status("NuGet restore failed", error: true);
+                    BottomStatus(lastMessage, error: true);
+                    return;
+                }
+            }
+
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+            Status("NuGet restored: " + packages.Count + " package" + (packages.Count == 1 ? "" : "s"));
+            BottomStatus(lastMessage);
+        }
+
+        private bool UpsertNuGetPackageDirective(
+            NuGetPackageReference package,
+            out bool changed,
+            out string error)
+        {
+            changed = false;
+            error = string.Empty;
+
+            if (!Core.SystemTools.Roslyn.TryCreateNuGetPackageDirective(
+                package.Id,
+                package.Version,
+                out string directive,
+                out error))
+            {
+                return false;
+            }
+
+            int existingIndex = FindNuGetPackageDirectiveLine(package.Id);
+            if (existingIndex >= 0)
+            {
+                if (string.Equals(_lines[existingIndex].Trim(), directive, StringComparison.Ordinal))
+                    return true;
+
+                PushUndo();
+                _insertUndoStarted = false;
+                ClearSelection();
+                DismissCompletion();
+                _lines[existingIndex] = directive;
+                _cursorLine = existingIndex;
+                _cursorCol = 0;
+                InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+                MarkDirty();
+                changed = true;
+                return true;
+            }
+
+            int insertIndex = NuGetDirectiveInsertIndex();
+            bool insertBlank = ShouldInsertBlankAfterNuGetDirective(insertIndex);
+            int lineCount = insertBlank ? 2 : 1;
+            if (!TryEnsureCanAddLines(lineCount, "NuGet"))
+            {
+                error = "File has too many lines for xte.";
+                return false;
+            }
+
+            PushUndo();
+            _insertUndoStarted = false;
+            ClearSelection();
+            DismissCompletion();
+            _lines.Insert(insertIndex, directive);
+            if (insertBlank)
+                _lines.Insert(insertIndex + 1, string.Empty);
+
+            _cursorLine = insertIndex;
+            _cursorCol = 0;
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+            MarkDirty();
+            changed = true;
+            return true;
+        }
+
+        private int FindNuGetPackageDirectiveLine(string packageId)
+        {
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                if (TryGetNuGetPackageFromLine(_lines[i], out NuGetPackageReference package) &&
+                    string.Equals(package.Id, packageId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int NuGetDirectiveInsertIndex()
+        {
+            int index = 0;
+            while (index < _lines.Count && IsNuGetDirectiveLine(_lines[index]))
+                index++;
+
+            return index;
+        }
+
+        private bool ShouldInsertBlankAfterNuGetDirective(int insertIndex)
+        {
+            if (insertIndex >= _lines.Count)
+                return false;
+
+            string nextLine = _lines[insertIndex];
+            return !string.IsNullOrWhiteSpace(nextLine) && !IsNuGetDirectiveLine(nextLine);
+        }
+
+        private static bool IsNuGetDirectiveLine(string line)
+        {
+            return TryGetNuGetPackageFromLine(line, out _);
+        }
+
+        private static bool TryGetNuGetPackageFromLine(
+            string line,
+            out NuGetPackageReference package)
+        {
+            package = null;
+            IReadOnlyList<NuGetPackageReference> packages =
+                Core.SystemTools.Roslyn.GetNuGetPackageReferences(line ?? string.Empty);
+            if (packages.Count == 0)
+                return false;
+
+            package = packages[0];
+            return true;
+        }
+
+        private static bool TryGetCommandRemainder(
+            string command,
+            string name,
+            out string remainder)
+        {
+            remainder = string.Empty;
+            string trimmed = (command ?? string.Empty).Trim();
+            if (!trimmed.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (trimmed.Length > name.Length && !char.IsWhiteSpace(trimmed[name.Length]))
+                return false;
+
+            remainder = trimmed.Length > name.Length
+                ? trimmed.Substring(name.Length).Trim()
+                : string.Empty;
+            return true;
+        }
+
+        private static List<string> SplitCommandTokens(string text)
+        {
+            var tokens = new List<string>();
+            if (string.IsNullOrWhiteSpace(text))
+                return tokens;
+
+            var current = new StringBuilder();
+            bool inQuotes = false;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                    continue;
+                }
+
+                if (char.IsWhiteSpace(c) && !inQuotes)
+                {
+                    if (current.Length > 0)
+                    {
+                        tokens.Add(current.ToString());
+                        current.Clear();
+                    }
+
+                    continue;
+                }
+
+                current.Append(c);
+            }
+
+            if (current.Length > 0)
+                tokens.Add(current.ToString());
+
+            return tokens;
+        }
+
+        private static bool TryGetNuGetVersionArgument(
+            List<string> tokens,
+            int startIndex,
+            out string version,
+            out string error)
+        {
+            version = string.Empty;
+            error = string.Empty;
+
+            for (int i = startIndex; i < tokens.Count; i++)
+            {
+                string token = tokens[i];
+                if (string.Equals(token, "--version", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(token, "-v", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (i + 1 >= tokens.Count)
+                    {
+                        error = "Missing NuGet package version.";
+                        return false;
+                    }
+
+                    version = tokens[++i];
+                    continue;
+                }
+
+                if (token.StartsWith("--version=", StringComparison.OrdinalIgnoreCase))
+                {
+                    version = token.Substring("--version=".Length);
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(version))
+                {
+                    version = token;
+                    continue;
+                }
+
+                error = "Unexpected NuGet argument: " + token;
+                return false;
+            }
+
+            return true;
         }
 
         private bool TryExecuteSyntaxCommand(string command)
