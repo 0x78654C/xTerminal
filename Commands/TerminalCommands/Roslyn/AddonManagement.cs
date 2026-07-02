@@ -26,6 +26,7 @@ namespace Commands.TerminalCommands.Roslyn
         public string Name => "!";
 
         private string _codeToRun;
+        private string _codePath;
         private string[] _commandLineArgs;
         private bool _commandCheck = false;
         private string _currentLocation = string.Empty;
@@ -43,6 +44,11 @@ namespace Commands.TerminalCommands.Roslyn
    -del   :  Deletes an Add-on.
                 Example: ! -del <command_name>
    -list  :  Displays the list of the saved add-ons with description.
+
+ NuGet packages:
+   Add package directives near the top of add-on C# files before ! -add:
+                // nuget: Newtonsoft.Json 13.0.3
+   xte can create these with :nuget <package> for latest stable, or :nuget add <package> [version].
 ";
 
 
@@ -221,7 +227,10 @@ namespace Commands.TerminalCommands.Roslyn
                 Assembly assembly = null;
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun, CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
                 string assemblyName = Path.GetRandomFileName();
-                var references = GetRef.References();
+                RoslynReferenceSet referenceSet = GetRef.ReferenceSet(_codePath, _codeToRun);
+                var references = referenceSet.References;
+                foreach (string warning in referenceSet.Warnings)
+                    FileSystem.ErrorWriteLine(warning);
 
                 CSharpCompilation compilation = CSharpCompilation.Create(
                     assemblyName,
@@ -253,6 +262,10 @@ namespace Commands.TerminalCommands.Roslyn
 
                     ms.Close();
                 }
+                if (assembly == null)
+                    return;
+
+                LoadReferencedAssemblies(referenceSet.AssemblyPaths);
                 MethodInfo myMethod = assembly.EntryPoint;
                 myMethod.Invoke(null, new object[] { _commandLineArgs });
             }
@@ -260,6 +273,31 @@ namespace Commands.TerminalCommands.Roslyn
             {
                 FileSystem.ErrorWriteLine(e.Message);
                 GlobalVariables.isErrorCommand = true;
+            }
+        }
+
+        private static void LoadReferencedAssemblies(IEnumerable<string> assemblyPaths)
+        {
+            foreach (string path in assemblyPaths)
+            {
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                        continue;
+
+                    AssemblyName assemblyName = AssemblyName.GetAssemblyName(path);
+                    bool alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies().Any(assembly =>
+                    {
+                        AssemblyName loadedName = assembly.GetName();
+                        return string.Equals(loadedName.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
+                    });
+
+                    if (!alreadyLoaded)
+                        Assembly.LoadFrom(path);
+                }
+                catch
+                {
+                }
             }
         }
 
@@ -295,6 +333,7 @@ namespace Commands.TerminalCommands.Roslyn
                             GlobalVariables.isErrorCommand = true;
                             return;
                         }
+                        _codePath = fileName;
                         _codeToRun = File.ReadAllText(fileName);
                     }
                 }

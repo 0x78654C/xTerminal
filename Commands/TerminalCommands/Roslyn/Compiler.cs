@@ -30,6 +30,11 @@ namespace Commands.TerminalCommands.Roslyn
    -h     :  Displays help message.
    -p     :  Uses command with parameters.
                 Example: ccs <file_name> -p <parameters>
+
+ NuGet packages:
+   Add package directives near the top of a C# file:
+                // nuget: Newtonsoft.Json 13.0.3
+   xte can create these with :nuget <package> for latest stable, or :nuget add <package> [version].
 ";
 
         public void Execute(string args)
@@ -87,7 +92,11 @@ namespace Commands.TerminalCommands.Roslyn
                 Assembly assembly = null;
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun, CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
                 string assemblyName = Path.GetRandomFileName();
-                var references = GetRef.References();
+                RoslynReferenceSet referenceSet = GetRef.ReferenceSet(fileName, _codeToRun);
+                var references = referenceSet.References;
+                foreach (string warning in referenceSet.Warnings)
+                    FileSystem.ErrorWriteLine(warning);
+
                 CSharpCompilation compilation = CSharpCompilation.Create(
                     assemblyName,
                     syntaxTrees: new[] { syntaxTree },
@@ -121,6 +130,8 @@ namespace Commands.TerminalCommands.Roslyn
 
                 if (assembly == null)
                     return;
+
+                LoadReferencedAssemblies(referenceSet.AssemblyPaths);
                 MethodInfo myMethod = assembly.EntryPoint;
                 if (!capturePipeOutput)
                 {
@@ -149,6 +160,31 @@ namespace Commands.TerminalCommands.Roslyn
             {
                 FileSystem.ErrorWriteLine(e.Message);
                 GlobalVariables.isErrorCommand = true;
+            }
+        }
+
+        private static void LoadReferencedAssemblies(IEnumerable<string> assemblyPaths)
+        {
+            foreach (string path in assemblyPaths)
+            {
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                        continue;
+
+                    AssemblyName assemblyName = AssemblyName.GetAssemblyName(path);
+                    bool alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies().Any(assembly =>
+                    {
+                        AssemblyName loadedName = assembly.GetName();
+                        return string.Equals(loadedName.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
+                    });
+
+                    if (!alreadyLoaded)
+                        Assembly.LoadFrom(path);
+                }
+                catch
+                {
+                }
             }
         }
 
