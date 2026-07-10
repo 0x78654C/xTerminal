@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading;
 using CheckType = Core.FileSystem.CheckType;
 using System.Net.Http;
@@ -27,8 +26,6 @@ namespace Commands.TerminalCommands.Network
         private static TimeSpan s_timeSpan;
         private static bool s_pingCheck = false;
         private static readonly HttpClient s_client = new HttpClient();
-        private static MatchCollection s_match2;
-        private static MatchCollection s_match;
         private static AutoResetEvent s_resetEvent = new AutoResetEvent(false);
         private static string s_helpMessage = @"Usage: wget <url> . Or with parameters:
 
@@ -142,22 +139,16 @@ namespace Commands.TerminalCommands.Network
         private static async Task Download()
         {
             string dlocation = File.ReadAllText(GlobalVariables.currentDirectory); ;
-            int parse;
-            string[] parseUrl;
-            string fileUrl;
             s_timeSpan = new TimeSpan();
             s_stopWatch = new Stopwatch();
-            s_match = Regex.Matches(s_urlFirst, "/");
-            parse = s_match.Count;
-            parseUrl = s_urlFirst.Split('/');
-            fileUrl = parseUrl[parse];
+            var source = CreateHttpUri(s_urlFirst);
+            var fileName = GetSafeDownloadPath(source, dlocation);
+            string fileUrl = Path.GetFileName(fileName);
             Console.WriteLine($"Downloading {fileUrl} in {dlocation} .......");
-            var source = new Uri(s_urlFirst);
             s_stopWatch.Start();
-            var fileName = $"{dlocation}\\{fileUrl}";
             using (var s = await s_client.GetStreamAsync(source))
             {
-                using (var fs = new FileStream(fileName, FileMode.Create))
+                using (var fs = new FileStream(fileName, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
                     await s.CopyToAsync(fs);
                 }
@@ -189,17 +180,14 @@ namespace Commands.TerminalCommands.Network
                 return;
             }
 
-            s_match2 = Regex.Matches(s_urlSecond, "/");
-            int parse2 = s_match2.Count;
-            string[] parseUrl2 = s_urlSecond.Split('/');
-            string fileUrl2 = parseUrl2[parse2];
+            var source = CreateHttpUri(s_urlSecond);
+            var fileName = GetSafeDownloadPath(source, s_urlFirst);
+            string fileUrl2 = Path.GetFileName(fileName);
             Console.WriteLine($"Downloading {fileUrl2} in {s_urlFirst}\\ .......");
-            var source = new Uri(s_urlSecond);
             s_stopWatch.Start();
-            var fileName = $"{s_urlFirst}\\{fileUrl2}";
             using (var s = await s_client.GetStreamAsync(source))
             {
-                using (var fs = new FileStream(fileName, FileMode.Create))
+                using (var fs = new FileStream(fileName, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
                     await s.CopyToAsync(fs);
                 }
@@ -209,6 +197,63 @@ namespace Commands.TerminalCommands.Network
             Console.WriteLine("Downloaded in " + s_urlFirst + @"\" + fileUrl2);
             Console.WriteLine($"Elapsed download time: {s_timeSpan.Seconds} seconds");
             s_resetEvent.Set();
+        }
+
+        private static Uri CreateHttpUri(string value)
+        {
+            if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                throw new ArgumentException("Download URL must be an absolute HTTP or HTTPS URL.");
+
+            return uri;
+        }
+
+        /// <summary>
+        /// Resolve a URL to a filename that is guaranteed to remain inside the destination directory.
+        /// </summary>
+        public static string GetSafeDownloadPath(Uri source, string destinationDirectory)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (!source.IsAbsoluteUri
+                || (source.Scheme != Uri.UriSchemeHttp && source.Scheme != Uri.UriSchemeHttps))
+                throw new ArgumentException("Download URL must be an absolute HTTP or HTTPS URL.", nameof(source));
+            if (string.IsNullOrWhiteSpace(destinationDirectory))
+                throw new ArgumentException("Download destination is empty.", nameof(destinationDirectory));
+
+            string localPath = Uri.UnescapeDataString(source.LocalPath);
+            string fileName = Path.GetFileName(localPath);
+            if (string.IsNullOrWhiteSpace(fileName)
+                || fileName == "." || fileName == ".."
+                || fileName.EndsWith(".", StringComparison.Ordinal)
+                || fileName.EndsWith(" ", StringComparison.Ordinal)
+                || IsReservedWindowsFileName(fileName)
+                || fileName.IndexOfAny(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar, '/', '\\' }) >= 0
+                || fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                throw new InvalidDataException("The URL does not contain a safe local filename.");
+
+            string root = Path.GetFullPath(destinationDirectory);
+            string rootPrefix = Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar;
+            string candidate = Path.GetFullPath(Path.Combine(root, fileName));
+            if (!candidate.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("The download filename escapes the destination directory.");
+
+            return candidate;
+        }
+
+        private static bool IsReservedWindowsFileName(string fileName)
+        {
+            string stem = Path.GetFileNameWithoutExtension(fileName);
+            if (stem.Equals("CON", StringComparison.OrdinalIgnoreCase)
+                || stem.Equals("PRN", StringComparison.OrdinalIgnoreCase)
+                || stem.Equals("AUX", StringComparison.OrdinalIgnoreCase)
+                || stem.Equals("NUL", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return stem.Length == 4
+                && (stem.StartsWith("COM", StringComparison.OrdinalIgnoreCase)
+                    || stem.StartsWith("LPT", StringComparison.OrdinalIgnoreCase))
+                && stem[3] >= '1' && stem[3] <= '9';
         }
     }
 }
