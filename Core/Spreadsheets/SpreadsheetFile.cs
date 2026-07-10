@@ -17,6 +17,8 @@ namespace Core.Spreadsheets
             path = Path.GetFullPath(path);
             if (!File.Exists(path))
                 throw new FileNotFoundException("Spreadsheet file was not found.", path);
+            if (new FileInfo(path).Length > SpreadsheetLimits.MaxFileBytes)
+                throw new InvalidDataException($"Spreadsheet files are limited to {SpreadsheetLimits.MaxFileBytes} bytes.");
 
             var kind = GetFileKindFromPath(path);
             SpreadsheetWorkbook workbook;

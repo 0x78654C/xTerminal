@@ -5,6 +5,26 @@ using System.Linq;
 
 namespace Core.Spreadsheets
 {
+    public static class SpreadsheetLimits
+    {
+        public const int MaxRows = 100000;
+        public const int MaxColumns = 16384;
+        public const int MaxMaterializedCells = 2000000;
+        public const int MaxWorksheets = 256;
+        public const long MaxFileBytes = 64L * 1024 * 1024;
+        public const long MaxArchiveEntryBytes = 32L * 1024 * 1024;
+        public const long MaxArchiveExpandedBytes = 128L * 1024 * 1024;
+        public const int MaxCompressionRatio = 100;
+
+        public static void ValidateCellIndex(int rowIndex, int columnIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= MaxRows)
+                throw new ArgumentOutOfRangeException(nameof(rowIndex), $"Spreadsheet rows are limited to {MaxRows}.");
+            if (columnIndex < 0 || columnIndex >= MaxColumns)
+                throw new ArgumentOutOfRangeException(nameof(columnIndex), $"Spreadsheet columns are limited to {MaxColumns}.");
+        }
+    }
+
     public enum SpreadsheetFileKind
     {
         Unknown,
@@ -71,6 +91,7 @@ namespace Core.Spreadsheets
     public sealed class SpreadsheetWorksheet
     {
         private readonly List<List<string>> _rows;
+        private int _materializedCellCount;
 
         public SpreadsheetWorksheet(string name)
         {
@@ -146,8 +167,7 @@ namespace Core.Spreadsheets
 
         public void SetCell(int rowIndex, int columnIndex, string value)
         {
-            if (rowIndex < 0 || columnIndex < 0)
-                return;
+            SpreadsheetLimits.ValidateCellIndex(rowIndex, columnIndex);
 
             EnsureCell(rowIndex, columnIndex);
             _rows[rowIndex][columnIndex] = value ?? string.Empty;
@@ -155,6 +175,13 @@ namespace Core.Spreadsheets
 
         public void AddRow(IList<string> values)
         {
+            if (_rows.Count >= SpreadsheetLimits.MaxRows)
+                throw new InvalidDataException($"Spreadsheet rows are limited to {SpreadsheetLimits.MaxRows}.");
+            if (values != null && values.Count > SpreadsheetLimits.MaxColumns)
+                throw new InvalidDataException($"Spreadsheet columns are limited to {SpreadsheetLimits.MaxColumns}.");
+            if (values != null && (long)_materializedCellCount + values.Count > SpreadsheetLimits.MaxMaterializedCells)
+                throw new InvalidDataException("Spreadsheet cell limit exceeded.");
+
             var row = new List<string>();
             if (values != null)
             {
@@ -163,17 +190,23 @@ namespace Core.Spreadsheets
             }
 
             _rows.Add(row);
+            _materializedCellCount += row.Count;
         }
 
         public void InsertRow(int rowIndex)
         {
+            if (_rows.Count >= SpreadsheetLimits.MaxRows)
+                throw new InvalidDataException($"Spreadsheet rows are limited to {SpreadsheetLimits.MaxRows}.");
             rowIndex = Math.Max(0, Math.Min(rowIndex, _rows.Count));
             int columns = ColumnCount;
+            if ((long)_materializedCellCount + columns > SpreadsheetLimits.MaxMaterializedCells)
+                throw new InvalidDataException("Spreadsheet cell limit exceeded.");
             var row = new List<string>(columns);
             for (int col = 0; col < columns; col++)
                 row.Add(string.Empty);
 
             _rows.Insert(rowIndex, row);
+            _materializedCellCount += row.Count;
         }
 
         public void DeleteRow(int rowIndex)
@@ -181,6 +214,7 @@ namespace Core.Spreadsheets
             if (rowIndex < 0 || rowIndex >= _rows.Count)
                 return;
 
+            _materializedCellCount -= _rows[rowIndex].Count;
             _rows.RemoveAt(rowIndex);
             if (_rows.Count == 0)
                 _rows.Add(new List<string>());
@@ -188,15 +222,25 @@ namespace Core.Spreadsheets
 
         public void InsertColumn(int columnIndex)
         {
+            if (ColumnCount >= SpreadsheetLimits.MaxColumns)
+                throw new InvalidDataException($"Spreadsheet columns are limited to {SpreadsheetLimits.MaxColumns}.");
             columnIndex = Math.Max(0, Math.Min(columnIndex, ColumnCount));
             if (_rows.Count == 0)
                 _rows.Add(new List<string>());
 
+            long cellsToAdd = 0;
+            foreach (var row in _rows)
+                cellsToAdd += Math.Max(0, columnIndex - row.Count) + 1;
+            if (_materializedCellCount + cellsToAdd > SpreadsheetLimits.MaxMaterializedCells)
+                throw new InvalidDataException("Spreadsheet cell limit exceeded.");
+
             foreach (var row in _rows)
             {
+                int previousCount = row.Count;
                 while (row.Count < columnIndex)
                     row.Add(string.Empty);
                 row.Insert(columnIndex, string.Empty);
+                _materializedCellCount += row.Count - previousCount;
             }
         }
 
@@ -208,7 +252,10 @@ namespace Core.Spreadsheets
             foreach (var row in _rows)
             {
                 if (columnIndex < row.Count)
+                {
                     row.RemoveAt(columnIndex);
+                    _materializedCellCount--;
+                }
             }
 
             if (_rows.Count == 0)
@@ -219,6 +266,9 @@ namespace Core.Spreadsheets
         {
             rowCount = Math.Max(1, rowCount);
             columnCount = Math.Max(1, columnCount);
+            SpreadsheetLimits.ValidateCellIndex(rowCount - 1, columnCount - 1);
+            if ((long)rowCount * columnCount > SpreadsheetLimits.MaxMaterializedCells)
+                throw new InvalidDataException("Spreadsheet cell limit exceeded.");
 
             var values = new List<List<string>>(rowCount);
             for (int row = 0; row < rowCount; row++)
@@ -246,16 +296,24 @@ namespace Core.Spreadsheets
 
             foreach (var row in _rows)
                 TrimRow(row);
+
+            _materializedCellCount = _rows.Sum(row => row.Count);
         }
 
         private void EnsureCell(int rowIndex, int columnIndex)
         {
+            int existingColumns = rowIndex < _rows.Count ? _rows[rowIndex].Count : 0;
+            int cellsToAdd = Math.Max(0, columnIndex + 1 - existingColumns);
+            if ((long)_materializedCellCount + cellsToAdd > SpreadsheetLimits.MaxMaterializedCells)
+                throw new InvalidDataException("Spreadsheet cell limit exceeded.");
+
             while (_rows.Count <= rowIndex)
                 _rows.Add(new List<string>());
 
             var row = _rows[rowIndex];
             while (row.Count <= columnIndex)
                 row.Add(string.Empty);
+            _materializedCellCount += cellsToAdd;
         }
 
         private static void TrimRow(List<string> row)
@@ -266,6 +324,7 @@ namespace Core.Spreadsheets
                     return;
 
                 row.RemoveAt(col);
+                // The count is recalculated by the caller after all rows are trimmed.
             }
         }
     }

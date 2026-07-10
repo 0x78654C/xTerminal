@@ -26,6 +26,7 @@ namespace Core.Spreadsheets
 
             using (var archive = ZipFile.OpenRead(path))
             {
+                ValidateArchive(archive);
                 var workbookDocument = LoadXml(archive, "xl/workbook.xml");
                 var relationships = LoadRelationships(archive, "xl/_rels/workbook.xml.rels", "xl/workbook.xml");
                 var sharedStrings = LoadSharedStrings(archive);
@@ -35,15 +36,20 @@ namespace Core.Spreadsheets
                     .Element(SpreadsheetNs + "sheets")
                     ?.Elements(SpreadsheetNs + "sheet")
                     .ToList() ?? new List<XElement>();
+                if (sheets.Count > SpreadsheetLimits.MaxWorksheets)
+                    throw new InvalidDataException($"Spreadsheet worksheets are limited to {SpreadsheetLimits.MaxWorksheets}.");
 
+                int totalCells = 0;
                 foreach (var sheetElement in sheets)
                 {
+                    if (workbook.Worksheets.Count >= SpreadsheetLimits.MaxWorksheets)
+                        throw new InvalidDataException($"Spreadsheet worksheets are limited to {SpreadsheetLimits.MaxWorksheets}.");
                     string name = (string)sheetElement.Attribute("name") ?? "Sheet";
                     string relationshipId = (string)sheetElement.Attribute(WorkbookRelNs + "id") ?? string.Empty;
                     if (!relationships.TryGetValue(relationshipId, out var targetPath))
                         continue;
 
-                    var worksheet = LoadWorksheet(archive, targetPath, name, sharedStrings, dateStyles);
+                    var worksheet = LoadWorksheet(archive, targetPath, name, sharedStrings, dateStyles, ref totalCells);
                     workbook.Worksheets.Add(worksheet);
                 }
             }
@@ -80,7 +86,8 @@ namespace Core.Spreadsheets
             string sheetPath,
             string sheetName,
             List<string> sharedStrings,
-            List<bool> dateStyles)
+            List<bool> dateStyles,
+            ref int totalCells)
         {
             var sheet = new SpreadsheetWorksheet(sheetName);
             var document = LoadXml(archive, sheetPath);
@@ -90,20 +97,38 @@ namespace Core.Spreadsheets
             {
                 int rowIndex = fallbackRowIndex;
                 var rowReference = (string)rowElement.Attribute("r");
-                if (int.TryParse(rowReference, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedRow) && parsedRow > 0)
+                if (!string.IsNullOrWhiteSpace(rowReference))
+                {
+                    if (!int.TryParse(rowReference, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedRow)
+                        || parsedRow <= 0)
+                        throw new InvalidDataException("Invalid XLSX row reference: " + rowReference);
                     rowIndex = parsedRow - 1;
+                }
+                if (rowIndex < 0 || rowIndex >= SpreadsheetLimits.MaxRows)
+                    throw new InvalidDataException($"Spreadsheet rows are limited to {SpreadsheetLimits.MaxRows}.");
 
                 int fallbackColumnIndex = 0;
                 foreach (var cellElement in rowElement.Elements(SpreadsheetNs + "c"))
                 {
                     int columnIndex = fallbackColumnIndex;
                     var reference = (string)cellElement.Attribute("r");
-                    if (!string.IsNullOrWhiteSpace(reference) && TryParseCellReference(reference, out _, out var parsedColumn))
+                    if (!string.IsNullOrWhiteSpace(reference))
+                    {
+                        if (!TryParseCellReference(reference, out _, out var parsedColumn))
+                            throw new InvalidDataException("Invalid XLSX cell reference: " + reference);
                         columnIndex = parsedColumn;
+                    }
+                    if (columnIndex < 0 || columnIndex >= SpreadsheetLimits.MaxColumns)
+                        throw new InvalidDataException($"Spreadsheet columns are limited to {SpreadsheetLimits.MaxColumns}.");
 
                     string value = ReadCellValue(cellElement, sharedStrings, dateStyles);
                     if (!string.IsNullOrEmpty(value))
+                    {
+                        totalCells++;
+                        if (totalCells > SpreadsheetLimits.MaxMaterializedCells)
+                            throw new InvalidDataException("Spreadsheet cell limit exceeded.");
                         sheet.SetCell(rowIndex, columnIndex, value);
+                    }
 
                     fallbackColumnIndex = columnIndex + 1;
                 }
@@ -243,7 +268,32 @@ namespace Core.Spreadsheets
         private static XDocument LoadXml(ZipArchiveEntry entry)
         {
             using (var stream = entry.Open())
-                return XDocument.Load(stream, LoadOptions.None);
+            using (var reader = XmlReader.Create(stream, new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = SpreadsheetLimits.MaxArchiveEntryBytes
+            }))
+                return XDocument.Load(reader, LoadOptions.None);
+        }
+
+        private static void ValidateArchive(ZipArchive archive)
+        {
+            long expandedBytes = 0;
+            foreach (var entry in archive.Entries)
+            {
+                if (entry.Length > SpreadsheetLimits.MaxArchiveEntryBytes)
+                    throw new InvalidDataException($"XLSX entry '{entry.FullName}' exceeds the expanded-size limit.");
+
+                expandedBytes = checked(expandedBytes + entry.Length);
+                if (expandedBytes > SpreadsheetLimits.MaxArchiveExpandedBytes)
+                    throw new InvalidDataException("XLSX archive exceeds the total expanded-size limit.");
+
+                if (entry.Length > 0
+                    && (entry.CompressedLength == 0
+                        || (double)entry.Length / Math.Max(1, entry.CompressedLength) > SpreadsheetLimits.MaxCompressionRatio))
+                    throw new InvalidDataException($"XLSX entry '{entry.FullName}' exceeds the compression-ratio limit.");
+            }
         }
 
         private static string CombinePackagePath(string sourcePath, string targetPath)
@@ -599,7 +649,10 @@ namespace Core.Spreadsheets
             int index = 0;
             while (index < reference.Length && char.IsLetter(reference[index]))
             {
-                columnIndex = columnIndex * 26 + (char.ToUpperInvariant(reference[index]) - 'A' + 1);
+                long nextColumn = (long)columnIndex * 26 + (char.ToUpperInvariant(reference[index]) - 'A' + 1);
+                if (nextColumn > SpreadsheetLimits.MaxColumns)
+                    return false;
+                columnIndex = (int)nextColumn;
                 index++;
             }
 
