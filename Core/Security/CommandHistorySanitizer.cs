@@ -57,7 +57,7 @@ namespace Core.Security
 
         private static string ReplaceValue(Match match)
         {
-            return match.Groups["prefix"].Value + "[REDACTED]";
+            return match.Groups["prefix"].Value + "[SECRET]";
         }
     }
 }
