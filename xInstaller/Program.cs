@@ -944,6 +944,12 @@ namespace xInstaller
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
+        /// <summary>
+        /// Resolve the payload directory path relative to the application base directory, ensuring it exists and does not contain any reparse points.
+        /// </summary>
+        /// <param name="relativePath"></param>
+        /// <returns></returns>
+        /// <exception cref="DirectoryNotFoundException"></exception>
         private static string ResolvePayloadDirectory(string relativePath)
         {
             string path = ResolveApplicationPath(relativePath);
@@ -953,6 +959,12 @@ namespace xInstaller
             return path;
         }
 
+        /// <summary>
+        /// Resolve the payload file path relative to the application base directory, ensuring it exists and is not a reparse point.
+        /// </summary>
+        /// <param name="relativePath"></param>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException"></exception>
         private static string ResolvePayloadFile(string relativePath)
         {
             string path = ResolveApplicationPath(relativePath);
@@ -962,6 +974,12 @@ namespace xInstaller
             return path;
         }
 
+        /// <summary>
+        /// Resolve a path relative to the application base directory, ensuring it does not escape the application directory.
+        /// </summary>
+        /// <param name="relativePath"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidDataException"></exception>
         private static string ResolveApplicationPath(string relativePath)
         {
             if (Path.IsPathRooted(relativePath))
@@ -973,6 +991,12 @@ namespace xInstaller
             return path;
         }
 
+
+        /// <summary>
+        /// Function to check if path is under application directory.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         private static bool IsUnderApplicationDirectory(string path)
         {
             string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(AppContext.BaseDirectory))
@@ -980,6 +1004,12 @@ namespace xInstaller
             return path.StartsWith(root, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Ensure that the destination directory exists and does not contain any reparse points, creating it if necessary.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidDataException"></exception>
         private static string EnsureSafeDestinationDirectory(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -992,6 +1022,11 @@ namespace xInstaller
             return fullPath;
         }
 
+        /// <summary>
+        /// Function to validate existing path and check if it contains reparse point.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <exception cref="IOException"></exception>
         private static void ValidateExistingPathNoReparse(string path)
         {
             var current = new DirectoryInfo(path);
@@ -1003,11 +1038,21 @@ namespace xInstaller
             }
         }
 
+        /// <summary>
+        /// validate the entire directory tree for reparse points, throwing an exception if any are found. This is used to ensure that the installer payload does not contain symbolic links or junctions that could lead to unexpected behavior during installation.
+        /// </summary>
+        /// <param name="root"></param>
         private static void ValidateDirectoryTreeNoReparse(string root)
         {
             foreach (var _ in EnumeratePayloadFiles(root)) { }
         }
 
+        /// <summary>
+        /// Enumerate all files in the payload directory tree, rejecting any reparse points to avoid writing through symbolic links or junctions.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <returns></returns>
+        /// <exception cref="IOException"></exception>
         private static IEnumerable<string> EnumeratePayloadFiles(string root)
         {
             var pending = new Stack<DirectoryInfo>();
@@ -1030,6 +1075,11 @@ namespace xInstaller
             }
         }
 
+        /// <summary>
+        /// Reject reparse point to avoid writing through symbolic links or junctions.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <exception cref="IOException"></exception>
         private static void RejectReparsePoint(string path)
         {
             if ((File.Exists(path) || Directory.Exists(path))
@@ -1037,6 +1087,12 @@ namespace xInstaller
                 throw new IOException("Refusing to write through a reparse point: " + path);
         }
 
+        /// <summary>
+        /// Veriy payload manifest file and check if all files are present and have correct hash.
+        /// </summary>
+        /// <param name="sourceDirectory"></param>
+        /// <param name="uninstallerPath"></param>
+        /// <exception cref="InvalidDataException"></exception>
         private static void VerifyPayloadManifest(string sourceDirectory, string uninstallerPath)
         {
             string manifestPath = ResolveApplicationPath(Path.Combine("data", "payload.sha256"));
