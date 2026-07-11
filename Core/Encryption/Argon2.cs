@@ -1,28 +1,43 @@
-﻿using Konscious.Security.Cryptography;
+using Konscious.Security.Cryptography;
+using System;
 using System.Text;
-
 
 namespace Core.Encryption
 {
     public static class Argon2
     {
-        public static Argon2id s_argon2;
-
         /// <summary>
-        /// Argon2 Password Hash
+        /// Derive key material from a password and a caller-provided random salt.
         /// </summary>
-        /// <param name="password"></param>
-        /// <returns></returns>
-        public static byte[] Argon2HashPassword(string password)
+        public static byte[] Argon2HashPassword(
+            string password,
+            byte[] salt,
+            int memorySize,
+            int iterations,
+            int degreeOfParallelism,
+            int outputLength = 32)
         {
-            s_argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
+            if (password == null)
+                throw new ArgumentNullException(nameof(password));
+            if (salt == null || salt.Length < 8)
+                throw new ArgumentException("Argon2 salts must contain at least 8 bytes.", nameof(salt));
+            if (memorySize < 8 * 1024 || memorySize > 1024 * 1024)
+                throw new ArgumentOutOfRangeException(nameof(memorySize));
+            if (iterations < 1 || iterations > 100)
+                throw new ArgumentOutOfRangeException(nameof(iterations));
+            if (degreeOfParallelism < 1 || degreeOfParallelism > 16)
+                throw new ArgumentOutOfRangeException(nameof(degreeOfParallelism));
+
+            using (var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
             {
-                Salt = Encoding.UTF8.GetBytes(password.Substring(2, 10)),
-                DegreeOfParallelism = 2,
-                Iterations = 40,
-                MemorySize = 4096
-            };
-            return s_argon2.GetBytes(32);
+                Salt = (byte[])salt.Clone(),
+                DegreeOfParallelism = degreeOfParallelism,
+                Iterations = iterations,
+                MemorySize = memorySize
+            })
+            {
+                return argon2.GetBytes(outputLength);
+            }
         }
     }
 }

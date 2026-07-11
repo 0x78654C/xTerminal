@@ -32,10 +32,11 @@ Inside the editor:
     Normal mode : h/j/k/l or arrows move, e opens file explorer, i or Insert enters insert, dd delete line, / search, n or F3 search next.
     Explorer    : Starts from xTerminal current directory and uses fxp controls. Enter opens the selected file in xte.
     Search      : Enter finds, empty Enter repeats the previous search.
-    Insert mode : Esc returns to normal mode, C# IntelliSense opens automatically, Enter/Tab accepts a completion, Ctrl+X cuts selection/line, Ctrl+Z undo, Ctrl+Y redo.
+    Insert mode : Esc returns to normal mode, C# IntelliSense opens automatically, Enter/Tab accepts a completion, Ctrl+D duplicates line, Ctrl+X cuts selection/line, Ctrl+Z undo, Ctrl+Y redo.
     Commands    : :e explorer, :w save, :w! overwrite changed disk file, :e! reload, :q quit, :q! quit without saving, :wq save and quit.
                   :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py switch highlight.
                   :errors/:warnings show diagnostics, :next-error/:prev-error and :next-warning/:prev-warning jump between .xt/.cs diagnostics.
+                  :nuget <package> adds latest stable. :nuget list packages, add <package> [version], remove, and restore manage C# package usage.
 ";
 
         private static readonly string s_template = @"# xTermXT Script template

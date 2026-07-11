@@ -11,14 +11,14 @@ namespace Commands.TerminalCommands.PasswordManager
 {
     /*
       Simple password manager to locally store sensitive authentification data from a specific application.
-      Using Rijndael AES-256bit encryption for data and Argon2 for master password hash.
+      Using AES-256-GCM encryption and an Argon2id-derived master key.
      */
     [SupportedOSPlatform("Windows")]
     public class PManager : ITerminalCommand
     {
         public string Name => "pwm";
         private static int s_tries = 0;
-        private static string s_helpMessage = @"A simple password manager to locally store the authentification data encrypted for an application using Rijndael AES-256 and Argon2 for password hash.
+        private static string s_helpMessage = @"A simple password manager to locally store authentication data using AES-256-GCM and an Argon2id-derived master key.
 Usage of Password Manager commands:
   -h       : Displays this message.
   -createv : Creates a new vault.
@@ -423,6 +423,12 @@ Usage of Password Manager commands:
             string masterPassword = PasswordValidator.ConvertSecureStringToString(PasswordValidator.GetHiddenConsoleInput());
             Console.WriteLine();
             string decryptVault = Core.Encryption.AES.Decrypt(encryptedData, masterPassword);
+            if (!decryptVault.Contains("Error decrypting") && Core.Encryption.AES.NeedsMigration(encryptedData))
+            {
+                string migratedVault = Core.Encryption.AES.Encrypt(decryptVault, masterPassword);
+                if (!migratedVault.Contains("Error encrypting"))
+                    File.WriteAllText(GlobalVariables.passwordManagerDirectory + $"\\{vault}.x", migratedVault);
+            }
             return decryptVault;
         }
 

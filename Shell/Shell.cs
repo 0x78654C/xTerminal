@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Core.Security;
 using SetConsoleColor = Core.SystemTools.UI;
 using ProccessManage = Core.SystemTools.ProcessStart;
 using SystemCmd = Core.Commands.SystemCommands;
@@ -507,7 +508,11 @@ namespace Shell
             // Read commands history
             if (File.Exists(s_historyFile))
             {
-                var historyStored = File.ReadAllText(s_historyFile);
+                var storedLines = File.ReadAllLines(s_historyFile);
+                var sanitizedLines = storedLines.Select(CommandHistorySanitizer.SanitizeHistoryEntry).ToArray();
+                if (!storedLines.SequenceEqual(sanitizedLines, StringComparer.Ordinal))
+                    File.WriteAllLines(s_historyFile, sanitizedLines);
+                var historyStored = string.Join(Environment.NewLine, sanitizedLines);
                 FileSystem.ReadStringLine(ref _history, historyStored, true);
             }
 
@@ -644,7 +649,7 @@ namespace Shell
                 text = text.Replace("\r", "");
                 text = text.Replace("\n", "");
                 text = text.Replace("\u0018", "");
-                _history.Add(text);
+                _history.Add(CommandHistorySanitizer.Sanitize(text));
             }
             return text;
         }
@@ -849,6 +854,7 @@ namespace Shell
         /// <param name="commandInput"></param
         private void WriteHistoryCommandFile(string historyFile, string commandInput)
         {
+            commandInput = CommandHistorySanitizer.Sanitize(commandInput);
             s_historyLimitSize = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize);
             int historyLimitSize = GlobalVariables.historyLimitSize;
             var isValidCommand = false;

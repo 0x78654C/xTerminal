@@ -21,6 +21,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.Principal;
+using System.Security.Cryptography;
 using IWSh = IWshRuntimeLibrary;
 
 namespace xInstaller
@@ -112,9 +113,12 @@ namespace xInstaller
             Raylib.SetTraceLogLevel(TraceLogLevel.None);
 
             if (Environment.Is64BitOperatingSystem)
-                sourceDir = _sourceDirX64;
+                sourceDir = ResolvePayloadDirectory(_sourceDirX64);
             else
-                sourceDir = _sourceDirX86;
+                sourceDir = ResolvePayloadDirectory(_sourceDirX86);
+
+            var uninstallerPath = ResolvePayloadFile(_uninstaller);
+            VerifyPayloadManifest(sourceDir, uninstallerPath);
 
             s_xTerminalVersion = GetFileVersionLabel(Path.Combine(sourceDir, "xTerminal.exe"));
 
@@ -195,7 +199,7 @@ namespace xInstaller
                     s_isShortAsked = false;
                     CopyFiles(sourceDir, s_destDirectory);
                     if (!s_statusPrint.Contains("installed"))
-                        CopyUninstaller(_uninstaller, s_profilePath);
+                        CopyUninstaller(uninstallerPath, s_profilePath);
                 }
 
                 // Start progress bar only if clicked install button.
@@ -720,20 +724,17 @@ namespace xInstaller
             var fileName = Path.GetFileName(path);
             string[] candidates =
             [
-                path,
-                Path.Combine(Environment.CurrentDirectory, path),
-                Path.Combine(Environment.CurrentDirectory, "resources", fileName),
-                Path.Combine(Environment.CurrentDirectory, "media", fileName),
                 Path.Combine(AppContext.BaseDirectory, path),
                 Path.Combine(AppContext.BaseDirectory, "resources", fileName),
-                Path.Combine(AppContext.BaseDirectory, fileName),
-                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "media", fileName))
+                Path.Combine(AppContext.BaseDirectory, "media", fileName),
+                Path.Combine(AppContext.BaseDirectory, fileName)
             ];
 
             foreach (var candidate in candidates)
             {
-                if (File.Exists(candidate))
-                    return candidate;
+                var fullCandidate = Path.GetFullPath(candidate);
+                if (IsUnderApplicationDirectory(fullCandidate) && File.Exists(fullCandidate))
+                    return fullCandidate;
             }
 
             return "";
@@ -774,15 +775,14 @@ namespace xInstaller
         /// <param name="destDir"></param>
         private static void CopyFiles(string sourceDir, string destDir)
         {
-            if (!Directory.Exists(destDir))
-                Directory.CreateDirectory(destDir);
+            sourceDir = Path.GetFullPath(sourceDir);
+            destDir = EnsureSafeDestinationDirectory(destDir);
+            ValidateDirectoryTreeNoReparse(sourceDir);
 
-            var sdirLen = new DirectoryInfo(sourceDir).GetFiles("*", SearchOption.AllDirectories).Length;
-            var desLen = new DirectoryInfo(destDir).GetFiles("*", SearchOption.AllDirectories).Length;
             Version fileVersion;
             Version destVersion = new Version("1.0");
             var versionCompare = 0;
-            fileVersion = GetFileVersion($"{(Environment.Is64BitOperatingSystem ? _sourceDirX64 : _sourceDirX86)}xTerminal.exe");
+            fileVersion = GetFileVersion(Path.Combine(sourceDir, "xTerminal.exe"));
 
             var destFile = $"{s_destDirectory}\\xTerminal.exe";
             if (File.Exists(destFile))
@@ -834,9 +834,9 @@ namespace xInstaller
             }
 
             // Write unsintall registry.
-            Reg_Uninstall();
+            Reg_Uninstall(sourceDir);
 
-            var files = Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories);
+            var files = EnumeratePayloadFiles(sourceDir).ToArray();
             foreach (var file in files)
                 s_totalBytes += new FileInfo(file).Length;
 
@@ -846,7 +846,8 @@ namespace xInstaller
                 {
                     var relativePath = Path.GetRelativePath(sourceDir, file);
                     var targetPath = Path.Combine(destDir, relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                    EnsureSafeDestinationDirectory(Path.GetDirectoryName(targetPath));
+                    RejectReparsePoint(targetPath);
                     using (FileStream source = File.OpenRead(file))
                     using (FileStream dest = File.Create(targetPath))
                     {
@@ -872,10 +873,11 @@ namespace xInstaller
         /// <param name="destDir"></param>
         private static void CopyUninstaller(string sourceFile, string destDir)
         {
-            if (!Directory.Exists(destDir))
-                Directory.CreateDirectory(destDir);
+            sourceFile = Path.GetFullPath(sourceFile);
+            destDir = EnsureSafeDestinationDirectory(destDir);
 
             var destFile = $@"{destDir}\xUninstaller.exe";
+            RejectReparsePoint(destFile);
 
             Thread copyThread = new Thread(() =>
             {
@@ -906,7 +908,7 @@ namespace xInstaller
         /// <summary>
         ///  Write registry key.
         /// </summary>
-        private static void Reg_Uninstall()
+        private static void Reg_Uninstall(string sourceDirectory)
         {
             try
             {
@@ -914,8 +916,7 @@ namespace xInstaller
                 var userProfile = $@"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}";
                 var date = DateTime.Now.ToString("yyyyMMdd");
                 var fileVersion = "1.0";
-                var path = Environment.Is64BitOperatingSystem ? _sourceDirX64 : _sourceDirX86;
-                fileVersion = FileVersionInfo.GetVersionInfo($"{path}xTerminal.exe").FileVersion;
+                fileVersion = FileVersionInfo.GetVersionInfo(Path.Combine(sourceDirectory, "xTerminal.exe")).FileVersion;
 
                 using RegistryKey key = Registry.CurrentUser.CreateSubKey(pathReg);
                 key.SetValue("DisplayName", "xTerminal");
@@ -941,6 +942,194 @@ namespace xInstaller
             using var identity = WindowsIdentity.GetCurrent();
             var principal = new WindowsPrincipal(identity);
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        }
+
+        /// <summary>
+        /// Resolve the payload directory path relative to the application base directory, ensuring it exists and does not contain any reparse points.
+        /// </summary>
+        /// <param name="relativePath"></param>
+        /// <returns></returns>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        private static string ResolvePayloadDirectory(string relativePath)
+        {
+            string path = ResolveApplicationPath(relativePath);
+            if (!Directory.Exists(path))
+                throw new DirectoryNotFoundException("Installer payload directory was not found: " + path);
+            ValidateDirectoryTreeNoReparse(path);
+            return path;
+        }
+
+        /// <summary>
+        /// Resolve the payload file path relative to the application base directory, ensuring it exists and is not a reparse point.
+        /// </summary>
+        /// <param name="relativePath"></param>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        private static string ResolvePayloadFile(string relativePath)
+        {
+            string path = ResolveApplicationPath(relativePath);
+            if (!File.Exists(path))
+                throw new FileNotFoundException("Installer payload file was not found.", path);
+            RejectReparsePoint(path);
+            return path;
+        }
+
+        /// <summary>
+        /// Resolve a path relative to the application base directory, ensuring it does not escape the application directory.
+        /// </summary>
+        /// <param name="relativePath"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidDataException"></exception>
+        private static string ResolveApplicationPath(string relativePath)
+        {
+            if (Path.IsPathRooted(relativePath))
+                throw new InvalidDataException("Installer payload paths must be relative.");
+
+            string path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, relativePath));
+            if (!IsUnderApplicationDirectory(path))
+                throw new InvalidDataException("Installer payload path escapes the application directory.");
+            return path;
+        }
+
+
+        /// <summary>
+        /// Function to check if path is under application directory.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        private static bool IsUnderApplicationDirectory(string path)
+        {
+            string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(AppContext.BaseDirectory))
+                + Path.DirectorySeparatorChar;
+            return path.StartsWith(root, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Ensure that the destination directory exists and does not contain any reparse points, creating it if necessary.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidDataException"></exception>
+        private static string EnsureSafeDestinationDirectory(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                throw new InvalidDataException("Installer destination directory is empty.");
+
+            string fullPath = Path.GetFullPath(path);
+            ValidateExistingPathNoReparse(fullPath);
+            Directory.CreateDirectory(fullPath);
+            ValidateExistingPathNoReparse(fullPath);
+            return fullPath;
+        }
+
+        /// <summary>
+        /// Function to validate existing path and check if it contains reparse point.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <exception cref="IOException"></exception>
+        private static void ValidateExistingPathNoReparse(string path)
+        {
+            var current = new DirectoryInfo(path);
+            while (current != null)
+            {
+                if (current.Exists && (current.Attributes & FileAttributes.ReparsePoint) != 0)
+                    throw new IOException("Installer destination contains a reparse point: " + current.FullName);
+                current = current.Parent;
+            }
+        }
+
+        /// <summary>
+        /// validate the entire directory tree for reparse points, throwing an exception if any are found. This is used to ensure that the installer payload does not contain symbolic links or junctions that could lead to unexpected behavior during installation.
+        /// </summary>
+        /// <param name="root"></param>
+        private static void ValidateDirectoryTreeNoReparse(string root)
+        {
+            foreach (var _ in EnumeratePayloadFiles(root)) { }
+        }
+
+        /// <summary>
+        /// Enumerate all files in the payload directory tree, rejecting any reparse points to avoid writing through symbolic links or junctions.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <returns></returns>
+        /// <exception cref="IOException"></exception>
+        private static IEnumerable<string> EnumeratePayloadFiles(string root)
+        {
+            var pending = new Stack<DirectoryInfo>();
+            pending.Push(new DirectoryInfo(root));
+            while (pending.Count > 0)
+            {
+                var directory = pending.Pop();
+                if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+                    throw new IOException("Installer payload contains a reparse point: " + directory.FullName);
+
+                foreach (var entry in directory.EnumerateFileSystemInfos())
+                {
+                    if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                        throw new IOException("Installer payload contains a reparse point: " + entry.FullName);
+                    if (entry is DirectoryInfo childDirectory)
+                        pending.Push(childDirectory);
+                    else if (entry is FileInfo file)
+                        yield return file.FullName;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reject reparse point to avoid writing through symbolic links or junctions.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <exception cref="IOException"></exception>
+        private static void RejectReparsePoint(string path)
+        {
+            if ((File.Exists(path) || Directory.Exists(path))
+                && (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+                throw new IOException("Refusing to write through a reparse point: " + path);
+        }
+
+        /// <summary>
+        /// Veriy payload manifest file and check if all files are present and have correct hash.
+        /// </summary>
+        /// <param name="sourceDirectory"></param>
+        /// <param name="uninstallerPath"></param>
+        /// <exception cref="InvalidDataException"></exception>
+        private static void VerifyPayloadManifest(string sourceDirectory, string uninstallerPath)
+        {
+            string manifestPath = ResolveApplicationPath(Path.Combine("data", "payload.sha256"));
+            if (!File.Exists(manifestPath))
+                throw new InvalidDataException("Installer payload hash manifest is missing: " + manifestPath);
+
+            var expectedHashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string rawLine in File.ReadLines(manifestPath))
+            {
+                string line = rawLine.Trim();
+                if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal))
+                    continue;
+
+                int separator = line.IndexOf(' ');
+                if (separator != 64)
+                    throw new InvalidDataException("Invalid installer payload manifest line.");
+                string hash = line.Substring(0, separator);
+                string relativePath = line.Substring(separator).TrimStart(' ', '*').Replace('/', Path.DirectorySeparatorChar);
+                string fullPath = ResolveApplicationPath(relativePath);
+                if (!expectedHashes.TryAdd(fullPath, hash))
+                    throw new InvalidDataException("Duplicate installer payload manifest entry: " + relativePath);
+            }
+
+            var payloadFiles = EnumeratePayloadFiles(sourceDirectory).ToList();
+            payloadFiles.Add(uninstallerPath);
+            foreach (string file in payloadFiles)
+            {
+                if (!expectedHashes.TryGetValue(Path.GetFullPath(file), out string expected))
+                    throw new InvalidDataException("Installer payload is missing from the hash manifest: " + file);
+
+                using var stream = File.OpenRead(file);
+                string actual = Convert.ToHexString(SHA256.HashData(stream));
+                if (!CryptographicOperations.FixedTimeEquals(
+                    Convert.FromHexString(expected),
+                    Convert.FromHexString(actual)))
+                    throw new InvalidDataException("Installer payload hash mismatch: " + file);
+            }
         }
 
         /// <summary>

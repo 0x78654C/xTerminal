@@ -115,14 +115,13 @@ This is the full list of commands that can be used in xTerminal:
     ccs       -- Compiles and runs in memory C# code directly from a file using Roslyn. Use -h for additional help.
     !         -- Run or add custom C# code add-ons as a command. Use -h for additional help.
     xt        -- TermXT: run .xt script files with variables, loops, conditionals, pipes and more. Use -h for additional help.
-    xte       -- Built-in Vim-style code editor with TermXT/C#/C/C++/Rust/JavaScript/Python syntax highlighting. Use -h for additional help.
+    xte       -- Built-in Vim-style code editor with TermXT/C#/C/C++/Rust/JavaScript/Python syntax highlighting and C# NuGet package directives. Use -h for additional help.
 
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
 
     -------------------- Password Manager -------------------
-    pwm       -- A simple password manager to store locally the authentication data encrypted for 
-                 a application using Rijndael AES-256 and Argon2 for password hash.
+    pwm       -- A simple password manager using AES-256-GCM and an Argon2id-derived master key.
                  Disclaimer: Use it at your OWN risk.
                  Use -h for additional help.
 

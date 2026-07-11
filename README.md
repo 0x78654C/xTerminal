@@ -595,7 +595,10 @@ Example:
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
 	                Shows editor diagnostics with red error and yellow warning notifications; use :errors, :warnings, :next-error, and :next-warning.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
+	                In C# buffers, use :nuget <package> to add the latest stable package, or :nuget list packages, :nuget add <package> [version], :nuget remove <package>, and :nuget restore to manage package usage.
 	                Ctrl+X cuts the selection, or the current line when nothing is selected.
+	                Ctrl+D duplicates the current line.
+
     -------------------- UI Customization -------------------
     ui        -- Customize the PS1(Prompt String 1). Use -h for additional help.
                     ::Predefined Colors: darkred, darkgreen, darkyellow, darkmagenta, darkcyan, darkgray, darkblue,
@@ -664,6 +667,9 @@ All xTerminal commands can be used from other terminals as <b>Command Line Argum
  For both ccs command and ! -add the code must be formatted and runned using the following example:
 
  ```C#
+// Optional package references for ccs, add-ons, and xte C# diagnostics:
+// nuget: Newtonsoft.Json 13.0.3
+
  using System;
 // You can add more dependencies.
 

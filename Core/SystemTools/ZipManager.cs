@@ -2,7 +2,6 @@
 using System.IO.Compression;
 using System.IO;
 using System.Runtime.Versioning;
-using System.Linq;
 
 namespace Core.SystemTools
 {
@@ -55,65 +54,78 @@ namespace Core.SystemTools
         /// </summary>
         public void Archive()
         {
-            bool isTempCreated = false;
-            var tempDir = "";
-            if (ZipDir.Contains("*"))
+            string tempDir = null;
+            try
             {
-                var splitFiles = ZipDir.Split("*");
-                var pathFile = "";
-                foreach (var file in splitFiles)
-                {
-                    pathFile = FileSystem.SanitizePath(file, _currentDirectory);//folder to add
-       
-                    if (!isTempCreated)
-                    {
-                        var getPath = "";
-                        if (FileSystem.IsFile(pathFile))
-                            getPath = Path.GetDirectoryName(pathFile);
-                        else
-                        {
-                            var len = pathFile.Split('\\').Count();
-                            getPath = pathFile.Substring(0, pathFile.Length - pathFile.Split('\\')[len - 1].Length - 1);
-                        }
-                        tempDir = $"{getPath}\\tmpZip";
-                        DeleteTempDir(tempDir);
-                        Directory.CreateDirectory(tempDir);
-                        isTempCreated = true;
-                    }
-                    if (!FileSystem.IsFile(pathFile))
-                    {
-                        var len = pathFile.Split('\\').Count();
-                        var dirName = pathFile.Split('\\')[len - 1];
-                        FileDirManager.CopyDirectory(pathFile, $"{tempDir}\\{dirName}",true); ;
-                    }
-                    else
-                       File.Copy(pathFile, $"{tempDir}\\{Path.GetFileName(pathFile)}");
-                }
+                tempDir = CreateTemporaryDirectory();
+                string pathFile;
 
-                var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
-                FileSystem.SuccessWriteLine($"Creating Zip file...");
-                ZipFile.CreateFromDirectory(tempDir, zipPath, GlobalVariables.compressionLevel, false);
-                FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
-            }
-            else
-            {
-                var pathFile = FileSystem.SanitizePath(ZipDir, _currentDirectory);//folder to add
-                if (!FileSystem.IsFile(pathFile))
+                if (ZipDir.Contains("*"))
                 {
-                    Compress();
-                    return;
+                    var splitFiles = ZipDir.Split('*', StringSplitOptions.RemoveEmptyEntries);
+                    if (splitFiles.Length == 0)
+                        throw new ArgumentException("No archive inputs were supplied.");
+
+                    pathFile = string.Empty;
+                    foreach (var file in splitFiles)
+                    {
+                        pathFile = FileSystem.SanitizePath(file, _currentDirectory);
+                        if (!File.Exists(pathFile) && !Directory.Exists(pathFile))
+                            throw new FileNotFoundException("Archive input was not found.", pathFile);
+
+                        if (Directory.Exists(pathFile))
+                        {
+                            var source = new DirectoryInfo(pathFile);
+                            if ((source.Attributes & FileAttributes.ReparsePoint) != 0)
+                                throw new IOException("Reparse-point directories cannot be archived recursively.");
+
+                            FileDirManager.CopyDirectory(pathFile, Path.Combine(tempDir, source.Name), true);
+                        }
+                        else
+                            File.Copy(pathFile, Path.Combine(tempDir, Path.GetFileName(pathFile)));
+                    }
+
+                    var zipPath = Path.Combine(Path.GetDirectoryName(pathFile), ZipName + ".zip");
+                    CreateArchive(tempDir, zipPath);
                 }
-                var getPath = Path.GetDirectoryName(pathFile);
-                tempDir = $"{getPath}\\tmpZip";
-                DeleteTempDir(tempDir);
-                Directory.CreateDirectory(tempDir);
-                File.Copy(pathFile, $"{tempDir}\\{Path.GetFileName(pathFile)}");
-                var zipPath = $"{Path.GetDirectoryName(pathFile)}\\{ZipName}.zip";
-                FileSystem.SuccessWriteLine($"Creating Zip file...");
-                ZipFile.CreateFromDirectory(tempDir, zipPath, GlobalVariables.compressionLevel, false);
-                FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
+                else
+                {
+                    pathFile = FileSystem.SanitizePath(ZipDir, _currentDirectory);
+                    if (Directory.Exists(pathFile))
+                    {
+                        DeleteTempDir(tempDir);
+                        tempDir = null;
+                        Compress();
+                        return;
+                    }
+                    if (!File.Exists(pathFile))
+                        throw new FileNotFoundException("Archive input was not found.", pathFile);
+
+                    File.Copy(pathFile, Path.Combine(tempDir, Path.GetFileName(pathFile)));
+                    var zipPath = Path.Combine(Path.GetDirectoryName(pathFile), ZipName + ".zip");
+                    CreateArchive(tempDir, zipPath);
+                }
             }
-            DeleteTempDir(tempDir);
+            finally
+            {
+                if (tempDir != null)
+                    DeleteTempDir(tempDir);
+            }
+        }
+
+        private static void CreateArchive(string tempDir, string zipPath)
+        {
+            FileSystem.SuccessWriteLine("Creating Zip file...");
+            ZipFile.CreateFromDirectory(tempDir, zipPath, GlobalVariables.compressionLevel, false);
+            FileSystem.SuccessWriteLine($"Created Zip file: {zipPath}");
+        }
+
+        private static string CreateTemporaryDirectory()
+        {
+            var directory = Directory.CreateTempSubdirectory("xterminal-zip-");
+            if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+                throw new IOException("Refusing to use a reparse point as temporary storage.");
+            return directory.FullName;
         }
 
         /// <summary>
@@ -122,7 +134,7 @@ namespace Core.SystemTools
         /// <param name="dir"></param>
         private static void DeleteTempDir(string dir)
         {
-            if (Directory.Exists(dir))
+            if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir))
             {
                 var dirInfo = new DirectoryInfo(dir);
                 FileDirManager.RecursiveDeleteDir(dirInfo);

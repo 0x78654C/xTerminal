@@ -86,7 +86,7 @@ namespace Core.DirFiles
         private const int CCurrentLineNo = 45;
         private const int CKeyword = 81;
         private const int CFlow = 111;
-        private const int CFunction = 214;
+        private const int CFunction = 121;
         private const int CString = 150;
         private const int CVariable = 219;
         private const int CNumber = 209;
@@ -107,6 +107,7 @@ namespace Core.DirFiles
         private const int CSourceType = 179;
         private const int CSourceStd = 117;
         private const int CSourceDirective = 208;
+        private const int CSourceFunction = CFunction;
         private const int CSourceInclude = 159;
         private const int CSourceString = 186;
         private const int CSourceNumber = 203;
@@ -117,6 +118,7 @@ namespace Core.DirFiles
         private const int CppSourceType = 111;
         private const int CppSourceStd = 219;
         private const int CppSourceDirective = 105;
+        private const int CppSourceFunction = CFunction;
         private const int CppSourceInclude = 183;
         private const int CppSourceString = 150;
         private const int CppSourceNumber = 214;
@@ -126,6 +128,7 @@ namespace Core.DirFiles
         private const int CSharpKeyword = 81;
         private const int CSharpType = 68;
         private const int CSharpDeclaration = 214;
+        private const int CSharpFunction = CFunction;
         private const int CSharpModifier = 117;
         private const int CSharpBcl = 159;
         private const int CSharpDirective = 183;
@@ -138,6 +141,7 @@ namespace Core.DirFiles
         private const int CRustKeyword = 81;
         private const int CRustType = 179;
         private const int CRustDeclaration = 214;
+        private const int CRustFunction = CFunction;
         private const int CRustModifier = 117;
         private const int CRustStd = 159;
         private const int CRustAttribute = 213;
@@ -150,6 +154,7 @@ namespace Core.DirFiles
         private const int CJavaScriptFlow = 39;
         private const int CJavaScriptKeyword = 81;
         private const int CJavaScriptDeclaration = 214;
+        private const int CJavaScriptFunction = CFunction;
         private const int CJavaScriptBuiltin = 159;
         private const int CJavaScriptDirective = 183;
         private const int CJavaScriptString = 150;
@@ -160,6 +165,7 @@ namespace Core.DirFiles
         private const int CPythonFlow = 39;
         private const int CPythonKeyword = 81;
         private const int CPythonDeclaration = 214;
+        private const int CPythonFunction = CFunction;
         private const int CPythonBuiltin = 159;
         private const int CPythonDecorator = 213;
         private const int CPythonString = 150;
@@ -583,9 +589,6 @@ namespace Core.DirFiles
             "range", "reversed", "RuntimeError", "set", "sorted", "str",
             "sum", "super", "tuple", "TypeError", "ValueError", "zip"
         };
-
-        private static readonly Lazy<List<MetadataReference>> s_csharpDiagnosticReferences =
-            new Lazy<List<MetadataReference>>(Core.SystemTools.Roslyn.References);
 
         private string _path;
         private readonly List<string> _lines = new List<string>();
@@ -1401,7 +1404,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+Z/Y";
+                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
                     help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
@@ -1410,7 +1413,7 @@ namespace Core.DirFiles
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | i edit | dd delete | / search | : command";
+                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -1716,6 +1719,12 @@ namespace Core.DirFiles
                 if (key.Key == ConsoleKey.V)
                 {
                     PasteFromClipboard();
+                    return;
+                }
+
+                if (key.Key == ConsoleKey.D)
+                {
+                    DuplicateCurrentLine();
                     return;
                 }
 
@@ -3240,7 +3249,7 @@ namespace Core.DirFiles
 
         private CSharpCompilation CreateCSharpCompilation(SyntaxTree syntaxTree, SourceCodeKind sourceKind)
         {
-            List<MetadataReference> references = s_csharpDiagnosticReferences.Value;
+            List<MetadataReference> references = Core.SystemTools.Roslyn.References(_path, BuildDocumentText());
             CSharpCompilationOptions compilationOptions =
                 new CSharpCompilationOptions(GetCSharpOutputKind(syntaxTree, sourceKind));
 
@@ -4090,6 +4099,9 @@ namespace Core.DirFiles
             if (TryExecuteSyntaxCommand(command))
                 return;
 
+            if (TryExecuteNuGetCommand(command))
+                return;
+
             switch (command.ToLowerInvariant())
             {
                 case "e":
@@ -4566,6 +4578,474 @@ namespace Core.DirFiles
             }
 
             return -1;
+        }
+
+        private bool TryExecuteNuGetCommand(string command)
+        {
+            if (!TryGetCommandRemainder(command, "nuget", out string rest) &&
+                !TryGetCommandRemainder(command, "nugget", out rest) &&
+                !TryGetCommandRemainder(command, "pkg", out rest) &&
+                !TryGetCommandRemainder(command, "package", out rest))
+            {
+                return false;
+            }
+
+            _mode = Mode.Normal;
+
+            if (_syntax != TermXTEditorSyntax.CSharp && !LooksLikeCSharpCompletionBuffer())
+            {
+                Status("NuGet packages are available in C# buffers.", error: true);
+                return true;
+            }
+
+            List<string> tokens = SplitCommandTokens(rest);
+            if (tokens.Count == 0)
+            {
+                Status("Use :nuget <package> for latest stable, or add <package> [version].");
+                return true;
+            }
+
+            string action = tokens[0].ToLowerInvariant();
+            switch (action)
+            {
+                case "add":
+                case "install":
+                    ExecuteNuGetAdd(tokens);
+                    return true;
+                case "list":
+                case "ls":
+                    ExecuteNuGetList(tokens);
+                    return true;
+                case "packages":
+                case "refs":
+                case "references":
+                    ExecuteNuGetList(tokens);
+                    return true;
+                case "remove":
+                case "rm":
+                case "delete":
+                case "del":
+                    ExecuteNuGetRemove(tokens);
+                    return true;
+                case "restore":
+                    ExecuteNuGetRestore();
+                    return true;
+                default:
+                    ExecuteNuGetAddWithArguments(tokens, packageIndex: 0);
+                    return true;
+            }
+        }
+
+        private void ExecuteNuGetAdd(List<string> tokens)
+        {
+            ExecuteNuGetAddWithArguments(tokens, packageIndex: 1);
+        }
+
+        private void ExecuteNuGetAddWithArguments(List<string> tokens, int packageIndex)
+        {
+            if (tokens.Count <= packageIndex)
+            {
+                Status("Missing package id. Use :nuget add <package> [version].", error: true);
+                return;
+            }
+
+            string packageId = tokens[packageIndex];
+            if (!TryGetNuGetVersionArgument(tokens, packageIndex + 1, out string version, out string error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            if (!Core.SystemTools.Roslyn.TryCreateNuGetPackageDirective(packageId, version, out _, out error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            Status(string.IsNullOrWhiteSpace(version)
+                ? "Restoring latest stable NuGet package..."
+                : "Restoring NuGet package...");
+            string workingDirectory = Path.GetDirectoryName(_path);
+            var package = new NuGetPackageReference(packageId, version);
+            if (!Core.SystemTools.Roslyn.TryRestoreNuGetPackage(
+                package,
+                workingDirectory,
+                out NuGetPackageReference restoredPackage,
+                out string message))
+            {
+                if (Core.SystemTools.Roslyn.IsNuGetCertificateValidationError(message))
+                {
+                    AddNuGetDirectiveAfterRestoreFailure(package, message);
+                    return;
+                }
+
+                Status("NuGet restore failed", error: true);
+                BottomStatus(message, error: true);
+                return;
+            }
+
+            if (!UpsertNuGetPackageDirective(restoredPackage, out bool changed, out error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            Status(changed ? "NuGet added: " + restoredPackage.DisplayName : "NuGet already added: " + restoredPackage.DisplayName);
+            BottomStatus(message);
+        }
+
+        private void AddNuGetDirectiveAfterRestoreFailure(
+            NuGetPackageReference package,
+            string restoreMessage)
+        {
+            if (!UpsertNuGetPackageDirective(package, out bool changed, out string error))
+            {
+                Status("NuGet restore failed", error: true);
+                BottomStatus(error, error: true);
+                return;
+            }
+
+            Status(
+                changed
+                    ? "NuGet directive added; restore failed"
+                    : "NuGet directive kept; restore failed",
+                warning: true);
+            BottomStatus(restoreMessage, warning: true);
+        }
+
+        private void ExecuteNuGetList(List<string> tokens)
+        {
+            if (!IsNuGetListCommand(tokens))
+            {
+                Status("Use :nuget list or :nuget list packages.", error: true);
+                return;
+            }
+
+            IReadOnlyList<NuGetPackageReference> packages =
+                Core.SystemTools.Roslyn.GetNuGetPackageReferences(BuildDocumentText());
+
+            if (packages.Count == 0)
+            {
+                Status("No NuGet packages in this buffer.");
+                BottomStatus("Add with :nuget add <package> [version].");
+                return;
+            }
+
+            var names = new List<string>();
+            foreach (NuGetPackageReference package in packages)
+                names.Add(package.DisplayName);
+
+            Status(packages.Count + " NuGet package" + (packages.Count == 1 ? "" : "s"));
+            BottomStatus(string.Join(", ", names));
+        }
+
+        private static bool IsNuGetListCommand(List<string> tokens)
+        {
+            if (tokens == null || tokens.Count == 0)
+                return false;
+
+            string action = tokens[0].ToLowerInvariant();
+            if (action == "packages" || action == "refs" || action == "references")
+                return tokens.Count == 1;
+
+            if (action != "list" && action != "ls")
+                return false;
+
+            if (tokens.Count == 1)
+                return true;
+
+            if (tokens.Count == 2)
+            {
+                string target = tokens[1].ToLowerInvariant();
+                return target == "packages" ||
+                    target == "package" ||
+                    target == "refs" ||
+                    target == "references";
+            }
+
+            return false;
+        }
+
+        private void ExecuteNuGetRemove(List<string> tokens)
+        {
+            if (tokens.Count < 2)
+            {
+                Status("Missing package id. Use :nuget remove <package>.", error: true);
+                return;
+            }
+
+            string packageId = tokens[1];
+            if (!Core.SystemTools.Roslyn.TryCreateNuGetPackageDirective(packageId, string.Empty, out _, out string error))
+            {
+                Status(error, error: true);
+                return;
+            }
+
+            int lineIndex = FindNuGetPackageDirectiveLine(packageId);
+            if (lineIndex < 0)
+            {
+                Status("NuGet package not found: " + packageId, warning: true);
+                return;
+            }
+
+            PushUndo();
+            _insertUndoStarted = false;
+            ClearSelection();
+            DismissCompletion();
+            _lines.RemoveAt(lineIndex);
+            if (_lines.Count == 0)
+                _lines.Add(string.Empty);
+
+            _cursorLine = Math.Min(lineIndex, _lines.Count - 1);
+            _cursorCol = 0;
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+            MarkDirty();
+            Status("NuGet removed: " + packageId);
+        }
+
+        private void ExecuteNuGetRestore()
+        {
+            IReadOnlyList<NuGetPackageReference> packages =
+                Core.SystemTools.Roslyn.GetNuGetPackageReferences(BuildDocumentText());
+
+            if (packages.Count == 0)
+            {
+                Status("No NuGet packages to restore.");
+                return;
+            }
+
+            string workingDirectory = Path.GetDirectoryName(_path);
+            string lastMessage = string.Empty;
+            foreach (NuGetPackageReference package in packages)
+            {
+                Status("Restoring " + package.DisplayName + "...");
+                if (!Core.SystemTools.Roslyn.TryRestoreNuGetPackage(
+                    package,
+                    workingDirectory,
+                    out _,
+                    out lastMessage))
+                {
+                    Status("NuGet restore failed", error: true);
+                    BottomStatus(lastMessage, error: true);
+                    return;
+                }
+            }
+
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+            Status("NuGet restored: " + packages.Count + " package" + (packages.Count == 1 ? "" : "s"));
+            BottomStatus(lastMessage);
+        }
+
+        private bool UpsertNuGetPackageDirective(
+            NuGetPackageReference package,
+            out bool changed,
+            out string error)
+        {
+            changed = false;
+            error = string.Empty;
+
+            if (!Core.SystemTools.Roslyn.TryCreateNuGetPackageDirective(
+                package.Id,
+                package.Version,
+                out string directive,
+                out error))
+            {
+                return false;
+            }
+
+            int existingIndex = FindNuGetPackageDirectiveLine(package.Id);
+            if (existingIndex >= 0)
+            {
+                if (string.Equals(_lines[existingIndex].Trim(), directive, StringComparison.Ordinal))
+                    return true;
+
+                PushUndo();
+                _insertUndoStarted = false;
+                ClearSelection();
+                DismissCompletion();
+                _lines[existingIndex] = directive;
+                _cursorLine = existingIndex;
+                _cursorCol = 0;
+                InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+                MarkDirty();
+                changed = true;
+                return true;
+            }
+
+            int insertIndex = NuGetDirectiveInsertIndex();
+            bool insertBlank = ShouldInsertBlankAfterNuGetDirective(insertIndex);
+            int lineCount = insertBlank ? 2 : 1;
+            if (!TryEnsureCanAddLines(lineCount, "NuGet"))
+            {
+                error = "File has too many lines for xte.";
+                return false;
+            }
+
+            PushUndo();
+            _insertUndoStarted = false;
+            ClearSelection();
+            DismissCompletion();
+            _lines.Insert(insertIndex, directive);
+            if (insertBlank)
+                _lines.Insert(insertIndex + 1, string.Empty);
+
+            _cursorLine = insertIndex;
+            _cursorCol = 0;
+            InvalidateDocumentCaches(delayCSharpSemanticDiagnostics: false);
+            MarkDirty();
+            changed = true;
+            return true;
+        }
+
+        private int FindNuGetPackageDirectiveLine(string packageId)
+        {
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                if (TryGetNuGetPackageFromLine(_lines[i], out NuGetPackageReference package) &&
+                    string.Equals(package.Id, packageId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int NuGetDirectiveInsertIndex()
+        {
+            int index = 0;
+            while (index < _lines.Count && IsNuGetDirectiveLine(_lines[index]))
+                index++;
+
+            return index;
+        }
+
+        private bool ShouldInsertBlankAfterNuGetDirective(int insertIndex)
+        {
+            if (insertIndex >= _lines.Count)
+                return false;
+
+            string nextLine = _lines[insertIndex];
+            return !string.IsNullOrWhiteSpace(nextLine) && !IsNuGetDirectiveLine(nextLine);
+        }
+
+        private static bool IsNuGetDirectiveLine(string line)
+        {
+            return TryGetNuGetPackageFromLine(line, out _);
+        }
+
+        private static bool TryGetNuGetPackageFromLine(
+            string line,
+            out NuGetPackageReference package)
+        {
+            package = null;
+            IReadOnlyList<NuGetPackageReference> packages =
+                Core.SystemTools.Roslyn.GetNuGetPackageReferences(line ?? string.Empty);
+            if (packages.Count == 0)
+                return false;
+
+            package = packages[0];
+            return true;
+        }
+
+        private static bool TryGetCommandRemainder(
+            string command,
+            string name,
+            out string remainder)
+        {
+            remainder = string.Empty;
+            string trimmed = (command ?? string.Empty).Trim();
+            if (!trimmed.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (trimmed.Length > name.Length && !char.IsWhiteSpace(trimmed[name.Length]))
+                return false;
+
+            remainder = trimmed.Length > name.Length
+                ? trimmed.Substring(name.Length).Trim()
+                : string.Empty;
+            return true;
+        }
+
+        private static List<string> SplitCommandTokens(string text)
+        {
+            var tokens = new List<string>();
+            if (string.IsNullOrWhiteSpace(text))
+                return tokens;
+
+            var current = new StringBuilder();
+            bool inQuotes = false;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                    continue;
+                }
+
+                if (char.IsWhiteSpace(c) && !inQuotes)
+                {
+                    if (current.Length > 0)
+                    {
+                        tokens.Add(current.ToString());
+                        current.Clear();
+                    }
+
+                    continue;
+                }
+
+                current.Append(c);
+            }
+
+            if (current.Length > 0)
+                tokens.Add(current.ToString());
+
+            return tokens;
+        }
+
+        private static bool TryGetNuGetVersionArgument(
+            List<string> tokens,
+            int startIndex,
+            out string version,
+            out string error)
+        {
+            version = string.Empty;
+            error = string.Empty;
+
+            for (int i = startIndex; i < tokens.Count; i++)
+            {
+                string token = tokens[i];
+                if (string.Equals(token, "--version", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(token, "-v", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (i + 1 >= tokens.Count)
+                    {
+                        error = "Missing NuGet package version.";
+                        return false;
+                    }
+
+                    version = tokens[++i];
+                    continue;
+                }
+
+                if (token.StartsWith("--version=", StringComparison.OrdinalIgnoreCase))
+                {
+                    version = token.Substring("--version=".Length);
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(version))
+                {
+                    version = token;
+                    continue;
+                }
+
+                error = "Unexpected NuGet argument: " + token;
+                return false;
+            }
+
+            return true;
         }
 
         private bool TryExecuteSyntaxCommand(string command)
@@ -5123,6 +5603,36 @@ namespace Core.DirFiles
             _cursorCol = 0;
             InvalidateDocumentCaches();
             MarkDirty();
+        }
+
+        private void DuplicateCurrentLine()
+        {
+            if (_mode == Mode.Command || _mode == Mode.Search)
+            {
+                Status("Duplicate unavailable", error: true);
+                return;
+            }
+
+            if (!TryEnsureCanAddLines(1, "Duplicate"))
+                return;
+
+            DismissCompletion();
+            PushUndo();
+            ClearSelection();
+
+            int duplicatedLineNumber = _cursorLine + 1;
+            string line = CurrentLine();
+            int column = _cursorCol;
+
+            _lines.Insert(_cursorLine + 1, line);
+            _cursorLine++;
+            _cursorCol = Math.Min(column, line.Length);
+            _insertUndoStarted = false;
+
+            InvalidateDocumentCaches();
+            MarkDirty();
+            Status("Duplicated line");
+            BottomStatus("Duplicated line " + duplicatedLineNumber);
         }
 
         private bool TryEnsureCanAddLines(int addedLines, string action)
@@ -7253,6 +7763,7 @@ namespace Core.DirFiles
         {
             var tokens = new List<Token>();
             int i = 0;
+            bool expectFunctionName = false;
 
             while (i < line.Length)
             {
@@ -7277,6 +7788,7 @@ namespace Core.DirFiles
                         i++;
                     }
                     tokens.Add(new Token(start, i - start, CString));
+                    expectFunctionName = false;
                     continue;
                 }
 
@@ -7288,6 +7800,7 @@ namespace Core.DirFiles
                     if (i < line.Length)
                         i++;
                     tokens.Add(new Token(start, i - start, CVariable));
+                    expectFunctionName = false;
                     continue;
                 }
 
@@ -7297,6 +7810,7 @@ namespace Core.DirFiles
                     while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '.'))
                         i++;
                     tokens.Add(new Token(start, i - start, CNumber));
+                    expectFunctionName = false;
                     continue;
                 }
 
@@ -7307,7 +7821,8 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, TermXtWordColor(word)));
+                    tokens.Add(new Token(start, i - start, TermXtWordColor(word, expectFunctionName)));
+                    expectFunctionName = IsTermXtFunctionNameKeyword(word);
                     continue;
                 }
 
@@ -7315,10 +7830,13 @@ namespace Core.DirFiles
                 {
                     tokens.Add(new Token(i, 1, COperator));
                     i++;
+                    expectFunctionName = false;
                     continue;
                 }
 
                 tokens.Add(new Token(i, 1, CNormal));
+                if (!char.IsWhiteSpace(c))
+                    expectFunctionName = false;
                 i++;
             }
 
@@ -7458,7 +7976,10 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(wordStart, i - wordStart);
-                    tokens.Add(new Token(start, i - start, CSharpWordColor(word, escapedIdentifier)));
+                    tokens.Add(new Token(
+                        start,
+                        i - start,
+                        CSharpWordColor(word, escapedIdentifier, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -7610,7 +8131,7 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, CStyleWordColor(word, cpp)));
+                    tokens.Add(new Token(start, i - start, CStyleWordColor(word, cpp, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -7856,7 +8377,7 @@ namespace Core.DirFiles
                         continue;
                     }
 
-                    tokens.Add(new Token(start, i - start, RustWordColor(word)));
+                    tokens.Add(new Token(start, i - start, RustWordColor(word, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -7970,7 +8491,7 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, JavaScriptWordColor(word)));
+                    tokens.Add(new Token(start, i - start, JavaScriptWordColor(word, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -8059,7 +8580,7 @@ namespace Core.DirFiles
                         i++;
 
                     string word = line.Substring(start, i - start);
-                    tokens.Add(new Token(start, i - start, PythonWordColor(word)));
+                    tokens.Add(new Token(start, i - start, PythonWordColor(word, IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -8080,8 +8601,11 @@ namespace Core.DirFiles
             return tokens;
         }
 
-        private static int TermXtWordColor(string word)
+        private static int TermXtWordColor(string word, bool functionName)
         {
+            if (functionName)
+                return CFunction;
+
             if (s_flowKeywords.Contains(word))
                 return CFlow;
 
@@ -8097,10 +8621,10 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int CSharpWordColor(string word, bool escapedIdentifier)
+        private static int CSharpWordColor(string word, bool escapedIdentifier, bool callable)
         {
             if (escapedIdentifier)
-                return CNormal;
+                return callable ? CSharpFunction : CNormal;
 
             if (s_csharpFlowKeywords.Contains(word))
                 return CSharpFlow;
@@ -8123,6 +8647,9 @@ namespace Core.DirFiles
             if (s_csharpContextualKeywords.Contains(word))
                 return CSharpKeyword;
 
+            if (callable)
+                return CSharpFunction;
+
             if (s_csharpBclIdentifiers.Contains(word))
                 return CSharpBcl;
 
@@ -8132,7 +8659,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int CStyleWordColor(string word, bool cpp)
+        private static int CStyleWordColor(string word, bool cpp, bool callable)
         {
             if (cpp)
             {
@@ -8150,6 +8677,9 @@ namespace Core.DirFiles
 
                 if (s_cppLiteralKeywords.Contains(word))
                     return CppSourceNumber;
+
+                if (callable)
+                    return CppSourceFunction;
 
                 if (s_cppStdIdentifiers.Contains(word))
                     return CppSourceStd;
@@ -8174,6 +8704,9 @@ namespace Core.DirFiles
                 if (s_cLiteralKeywords.Contains(word))
                     return CSourceNumber;
 
+                if (callable)
+                    return CSourceFunction;
+
                 if (s_cStdIdentifiers.Contains(word))
                     return CSourceStd;
 
@@ -8184,7 +8717,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int RustWordColor(string word)
+        private static int RustWordColor(string word, bool callable)
         {
             if (s_rustFlowKeywords.Contains(word))
                 return CRustFlow;
@@ -8207,6 +8740,9 @@ namespace Core.DirFiles
             if (s_rustLiteralKeywords.Contains(word))
                 return CRustNumber;
 
+            if (callable)
+                return CRustFunction;
+
             if (s_rustStdIdentifiers.Contains(word))
                 return CRustStd;
 
@@ -8216,7 +8752,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int JavaScriptWordColor(string word)
+        private static int JavaScriptWordColor(string word, bool callable)
         {
             if (s_javaScriptFlowKeywords.Contains(word))
                 return CJavaScriptFlow;
@@ -8230,6 +8766,9 @@ namespace Core.DirFiles
             if (s_javaScriptLiteralKeywords.Contains(word))
                 return CJavaScriptNumber;
 
+            if (callable)
+                return CJavaScriptFunction;
+
             if (s_javaScriptBuiltinIdentifiers.Contains(word))
                 return CJavaScriptBuiltin;
 
@@ -8239,7 +8778,7 @@ namespace Core.DirFiles
             return CNormal;
         }
 
-        private static int PythonWordColor(string word)
+        private static int PythonWordColor(string word, bool callable)
         {
             if (s_pythonFlowKeywords.Contains(word))
                 return CPythonFlow;
@@ -8252,6 +8791,9 @@ namespace Core.DirFiles
 
             if (s_pythonLiteralKeywords.Contains(word))
                 return CPythonNumber;
+
+            if (callable)
+                return CPythonFunction;
 
             if (s_pythonBuiltinIdentifiers.Contains(word) || IsPythonDunderName(word))
                 return CPythonBuiltin;
@@ -8335,6 +8877,21 @@ namespace Core.DirFiles
             }
 
             return hasLetter;
+        }
+
+        private static bool IsTermXtFunctionNameKeyword(string word)
+        {
+            return string.Equals(word, "func", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(word, "call", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsCallableIdentifier(string line, int index)
+        {
+            int next = index;
+            while (next < line.Length && char.IsWhiteSpace(line[next]))
+                next++;
+
+            return next < line.Length && line[next] == '(';
         }
 
         private static bool IsWordStart(char c)

@@ -30,10 +30,21 @@ namespace Commands.TerminalCommands.Roslyn
    -h     :  Displays help message.
    -p     :  Uses command with parameters.
                 Example: ccs <file_name> -p <parameters>
+
+ NuGet packages:
+   Add package directives near the top of a C# file:
+                // nuget: Newtonsoft.Json 13.0.3
+   xte can create these with :nuget <package> for latest stable, or :nuget add <package> [version].
 ";
 
         public void Execute(string args)
         {
+            bool hasPipeInput = GlobalVariables.isPipeCommand &&
+                      GlobalVariables.pipeCmdCount < GlobalVariables.pipeCmdCountTemp;
+
+            bool hasPipeOutput = GlobalVariables.isPipeCommand &&
+                                 GlobalVariables.pipeCmdCount > 0;
+
             GlobalVariables.isErrorCommand = false;
             _currentLocation = File.ReadAllText(GlobalVariables.currentDirectory);
             string fileName;
@@ -50,28 +61,28 @@ namespace Commands.TerminalCommands.Roslyn
                 return;
             }
 
-            args = args.Replace("ccs ", "");
+            args = args.Replace("ccs ", "").Trim();
+
             if (args.ContainsText("-p"))
             {
-                if(GlobalVariables.isPipeCommand)
-                    fileName = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
-                else
-                    fileName = FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
-                param = args.SplitByText("-p", 1);
-                CompileAndRun(fileName, param.Trim());
-                GC.Collect();
-                return;
+                fileName = hasPipeInput
+                    ? FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation)
+                    : FileSystem.SanitizePath(args.SplitByText(" -p ", 0), _currentLocation);
+                param = args.SplitByText("-p", 1).Trim();
             }
-            if (GlobalVariables.isPipeCommand)
-                args = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation);
             else
-                args = FileSystem.SanitizePath(args, _currentLocation);
-            CompileAndRun(args, param);
+            {
+                fileName = hasPipeInput
+                    ? FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), _currentLocation)
+                    : FileSystem.SanitizePath(args, _currentLocation);
+            }
+
+            CompileAndRun(fileName, param, hasPipeOutput);
             GC.Collect();
         }
 
 
-        private void CompileAndRun(string fileName, string param)
+        private void CompileAndRun(string fileName, string param, bool capturePipeOutput)
         {
             try
             {
@@ -81,7 +92,11 @@ namespace Commands.TerminalCommands.Roslyn
                 Assembly assembly = null;
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(_codeToRun, CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
                 string assemblyName = Path.GetRandomFileName();
-                var references = GetRef.References();
+                RoslynReferenceSet referenceSet = GetRef.ReferenceSet(fileName, _codeToRun);
+                var references = referenceSet.References;
+                foreach (string warning in referenceSet.Warnings)
+                    FileSystem.ErrorWriteLine(warning);
+
                 CSharpCompilation compilation = CSharpCompilation.Create(
                     assemblyName,
                     syntaxTrees: new[] { syntaxTree },
@@ -112,13 +127,64 @@ namespace Commands.TerminalCommands.Roslyn
 
                     ms.Close();
                 }
+
+                if (assembly == null)
+                    return;
+
+                LoadReferencedAssemblies(referenceSet.AssemblyPaths);
                 MethodInfo myMethod = assembly.EntryPoint;
-                myMethod.Invoke(null, new object[] { _commandLineArgs });
+                if (!capturePipeOutput)
+                {
+                    myMethod.Invoke(null, new object[] { _commandLineArgs });
+                    return;
+                }
+
+                var originalOut = Console.Out;
+                GlobalVariables.pipeCmdOutput = string.Empty;
+
+                using var writer = new StringWriter();
+
+                try
+                {
+                    Console.SetOut(writer);
+                    myMethod.Invoke(null, new object[] { _commandLineArgs });
+                }
+                finally
+                {
+                    Console.SetOut(originalOut);
+                    GlobalVariables.pipeCmdOutput = writer.ToString();
+                    GlobalVariables.isErrorCommand = true;
+                }
             }
             catch (Exception e)
             {
                 FileSystem.ErrorWriteLine(e.Message);
                 GlobalVariables.isErrorCommand = true;
+            }
+        }
+
+        private static void LoadReferencedAssemblies(IEnumerable<string> assemblyPaths)
+        {
+            foreach (string path in assemblyPaths)
+            {
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                        continue;
+
+                    AssemblyName assemblyName = AssemblyName.GetAssemblyName(path);
+                    bool alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies().Any(assembly =>
+                    {
+                        AssemblyName loadedName = assembly.GetName();
+                        return string.Equals(loadedName.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase);
+                    });
+
+                    if (!alreadyLoaded)
+                        Assembly.LoadFrom(path);
+                }
+                catch
+                {
+                }
             }
         }
 

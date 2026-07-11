@@ -55,9 +55,18 @@ namespace Core
                 return;
             }
 
+            if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                directory.Delete(false);
+                return;
+            }
+
             foreach (var dir in directory.EnumerateDirectories())
             {
-                RecursiveDeleteDir(dir);
+                if ((dir.Attributes & FileAttributes.ReparsePoint) != 0)
+                    dir.Delete(false);
+                else
+                    RecursiveDeleteDir(dir);
             }
             var files = directory.GetFiles();
             foreach (var file in files)
