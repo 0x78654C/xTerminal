@@ -68,6 +68,9 @@ namespace Core.DirFiles
         private const short WindowBufferSizeEvent = 0x0004;
         private const int FromLeft1stButtonPressed = 0x0001;
         private const int MouseMoved = 0x0001;
+        private const int MouseWheeled = 0x0004;
+        private const int WheelDelta = 120;
+        private const int RowsPerWheelNotch = 3;
 
         private const int CTitle = 45;
         private const int CTitleDim = 250;
@@ -610,6 +613,7 @@ namespace Core.DirFiles
         private int _verticalCursorCol = -1;
         private int _scrollTop;
         private int _scrollLeft;
+        private bool _keepCursorInView = true;
         private int _lastWidth = -1;
         private int _lastHeight = -1;
         private bool _pendingDelete;
@@ -997,6 +1001,9 @@ namespace Core.DirFiles
 
         private bool HandleMouseInput(MouseEventRecord mouse)
         {
+            if ((mouse.EventFlags & MouseWheeled) != 0)
+                return ScrollViewportFromWheel(mouse);
+
             if (_mode == Mode.Command || _mode == Mode.Search)
                 return false;
 
@@ -1018,6 +1025,7 @@ namespace Core.DirFiles
             if (leftDown && !_mouseSelecting)
             {
                 _mouseSelecting = true;
+                _keepCursorInView = true;
                 DismissCompletion();
                 ResetVerticalCursorColumn();
                 _selectionAnchorLine = position.Line;
@@ -1047,6 +1055,52 @@ namespace Core.DirFiles
             }
 
             return false;
+        }
+
+        private bool ScrollViewportFromWheel(MouseEventRecord mouse)
+        {
+            int notches = GetWheelNotches(mouse.ButtonState);
+            if (notches == 0)
+                return false;
+
+            (int width, int height) = WindowSize();
+            const int headerRows = 2;
+            const int footerRows = 2;
+            int textRows = Math.Max(1, height - headerRows - footerRows);
+            int numberWidth = Math.Max(4, _lines.Count.ToString().Length + 2);
+            int textWidth = Math.Max(1, width - numberWidth - 1);
+            return ScrollViewportByWheelNotches(notches, textRows, textWidth);
+        }
+
+        private bool ScrollViewportByWheelNotches(int notches, int textRows, int textWidth)
+        {
+            if (notches == 0)
+                return false;
+
+            textWidth = Math.Max(1, textWidth);
+            EnsureWrapCache(textWidth);
+            int maxScrollTop = Math.Max(0, GetTotalVisualRows(textWidth) - Math.Max(1, textRows));
+            int oldScrollTop = _scrollTop;
+            _scrollTop = Math.Max(
+                0,
+                Math.Min(maxScrollTop, _scrollTop - (notches * RowsPerWheelNotch)));
+
+            if (_scrollTop == oldScrollTop)
+                return false;
+
+            _keepCursorInView = false;
+            DismissCompletion();
+            return true;
+        }
+
+        private static int GetWheelNotches(int buttonState)
+        {
+            short delta = unchecked((short)((buttonState >> 16) & 0xffff));
+            if (delta == 0)
+                return 0;
+
+            int notches = delta / WheelDelta;
+            return notches != 0 ? notches : delta > 0 ? 1 : -1;
         }
 
         private bool TryGetMouseTextPosition(int x, int y, out TextPosition position)
@@ -1676,6 +1730,8 @@ namespace Core.DirFiles
 
         private void HandleKey(ConsoleKeyInfo key)
         {
+            _keepCursorInView = true;
+
             if (_mode == Mode.Insert && TryReadQueuedInsertText(key, out string queuedInsertText, out string queuedPasteError))
             {
                 if (!string.IsNullOrEmpty(queuedPasteError) ||
@@ -6135,10 +6191,13 @@ namespace Core.DirFiles
             int cursorVisualRow = GetCursorVisualRow(textWidth);
             int totalVisualRows = GetTotalVisualRows(textWidth);
 
-            if (cursorVisualRow < _scrollTop)
-                _scrollTop = cursorVisualRow;
-            else if (cursorVisualRow >= _scrollTop + textRows)
-                _scrollTop = cursorVisualRow - textRows + 1;
+            if (_keepCursorInView)
+            {
+                if (cursorVisualRow < _scrollTop)
+                    _scrollTop = cursorVisualRow;
+                else if (cursorVisualRow >= _scrollTop + textRows)
+                    _scrollTop = cursorVisualRow - textRows + 1;
+            }
 
             _scrollTop = Math.Max(0, Math.Min(Math.Max(0, totalVisualRows - textRows), _scrollTop));
             _scrollLeft = 0;

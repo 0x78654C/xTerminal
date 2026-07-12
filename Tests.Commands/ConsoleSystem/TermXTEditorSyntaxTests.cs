@@ -1196,6 +1196,43 @@ public class TermXTEditorSyntaxTests
         }
     }
 
+    [Theory]
+    [InlineData(120 << 16, 1)]
+    [InlineData(unchecked((int)0xff880000), -1)]
+    [InlineData(240 << 16, 2)]
+    public void GetWheelNotches_ReadsSignedDeltaFromButtonState(int buttonState, int expected)
+    {
+        InvokePrivateStatic<int>("GetWheelNotches", buttonState).Should().Be(expected);
+    }
+
+    [Fact]
+    public void ScrollViewportByWheelNotches_ScrollsVisualRowsWithoutMovingCursor()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, Enumerable.Range(1, 20).Select(line => "line " + line));
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_scrollTop", 9);
+
+            bool scrolled = InvokePrivate<bool>(editor, "ScrollViewportByWheelNotches", -1, 5, 80);
+
+            scrolled.Should().BeTrue();
+            GetPrivateField<int>(editor, "_scrollTop").Should().Be(12);
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(0);
+            GetPrivateField<bool>(editor, "_keepCursorInView").Should().BeFalse();
+
+            InvokePrivate(editor, "AdjustScroll", 5, 80);
+            GetPrivateField<int>(editor, "_scrollTop").Should().Be(12);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
     [Fact]
     public void CutSelectionOrCurrentLine_WithSelection_CutsSelectedText()
     {
