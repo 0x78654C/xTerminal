@@ -10139,7 +10139,9 @@ namespace Core.DirFiles
                     else
                         Render();
 
-                    ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                    if (!WaitForExplorerKey(out ConsoleKeyInfo key))
+                        continue;
+
                     bool close;
                     string selectedFile = _searchMode
                         ? HandleSearchKey(key, out close)
@@ -10151,6 +10153,123 @@ namespace Core.DirFiles
                     if (!string.IsNullOrWhiteSpace(selectedFile))
                         return selectedFile;
                 }
+            }
+
+            private bool WaitForExplorerKey(out ConsoleKeyInfo key)
+            {
+                key = default;
+
+                while (true)
+                {
+                    IntPtr inputHandle = GetStdHandle(StdInputHandle);
+                    if (TryPeekConsoleInput(inputHandle, out InputRecord record))
+                    {
+                        if (record.EventType == MouseEvent)
+                        {
+                            if (!TryReadConsoleInputRecord(inputHandle, out record))
+                                continue;
+
+                            if (HandleExplorerMouseInput(record.MouseEvent))
+                                return false;
+
+                            continue;
+                        }
+
+                        if (record.EventType == KeyEvent && !record.KeyEvent.KeyDown)
+                        {
+                            TryReadConsoleInputRecord(inputHandle, out record);
+                            continue;
+                        }
+
+                        if (record.EventType == WindowBufferSizeEvent)
+                        {
+                            TryReadConsoleInputRecord(inputHandle, out record);
+                            return false;
+                        }
+
+                        if (record.EventType != KeyEvent)
+                        {
+                            TryReadConsoleInputRecord(inputHandle, out record);
+                            continue;
+                        }
+                    }
+
+                    if (IsConsoleKeyAvailable())
+                    {
+                        key = Console.ReadKey(intercept: true);
+                        return true;
+                    }
+
+                    (int width, int height) = WindowSize();
+                    if (width != _lastWidth || height != _lastHeight)
+                        return false;
+
+                    Thread.Sleep(30);
+                }
+            }
+
+            private bool HandleExplorerMouseInput(MouseEventRecord mouse)
+            {
+                if ((mouse.EventFlags & MouseWheeled) == 0)
+                    return false;
+
+                int notches = GetWheelNotches(mouse.ButtonState);
+                if (notches == 0)
+                    return false;
+
+                (_, int height) = WindowSize();
+                int contentRows = Math.Max(4, Math.Max(20, height) - 5);
+                return ScrollByWheelNotches(notches, contentRows);
+            }
+
+            private bool ScrollByWheelNotches(int notches, int contentRows)
+            {
+                if (_searchMode)
+                {
+                    return ScrollListByWheelNotches(
+                        notches,
+                        _searchResults.Count,
+                        contentRows,
+                        ref _searchSelectedIndex,
+                        ref _searchScrollOffset);
+                }
+
+                return ScrollListByWheelNotches(
+                    notches,
+                    _items.Count,
+                    contentRows,
+                    ref _selectedIndex,
+                    ref _scrollOffset);
+            }
+
+            private static bool ScrollListByWheelNotches(
+                int notches,
+                int itemCount,
+                int contentRows,
+                ref int selectedIndex,
+                ref int scrollOffset)
+            {
+                if (notches == 0 || itemCount <= 0)
+                    return false;
+
+                int oldSelectedIndex = selectedIndex;
+                int oldScrollOffset = scrollOffset;
+                int rows = Math.Max(1, contentRows);
+                int maxScrollOffset = Math.Max(0, itemCount - rows);
+
+                selectedIndex = ClampValue(
+                    selectedIndex - (notches * RowsPerWheelNotch),
+                    0,
+                    itemCount - 1);
+                scrollOffset = ClampValue(scrollOffset, 0, maxScrollOffset);
+
+                if (selectedIndex < scrollOffset)
+                    scrollOffset = selectedIndex;
+                else if (selectedIndex >= scrollOffset + rows)
+                    scrollOffset = selectedIndex - rows + 1;
+
+                scrollOffset = ClampValue(scrollOffset, 0, maxScrollOffset);
+                return selectedIndex != oldSelectedIndex || scrollOffset != oldScrollOffset;
             }
 
             private string HandleKey(ConsoleKeyInfo key, out bool close)
@@ -10293,7 +10412,7 @@ namespace Core.DirFiles
                 _explorerFrame.Append(At(0, 1)).Append(F(CMuted)).Append(new string('\u2550', width)).Append(Reset);
                 _explorerFrame.Append(At(0, 2)).Append(F(COperator)).Append(Clip(" \u25b6 " + _currentDirectory, width)).Append(Reset).Append(ClearEol);
                 _explorerFrame.Append(At(0, 3)).Append(F(CMuted))
-                    .Append(Clip(" \u2191\u2193:move  \u21b5:open  \u232b:back  \u2192:forward  PgUp:up  Del:del  /:search  Tab:drives  `:quit", width))
+                    .Append(Clip(" \u2191\u2193/Wheel:move  \u21b5:open  \u232b:back  \u2192:forward  PgUp:up  Del:del  /:search  Tab:drives  `:quit", width))
                     .Append(Reset).Append(ClearEol);
             }
 
@@ -10955,6 +11074,8 @@ namespace Core.DirFiles
                 (int width, int height) = WindowSize();
                 width = Math.Max(width, 60);
                 height = Math.Max(height, 20);
+                _lastWidth = width;
+                _lastHeight = height;
 
                 int headerRows = 4;
                 int contentTop = headerRows;
@@ -10982,7 +11103,7 @@ namespace Core.DirFiles
                 _explorerFrame.Append(At(0, 0)).Append(F(CTitle)).Append(Clip(title + new string(' ', pad) + counter + " ", width)).Append(Reset);
                 _explorerFrame.Append(At(0, 1)).Append(F(CMuted)).Append(new string('\u2550', width)).Append(Reset);
                 _explorerFrame.Append(At(0, 2)).Append(F(COperator)).Append(Clip("  Base: " + _currentDirectory, width)).Append(Reset);
-                _explorerFrame.Append(At(0, 3)).Append(F(CMuted)).Append(Clip(" \u2191\u2193:move  \u21b5:open  Del:del  Esc/Q:exit  \u232b:back  U:up", width)).Append(Reset);
+                _explorerFrame.Append(At(0, 3)).Append(F(CMuted)).Append(Clip(" \u2191\u2193/Wheel:move  \u21b5:open  Del:del  Esc/Q:exit  \u232b:back  U:up", width)).Append(Reset);
 
                 for (int row = 0; row < contentRows; row++)
                 {

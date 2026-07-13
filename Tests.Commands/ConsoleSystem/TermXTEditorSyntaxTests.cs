@@ -1234,6 +1234,40 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void ExplorerScrollByWheelNotches_MovesSelectionAndKeepsItVisible()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            Directory.CreateDirectory(directory);
+            for (int i = 0; i < 12; i++)
+                File.WriteAllText(Path.Combine(directory, "file-" + i.ToString("00") + ".xt"), string.Empty);
+
+            object explorer = Activator.CreateInstance(
+                NestedType("EditorFileExplorer"),
+                new object[] { directory })!;
+
+            bool firstScroll = InvokePrivate<bool>(explorer, "ScrollByWheelNotches", -1, 5);
+            bool secondScroll = InvokePrivate<bool>(explorer, "ScrollByWheelNotches", -1, 5);
+
+            firstScroll.Should().BeTrue();
+            secondScroll.Should().BeTrue();
+            GetPrivateField<int>(explorer, "_selectedIndex").Should().Be(6);
+            GetPrivateField<int>(explorer, "_scrollOffset").Should().Be(2);
+
+            InvokePrivate<bool>(explorer, "ScrollByWheelNotches", 2, 5).Should().BeTrue();
+            GetPrivateField<int>(explorer, "_selectedIndex").Should().Be(0);
+            GetPrivateField<int>(explorer, "_scrollOffset").Should().Be(0);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void CutSelectionOrCurrentLine_WithSelection_CutsSelectedText()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
