@@ -596,6 +596,7 @@ Example:
 	                Shows editor diagnostics with red error and yellow warning notifications; use :errors, :warnings, :next-error, and :next-warning.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
 	                In C# buffers, use :nuget <package> to add the latest stable package, or :nuget list packages, :nuget add <package> [version], :nuget remove <package>, and :nuget restore to manage package usage.
+	                Ctrl+A selects the entire document.
 	                Ctrl+X cuts the selection, or the current line when nothing is selected.
 	                Ctrl+D duplicates the current line.
 

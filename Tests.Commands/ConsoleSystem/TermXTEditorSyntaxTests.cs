@@ -1351,6 +1351,39 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void HandleKey_CtrlA_SelectsEntireDocument()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "one", "two", "three" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 1);
+            SetPrivateField(editor, "_cursorCol", 1);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\u0001', ConsoleKey.A, shift: false, alt: false, control: true));
+
+            GetPrivateField<bool>(editor, "_hasSelectionAnchor").Should().BeTrue();
+            GetPrivateField<int>(editor, "_selectionAnchorLine").Should().Be(0);
+            GetPrivateField<int>(editor, "_selectionAnchorCol").Should().Be(0);
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(2);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be("three".Length);
+            InvokePrivate<bool>(editor, "HasSelection").Should().BeTrue();
+            CopyTextForClipboard(editor).text.Should().Be(
+                "one" + Environment.NewLine + "two" + Environment.NewLine + "three");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CheckExternalFileChange_WhenDiskFileChanges_SetsPendingDiskWarning()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");

@@ -1458,7 +1458,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
+                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+A select all | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
                     help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
@@ -1467,7 +1467,7 @@ namespace Core.DirFiles
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
+                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+A select all | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -1760,6 +1760,12 @@ namespace Core.DirFiles
 
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
+                if (key.Key == ConsoleKey.A)
+                {
+                    SelectAll();
+                    return;
+                }
+
                 if (key.Key == ConsoleKey.C)
                 {
                     CopySelectionToClipboard();
@@ -6109,6 +6115,27 @@ namespace Core.DirFiles
         private void ResetVerticalCursorColumn()
         {
             _verticalCursorCol = -1;
+        }
+
+        private void SelectAll()
+        {
+            if (_mode == Mode.Command || _mode == Mode.Search)
+            {
+                Status("Select all unavailable", error: true);
+                return;
+            }
+
+            DismissCompletion();
+            ResetVerticalCursorColumn();
+            _pendingDelete = false;
+            _insertUndoStarted = false;
+            _selectionAnchorLine = 0;
+            _selectionAnchorCol = 0;
+            _cursorLine = Math.Max(0, _lines.Count - 1);
+            _cursorCol = CurrentLine().Length;
+            _hasSelectionAnchor = true;
+            _mouseSelecting = false;
+            Status("Selected all");
         }
 
         private void MoveToDocumentStart()
