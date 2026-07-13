@@ -13,6 +13,8 @@ namespace Core.DirFiles
     [SupportedOSPlatform("Windows")]
     public class FileExplorer
     {
+        private const long PreviewByteLimit = 64 * 1024;
+
         private class Item
         {
             public string Path { get; set; }
@@ -1160,6 +1162,40 @@ namespace Core.DirFiles
                 {
                     ClearLineAt(left, top + line, width);
                     WriteTrimmedAtColor(left, top + line, "  " + info.FullName, width, ConsoleColor.DarkGray);
+                    line++;
+                }
+                if (line < maxLines)
+                {
+                    ClearLineAt(left, top + line, width);
+                    WriteTrimmedAtColor(left, top + line, new string('─', Math.Max(0, width - 1)), width, ClrBorder);
+                    line++;
+                }
+                if (line < maxLines)
+                {
+                    ClearLineAt(left, top + line, width);
+                    WriteTrimmedAtColor(
+                        left,
+                        top + line,
+                        "  Preview (first " + FormatSize(PreviewByteLimit) + " max):",
+                        width,
+                        ClrBorder);
+                    line++;
+                }
+
+                List<string> previewLines = BuildFilePreview(filePath, info.Length, maxLines - line);
+                foreach (string previewLine in previewLines)
+                {
+                    if (line >= maxLines)
+                        break;
+
+                    ClearLineAt(left, top + line, width);
+                    bool muted = previewLine.StartsWith("  (", StringComparison.Ordinal) ||
+                        previewLine.StartsWith("  ...", StringComparison.Ordinal);
+                    if (muted)
+                        WriteTrimmedAtColor(left, top + line, previewLine, width, ConsoleColor.DarkGray);
+                    else
+                        WriteTrimmedAtAnsiColor(left, top + line, previewLine, width, CNormal);
+                    line++;
                 }
             }
             catch
@@ -1170,6 +1206,89 @@ namespace Core.DirFiles
                     WriteTrimmedAtColor(left, top + line, "  (unable to read)", width, ConsoleColor.DarkGray);
                 }
             }
+        }
+
+        private static List<string> BuildFilePreview(string filePath, long totalBytes, int maxLines)
+        {
+            var lines = new List<string>();
+            if (maxLines <= 0)
+                return lines;
+
+            try
+            {
+                if (totalBytes == 0)
+                {
+                    lines.Add("  (empty)");
+                    return lines;
+                }
+
+                int bytesToRead = (int)Math.Min(totalBytes, PreviewByteLimit);
+                byte[] buffer = new byte[bytesToRead];
+                int read = 0;
+
+                using (var stream = File.OpenRead(filePath))
+                {
+                    while (read < bytesToRead)
+                    {
+                        int chunk = stream.Read(buffer, read, bytesToRead - read);
+                        if (chunk <= 0)
+                            break;
+
+                        read += chunk;
+                    }
+                }
+
+                if (read == 0)
+                {
+                    lines.Add("  (empty)");
+                    return lines;
+                }
+
+                if (LooksBinary(buffer, read))
+                {
+                    lines.Add("  (binary preview skipped)");
+                    return lines;
+                }
+
+                string text = Encoding.UTF8.GetString(buffer, 0, read)
+                    .Replace("\r\n", "\n")
+                    .Replace('\r', '\n')
+                    .Replace('\0', ' ');
+                string[] fileLines = text.Split('\n');
+
+                for (int i = 0; i < fileLines.Length && lines.Count < maxLines; i++)
+                    lines.Add("  " + fileLines[i].Replace("\t", "    "));
+
+                if (totalBytes > read && lines.Count < maxLines)
+                {
+                    lines.Add(
+                        "  ... preview truncated at " + FormatSize(read) +
+                        " of " + FormatSize(totalBytes));
+                }
+            }
+            catch (Exception ex)
+            {
+                lines.Add("  Preview unavailable: " + ex.Message);
+            }
+
+            return lines;
+        }
+
+        private static bool LooksBinary(byte[] buffer, int length)
+        {
+            int controls = 0;
+            for (int i = 0; i < length; i++)
+            {
+                byte value = buffer[i];
+                if (value == 0)
+                    return true;
+
+                bool allowed = value == 9 || value == 10 || value == 12 || value == 13;
+                if (value < 32 && !allowed)
+                    controls++;
+            }
+
+            return controls > Math.Max(4, length / 10);
         }
 
         private void ShowFolderDetails(string folderPath, int left, int top, int width, int maxLines)
