@@ -52,6 +52,7 @@ Example:
                    -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
                    -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
                           Use -l to set the depth of the tree structure. Ex.: ls -t -l 2
+                   -n   : Displays only names of files and directories.
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.
