@@ -630,6 +630,7 @@ namespace Core.DirFiles
         private bool _messageDetailsActive;
         private string _messageDetailsText = string.Empty;
         private EditorNotificationSeverity _messageDetailsSeverity;
+        private bool _messageDetailsShowsDiagnostics;
         private int _messageDetailsScrollOffset;
         private DateTime _nextExternalChangeCheckUtc = DateTime.MinValue;
         private string _lineClipboard = string.Empty;
@@ -956,6 +957,23 @@ namespace Core.DirFiles
                 return HandleMouseInput(record.MouseEvent);
             }
 
+            if (record.EventType == KeyEvent &&
+                record.KeyEvent.KeyDown &&
+                _messageDetailsActive &&
+                TryGetMessageDetailsKey(record.KeyEvent.VirtualKeyCode, out ConsoleKey detailsKey))
+            {
+                if (!TryReadConsoleInputRecord(inputHandle, out record))
+                    return false;
+
+                HandleMessageDetailsKey(new ConsoleKeyInfo(
+                    record.KeyEvent.UnicodeChar,
+                    detailsKey,
+                    shift: false,
+                    alt: false,
+                    control: false));
+                return true;
+            }
+
             if (record.EventType == KeyEvent && !record.KeyEvent.KeyDown)
             {
                 TryReadConsoleInputRecord(inputHandle, out record);
@@ -969,6 +987,26 @@ namespace Core.DirFiles
             }
 
             return false;
+        }
+
+        private static bool TryGetMessageDetailsKey(short virtualKeyCode, out ConsoleKey key)
+        {
+            key = (ConsoleKey)virtualKeyCode;
+            switch (key)
+            {
+                case ConsoleKey.F2:
+                case ConsoleKey.Escape:
+                case ConsoleKey.UpArrow:
+                case ConsoleKey.DownArrow:
+                case ConsoleKey.PageUp:
+                case ConsoleKey.PageDown:
+                case ConsoleKey.Home:
+                case ConsoleKey.End:
+                    return true;
+                default:
+                    key = default;
+                    return false;
+            }
         }
 
         private static bool TryPeekConsoleInput(IntPtr inputHandle, out InputRecord record)
@@ -1480,16 +1518,16 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+A select all | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
+                    help = " INSERT  F2 diagnostics | Esc normal | Enter/Tab complete | Tab indent | Ctrl+A select all | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
+                    help = " COMMAND  F2 diagnostics | e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+A select all | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
+                    help = " NORMAL  F2 diagnostics | e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+A select all | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -1648,7 +1686,9 @@ namespace Core.DirFiles
             bool error = _messageDetailsSeverity == EditorNotificationSeverity.Error;
             int accent = error ? CError : CWarning;
             int titleForeground = error ? 231 : 232;
-            string title = error ? " ERROR - Message details" : " WARNING - Message details";
+            string title = _messageDetailsShowsDiagnostics
+                ? " DIAGNOSTICS - " + FormatDiagnosticTotals(null)
+                : error ? " ERROR - Message details" : " WARNING - Message details";
 
             _frame.Append(At(panelLeft, panelTop))
                 .Append(B(accent)).Append(F(titleForeground)).Append(Bold())
@@ -1659,8 +1699,11 @@ namespace Core.DirFiles
                 int lineIndex = _messageDetailsScrollOffset + row;
                 string line = lineIndex < lines.Count ? lines[lineIndex] : string.Empty;
                 string content = " " + Clip(line, contentWidth);
+                int foreground = _messageDetailsShowsDiagnostics
+                    ? DiagnosticDetailsLineColor(line)
+                    : CNormal;
                 _frame.Append(At(panelLeft, panelTop + 1 + row))
-                    .Append(B(236)).Append(F(CNormal))
+                    .Append(B(236)).Append(F(foreground))
                     .Append(Clip(content, panelWidth).PadRight(panelWidth)).Append(Reset);
             }
 
@@ -1949,7 +1992,10 @@ namespace Core.DirFiles
 
         private void OpenMessageDetails()
         {
-            if (!TryBuildMessageDetails(out string message, out EditorNotificationSeverity severity))
+            if (!TryBuildMessageDetails(
+                out string message,
+                out EditorNotificationSeverity severity,
+                out bool diagnosticsList))
             {
                 Status("No error or warning details");
                 return;
@@ -1957,6 +2003,7 @@ namespace Core.DirFiles
 
             _messageDetailsText = message;
             _messageDetailsSeverity = severity;
+            _messageDetailsShowsDiagnostics = diagnosticsList;
             _messageDetailsScrollOffset = 0;
             _messageDetailsActive = true;
             DismissCompletion();
@@ -2016,11 +2063,24 @@ namespace Core.DirFiles
 
         private bool TryBuildMessageDetails(
             out string message,
-            out EditorNotificationSeverity severity)
+            out EditorNotificationSeverity severity,
+            out bool diagnosticsList)
         {
             var messages = new List<string>();
             severity = EditorNotificationSeverity.Normal;
+            diagnosticsList = false;
             DateTime now = DateTime.UtcNow;
+
+            EnsureFullDiagnostics();
+            if (_diagnostics.Count > 0)
+            {
+                diagnosticsList = true;
+                message = BuildDiagnosticsDetails();
+                severity = HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, null)
+                    ? EditorNotificationSeverity.Error
+                    : EditorNotificationSeverity.Warning;
+                return true;
+            }
 
             if (now <= _statusUntil && _statusSeverity != EditorNotificationSeverity.Normal)
             {
@@ -2039,27 +2099,6 @@ namespace Core.DirFiles
                 severity = MoreSevereNotification(severity, bottomSeverity);
             }
 
-            if (messages.Count == 0)
-            {
-                EnsureFullDiagnostics();
-                if (_diagnostics.Count > 0)
-                {
-                    EditorDiagnostic diagnostic;
-                    int diagnosticIndex;
-                    if (!TryGetDiagnosticForLine(_cursorLine, out diagnostic, out diagnosticIndex))
-                    {
-                        diagnosticIndex = FirstDiagnosticIndexAtOrAfter(_cursorLine);
-                        diagnostic = _diagnostics[diagnosticIndex];
-                    }
-
-                    int ordinal = DiagnosticOrdinal(diagnosticIndex, null);
-                    AddDistinctMessage(
-                        messages,
-                        FormatDiagnosticCounter(diagnostic, ordinal, _diagnostics.Count));
-                    severity = NotificationSeverity(diagnostic.Severity);
-                }
-            }
-
             if (messages.Count == 0 && _statusSeverity != EditorNotificationSeverity.Normal)
             {
                 AddDistinctMessage(messages, _status);
@@ -2068,6 +2107,43 @@ namespace Core.DirFiles
 
             message = string.Join(Environment.NewLine, messages);
             return messages.Count > 0;
+        }
+
+        private string BuildDiagnosticsDetails()
+        {
+            int count = _diagnostics.Count;
+            int ordinalWidth = Math.Max(1, count.ToString(CultureInfo.InvariantCulture).Length);
+            var builder = new StringBuilder();
+
+            for (int i = 0; i < count; i++)
+            {
+                if (i > 0)
+                    builder.AppendLine();
+
+                EditorDiagnostic diagnostic = _diagnostics[i];
+                builder.Append('[')
+                    .Append(DiagnosticSeverityName(diagnostic.Severity).ToUpperInvariant())
+                    .Append("] ")
+                    .Append((i + 1).ToString(CultureInfo.InvariantCulture).PadLeft(ordinalWidth))
+                    .Append('/')
+                    .Append(count.ToString(CultureInfo.InvariantCulture))
+                    .Append("  ")
+                    .Append(FormatDiagnosticListLocation(diagnostic));
+            }
+
+            return builder.ToString();
+        }
+
+        private static int DiagnosticDetailsLineColor(string line)
+        {
+            string value = (line ?? string.Empty).TrimStart();
+            if (value.StartsWith("[ERROR]", StringComparison.Ordinal))
+                return CError;
+
+            if (value.StartsWith("[WARNING]", StringComparison.Ordinal))
+                return CWarning;
+
+            return CNormal;
         }
 
         private static void AddDistinctMessage(List<string> messages, string message)
@@ -7502,6 +7578,13 @@ namespace Core.DirFiles
         {
             string code = string.IsNullOrWhiteSpace(diagnostic.Code) ? string.Empty : " " + diagnostic.Code;
             return "L" + diagnostic.LineNumber + code + ": " + diagnostic.Description;
+        }
+
+        private static string FormatDiagnosticListLocation(EditorDiagnostic diagnostic)
+        {
+            string code = string.IsNullOrWhiteSpace(diagnostic.Code) ? string.Empty : " " + diagnostic.Code;
+            return "L" + diagnostic.LineNumber + ":C" + (diagnostic.StartColumn + 1) +
+                code + ": " + diagnostic.Description;
         }
 
         private static string DiagnosticSeverityName(EditorDiagnosticSeverity severity)

@@ -1422,13 +1422,13 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
-    public void HandleKey_F2_OpensCurrentDiagnosticWhenStatusNotificationIsNotActive()
+    public void HandleKey_F2_OpensAllDiagnosticsInSourceOrder()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
 
         try
         {
-            File.WriteAllLines(path, new[] { "if true", "  break" });
+            File.WriteAllLines(path, new[] { "break", "call missing", "return" });
             var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
             SetPrivateField(editor, "_cursorLine", 1);
 
@@ -1438,13 +1438,96 @@ public class TermXTEditorSyntaxTests
                 new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
 
             GetPrivateField<bool>(editor, "_messageDetailsActive").Should().BeTrue();
-            GetPrivateField<string>(editor, "_messageDetailsText").Should().Contain("outside of a loop");
+            GetPrivateField<bool>(editor, "_messageDetailsShowsDiagnostics").Should().BeTrue();
+            GetPrivateField<string>(editor, "_messageDetailsText").Should().Be(
+                "[ERROR] 1/3  L1:C1: 'break' outside of a loop." + Environment.NewLine +
+                "[ERROR] 2/3  L2:C1: Function 'missing' not found." + Environment.NewLine +
+                "[ERROR] 3/3  L3:C1: 'return' outside of a function.");
         }
         finally
         {
             if (File.Exists(path))
                 File.Delete(path);
         }
+    }
+
+    [Fact]
+    public void HandleKey_F2_ListsErrorsAndWarningsTogether()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllLines(path, new[]
+            {
+                "#warning verify-warning",
+                "public class C { void M() { Missing(); } }"
+            });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+
+            string details = GetPrivateField<string>(editor, "_messageDetailsText");
+            details.Should().Contain("[WARNING]").And.Contain("CS1030");
+            details.Should().Contain("[ERROR]").And.Contain("CS0103");
+            details.IndexOf("[WARNING]", StringComparison.Ordinal).Should().BeLessThan(
+                details.IndexOf("[ERROR]", StringComparison.Ordinal));
+            GetPrivateField<object>(editor, "_messageDetailsSeverity").ToString().Should().Be("Error");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void HandleKey_F2_PageDownAndPageUpScrollDiagnosticList()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, Enumerable.Repeat("break", 80));
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.PageDown, shift: false, alt: false, control: false));
+
+            GetPrivateField<int>(editor, "_messageDetailsScrollOffset").Should().BeGreaterThan(0);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.PageUp, shift: false, alt: false, control: false));
+
+            GetPrivateField<int>(editor, "_messageDetailsScrollOffset").Should().Be(0);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData(ConsoleKey.PageUp)]
+    [InlineData(ConsoleKey.PageDown)]
+    public void TryGetMessageDetailsKey_MapsNativePagingKeys(ConsoleKey expected)
+    {
+        object[] arguments = { (short)expected, default(ConsoleKey) };
+
+        InvokePrivateStatic<bool>("TryGetMessageDetailsKey", arguments).Should().BeTrue();
+        ((ConsoleKey)arguments[1]).Should().Be(expected);
     }
 
     [Fact]
