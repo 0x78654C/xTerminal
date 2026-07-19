@@ -68,6 +68,9 @@ namespace Core.DirFiles
         private const short WindowBufferSizeEvent = 0x0004;
         private const int FromLeft1stButtonPressed = 0x0001;
         private const int MouseMoved = 0x0001;
+        private const int MouseWheeled = 0x0004;
+        private const int WheelDelta = 120;
+        private const int RowsPerWheelNotch = 3;
 
         private const int CTitle = 45;
         private const int CTitleDim = 250;
@@ -610,6 +613,7 @@ namespace Core.DirFiles
         private int _verticalCursorCol = -1;
         private int _scrollTop;
         private int _scrollLeft;
+        private bool _keepCursorInView = true;
         private int _lastWidth = -1;
         private int _lastHeight = -1;
         private bool _pendingDelete;
@@ -618,10 +622,16 @@ namespace Core.DirFiles
         private string _lastSearch = string.Empty;
         private string _status = "NORMAL";
         private DateTime _statusUntil = DateTime.MinValue;
+        private EditorNotificationSeverity _statusSeverity;
         private string _bottomStatus = string.Empty;
         private DateTime _bottomStatusUntil = DateTime.MinValue;
         private bool _bottomStatusError;
         private bool _bottomStatusWarning;
+        private bool _messageDetailsActive;
+        private string _messageDetailsText = string.Empty;
+        private EditorNotificationSeverity _messageDetailsSeverity;
+        private bool _messageDetailsShowsDiagnostics;
+        private int _messageDetailsScrollOffset;
         private DateTime _nextExternalChangeCheckUtc = DateTime.MinValue;
         private string _lineClipboard = string.Empty;
         private bool _hasLineClipboard;
@@ -947,6 +957,23 @@ namespace Core.DirFiles
                 return HandleMouseInput(record.MouseEvent);
             }
 
+            if (record.EventType == KeyEvent &&
+                record.KeyEvent.KeyDown &&
+                _messageDetailsActive &&
+                TryGetMessageDetailsKey(record.KeyEvent.VirtualKeyCode, out ConsoleKey detailsKey))
+            {
+                if (!TryReadConsoleInputRecord(inputHandle, out record))
+                    return false;
+
+                HandleMessageDetailsKey(new ConsoleKeyInfo(
+                    record.KeyEvent.UnicodeChar,
+                    detailsKey,
+                    shift: false,
+                    alt: false,
+                    control: false));
+                return true;
+            }
+
             if (record.EventType == KeyEvent && !record.KeyEvent.KeyDown)
             {
                 TryReadConsoleInputRecord(inputHandle, out record);
@@ -960,6 +987,26 @@ namespace Core.DirFiles
             }
 
             return false;
+        }
+
+        private static bool TryGetMessageDetailsKey(short virtualKeyCode, out ConsoleKey key)
+        {
+            key = (ConsoleKey)virtualKeyCode;
+            switch (key)
+            {
+                case ConsoleKey.F2:
+                case ConsoleKey.Escape:
+                case ConsoleKey.UpArrow:
+                case ConsoleKey.DownArrow:
+                case ConsoleKey.PageUp:
+                case ConsoleKey.PageDown:
+                case ConsoleKey.Home:
+                case ConsoleKey.End:
+                    return true;
+                default:
+                    key = default;
+                    return false;
+            }
         }
 
         private static bool TryPeekConsoleInput(IntPtr inputHandle, out InputRecord record)
@@ -997,6 +1044,12 @@ namespace Core.DirFiles
 
         private bool HandleMouseInput(MouseEventRecord mouse)
         {
+            if (_messageDetailsActive)
+                return HandleMessageDetailsMouse(mouse);
+
+            if ((mouse.EventFlags & MouseWheeled) != 0)
+                return ScrollViewportFromWheel(mouse);
+
             if (_mode == Mode.Command || _mode == Mode.Search)
                 return false;
 
@@ -1018,6 +1071,7 @@ namespace Core.DirFiles
             if (leftDown && !_mouseSelecting)
             {
                 _mouseSelecting = true;
+                _keepCursorInView = true;
                 DismissCompletion();
                 ResetVerticalCursorColumn();
                 _selectionAnchorLine = position.Line;
@@ -1047,6 +1101,65 @@ namespace Core.DirFiles
             }
 
             return false;
+        }
+
+        private bool ScrollViewportFromWheel(MouseEventRecord mouse)
+        {
+            int notches = GetWheelNotches(mouse.ButtonState);
+            if (notches == 0)
+                return false;
+
+            (int width, int height) = WindowSize();
+            const int headerRows = 2;
+            const int footerRows = 2;
+            int textRows = Math.Max(1, height - headerRows - footerRows);
+            int numberWidth = Math.Max(4, _lines.Count.ToString().Length + 2);
+            int textWidth = Math.Max(1, width - numberWidth - 1);
+            return ScrollViewportByWheelNotches(notches, textRows, textWidth);
+        }
+
+        private bool HandleMessageDetailsMouse(MouseEventRecord mouse)
+        {
+            if ((mouse.EventFlags & MouseWheeled) == 0)
+                return true;
+
+            int notches = GetWheelNotches(mouse.ButtonState);
+            if (notches == 0)
+                return true;
+
+            ScrollMessageDetails(-notches * RowsPerWheelNotch);
+            return true;
+        }
+
+        private bool ScrollViewportByWheelNotches(int notches, int textRows, int textWidth)
+        {
+            if (notches == 0)
+                return false;
+
+            textWidth = Math.Max(1, textWidth);
+            EnsureWrapCache(textWidth);
+            int maxScrollTop = Math.Max(0, GetTotalVisualRows(textWidth) - Math.Max(1, textRows));
+            int oldScrollTop = _scrollTop;
+            _scrollTop = Math.Max(
+                0,
+                Math.Min(maxScrollTop, _scrollTop - (notches * RowsPerWheelNotch)));
+
+            if (_scrollTop == oldScrollTop)
+                return false;
+
+            _keepCursorInView = false;
+            DismissCompletion();
+            return true;
+        }
+
+        private static int GetWheelNotches(int buttonState)
+        {
+            short delta = unchecked((short)((buttonState >> 16) & 0xffff));
+            if (delta == 0)
+                return 0;
+
+            int notches = delta / WheelDelta;
+            return notches != 0 ? notches : delta > 0 ? 1 : -1;
         }
 
         private bool TryGetMouseTextPosition(int x, int y, out TextPosition position)
@@ -1370,6 +1483,7 @@ namespace Core.DirFiles
                 RenderEditorRow(_scrollTop + row, textTop + row, numberWidth, textLeft, textWidth, width);
 
             RenderCompletionPopup(textTop, textLeft, textRows, textWidth, width);
+            RenderMessageDetails(width, height);
             RenderStatus(statusRow, width);
             RenderCommandLine(commandRow, width);
 
@@ -1404,16 +1518,16 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  Esc normal | Enter/Tab complete | Tab indent | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
+                    help = " INSERT  F2 diagnostics | Esc normal | Enter/Tab complete | Tab indent | Ctrl+A select all | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
-                    help = " COMMAND  e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
+                    help = " COMMAND  F2 diagnostics | e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
                     break;
                 case Mode.Search:
                     help = " SEARCH  Type text then Enter | empty Enter next | Backspace edit | Esc cancel";
                     break;
                 default:
-                    help = " NORMAL  e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
+                    help = " NORMAL  F2 diagnostics | e explorer | Ctrl+Home/End first/last | Shift+arrows select | Ctrl+A select all | Ctrl+C copy | Ctrl+X cut | Ctrl+V paste | Ctrl+D duplicate | i edit | dd delete | / search | : command";
                     break;
             }
 
@@ -1554,16 +1668,97 @@ namespace Core.DirFiles
             return kind.Length == 0 ? detail : kind + " " + detail;
         }
 
+        private void RenderMessageDetails(int width, int height)
+        {
+            if (!_messageDetailsActive)
+                return;
+
+            int panelLeft = 2;
+            int panelTop = 2;
+            int panelWidth = Math.Max(1, width - 4);
+            int panelHeight = Math.Max(3, height - 4);
+            int contentWidth = MessageDetailsContentWidth(width);
+            int contentRows = MessageDetailsContentRows(height);
+            List<string> lines = WrapMessageText(_messageDetailsText, contentWidth);
+            List<int> diagnosticLineColors = _messageDetailsShowsDiagnostics
+                ? DiagnosticDetailsLineColors(lines)
+                : new List<int>();
+            int maxOffset = Math.Max(0, lines.Count - contentRows);
+            _messageDetailsScrollOffset = ClampValue(_messageDetailsScrollOffset, 0, maxOffset);
+
+            bool error = _messageDetailsSeverity == EditorNotificationSeverity.Error;
+            int accent = error ? CError : CWarning;
+            int titleForeground = error ? 231 : 232;
+            string title = _messageDetailsShowsDiagnostics
+                ? " DIAGNOSTICS - " + FormatDiagnosticTotals(null)
+                : error ? " ERROR - Message details" : " WARNING - Message details";
+
+            _frame.Append(At(panelLeft, panelTop))
+                .Append(B(accent)).Append(F(titleForeground)).Append(Bold())
+                .Append(Clip(title, panelWidth).PadRight(panelWidth)).Append(Reset);
+
+            for (int row = 0; row < contentRows; row++)
+            {
+                int lineIndex = _messageDetailsScrollOffset + row;
+                string line = lineIndex < lines.Count ? lines[lineIndex] : string.Empty;
+                string content = " " + Clip(line, contentWidth);
+                int foreground = _messageDetailsShowsDiagnostics && lineIndex < diagnosticLineColors.Count
+                    ? diagnosticLineColors[lineIndex]
+                    : CNormal;
+                _frame.Append(At(panelLeft, panelTop + 1 + row))
+                    .Append(B(236)).Append(F(foreground))
+                    .Append(Clip(content, panelWidth).PadRight(panelWidth)).Append(Reset);
+            }
+
+            int firstVisible = lines.Count == 0 ? 0 : _messageDetailsScrollOffset + 1;
+            int lastVisible = Math.Min(lines.Count, _messageDetailsScrollOffset + contentRows);
+            string footer = " ↑↓/PgUp/PgDn scroll | F2/Esc close | " +
+                firstVisible + "-" + lastVisible + "/" + lines.Count;
+            _frame.Append(At(panelLeft, panelTop + panelHeight - 1))
+                .Append(B(238)).Append(F(250))
+                .Append(Clip(footer, panelWidth).PadRight(panelWidth)).Append(Reset);
+        }
+
+        private static int MessageDetailsContentWidth(int windowWidth)
+        {
+            return Math.Max(1, windowWidth - 6);
+        }
+
+        private static int MessageDetailsContentRows(int windowHeight)
+        {
+            return Math.Max(1, windowHeight - 6);
+        }
+
         private void RenderStatus(int row, int width)
         {
             string mode = _mode.ToString().ToUpperInvariant();
-            string message = DateTime.UtcNow <= _statusUntil ? _status : DefaultStatus();
+            bool temporaryStatus = DateTime.UtcNow <= _statusUntil;
+            string message = temporaryStatus ? _status : DefaultStatus();
+            EditorNotificationSeverity severity = temporaryStatus
+                ? _statusSeverity
+                : DefaultStatusSeverity();
             string text = " " + mode.PadRight(7) + " " + message;
+            text = ClipMessageWithDetailsHint(text, width, severity);
             GetStatusColors(out int fg, out int bg);
 
             _frame.Append(At(0, row))
                 .Append(B(bg)).Append(F(fg)).Append(Clip(text, width).PadRight(width))
                 .Append(Reset);
+        }
+
+        private static string ClipMessageWithDetailsHint(
+            string text,
+            int width,
+            EditorNotificationSeverity severity)
+        {
+            const string hint = " [F2 details]";
+            if (severity == EditorNotificationSeverity.Normal || VisibleLength(text) <= width)
+                return text;
+
+            if (width <= hint.Length)
+                return Clip(text, width);
+
+            return Clip(text, width - hint.Length) + hint;
         }
 
         private void GetStatusColors(out int fg, out int bg)
@@ -1629,6 +1824,8 @@ namespace Core.DirFiles
             {
                 GetBottomStatusColors(out int fg, out int bg);
                 string message = " " + _bottomStatus;
+                EditorNotificationSeverity severity = NotificationSeverity(_bottomStatusError, _bottomStatusWarning);
+                message = ClipMessageWithDetailsHint(message, width, severity);
                 _frame.Append(B(bg)).Append(F(fg)).Append(Clip(message, width).PadRight(width)).Append(Reset);
                 return;
             }
@@ -1639,6 +1836,12 @@ namespace Core.DirFiles
 
         private void PlaceCursor(int textTop, int textLeft, int textRows, int textWidth)
         {
+            if (_messageDetailsActive)
+            {
+                Console.Write(HideCursor);
+                return;
+            }
+
             int x;
             int y;
 
@@ -1676,6 +1879,20 @@ namespace Core.DirFiles
 
         private void HandleKey(ConsoleKeyInfo key)
         {
+            _keepCursorInView = true;
+
+            if (_messageDetailsActive)
+            {
+                HandleMessageDetailsKey(key);
+                return;
+            }
+
+            if (key.Key == ConsoleKey.F2)
+            {
+                OpenMessageDetails();
+                return;
+            }
+
             if (_mode == Mode.Insert && TryReadQueuedInsertText(key, out string queuedInsertText, out string queuedPasteError))
             {
                 if (!string.IsNullOrEmpty(queuedPasteError) ||
@@ -1704,6 +1921,12 @@ namespace Core.DirFiles
 
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
+                if (key.Key == ConsoleKey.A)
+                {
+                    SelectAll();
+                    return;
+                }
+
                 if (key.Key == ConsoleKey.C)
                 {
                     CopySelectionToClipboard();
@@ -1768,6 +1991,219 @@ namespace Core.DirFiles
                     HandleNormalKey(key);
                     break;
             }
+        }
+
+        private void OpenMessageDetails()
+        {
+            if (!TryBuildMessageDetails(
+                out string message,
+                out EditorNotificationSeverity severity,
+                out bool diagnosticsList))
+            {
+                Status("No error or warning details");
+                return;
+            }
+
+            _messageDetailsText = message;
+            _messageDetailsSeverity = severity;
+            _messageDetailsShowsDiagnostics = diagnosticsList;
+            _messageDetailsScrollOffset = 0;
+            _messageDetailsActive = true;
+            DismissCompletion();
+        }
+
+        private void HandleMessageDetailsKey(ConsoleKeyInfo key)
+        {
+            switch (key.Key)
+            {
+                case ConsoleKey.F2:
+                case ConsoleKey.Escape:
+                    _messageDetailsActive = false;
+                    _lastWidth = -1;
+                    _lastHeight = -1;
+                    return;
+                case ConsoleKey.UpArrow:
+                    ScrollMessageDetails(-1);
+                    return;
+                case ConsoleKey.DownArrow:
+                    ScrollMessageDetails(1);
+                    return;
+                case ConsoleKey.PageUp:
+                    ScrollMessageDetails(-MessageDetailsContentRows(WindowSize().height));
+                    return;
+                case ConsoleKey.PageDown:
+                    ScrollMessageDetails(MessageDetailsContentRows(WindowSize().height));
+                    return;
+                case ConsoleKey.Home:
+                    _messageDetailsScrollOffset = 0;
+                    return;
+                case ConsoleKey.End:
+                {
+                    (int width, int height) = WindowSize();
+                    int lineCount = WrapMessageText(
+                        _messageDetailsText,
+                        MessageDetailsContentWidth(width)).Count;
+                    _messageDetailsScrollOffset = Math.Max(
+                        0,
+                        lineCount - MessageDetailsContentRows(height));
+                    return;
+                }
+            }
+        }
+
+        private void ScrollMessageDetails(int rowDelta)
+        {
+            (int width, int height) = WindowSize();
+            int lineCount = WrapMessageText(
+                _messageDetailsText,
+                MessageDetailsContentWidth(width)).Count;
+            int maxOffset = Math.Max(0, lineCount - MessageDetailsContentRows(height));
+            _messageDetailsScrollOffset = ClampValue(
+                _messageDetailsScrollOffset + rowDelta,
+                0,
+                maxOffset);
+        }
+
+        private bool TryBuildMessageDetails(
+            out string message,
+            out EditorNotificationSeverity severity,
+            out bool diagnosticsList)
+        {
+            var messages = new List<string>();
+            severity = EditorNotificationSeverity.Normal;
+            diagnosticsList = false;
+            DateTime now = DateTime.UtcNow;
+
+            EnsureFullDiagnostics();
+            if (_diagnostics.Count > 0)
+            {
+                diagnosticsList = true;
+                message = BuildDiagnosticsDetails();
+                severity = HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, null)
+                    ? EditorNotificationSeverity.Error
+                    : EditorNotificationSeverity.Warning;
+                return true;
+            }
+
+            if (now <= _statusUntil && _statusSeverity != EditorNotificationSeverity.Normal)
+            {
+                AddDistinctMessage(messages, _status);
+                severity = MoreSevereNotification(severity, _statusSeverity);
+            }
+
+            EditorNotificationSeverity bottomSeverity = NotificationSeverity(
+                _bottomStatusError,
+                _bottomStatusWarning);
+            if (now <= _bottomStatusUntil &&
+                bottomSeverity != EditorNotificationSeverity.Normal &&
+                !string.IsNullOrWhiteSpace(_bottomStatus))
+            {
+                AddDistinctMessage(messages, _bottomStatus);
+                severity = MoreSevereNotification(severity, bottomSeverity);
+            }
+
+            if (messages.Count == 0 && _statusSeverity != EditorNotificationSeverity.Normal)
+            {
+                AddDistinctMessage(messages, _status);
+                severity = _statusSeverity;
+            }
+
+            message = string.Join(Environment.NewLine, messages);
+            return messages.Count > 0;
+        }
+
+        private string BuildDiagnosticsDetails()
+        {
+            int count = _diagnostics.Count;
+            int ordinalWidth = Math.Max(1, count.ToString(CultureInfo.InvariantCulture).Length);
+            var builder = new StringBuilder();
+
+            for (int i = 0; i < count; i++)
+            {
+                if (i > 0)
+                    builder.AppendLine();
+
+                EditorDiagnostic diagnostic = _diagnostics[i];
+                builder.Append('[')
+                    .Append(DiagnosticSeverityName(diagnostic.Severity).ToUpperInvariant())
+                    .Append("] ")
+                    .Append((i + 1).ToString(CultureInfo.InvariantCulture).PadLeft(ordinalWidth))
+                    .Append('/')
+                    .Append(count.ToString(CultureInfo.InvariantCulture))
+                    .Append("  ")
+                    .Append(FormatDiagnosticListLocation(diagnostic));
+            }
+
+            return builder.ToString();
+        }
+
+        private static int DiagnosticDetailsLineColor(string line)
+        {
+            string value = (line ?? string.Empty).TrimStart();
+            if (value.StartsWith("[ERROR]", StringComparison.Ordinal))
+                return CError;
+
+            if (value.StartsWith("[WARNING]", StringComparison.Ordinal))
+                return CWarning;
+
+            return CNormal;
+        }
+
+        private static List<int> DiagnosticDetailsLineColors(IReadOnlyList<string> lines)
+        {
+            var colors = new List<int>(lines.Count);
+            int currentColor = CNormal;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                int markerColor = DiagnosticDetailsLineColor(lines[i]);
+                if (markerColor != CNormal)
+                    currentColor = markerColor;
+
+                colors.Add(currentColor);
+            }
+
+            return colors;
+        }
+
+        private static void AddDistinctMessage(List<string> messages, string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            for (int i = 0; i < messages.Count; i++)
+            {
+                if (messages[i].IndexOf(message, StringComparison.Ordinal) >= 0)
+                    return;
+
+                if (message.IndexOf(messages[i], StringComparison.Ordinal) >= 0)
+                {
+                    messages[i] = message;
+                    return;
+                }
+            }
+
+            messages.Add(message);
+        }
+
+        private static EditorNotificationSeverity MoreSevereNotification(
+            EditorNotificationSeverity left,
+            EditorNotificationSeverity right)
+        {
+            if (left == EditorNotificationSeverity.Error || right == EditorNotificationSeverity.Error)
+                return EditorNotificationSeverity.Error;
+
+            if (left == EditorNotificationSeverity.Warning || right == EditorNotificationSeverity.Warning)
+                return EditorNotificationSeverity.Warning;
+
+            return EditorNotificationSeverity.Normal;
+        }
+
+        private static EditorNotificationSeverity NotificationSeverity(EditorDiagnosticSeverity severity)
+        {
+            return severity == EditorDiagnosticSeverity.Error
+                ? EditorNotificationSeverity.Error
+                : EditorNotificationSeverity.Warning;
         }
 
         private bool IsVerticalCursorNavigationKey(ConsoleKeyInfo key)
@@ -4126,6 +4562,11 @@ namespace Core.DirFiles
                     ShowDiagnosticsSummary();
                     _mode = Mode.Normal;
                     break;
+                case "details":
+                case "message":
+                    _mode = Mode.Normal;
+                    OpenMessageDetails();
+                    break;
                 case "next-error":
                 case "nexterror":
                 case "errnext":
@@ -6055,6 +6496,27 @@ namespace Core.DirFiles
             _verticalCursorCol = -1;
         }
 
+        private void SelectAll()
+        {
+            if (_mode == Mode.Command || _mode == Mode.Search)
+            {
+                Status("Select all unavailable", error: true);
+                return;
+            }
+
+            DismissCompletion();
+            ResetVerticalCursorColumn();
+            _pendingDelete = false;
+            _insertUndoStarted = false;
+            _selectionAnchorLine = 0;
+            _selectionAnchorCol = 0;
+            _cursorLine = Math.Max(0, _lines.Count - 1);
+            _cursorCol = CurrentLine().Length;
+            _hasSelectionAnchor = true;
+            _mouseSelecting = false;
+            Status("Selected all");
+        }
+
         private void MoveToDocumentStart()
         {
             ResetVerticalCursorColumn();
@@ -6135,10 +6597,13 @@ namespace Core.DirFiles
             int cursorVisualRow = GetCursorVisualRow(textWidth);
             int totalVisualRows = GetTotalVisualRows(textWidth);
 
-            if (cursorVisualRow < _scrollTop)
-                _scrollTop = cursorVisualRow;
-            else if (cursorVisualRow >= _scrollTop + textRows)
-                _scrollTop = cursorVisualRow - textRows + 1;
+            if (_keepCursorInView)
+            {
+                if (cursorVisualRow < _scrollTop)
+                    _scrollTop = cursorVisualRow;
+                else if (cursorVisualRow >= _scrollTop + textRows)
+                    _scrollTop = cursorVisualRow - textRows + 1;
+            }
 
             _scrollTop = Math.Max(0, Math.Min(Math.Max(0, totalVisualRows - textRows), _scrollTop));
             _scrollLeft = 0;
@@ -6359,6 +6824,7 @@ namespace Core.DirFiles
         {
             _status = message;
             EditorNotificationSeverity severity = NotificationSeverity(error, warning);
+            _statusSeverity = severity;
             _statusUntil = DateTime.UtcNow.AddMilliseconds(StatusDurationMs(severity));
         }
 
@@ -6738,6 +7204,32 @@ namespace Core.DirFiles
             return "ready";
         }
 
+        private EditorNotificationSeverity DefaultStatusSeverity()
+        {
+            if (_externalChangePending)
+                return EditorNotificationSeverity.Warning;
+
+            EnsureDiagnosticsForRender();
+            if (_diagnostics.Count == 0)
+                return EditorNotificationSeverity.Normal;
+
+            if (TryGetDiagnosticForLine(
+                _cursorLine,
+                out EditorDiagnostic currentDiagnostic,
+                out _))
+            {
+                return NotificationSeverity(currentDiagnostic.Severity);
+            }
+
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (_diagnostics[i].Severity == EditorDiagnosticSeverity.Error)
+                    return EditorNotificationSeverity.Error;
+            }
+
+            return EditorNotificationSeverity.Warning;
+        }
+
         private string ModifiedPrefix()
         {
             return _dirty ? "modified | " : string.Empty;
@@ -7106,6 +7598,13 @@ namespace Core.DirFiles
         {
             string code = string.IsNullOrWhiteSpace(diagnostic.Code) ? string.Empty : " " + diagnostic.Code;
             return "L" + diagnostic.LineNumber + code + ": " + diagnostic.Description;
+        }
+
+        private static string FormatDiagnosticListLocation(EditorDiagnostic diagnostic)
+        {
+            string code = string.IsNullOrWhiteSpace(diagnostic.Code) ? string.Empty : " " + diagnostic.Code;
+            return "L" + diagnostic.LineNumber + ":C" + (diagnostic.StartColumn + 1) +
+                code + ": " + diagnostic.Description;
         }
 
         private static string DiagnosticSeverityName(EditorDiagnosticSeverity severity)
@@ -9978,6 +10477,59 @@ namespace Core.DirFiles
             }
         }
 
+        private static List<string> WrapMessageText(string text, int width)
+        {
+            width = Math.Max(1, width);
+            string normalized = (text ?? string.Empty)
+                .Replace("\r\n", "\n")
+                .Replace('\r', '\n');
+            string[] paragraphs = normalized.Split('\n');
+            var lines = new List<string>();
+
+            for (int paragraphIndex = 0; paragraphIndex < paragraphs.Length; paragraphIndex++)
+            {
+                string paragraph = EscapeText(paragraphs[paragraphIndex]);
+                if (paragraph.Length == 0)
+                {
+                    lines.Add(string.Empty);
+                    continue;
+                }
+
+                int position = 0;
+                while (position < paragraph.Length)
+                {
+                    int remaining = paragraph.Length - position;
+                    int take = Math.Min(width, remaining);
+
+                    if (take < remaining)
+                    {
+                        int wrapAt = -1;
+                        for (int i = position + take - 1; i > position; i--)
+                        {
+                            if (char.IsWhiteSpace(paragraph[i]))
+                            {
+                                wrapAt = i;
+                                break;
+                            }
+                        }
+
+                        if (wrapAt > position)
+                            take = wrapAt - position;
+                    }
+
+                    lines.Add(paragraph.Substring(position, take).TrimEnd());
+                    position += take;
+                    while (position < paragraph.Length && char.IsWhiteSpace(paragraph[position]))
+                        position++;
+                }
+            }
+
+            if (lines.Count == 0)
+                lines.Add(string.Empty);
+
+            return lines;
+        }
+
         private static string Clip(string text, int width)
         {
             if (width <= 0)
@@ -10080,7 +10632,9 @@ namespace Core.DirFiles
                     else
                         Render();
 
-                    ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                    if (!WaitForExplorerKey(out ConsoleKeyInfo key))
+                        continue;
+
                     bool close;
                     string selectedFile = _searchMode
                         ? HandleSearchKey(key, out close)
@@ -10092,6 +10646,123 @@ namespace Core.DirFiles
                     if (!string.IsNullOrWhiteSpace(selectedFile))
                         return selectedFile;
                 }
+            }
+
+            private bool WaitForExplorerKey(out ConsoleKeyInfo key)
+            {
+                key = default;
+
+                while (true)
+                {
+                    IntPtr inputHandle = GetStdHandle(StdInputHandle);
+                    if (TryPeekConsoleInput(inputHandle, out InputRecord record))
+                    {
+                        if (record.EventType == MouseEvent)
+                        {
+                            if (!TryReadConsoleInputRecord(inputHandle, out record))
+                                continue;
+
+                            if (HandleExplorerMouseInput(record.MouseEvent))
+                                return false;
+
+                            continue;
+                        }
+
+                        if (record.EventType == KeyEvent && !record.KeyEvent.KeyDown)
+                        {
+                            TryReadConsoleInputRecord(inputHandle, out record);
+                            continue;
+                        }
+
+                        if (record.EventType == WindowBufferSizeEvent)
+                        {
+                            TryReadConsoleInputRecord(inputHandle, out record);
+                            return false;
+                        }
+
+                        if (record.EventType != KeyEvent)
+                        {
+                            TryReadConsoleInputRecord(inputHandle, out record);
+                            continue;
+                        }
+                    }
+
+                    if (IsConsoleKeyAvailable())
+                    {
+                        key = Console.ReadKey(intercept: true);
+                        return true;
+                    }
+
+                    (int width, int height) = WindowSize();
+                    if (width != _lastWidth || height != _lastHeight)
+                        return false;
+
+                    Thread.Sleep(30);
+                }
+            }
+
+            private bool HandleExplorerMouseInput(MouseEventRecord mouse)
+            {
+                if ((mouse.EventFlags & MouseWheeled) == 0)
+                    return false;
+
+                int notches = GetWheelNotches(mouse.ButtonState);
+                if (notches == 0)
+                    return false;
+
+                (_, int height) = WindowSize();
+                int contentRows = Math.Max(4, Math.Max(20, height) - 5);
+                return ScrollByWheelNotches(notches, contentRows);
+            }
+
+            private bool ScrollByWheelNotches(int notches, int contentRows)
+            {
+                if (_searchMode)
+                {
+                    return ScrollListByWheelNotches(
+                        notches,
+                        _searchResults.Count,
+                        contentRows,
+                        ref _searchSelectedIndex,
+                        ref _searchScrollOffset);
+                }
+
+                return ScrollListByWheelNotches(
+                    notches,
+                    _items.Count,
+                    contentRows,
+                    ref _selectedIndex,
+                    ref _scrollOffset);
+            }
+
+            private static bool ScrollListByWheelNotches(
+                int notches,
+                int itemCount,
+                int contentRows,
+                ref int selectedIndex,
+                ref int scrollOffset)
+            {
+                if (notches == 0 || itemCount <= 0)
+                    return false;
+
+                int oldSelectedIndex = selectedIndex;
+                int oldScrollOffset = scrollOffset;
+                int rows = Math.Max(1, contentRows);
+                int maxScrollOffset = Math.Max(0, itemCount - rows);
+
+                selectedIndex = ClampValue(
+                    selectedIndex - (notches * RowsPerWheelNotch),
+                    0,
+                    itemCount - 1);
+                scrollOffset = ClampValue(scrollOffset, 0, maxScrollOffset);
+
+                if (selectedIndex < scrollOffset)
+                    scrollOffset = selectedIndex;
+                else if (selectedIndex >= scrollOffset + rows)
+                    scrollOffset = selectedIndex - rows + 1;
+
+                scrollOffset = ClampValue(scrollOffset, 0, maxScrollOffset);
+                return selectedIndex != oldSelectedIndex || scrollOffset != oldScrollOffset;
             }
 
             private string HandleKey(ConsoleKeyInfo key, out bool close)
@@ -10234,7 +10905,7 @@ namespace Core.DirFiles
                 _explorerFrame.Append(At(0, 1)).Append(F(CMuted)).Append(new string('\u2550', width)).Append(Reset);
                 _explorerFrame.Append(At(0, 2)).Append(F(COperator)).Append(Clip(" \u25b6 " + _currentDirectory, width)).Append(Reset).Append(ClearEol);
                 _explorerFrame.Append(At(0, 3)).Append(F(CMuted))
-                    .Append(Clip(" \u2191\u2193:move  \u21b5:open  \u232b:back  \u2192:forward  PgUp:up  Del:del  /:search  Tab:drives  `:quit", width))
+                    .Append(Clip(" \u2191\u2193/Wheel:move  \u21b5:open  \u232b:back  \u2192:forward  PgUp:up  Del:del  /:search  Tab:drives  `:quit", width))
                     .Append(Reset).Append(ClearEol);
             }
 
@@ -10896,6 +11567,8 @@ namespace Core.DirFiles
                 (int width, int height) = WindowSize();
                 width = Math.Max(width, 60);
                 height = Math.Max(height, 20);
+                _lastWidth = width;
+                _lastHeight = height;
 
                 int headerRows = 4;
                 int contentTop = headerRows;
@@ -10923,7 +11596,7 @@ namespace Core.DirFiles
                 _explorerFrame.Append(At(0, 0)).Append(F(CTitle)).Append(Clip(title + new string(' ', pad) + counter + " ", width)).Append(Reset);
                 _explorerFrame.Append(At(0, 1)).Append(F(CMuted)).Append(new string('\u2550', width)).Append(Reset);
                 _explorerFrame.Append(At(0, 2)).Append(F(COperator)).Append(Clip("  Base: " + _currentDirectory, width)).Append(Reset);
-                _explorerFrame.Append(At(0, 3)).Append(F(CMuted)).Append(Clip(" \u2191\u2193:move  \u21b5:open  Del:del  Esc/Q:exit  \u232b:back  U:up", width)).Append(Reset);
+                _explorerFrame.Append(At(0, 3)).Append(F(CMuted)).Append(Clip(" \u2191\u2193/Wheel:move  \u21b5:open  Del:del  Esc/Q:exit  \u232b:back  U:up", width)).Append(Reset);
 
                 for (int row = 0; row < contentRows; row++)
                 {

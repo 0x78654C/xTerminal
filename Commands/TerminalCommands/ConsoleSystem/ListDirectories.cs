@@ -38,7 +38,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static List<string> s_listSearched = new List<string>();
         private static string s_virus;
         private static string s_tree;
-        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-f", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la", "-dup" };
+        private static List<string> s_listParams = new List<string>() { "-h", "-d", "-f", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la", "-dup", "-n" };
         private static string s_Header = "";
         private readonly Func<IGrouping<string, FileInfo>, IEnumerable<Dupe>[]> DupesEnumerable = items => items.Select(t => new Dupe { FileName = t.FullName, Md5 = GetMD5CheckSum(t.FullName) })
    .GroupBy(t => t.Md5)
@@ -71,6 +71,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
     -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
     -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
            Use -l to set the depth of the tree structure. Ex.: ls -t -l 2
+    -n   : Displays only names of files and directories.
 
 Commands can be canceled with CTRL+X key combination.
 
@@ -151,6 +152,17 @@ e - Encrypted
                     GlobalVariables.eventKeyFlagX = true;
                     // Display directory and file information
                     DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText, false, false, true);
+                    if (GlobalVariables.eventCancelKey)
+                        FileSystem.SuccessWriteLine("Command stopped!");
+                    return;
+                }
+
+                // List only names of files/folders.
+                if (arg.ContainsParameter("-n"))
+                {
+                    GlobalVariables.eventKeyFlagX = true;
+                    // Display directory and file information
+                    DisplayCurrentDirectoryFiles(arg.ContainsParameter("-s"), highlightSearchText,false,false,false,true,true,true);
                     if (GlobalVariables.eventCancelKey)
                         FileSystem.SuccessWriteLine("Command stopped!");
                     return;
@@ -301,10 +313,10 @@ e - Encrypted
                     if (GlobalVariables.isPipeCommand && !string.IsNullOrEmpty(GlobalVariables.pipeCmdOutput))
                         currDir = FileSystem.SanitizePath(GlobalVariables.pipeCmdOutput.Trim(), s_currentDirectory);
                     DisplayTreeDirStructureDepth(currDir, level);
-                    
+
                     if (GlobalVariables.eventCancelKey)
                         s_tree += "\nCommand stopped!\n";
-                    
+
                     if (arg.ContainsParameter("-o"))
                     {
                         var fileName = args.SplitByText("-o", 1).Trim();
@@ -631,7 +643,7 @@ e - Encrypted
         /// <param name="highlightSearchText">Thext to be highlighted in files or directories names.</param>
         /// <param name="saveToFile">Save output to a file.</param>
         private static void DisplayCurrentDirectoryFiles(bool displaySizes, string highlightSearchText, bool saveToFile,
-            bool isCreationTime = false, bool isLastAccessTime = false, bool displayFiles = true, bool displayDirectories = true)
+            bool isCreationTime = false, bool isLastAccessTime = false, bool displayFiles = true, bool displayDirectories = true, bool displayOnlyNames = false)
         {
             if (GlobalVariables.isPipeCommand)
                 GlobalVariables.pipeCmdOutput = string.Empty;
@@ -669,9 +681,9 @@ e - Encrypted
                     SetHeader(TypeHeader.LastWrite);
 
                 if (displayDirectories)
-                    DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime);
+                    DisplaySubDirectories(highlightSearchText, saveToFile, isCreationTime, isLastAccessTime, displayOnlyNames);
                 if (displayFiles)
-                    DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime);
+                    DisplayFiles(highlightSearchText, displaySizes, saveToFile, isCreationTime, isLastAccessTime, displayOnlyNames);
             }
 
 
@@ -697,7 +709,7 @@ e - Encrypted
         /// <param name="isLastAccessTime"></param>
         /// <param name="isLastWriteTime"></param>
         private static void DisplaySubDirectories(string highlightSearchText, bool saveToFile,
-            bool isCreationTime = false, bool isLastAccessTime = false)
+            bool isCreationTime = false, bool isLastAccessTime = false, bool displayOnlyName = false)
         {
             try
             {
@@ -745,7 +757,12 @@ e - Encrypted
                                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                         GlobalVariables.pipeCmdOutput += $"{directoryInfo.Name}\n";
                                     else
-                                        FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, $"{attributes}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + $"{directoryInfo.Name}");
+                                    {
+                                        if (displayOnlyName)
+                                            FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, $"{directoryInfo.Name}");
+                                        else
+                                            FileSystem.ColorConsoleTextLine(ConsoleColor.DarkCyan, $"{attributes}".PadRight(20, ' ') + $"{FileSystem.GetFileDirOwner(directoryInfo.FullName)}".PadRight(20, ' ') + $"{directoryInfo.LastWriteTime.ToLocalTime()}".PadRight(50, ' ') + $"{directoryInfo.Name}");
+                                    }
                                 }
                             }
                         }
@@ -765,7 +782,7 @@ e - Encrypted
         /// <param name="isLastAccessTime"></param>
         /// <param name="isLastWriteTime"></param>
         private static void DisplayFiles(string highlightSearchText, bool displaySizes, bool saveToFile,
-            bool isCreationTime = false, bool isLastAccessTime = false)
+            bool isCreationTime = false, bool isLastAccessTime = false, bool displayOnlyNames = false)
         {
             try
             {
@@ -841,7 +858,12 @@ e - Encrypted
                                     if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                                         GlobalVariables.pipeCmdOutput += $"{file.Name}\n";
                                     else
-                                        DisplayFileInfoText(formattedText, highlightSearchText);
+                                    {
+                                        if(displayOnlyNames)   
+                                            Console.WriteLine(file.Name);
+                                        else
+                                            DisplayFileInfoText(formattedText, highlightSearchText);
+                                    }
                                 }
                             }
                         }

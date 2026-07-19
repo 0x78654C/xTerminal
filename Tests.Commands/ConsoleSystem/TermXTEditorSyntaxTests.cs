@@ -1196,6 +1196,77 @@ public class TermXTEditorSyntaxTests
         }
     }
 
+    [Theory]
+    [InlineData(120 << 16, 1)]
+    [InlineData(unchecked((int)0xff880000), -1)]
+    [InlineData(240 << 16, 2)]
+    public void GetWheelNotches_ReadsSignedDeltaFromButtonState(int buttonState, int expected)
+    {
+        InvokePrivateStatic<int>("GetWheelNotches", buttonState).Should().Be(expected);
+    }
+
+    [Fact]
+    public void ScrollViewportByWheelNotches_ScrollsVisualRowsWithoutMovingCursor()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, Enumerable.Range(1, 20).Select(line => "line " + line));
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_scrollTop", 9);
+
+            bool scrolled = InvokePrivate<bool>(editor, "ScrollViewportByWheelNotches", -1, 5, 80);
+
+            scrolled.Should().BeTrue();
+            GetPrivateField<int>(editor, "_scrollTop").Should().Be(12);
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(0);
+            GetPrivateField<bool>(editor, "_keepCursorInView").Should().BeFalse();
+
+            InvokePrivate(editor, "AdjustScroll", 5, 80);
+            GetPrivateField<int>(editor, "_scrollTop").Should().Be(12);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ExplorerScrollByWheelNotches_MovesSelectionAndKeepsItVisible()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            Directory.CreateDirectory(directory);
+            for (int i = 0; i < 12; i++)
+                File.WriteAllText(Path.Combine(directory, "file-" + i.ToString("00") + ".xt"), string.Empty);
+
+            object explorer = Activator.CreateInstance(
+                NestedType("EditorFileExplorer"),
+                new object[] { directory })!;
+
+            bool firstScroll = InvokePrivate<bool>(explorer, "ScrollByWheelNotches", -1, 5);
+            bool secondScroll = InvokePrivate<bool>(explorer, "ScrollByWheelNotches", -1, 5);
+
+            firstScroll.Should().BeTrue();
+            secondScroll.Should().BeTrue();
+            GetPrivateField<int>(explorer, "_selectedIndex").Should().Be(6);
+            GetPrivateField<int>(explorer, "_scrollOffset").Should().Be(2);
+
+            InvokePrivate<bool>(explorer, "ScrollByWheelNotches", 2, 5).Should().BeTrue();
+            GetPrivateField<int>(explorer, "_selectedIndex").Should().Be(0);
+            GetPrivateField<int>(explorer, "_scrollOffset").Should().Be(0);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+        }
+    }
+
     [Fact]
     public void CutSelectionOrCurrentLine_WithSelection_CutsSelectedText()
     {
@@ -1277,6 +1348,234 @@ public class TermXTEditorSyntaxTests
             if (File.Exists(path))
                 File.Delete(path);
         }
+    }
+
+    [Fact]
+    public void HandleKey_CtrlA_SelectsEntireDocument()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "one", "two", "three" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 1);
+            SetPrivateField(editor, "_cursorCol", 1);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\u0001', ConsoleKey.A, shift: false, alt: false, control: true));
+
+            GetPrivateField<bool>(editor, "_hasSelectionAnchor").Should().BeTrue();
+            GetPrivateField<int>(editor, "_selectionAnchorLine").Should().Be(0);
+            GetPrivateField<int>(editor, "_selectionAnchorCol").Should().Be(0);
+            GetPrivateField<int>(editor, "_cursorLine").Should().Be(2);
+            GetPrivateField<int>(editor, "_cursorCol").Should().Be("three".Length);
+            InvokePrivate<bool>(editor, "HasSelection").Should().BeTrue();
+            CopyTextForClipboard(editor).text.Should().Be(
+                "one" + Environment.NewLine + "two" + Environment.NewLine + "three");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void HandleKey_F2_OpensFullErrorMessageDetails()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "print \"ok\"");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            const string error =
+                "A deliberately long error message that cannot fit on a normal terminal status row.";
+            const string context = "L42: Additional context for the same error.";
+            InvokePrivate(editor, "Status", error, true, false);
+            InvokePrivate(editor, "BottomStatus", context, true, false);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_messageDetailsActive").Should().BeTrue();
+            GetPrivateField<string>(editor, "_messageDetailsText").Should().Contain(error).And.Contain(context);
+            GetPrivateField<object>(editor, "_messageDetailsSeverity").ToString().Should().Be("Error");
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\u001b', ConsoleKey.Escape, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_messageDetailsActive").Should().BeFalse();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void HandleKey_F2_OpensAllDiagnosticsInSourceOrder()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "break", "call missing", "return" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 1);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_messageDetailsActive").Should().BeTrue();
+            GetPrivateField<bool>(editor, "_messageDetailsShowsDiagnostics").Should().BeTrue();
+            GetPrivateField<string>(editor, "_messageDetailsText").Should().Be(
+                "[ERROR] 1/3  L1:C1: 'break' outside of a loop." + Environment.NewLine +
+                "[ERROR] 2/3  L2:C1: Function 'missing' not found." + Environment.NewLine +
+                "[ERROR] 3/3  L3:C1: 'return' outside of a function.");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void HandleKey_F2_ListsErrorsAndWarningsTogether()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            File.WriteAllLines(path, new[]
+            {
+                "#warning verify-warning",
+                "public class C { void M() { Missing(); } }"
+            });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+
+            string details = GetPrivateField<string>(editor, "_messageDetailsText");
+            details.Should().Contain("[WARNING]").And.Contain("CS1030");
+            details.Should().Contain("[ERROR]").And.Contain("CS0103");
+            details.IndexOf("[WARNING]", StringComparison.Ordinal).Should().BeLessThan(
+                details.IndexOf("[ERROR]", StringComparison.Ordinal));
+            GetPrivateField<object>(editor, "_messageDetailsSeverity").ToString().Should().Be("Error");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void HandleKey_F2_PageDownAndPageUpScrollDiagnosticList()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, Enumerable.Repeat("break", 80));
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.PageDown, shift: false, alt: false, control: false));
+
+            GetPrivateField<int>(editor, "_messageDetailsScrollOffset").Should().BeGreaterThan(0);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.PageUp, shift: false, alt: false, control: false));
+
+            GetPrivateField<int>(editor, "_messageDetailsScrollOffset").Should().Be(0);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData(ConsoleKey.PageUp)]
+    [InlineData(ConsoleKey.PageDown)]
+    public void TryGetMessageDetailsKey_MapsNativePagingKeys(ConsoleKey expected)
+    {
+        object[] arguments = { (short)expected, default(ConsoleKey) };
+
+        InvokePrivateStatic<bool>("TryGetMessageDetailsKey", arguments).Should().BeTrue();
+        ((ConsoleKey)arguments[1]).Should().Be(expected);
+    }
+
+    [Fact]
+    public void WrapMessageText_LongUnbrokenText_PreservesAllCharacters()
+    {
+        const string message = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+        List<string> lines = InvokePrivateStatic<List<string>>("WrapMessageText", message, 8);
+
+        lines.Should().OnlyContain(line => line.Length <= 8);
+        string.Concat(lines).Should().Be(message);
+    }
+
+    [Theory]
+    [InlineData(18)]
+    [InlineData(32)]
+    public void DiagnosticDetailsLineColors_AfterResize_ColorsWrappedContinuationRows(int width)
+    {
+        const string message =
+            "[ERROR] 1/2  line 1: a long error description that wraps onto new rows\n" +
+            "[WARNING] 2/2  line 2: a long warning description that also wraps onto new rows";
+
+        List<string> lines = InvokePrivateStatic<List<string>>("WrapMessageText", message, width);
+        List<int> colors = InvokePrivateStatic<List<int>>("DiagnosticDetailsLineColors", lines);
+        int warningRow = lines.FindIndex(line => line.StartsWith("[WARNING]", StringComparison.Ordinal));
+
+        warningRow.Should().BeGreaterThan(1);
+        colors.Should().HaveCount(lines.Count);
+        colors.Take(warningRow).Should().OnlyContain(color => color == colors[0]);
+        colors.Skip(warningRow).Should().OnlyContain(color => color == colors[warningRow]);
+        colors[warningRow].Should().NotBe(colors[0]);
+    }
+
+    [Fact]
+    public void ClipMessageWithDetailsHint_ClippedError_ShowsF2Shortcut()
+    {
+        FieldInfo severityField = typeof(TermXTEditor).GetField(
+            "_messageDetailsSeverity",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+        object errorSeverity = Enum.Parse(severityField.FieldType, "Error");
+
+        string clipped = InvokePrivateStatic<string>(
+            "ClipMessageWithDetailsHint",
+            "A long error message that will not fit in this status bar",
+            32,
+            errorSeverity);
+
+        clipped.Should().HaveLength(32).And.EndWith(" [F2 details]");
     }
 
     [Fact]

@@ -52,6 +52,7 @@ Example:
                    -o   : Saves the output to a file. Ex.: ls -o <file_to_save>
                    -t   : Display tree structure of directories. Use with param -o for store the output in a file: Ex.: ls -t -o <file_name>
                           Use -l to set the depth of the tree structure. Ex.: ls -t -l 2
+                   -n   : Displays only names of files and directories.
     ch        -- Displays a list of previous commands typed in terminal. Use -h for additional parameters. 
                     For display the last X commands that was used: ch x(numbers of commands to be displayed) 
                    -h   : Displays this message.
@@ -593,9 +594,11 @@ Example:
 	                xte -new <script.xt>        : Create a template and open it.
 	                Detects disk-side changes when returning to the editor; use :e! to reload or :w! to overwrite.
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
-	                Shows editor diagnostics with red error and yellow warning notifications; use :errors, :warnings, :next-error, and :next-warning.
+	                Shows editor diagnostics with red error and yellow warning notifications; press F2 for the complete scrollable list.
+	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
 	                In C# buffers, use :nuget <package> to add the latest stable package, or :nuget list packages, :nuget add <package> [version], :nuget remove <package>, and :nuget restore to manage package usage.
+	                Ctrl+A selects the entire document.
 	                Ctrl+X cuts the selection, or the current line when nothing is selected.
 	                Ctrl+D duplicates the current line.
 
