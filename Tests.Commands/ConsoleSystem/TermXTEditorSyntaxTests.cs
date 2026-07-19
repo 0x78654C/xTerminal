@@ -1384,6 +1384,98 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void HandleKey_F2_OpensFullErrorMessageDetails()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllText(path, "print \"ok\"");
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            const string error =
+                "A deliberately long error message that cannot fit on a normal terminal status row.";
+            const string context = "L42: Additional context for the same error.";
+            InvokePrivate(editor, "Status", error, true, false);
+            InvokePrivate(editor, "BottomStatus", context, true, false);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_messageDetailsActive").Should().BeTrue();
+            GetPrivateField<string>(editor, "_messageDetailsText").Should().Contain(error).And.Contain(context);
+            GetPrivateField<object>(editor, "_messageDetailsSeverity").ToString().Should().Be("Error");
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\u001b', ConsoleKey.Escape, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_messageDetailsActive").Should().BeFalse();
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void HandleKey_F2_OpensCurrentDiagnosticWhenStatusNotificationIsNotActive()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+
+        try
+        {
+            File.WriteAllLines(path, new[] { "if true", "  break" });
+            var editor = new TermXTEditor(path, TermXTEditorSyntax.TermXt);
+            SetPrivateField(editor, "_cursorLine", 1);
+
+            InvokePrivate(
+                editor,
+                "HandleKey",
+                new ConsoleKeyInfo('\0', ConsoleKey.F2, shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_messageDetailsActive").Should().BeTrue();
+            GetPrivateField<string>(editor, "_messageDetailsText").Should().Contain("outside of a loop");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void WrapMessageText_LongUnbrokenText_PreservesAllCharacters()
+    {
+        const string message = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+        List<string> lines = InvokePrivateStatic<List<string>>("WrapMessageText", message, 8);
+
+        lines.Should().OnlyContain(line => line.Length <= 8);
+        string.Concat(lines).Should().Be(message);
+    }
+
+    [Fact]
+    public void ClipMessageWithDetailsHint_ClippedError_ShowsF2Shortcut()
+    {
+        FieldInfo severityField = typeof(TermXTEditor).GetField(
+            "_messageDetailsSeverity",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+        object errorSeverity = Enum.Parse(severityField.FieldType, "Error");
+
+        string clipped = InvokePrivateStatic<string>(
+            "ClipMessageWithDetailsHint",
+            "A long error message that will not fit in this status bar",
+            32,
+            errorSeverity);
+
+        clipped.Should().HaveLength(32).And.EndWith(" [F2 details]");
+    }
+
+    [Fact]
     public void CheckExternalFileChange_WhenDiskFileChanges_SetsPendingDiskWarning()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");

@@ -622,10 +622,15 @@ namespace Core.DirFiles
         private string _lastSearch = string.Empty;
         private string _status = "NORMAL";
         private DateTime _statusUntil = DateTime.MinValue;
+        private EditorNotificationSeverity _statusSeverity;
         private string _bottomStatus = string.Empty;
         private DateTime _bottomStatusUntil = DateTime.MinValue;
         private bool _bottomStatusError;
         private bool _bottomStatusWarning;
+        private bool _messageDetailsActive;
+        private string _messageDetailsText = string.Empty;
+        private EditorNotificationSeverity _messageDetailsSeverity;
+        private int _messageDetailsScrollOffset;
         private DateTime _nextExternalChangeCheckUtc = DateTime.MinValue;
         private string _lineClipboard = string.Empty;
         private bool _hasLineClipboard;
@@ -1001,6 +1006,9 @@ namespace Core.DirFiles
 
         private bool HandleMouseInput(MouseEventRecord mouse)
         {
+            if (_messageDetailsActive)
+                return HandleMessageDetailsMouse(mouse);
+
             if ((mouse.EventFlags & MouseWheeled) != 0)
                 return ScrollViewportFromWheel(mouse);
 
@@ -1070,6 +1078,19 @@ namespace Core.DirFiles
             int numberWidth = Math.Max(4, _lines.Count.ToString().Length + 2);
             int textWidth = Math.Max(1, width - numberWidth - 1);
             return ScrollViewportByWheelNotches(notches, textRows, textWidth);
+        }
+
+        private bool HandleMessageDetailsMouse(MouseEventRecord mouse)
+        {
+            if ((mouse.EventFlags & MouseWheeled) == 0)
+                return true;
+
+            int notches = GetWheelNotches(mouse.ButtonState);
+            if (notches == 0)
+                return true;
+
+            ScrollMessageDetails(-notches * RowsPerWheelNotch);
+            return true;
         }
 
         private bool ScrollViewportByWheelNotches(int notches, int textRows, int textWidth)
@@ -1424,6 +1445,7 @@ namespace Core.DirFiles
                 RenderEditorRow(_scrollTop + row, textTop + row, numberWidth, textLeft, textWidth, width);
 
             RenderCompletionPopup(textTop, textLeft, textRows, textWidth, width);
+            RenderMessageDetails(width, height);
             RenderStatus(statusRow, width);
             RenderCommandLine(commandRow, width);
 
@@ -1608,16 +1630,89 @@ namespace Core.DirFiles
             return kind.Length == 0 ? detail : kind + " " + detail;
         }
 
+        private void RenderMessageDetails(int width, int height)
+        {
+            if (!_messageDetailsActive)
+                return;
+
+            int panelLeft = 2;
+            int panelTop = 2;
+            int panelWidth = Math.Max(1, width - 4);
+            int panelHeight = Math.Max(3, height - 4);
+            int contentWidth = MessageDetailsContentWidth(width);
+            int contentRows = MessageDetailsContentRows(height);
+            List<string> lines = WrapMessageText(_messageDetailsText, contentWidth);
+            int maxOffset = Math.Max(0, lines.Count - contentRows);
+            _messageDetailsScrollOffset = ClampValue(_messageDetailsScrollOffset, 0, maxOffset);
+
+            bool error = _messageDetailsSeverity == EditorNotificationSeverity.Error;
+            int accent = error ? CError : CWarning;
+            int titleForeground = error ? 231 : 232;
+            string title = error ? " ERROR - Message details" : " WARNING - Message details";
+
+            _frame.Append(At(panelLeft, panelTop))
+                .Append(B(accent)).Append(F(titleForeground)).Append(Bold())
+                .Append(Clip(title, panelWidth).PadRight(panelWidth)).Append(Reset);
+
+            for (int row = 0; row < contentRows; row++)
+            {
+                int lineIndex = _messageDetailsScrollOffset + row;
+                string line = lineIndex < lines.Count ? lines[lineIndex] : string.Empty;
+                string content = " " + Clip(line, contentWidth);
+                _frame.Append(At(panelLeft, panelTop + 1 + row))
+                    .Append(B(236)).Append(F(CNormal))
+                    .Append(Clip(content, panelWidth).PadRight(panelWidth)).Append(Reset);
+            }
+
+            int firstVisible = lines.Count == 0 ? 0 : _messageDetailsScrollOffset + 1;
+            int lastVisible = Math.Min(lines.Count, _messageDetailsScrollOffset + contentRows);
+            string footer = " ↑↓/PgUp/PgDn scroll | F2/Esc close | " +
+                firstVisible + "-" + lastVisible + "/" + lines.Count;
+            _frame.Append(At(panelLeft, panelTop + panelHeight - 1))
+                .Append(B(238)).Append(F(250))
+                .Append(Clip(footer, panelWidth).PadRight(panelWidth)).Append(Reset);
+        }
+
+        private static int MessageDetailsContentWidth(int windowWidth)
+        {
+            return Math.Max(1, windowWidth - 6);
+        }
+
+        private static int MessageDetailsContentRows(int windowHeight)
+        {
+            return Math.Max(1, windowHeight - 6);
+        }
+
         private void RenderStatus(int row, int width)
         {
             string mode = _mode.ToString().ToUpperInvariant();
-            string message = DateTime.UtcNow <= _statusUntil ? _status : DefaultStatus();
+            bool temporaryStatus = DateTime.UtcNow <= _statusUntil;
+            string message = temporaryStatus ? _status : DefaultStatus();
+            EditorNotificationSeverity severity = temporaryStatus
+                ? _statusSeverity
+                : DefaultStatusSeverity();
             string text = " " + mode.PadRight(7) + " " + message;
+            text = ClipMessageWithDetailsHint(text, width, severity);
             GetStatusColors(out int fg, out int bg);
 
             _frame.Append(At(0, row))
                 .Append(B(bg)).Append(F(fg)).Append(Clip(text, width).PadRight(width))
                 .Append(Reset);
+        }
+
+        private static string ClipMessageWithDetailsHint(
+            string text,
+            int width,
+            EditorNotificationSeverity severity)
+        {
+            const string hint = " [F2 details]";
+            if (severity == EditorNotificationSeverity.Normal || VisibleLength(text) <= width)
+                return text;
+
+            if (width <= hint.Length)
+                return Clip(text, width);
+
+            return Clip(text, width - hint.Length) + hint;
         }
 
         private void GetStatusColors(out int fg, out int bg)
@@ -1683,6 +1778,8 @@ namespace Core.DirFiles
             {
                 GetBottomStatusColors(out int fg, out int bg);
                 string message = " " + _bottomStatus;
+                EditorNotificationSeverity severity = NotificationSeverity(_bottomStatusError, _bottomStatusWarning);
+                message = ClipMessageWithDetailsHint(message, width, severity);
                 _frame.Append(B(bg)).Append(F(fg)).Append(Clip(message, width).PadRight(width)).Append(Reset);
                 return;
             }
@@ -1693,6 +1790,12 @@ namespace Core.DirFiles
 
         private void PlaceCursor(int textTop, int textLeft, int textRows, int textWidth)
         {
+            if (_messageDetailsActive)
+            {
+                Console.Write(HideCursor);
+                return;
+            }
+
             int x;
             int y;
 
@@ -1731,6 +1834,18 @@ namespace Core.DirFiles
         private void HandleKey(ConsoleKeyInfo key)
         {
             _keepCursorInView = true;
+
+            if (_messageDetailsActive)
+            {
+                HandleMessageDetailsKey(key);
+                return;
+            }
+
+            if (key.Key == ConsoleKey.F2)
+            {
+                OpenMessageDetails();
+                return;
+            }
 
             if (_mode == Mode.Insert && TryReadQueuedInsertText(key, out string queuedInsertText, out string queuedPasteError))
             {
@@ -1830,6 +1945,169 @@ namespace Core.DirFiles
                     HandleNormalKey(key);
                     break;
             }
+        }
+
+        private void OpenMessageDetails()
+        {
+            if (!TryBuildMessageDetails(out string message, out EditorNotificationSeverity severity))
+            {
+                Status("No error or warning details");
+                return;
+            }
+
+            _messageDetailsText = message;
+            _messageDetailsSeverity = severity;
+            _messageDetailsScrollOffset = 0;
+            _messageDetailsActive = true;
+            DismissCompletion();
+        }
+
+        private void HandleMessageDetailsKey(ConsoleKeyInfo key)
+        {
+            switch (key.Key)
+            {
+                case ConsoleKey.F2:
+                case ConsoleKey.Escape:
+                    _messageDetailsActive = false;
+                    _lastWidth = -1;
+                    _lastHeight = -1;
+                    return;
+                case ConsoleKey.UpArrow:
+                    ScrollMessageDetails(-1);
+                    return;
+                case ConsoleKey.DownArrow:
+                    ScrollMessageDetails(1);
+                    return;
+                case ConsoleKey.PageUp:
+                    ScrollMessageDetails(-MessageDetailsContentRows(WindowSize().height));
+                    return;
+                case ConsoleKey.PageDown:
+                    ScrollMessageDetails(MessageDetailsContentRows(WindowSize().height));
+                    return;
+                case ConsoleKey.Home:
+                    _messageDetailsScrollOffset = 0;
+                    return;
+                case ConsoleKey.End:
+                {
+                    (int width, int height) = WindowSize();
+                    int lineCount = WrapMessageText(
+                        _messageDetailsText,
+                        MessageDetailsContentWidth(width)).Count;
+                    _messageDetailsScrollOffset = Math.Max(
+                        0,
+                        lineCount - MessageDetailsContentRows(height));
+                    return;
+                }
+            }
+        }
+
+        private void ScrollMessageDetails(int rowDelta)
+        {
+            (int width, int height) = WindowSize();
+            int lineCount = WrapMessageText(
+                _messageDetailsText,
+                MessageDetailsContentWidth(width)).Count;
+            int maxOffset = Math.Max(0, lineCount - MessageDetailsContentRows(height));
+            _messageDetailsScrollOffset = ClampValue(
+                _messageDetailsScrollOffset + rowDelta,
+                0,
+                maxOffset);
+        }
+
+        private bool TryBuildMessageDetails(
+            out string message,
+            out EditorNotificationSeverity severity)
+        {
+            var messages = new List<string>();
+            severity = EditorNotificationSeverity.Normal;
+            DateTime now = DateTime.UtcNow;
+
+            if (now <= _statusUntil && _statusSeverity != EditorNotificationSeverity.Normal)
+            {
+                AddDistinctMessage(messages, _status);
+                severity = MoreSevereNotification(severity, _statusSeverity);
+            }
+
+            EditorNotificationSeverity bottomSeverity = NotificationSeverity(
+                _bottomStatusError,
+                _bottomStatusWarning);
+            if (now <= _bottomStatusUntil &&
+                bottomSeverity != EditorNotificationSeverity.Normal &&
+                !string.IsNullOrWhiteSpace(_bottomStatus))
+            {
+                AddDistinctMessage(messages, _bottomStatus);
+                severity = MoreSevereNotification(severity, bottomSeverity);
+            }
+
+            if (messages.Count == 0)
+            {
+                EnsureFullDiagnostics();
+                if (_diagnostics.Count > 0)
+                {
+                    EditorDiagnostic diagnostic;
+                    int diagnosticIndex;
+                    if (!TryGetDiagnosticForLine(_cursorLine, out diagnostic, out diagnosticIndex))
+                    {
+                        diagnosticIndex = FirstDiagnosticIndexAtOrAfter(_cursorLine);
+                        diagnostic = _diagnostics[diagnosticIndex];
+                    }
+
+                    int ordinal = DiagnosticOrdinal(diagnosticIndex, null);
+                    AddDistinctMessage(
+                        messages,
+                        FormatDiagnosticCounter(diagnostic, ordinal, _diagnostics.Count));
+                    severity = NotificationSeverity(diagnostic.Severity);
+                }
+            }
+
+            if (messages.Count == 0 && _statusSeverity != EditorNotificationSeverity.Normal)
+            {
+                AddDistinctMessage(messages, _status);
+                severity = _statusSeverity;
+            }
+
+            message = string.Join(Environment.NewLine, messages);
+            return messages.Count > 0;
+        }
+
+        private static void AddDistinctMessage(List<string> messages, string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            for (int i = 0; i < messages.Count; i++)
+            {
+                if (messages[i].IndexOf(message, StringComparison.Ordinal) >= 0)
+                    return;
+
+                if (message.IndexOf(messages[i], StringComparison.Ordinal) >= 0)
+                {
+                    messages[i] = message;
+                    return;
+                }
+            }
+
+            messages.Add(message);
+        }
+
+        private static EditorNotificationSeverity MoreSevereNotification(
+            EditorNotificationSeverity left,
+            EditorNotificationSeverity right)
+        {
+            if (left == EditorNotificationSeverity.Error || right == EditorNotificationSeverity.Error)
+                return EditorNotificationSeverity.Error;
+
+            if (left == EditorNotificationSeverity.Warning || right == EditorNotificationSeverity.Warning)
+                return EditorNotificationSeverity.Warning;
+
+            return EditorNotificationSeverity.Normal;
+        }
+
+        private static EditorNotificationSeverity NotificationSeverity(EditorDiagnosticSeverity severity)
+        {
+            return severity == EditorDiagnosticSeverity.Error
+                ? EditorNotificationSeverity.Error
+                : EditorNotificationSeverity.Warning;
         }
 
         private bool IsVerticalCursorNavigationKey(ConsoleKeyInfo key)
@@ -4188,6 +4466,11 @@ namespace Core.DirFiles
                     ShowDiagnosticsSummary();
                     _mode = Mode.Normal;
                     break;
+                case "details":
+                case "message":
+                    _mode = Mode.Normal;
+                    OpenMessageDetails();
+                    break;
                 case "next-error":
                 case "nexterror":
                 case "errnext":
@@ -6445,6 +6728,7 @@ namespace Core.DirFiles
         {
             _status = message;
             EditorNotificationSeverity severity = NotificationSeverity(error, warning);
+            _statusSeverity = severity;
             _statusUntil = DateTime.UtcNow.AddMilliseconds(StatusDurationMs(severity));
         }
 
@@ -6822,6 +7106,32 @@ namespace Core.DirFiles
                 return "modified";
 
             return "ready";
+        }
+
+        private EditorNotificationSeverity DefaultStatusSeverity()
+        {
+            if (_externalChangePending)
+                return EditorNotificationSeverity.Warning;
+
+            EnsureDiagnosticsForRender();
+            if (_diagnostics.Count == 0)
+                return EditorNotificationSeverity.Normal;
+
+            if (TryGetDiagnosticForLine(
+                _cursorLine,
+                out EditorDiagnostic currentDiagnostic,
+                out _))
+            {
+                return NotificationSeverity(currentDiagnostic.Severity);
+            }
+
+            for (int i = 0; i < _diagnostics.Count; i++)
+            {
+                if (_diagnostics[i].Severity == EditorDiagnosticSeverity.Error)
+                    return EditorNotificationSeverity.Error;
+            }
+
+            return EditorNotificationSeverity.Warning;
         }
 
         private string ModifiedPrefix()
@@ -10062,6 +10372,59 @@ namespace Core.DirFiles
             {
                 return (100, 30);
             }
+        }
+
+        private static List<string> WrapMessageText(string text, int width)
+        {
+            width = Math.Max(1, width);
+            string normalized = (text ?? string.Empty)
+                .Replace("\r\n", "\n")
+                .Replace('\r', '\n');
+            string[] paragraphs = normalized.Split('\n');
+            var lines = new List<string>();
+
+            for (int paragraphIndex = 0; paragraphIndex < paragraphs.Length; paragraphIndex++)
+            {
+                string paragraph = EscapeText(paragraphs[paragraphIndex]);
+                if (paragraph.Length == 0)
+                {
+                    lines.Add(string.Empty);
+                    continue;
+                }
+
+                int position = 0;
+                while (position < paragraph.Length)
+                {
+                    int remaining = paragraph.Length - position;
+                    int take = Math.Min(width, remaining);
+
+                    if (take < remaining)
+                    {
+                        int wrapAt = -1;
+                        for (int i = position + take - 1; i > position; i--)
+                        {
+                            if (char.IsWhiteSpace(paragraph[i]))
+                            {
+                                wrapAt = i;
+                                break;
+                            }
+                        }
+
+                        if (wrapAt > position)
+                            take = wrapAt - position;
+                    }
+
+                    lines.Add(paragraph.Substring(position, take).TrimEnd());
+                    position += take;
+                    while (position < paragraph.Length && char.IsWhiteSpace(paragraph[position]))
+                        position++;
+                }
+            }
+
+            if (lines.Count == 0)
+                lines.Add(string.Empty);
+
+            return lines;
         }
 
         private static string Clip(string text, int width)
