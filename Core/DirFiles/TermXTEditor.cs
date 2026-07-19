@@ -1680,6 +1680,9 @@ namespace Core.DirFiles
             int contentWidth = MessageDetailsContentWidth(width);
             int contentRows = MessageDetailsContentRows(height);
             List<string> lines = WrapMessageText(_messageDetailsText, contentWidth);
+            List<int> diagnosticLineColors = _messageDetailsShowsDiagnostics
+                ? DiagnosticDetailsLineColors(lines)
+                : new List<int>();
             int maxOffset = Math.Max(0, lines.Count - contentRows);
             _messageDetailsScrollOffset = ClampValue(_messageDetailsScrollOffset, 0, maxOffset);
 
@@ -1699,8 +1702,8 @@ namespace Core.DirFiles
                 int lineIndex = _messageDetailsScrollOffset + row;
                 string line = lineIndex < lines.Count ? lines[lineIndex] : string.Empty;
                 string content = " " + Clip(line, contentWidth);
-                int foreground = _messageDetailsShowsDiagnostics
-                    ? DiagnosticDetailsLineColor(line)
+                int foreground = _messageDetailsShowsDiagnostics && lineIndex < diagnosticLineColors.Count
+                    ? diagnosticLineColors[lineIndex]
                     : CNormal;
                 _frame.Append(At(panelLeft, panelTop + 1 + row))
                     .Append(B(236)).Append(F(foreground))
@@ -2144,6 +2147,23 @@ namespace Core.DirFiles
                 return CWarning;
 
             return CNormal;
+        }
+
+        private static List<int> DiagnosticDetailsLineColors(IReadOnlyList<string> lines)
+        {
+            var colors = new List<int>(lines.Count);
+            int currentColor = CNormal;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                int markerColor = DiagnosticDetailsLineColor(lines[i]);
+                if (markerColor != CNormal)
+                    currentColor = markerColor;
+
+                colors.Add(currentColor);
+            }
+
+            return colors;
         }
 
         private static void AddDistinctMessage(List<string> messages, string message)

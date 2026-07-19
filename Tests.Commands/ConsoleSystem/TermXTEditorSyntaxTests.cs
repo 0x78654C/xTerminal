@@ -1541,6 +1541,26 @@ public class TermXTEditorSyntaxTests
         string.Concat(lines).Should().Be(message);
     }
 
+    [Theory]
+    [InlineData(18)]
+    [InlineData(32)]
+    public void DiagnosticDetailsLineColors_AfterResize_ColorsWrappedContinuationRows(int width)
+    {
+        const string message =
+            "[ERROR] 1/2  line 1: a long error description that wraps onto new rows\n" +
+            "[WARNING] 2/2  line 2: a long warning description that also wraps onto new rows";
+
+        List<string> lines = InvokePrivateStatic<List<string>>("WrapMessageText", message, width);
+        List<int> colors = InvokePrivateStatic<List<int>>("DiagnosticDetailsLineColors", lines);
+        int warningRow = lines.FindIndex(line => line.StartsWith("[WARNING]", StringComparison.Ordinal));
+
+        warningRow.Should().BeGreaterThan(1);
+        colors.Should().HaveCount(lines.Count);
+        colors.Take(warningRow).Should().OnlyContain(color => color == colors[0]);
+        colors.Skip(warningRow).Should().OnlyContain(color => color == colors[warningRow]);
+        colors[warningRow].Should().NotBe(colors[0]);
+    }
+
     [Fact]
     public void ClipMessageWithDetailsHint_ClippedError_ShowsF2Shortcut()
     {
