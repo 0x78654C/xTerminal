@@ -19,9 +19,17 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 : GlobalVariables.version;
 
             var architecture = RuntimeInformation.ProcessArchitecture.ToString();
+            var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
+            var commandsDll = @$"{pathExecutable}\Commands.dll";
+            var coreDll = @$"{pathExecutable}\Core.dll";
+            var sha256Commands = File.Exists(commandsDll) ? HashAlgo.GetSHA256(commandsDll) : "File does not exist!";
+            var sha256Core = File.Exists(coreDll) ? HashAlgo.GetSHA256(coreDll) : "File does not exist!";
             var sha256 = HashAlgo.GetSHA256(Application.ExecutablePath).ToUpper();
             var output = $"xTerminal version: {version} ({architecture})\n" +
-                $"SHA256 executable: {sha256}";
+                "__________________________________\n"+
+                $"SHA256 xTerminal.exe: {sha256}\n"+
+                $"SHA256 Commands.dll : {sha256Commands}\n"+
+                $"SHA256 Core.dll     : {sha256Core}\n";
 
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput = output;
