@@ -1,5 +1,6 @@
 using Core;
-using System;
+using Core.Encryption;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Windows.Forms;
@@ -13,12 +14,14 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
         public void Execute(string args)
         {
-            string version = string.IsNullOrWhiteSpace(GlobalVariables.version)
+            var version = string.IsNullOrWhiteSpace(GlobalVariables.version)
                 ? Application.ProductVersion
                 : GlobalVariables.version;
 
-            string architecture = RuntimeInformation.ProcessArchitecture.ToString();
-            string output = $"xTerminal version: {version} ({architecture})";
+            var architecture = RuntimeInformation.ProcessArchitecture.ToString();
+            var sha256 = HashAlgo.GetSHA256(Application.ExecutablePath).ToUpper();
+            var output = $"xTerminal version: {version} ({architecture})\n" +
+                $"SHA256 executable: {sha256}";
 
             if (GlobalVariables.isPipeCommand && GlobalVariables.pipeCmdCount > 0)
                 GlobalVariables.pipeCmdOutput = output;
