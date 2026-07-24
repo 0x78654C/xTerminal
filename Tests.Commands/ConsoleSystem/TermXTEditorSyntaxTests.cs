@@ -2,6 +2,7 @@ using System.Collections;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Text;
 using Core.DirFiles;
 using Core.SystemTools;
 using FluentAssertions;
@@ -678,6 +679,74 @@ public class TermXTEditorSyntaxTests
             List<CompletionInfo> completions = ActiveCSharpCompletions(editor);
             completions.Should().Contain(completion => completion.Label == "WriteLine");
             completions.Take(4).Should().Contain(completion => completion.Label == "WriteLine");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData(TermXTEditorSyntax.CSharp, ".cs", "")]
+    [InlineData(TermXTEditorSyntax.CSharp, ".cs", "string[] args")]
+    [InlineData(TermXTEditorSyntax.TermXt, ".xt", "")]
+    [InlineData(TermXTEditorSyntax.TermXt, ".xt", "string[] args")]
+    public void CSharpCompletion_LocalVariableDotAtEndOfFile_AutoOpensMemberSuggestions(
+        TermXTEditorSyntax syntax,
+        string extension,
+        string mainParameters)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + extension);
+
+        try
+        {
+            string textBeforeAccount =
+                "using System;\n" +
+                "using System.Reflection;\n\n" +
+                "public class BankAccount\n" +
+                "{\n" +
+                "    public void PrintSecretMessage(string message)\n" +
+                "    {\n" +
+                "        Console.WriteLine($\"Private method says: {message}\");\n" +
+                "    }\n" +
+                "}\n\n" +
+                "public static class Program\n" +
+                "{\n" +
+                "    public static void Main(" + mainParameters + ")\n" +
+                "    {\n" +
+                "        var account = new BankAccount();\n" +
+                "        ";
+            File.WriteAllText(path, string.Empty);
+            var editor = new TermXTEditor(path, syntax);
+            SetPrivateEnumField(editor, "_mode", "Insert");
+            InvokePrivate(editor, "InsertText", textBeforeAccount);
+            InvokePrivate(editor, "RefreshCompletionAfterEdit");
+
+            foreach (char value in "account.")
+                InvokePrivate(
+                    editor,
+                    "HandleKey",
+                    new ConsoleKeyInfo(value, ConsoleKeyFromChar(value), shift: false, alt: false, control: false));
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            ActiveCSharpCompletions(editor).Should().Contain(completion =>
+                completion.Label == "PrintSecretMessage" &&
+                completion.Kind == "method");
+
+            const int textTop = 2;
+            const int textRows = 30;
+            const int textWidth = 100;
+            InvokePrivate(editor, "AdjustScroll", textRows, textWidth);
+            GetPrivateField<StringBuilder>(editor, "_frame").Clear();
+            InvokePrivate(editor, "RenderCompletionPopup", textTop, 5, textRows, textWidth, 105);
+
+            int cursorVisualRow = InvokePrivate<int>(editor, "GetCursorVisualRow", textWidth);
+            int visibleRows = Math.Min(8, ActiveCSharpCompletions(editor).Count);
+            int expectedPopupTop = textTop + cursorVisualRow - visibleRows;
+            string popupFrame = GetPrivateField<StringBuilder>(editor, "_frame").ToString();
+            popupFrame.Should().StartWith("\u001b[" + (expectedPopupTop + 1) + ";");
+            popupFrame.Should().Contain("PrintSecretMessage");
         }
         finally
         {
@@ -1863,7 +1932,10 @@ public class TermXTEditorSyntaxTests
         return tokens;
     }
 
-    private static TermXTEditor CSharpEditorAtMarker(string path, string markedText)
+    private static TermXTEditor CSharpEditorAtMarker(
+        string path,
+        string markedText,
+        TermXTEditorSyntax syntax = TermXTEditorSyntax.CSharp)
     {
         int marker = markedText.IndexOf("$$", StringComparison.Ordinal);
         marker.Should().BeGreaterThanOrEqualTo(0);
@@ -1871,7 +1943,7 @@ public class TermXTEditorSyntaxTests
         string text = markedText.Remove(marker, 2);
         File.WriteAllText(path, text);
 
-        var editor = new TermXTEditor(path, TermXTEditorSyntax.CSharp);
+        var editor = new TermXTEditor(path, syntax);
         (int line, int column) = LineColumnAtPosition(text, marker);
         SetPrivateField(editor, "_cursorLine", line);
         SetPrivateField(editor, "_cursorCol", column);

@@ -1592,8 +1592,14 @@ namespace Core.DirFiles
                 return;
 
             int popupTop = textTop + visualLine + 1;
-            if (popupTop + visibleRows > textTop + textRows)
+            bool cursorAtDocumentEnd =
+                cursorVisualRow >= GetTotalVisualRows(textWidth) - 1;
+            bool popupFitsAboveCursor = visualLine >= visibleRows;
+            if ((cursorAtDocumentEnd && popupFitsAboveCursor) ||
+                popupTop + visibleRows > textTop + textRows)
+            {
                 popupTop = textTop + visualLine - visibleRows;
+            }
 
             if (popupTop < textTop)
                 popupTop = textTop;
@@ -3334,8 +3340,13 @@ namespace Core.DirFiles
             {
                 SourceCodeKind sourceKind = GetCSharpSourceKind();
                 CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
-                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
                 int position = GetDocumentPosition(_cursorLine, _cursorCol);
+                string documentText = BuildDocumentText();
+                if (position == documentText.Length)
+                    // Give Roslyn a complete member-access node without changing the editor buffer.
+                    documentText += "__xte_completion__";
+
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(documentText, parseOptions, _path);
 
                 if (IsCSharpCompletionSuppressed(syntaxTree, position))
                     return false;
