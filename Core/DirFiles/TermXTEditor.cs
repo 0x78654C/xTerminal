@@ -5,7 +5,7 @@ It uses ANSI escape codes for rendering the interface and handles user input thr
 The editor maintains an internal state to manage the file being edited, cursor position, undo/redo stacks, diagnostics, and more. 
 It also integrates with Roslyn for C# semantic analysis and code completion.
 
-Fully vibe coded with codex/gpt-5.5
+Fully vibe coded with codex/gpt-5.5, gpt-5.6-sol
 
  */
 
