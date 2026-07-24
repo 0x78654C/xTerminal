@@ -688,14 +688,18 @@ public class TermXTEditorSyntaxTests
     }
 
     [Theory]
-    [InlineData(TermXTEditorSyntax.CSharp, ".cs", "")]
-    [InlineData(TermXTEditorSyntax.CSharp, ".cs", "string[] args")]
-    [InlineData(TermXTEditorSyntax.TermXt, ".xt", "")]
-    [InlineData(TermXTEditorSyntax.TermXt, ".xt", "string[] args")]
+    [InlineData(TermXTEditorSyntax.CSharp, ".cs", "", "public", "PrintSecretMessage")]
+    [InlineData(TermXTEditorSyntax.CSharp, ".cs", "string[] args", "public", "PrintSecretMessage")]
+    [InlineData(TermXTEditorSyntax.TermXt, ".xt", "", "public", "PrintSecretMessage")]
+    [InlineData(TermXTEditorSyntax.TermXt, ".xt", "string[] args", "public", "PrintSecretMessage")]
+    [InlineData(TermXTEditorSyntax.CSharp, ".cs", "", "private", "ToString")]
+    [InlineData(TermXTEditorSyntax.TermXt, ".xt", "", "private", "ToString")]
     public void CSharpCompletion_LocalVariableDotAtEndOfFile_AutoOpensMemberSuggestions(
         TermXTEditorSyntax syntax,
         string extension,
-        string mainParameters)
+        string mainParameters,
+        string methodAccessibility,
+        string expectedCompletion)
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + extension);
 
@@ -706,7 +710,7 @@ public class TermXTEditorSyntaxTests
                 "using System.Reflection;\n\n" +
                 "public class BankAccount\n" +
                 "{\n" +
-                "    public void PrintSecretMessage(string message)\n" +
+                "    " + methodAccessibility + " void PrintSecretMessage(string message)\n" +
                 "    {\n" +
                 "        Console.WriteLine($\"Private method says: {message}\");\n" +
                 "    }\n" +
@@ -731,7 +735,7 @@ public class TermXTEditorSyntaxTests
 
             GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
             ActiveCSharpCompletions(editor).Should().Contain(completion =>
-                completion.Label == "PrintSecretMessage" &&
+                completion.Label == expectedCompletion &&
                 completion.Kind == "method");
 
             const int textTop = 2;
@@ -746,7 +750,71 @@ public class TermXTEditorSyntaxTests
             int expectedPopupTop = textTop + cursorVisualRow - visibleRows;
             string popupFrame = GetPrivateField<StringBuilder>(editor, "_frame").ToString();
             popupFrame.Should().StartWith("\u001b[" + (expectedPopupTop + 1) + ";");
-            popupFrame.Should().Contain("PrintSecretMessage");
+            popupFrame.Should().Contain(expectedCompletion);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData(TermXTEditorSyntax.CSharp, ".cs", false)]
+    [InlineData(TermXTEditorSyntax.CSharp, ".cs", true)]
+    [InlineData(TermXTEditorSyntax.TermXt, ".xt", false)]
+    [InlineData(TermXTEditorSyntax.TermXt, ".xt", true)]
+    public void CSharpCompletion_LocalVariableDotImmediatelyAfterDeclaration_WithFollowingStatement_AutoOpensMemberSuggestions(
+        TermXTEditorSyntax syntax,
+        string extension,
+        bool batchedInput)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + extension);
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(
+                path,
+                "using System;\n\n" +
+                "public class BankAccount\n" +
+                "{\n" +
+                "    public void PrintSecretMessage(string message)\n" +
+                "    {\n" +
+                "        Console.WriteLine(message);\n" +
+                "    }\n" +
+                "}\n\n" +
+                "public static class Program\n" +
+                "{\n" +
+                "    public static void Main()\n" +
+                "    {\n" +
+                "        var account = new BankAccount();\n" +
+                "        $$\n" +
+                "        var laterStatement = \"still here\";\n" +
+                "    }\n" +
+                "}",
+                syntax);
+            SetPrivateEnumField(editor, "_mode", "Insert");
+
+            if (batchedInput)
+            {
+                InvokePrivate(editor, "InsertText", "account.");
+                InvokePrivate(editor, "RefreshCompletionAfterEdit");
+            }
+            else
+            {
+                foreach (char value in "account.")
+                {
+                    InvokePrivate(
+                        editor,
+                        "HandleKey",
+                        new ConsoleKeyInfo(value, ConsoleKeyFromChar(value), shift: false, alt: false, control: false));
+                }
+            }
+
+            GetPrivateField<bool>(editor, "_completionActive").Should().BeTrue();
+            ActiveCSharpCompletions(editor).Should().Contain(completion =>
+                completion.Label == "PrintSecretMessage" &&
+                completion.Kind == "method");
         }
         finally
         {

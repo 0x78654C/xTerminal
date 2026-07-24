@@ -3342,9 +3342,13 @@ namespace Core.DirFiles
                 CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
                 int position = GetDocumentPosition(_cursorLine, _cursorCol);
                 string documentText = BuildDocumentText();
-                if (position == documentText.Length)
-                    // Give Roslyn a complete member-access node without changing the editor buffer.
-                    documentText += "__xte_completion__";
+                if (prefix.Length == 0)
+                {
+                    // Complete the temporary expression at the cursor and terminate it before any
+                    // following statement. This keeps Roslyn from recovering "account.\nvar ..."
+                    // as a qualified name while leaving the editor buffer untouched.
+                    documentText = documentText.Insert(position, "__xte_completion__;");
+                }
 
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(documentText, parseOptions, _path);
 
