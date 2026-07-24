@@ -404,6 +404,81 @@ public class TermXTEditorSyntaxTests
     }
 
     [Fact]
+    public void CSharpCompletion_ImportedLinqExtensionMethod_SuggestsWhere()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(
+                path,
+                "using System.Linq;\npublic class C { void M() { var values = new[] { 1, 2 }; values.Whe$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "Where" &&
+                completion.Kind == "method" &&
+                completion.Detail.Contains("Where("));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_UnimportedLinqExtensionMethod_DoesNotSuggestWhere()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(
+                path,
+                "public class C { void M() { var values = new[] { 1, 2 }; values.Whe$$ } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().NotContain(completion => completion.Label == "Where");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void CSharpCompletion_ImportedUserDefinedExtensionMethod_IsSuggested()
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");
+
+        try
+        {
+            var editor = CSharpEditorAtMarker(
+                path,
+                "using Helpers;\n" +
+                "namespace Helpers { public static class StringExtensions { " +
+                "public static string Shout(this string value) => value; } }\n" +
+                "namespace App { public class C { void M() { string value = \"\"; value.Sho$$ } } }");
+
+            List<CompletionInfo> completions = CSharpCompletions(editor);
+
+            completions.Should().Contain(completion =>
+                completion.Label == "Shout" &&
+                completion.Kind == "method" &&
+                completion.Detail.Contains("Shout("));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void CSharpCompletion_TypingIdentifierPart_AutoOpensSuggestions()
     {
         string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".cs");

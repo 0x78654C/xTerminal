@@ -3910,7 +3910,10 @@ namespace Core.DirFiles
                 return;
 
             int countBeforeLookup = items.Count;
-            foreach (ISymbol member in semanticModel.LookupSymbols(position, typeSymbol))
+            foreach (ISymbol member in semanticModel.LookupSymbols(
+                position,
+                typeSymbol,
+                includeReducedExtensionMethods: !staticContext))
             {
                 AddCSharpSymbolCompletion(
                     items,
@@ -4255,6 +4258,11 @@ namespace Core.DirFiles
             if (string.IsNullOrWhiteSpace(name) || name[0] == '<')
                 return false;
 
+            var method = symbol as IMethodSymbol;
+            bool reducedExtensionMethod =
+                method != null &&
+                method.MethodKind == MethodKind.ReducedExtension;
+
             if (memberAccess)
             {
                 if (staticContext)
@@ -4266,17 +4274,19 @@ namespace Core.DirFiles
                         return false;
                     }
                 }
-                else if (symbol.IsStatic && symbol.Kind != SymbolKind.NamedType)
+                else if (symbol.IsStatic &&
+                    symbol.Kind != SymbolKind.NamedType &&
+                    !reducedExtensionMethod)
                 {
                     return false;
                 }
             }
 
-            var method = symbol as IMethodSymbol;
             if (method != null)
             {
                 return method.MethodKind == MethodKind.Ordinary ||
-                    method.MethodKind == MethodKind.LocalFunction;
+                    method.MethodKind == MethodKind.LocalFunction ||
+                    reducedExtensionMethod;
             }
 
             return symbol.Kind == SymbolKind.NamedType ||
