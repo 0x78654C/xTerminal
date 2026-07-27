@@ -32,11 +32,11 @@ namespace Commands.TerminalCommands.ConsoleSystem
             var openaiDll = @$"{pathExecutable}\OpenAI.Api.Client.dll";
             var openrouterDll = @$"{pathExecutable}\Openrouter.dll";
             var xterminalDll = @$"{pathExecutable}\xTerminal.dll";
-            var sha256Commands = File.Exists(commandsDll) ? HashAlgo.GetSHA256(commandsDll) : "File does not exist!";
-            var sha256Core = File.Exists(coreDll) ? HashAlgo.GetSHA256(coreDll) : "File does not exist!";
-            var sha256Ollama = File.Exists(ollamaDll) ? HashAlgo.GetSHA256(ollamaDll) : "File does not exist!";
-            var sha256OpenAi = File.Exists(openaiDll) ? HashAlgo.GetSHA256(openaiDll) : "File does not exist!";
-            var sha256Openrouter = File.Exists(openrouterDll) ? HashAlgo.GetSHA256(openrouterDll) : "File does not exist!";
+            var sha256Commands = File.Exists(commandsDll) ? HashAlgo.GetSHA256(commandsDll).ToUpper() : "File does not exist!";
+            var sha256Core = File.Exists(coreDll) ? HashAlgo.GetSHA256(coreDll).ToUpper() : "File does not exist!";
+            var sha256Ollama = File.Exists(ollamaDll) ? HashAlgo.GetSHA256(ollamaDll).ToUpper() : "File does not exist!";
+            var sha256OpenAi = File.Exists(openaiDll) ? HashAlgo.GetSHA256(openaiDll).ToUpper() : "File does not exist!";
+            var sha256Openrouter = File.Exists(openrouterDll) ? HashAlgo.GetSHA256(openrouterDll).ToUpper() : "File does not exist!";
             var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
             var verCore = File.Exists(coreDll) ? AssemblyName.GetAssemblyName(coreDll).Version.ToString() : "File does not exist!";
             var verCommands = File.Exists(commandsDll) ? AssemblyName.GetAssemblyName(commandsDll).Version.ToString() : "File does not exist!";
