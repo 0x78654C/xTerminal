@@ -5,7 +5,7 @@ It uses ANSI escape codes for rendering the interface and handles user input thr
 The editor maintains an internal state to manage the file being edited, cursor position, undo/redo stacks, diagnostics, and more. 
 It also integrates with Roslyn for C# semantic analysis and code completion.
 
-Fully vibe coded with codex/gpt-5.5
+Fully vibe coded with codex/gpt-5.5, gpt-5.6-sol
 
  */
 
@@ -1592,8 +1592,14 @@ namespace Core.DirFiles
                 return;
 
             int popupTop = textTop + visualLine + 1;
-            if (popupTop + visibleRows > textTop + textRows)
+            bool cursorAtDocumentEnd =
+                cursorVisualRow >= GetTotalVisualRows(textWidth) - 1;
+            bool popupFitsAboveCursor = visualLine >= visibleRows;
+            if ((cursorAtDocumentEnd && popupFitsAboveCursor) ||
+                popupTop + visibleRows > textTop + textRows)
+            {
                 popupTop = textTop + visualLine - visibleRows;
+            }
 
             if (popupTop < textTop)
                 popupTop = textTop;
@@ -3334,8 +3340,17 @@ namespace Core.DirFiles
             {
                 SourceCodeKind sourceKind = GetCSharpSourceKind();
                 CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
-                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
                 int position = GetDocumentPosition(_cursorLine, _cursorCol);
+                string documentText = BuildDocumentText();
+                if (prefix.Length == 0)
+                {
+                    // Complete the temporary expression at the cursor and terminate it before any
+                    // following statement. This keeps Roslyn from recovering "account.\nvar ..."
+                    // as a qualified name while leaving the editor buffer untouched.
+                    documentText = documentText.Insert(position, "__xte_completion__;");
+                }
+
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(documentText, parseOptions, _path);
 
                 if (IsCSharpCompletionSuppressed(syntaxTree, position))
                     return false;
@@ -3910,7 +3925,10 @@ namespace Core.DirFiles
                 return;
 
             int countBeforeLookup = items.Count;
-            foreach (ISymbol member in semanticModel.LookupSymbols(position, typeSymbol))
+            foreach (ISymbol member in semanticModel.LookupSymbols(
+                position,
+                typeSymbol,
+                includeReducedExtensionMethods: !staticContext))
             {
                 AddCSharpSymbolCompletion(
                     items,
@@ -4255,6 +4273,11 @@ namespace Core.DirFiles
             if (string.IsNullOrWhiteSpace(name) || name[0] == '<')
                 return false;
 
+            var method = symbol as IMethodSymbol;
+            bool reducedExtensionMethod =
+                method != null &&
+                method.MethodKind == MethodKind.ReducedExtension;
+
             if (memberAccess)
             {
                 if (staticContext)
@@ -4266,17 +4289,19 @@ namespace Core.DirFiles
                         return false;
                     }
                 }
-                else if (symbol.IsStatic && symbol.Kind != SymbolKind.NamedType)
+                else if (symbol.IsStatic &&
+                    symbol.Kind != SymbolKind.NamedType &&
+                    !reducedExtensionMethod)
                 {
                     return false;
                 }
             }
 
-            var method = symbol as IMethodSymbol;
             if (method != null)
             {
                 return method.MethodKind == MethodKind.Ordinary ||
-                    method.MethodKind == MethodKind.LocalFunction;
+                    method.MethodKind == MethodKind.LocalFunction ||
+                    reducedExtensionMethod;
             }
 
             return symbol.Kind == SymbolKind.NamedType ||

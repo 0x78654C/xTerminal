@@ -135,7 +135,7 @@ namespace Commands.TerminalCommands.Roslyn
                 MethodInfo myMethod = assembly.EntryPoint;
                 if (!capturePipeOutput)
                 {
-                    myMethod.Invoke(null, new object[] { _commandLineArgs });
+                    InvokeEntryPoint(myMethod);
                     return;
                 }
 
@@ -147,7 +147,7 @@ namespace Commands.TerminalCommands.Roslyn
                 try
                 {
                     Console.SetOut(writer);
-                    myMethod.Invoke(null, new object[] { _commandLineArgs });
+                    InvokeEntryPoint(myMethod);
                 }
                 finally
                 {
@@ -161,6 +161,15 @@ namespace Commands.TerminalCommands.Roslyn
                 FileSystem.ErrorWriteLine(e.Message);
                 GlobalVariables.isErrorCommand = true;
             }
+        }
+
+        private void InvokeEntryPoint(MethodInfo entryPoint)
+        {
+            object[] parameters = entryPoint.GetParameters().Length == 0
+                ? Array.Empty<object>()
+                : new object[] { _commandLineArgs };
+
+            entryPoint.Invoke(null, parameters);
         }
 
         private static void LoadReferencedAssemblies(IEnumerable<string> assemblyPaths)
