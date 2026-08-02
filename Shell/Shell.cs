@@ -14,20 +14,23 @@
       SOFTWARE.
 */
 using Core;
+using Core.Commands;
+using Core.Security;
+using Core.SystemTools;
+using Core.Updater;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
-using Core.Security;
-using SetConsoleColor = Core.SystemTools.UI;
-using ProccessManage = Core.SystemTools.ProcessStart;
-using SystemCmd = Core.Commands.SystemCommands;
+using System.Reflection;
 using System.Runtime.Versioning;
-using Core.SystemTools;
-using Core.Commands;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using ProccessManage = Core.SystemTools.ProcessStart;
+using SetConsoleColor = Core.SystemTools.UI;
+using SystemCmd = Core.Commands.SystemCommands;
 
 namespace Shell
 {
@@ -154,6 +157,30 @@ namespace Shell
 
             // Store xTerminal version.
             GlobalVariables.version = Application.ProductVersion;
+        }
+
+        /// <summary>
+        /// Update checker
+        /// </summary>
+        private static void CheckUpdate()
+        {
+            var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
+            var xterminalDll = @$"{pathExecutable}\xTerminal.dll"; 
+            var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe"; 
+           // var xterminalDll = Path.Combine("C:\\Users\\MrX\\Projects\\xTerminal\\Shell\\bin\\x64\\Debug\\net10.0-windows7.0\\xTerminal.dll");
+            var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
+            var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+            var githubAPI = new GitHubAPI();
+            Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
+            if (GlobalVariables.isNewVersion)
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version available for update. Do you want to update?\nYes [Y]/ No [N]: ");
+                var key = Console.ReadKey();
+                if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
+                {
+                    ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
+                }
+            }
         }
 
 
@@ -517,6 +544,10 @@ namespace Shell
             }
 
             if (ExecuteParamCommands(args)) { return; }
+
+
+            // Check for updates
+            CheckUpdate();
 
             // We loop until exit commands is hit
             do
