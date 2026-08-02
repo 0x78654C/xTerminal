@@ -1,6 +1,7 @@
 using Commands.TerminalCommands.Network;
 using Core;
 using Core.Encryption;
+using Core.Network;
 using Core.Security;
 using Core.Spreadsheets;
 using System.IO.Compression;
@@ -54,7 +55,7 @@ public class SecurityRegressionTests
         string destination = Path.Combine(Path.GetTempPath(), "wget-destination");
         var uri = new Uri("https://example.test/files/..%5C..%5Cescaped.txt");
 
-        string result = WGet.GetSafeDownloadPath(uri, destination);
+        string result = UriSafety.GetSafeDownloadPath(uri, destination);
 
         Assert.Equal(Path.Combine(Path.GetFullPath(destination), "escaped.txt"), result);
     }
