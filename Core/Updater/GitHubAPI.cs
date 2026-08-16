@@ -7,12 +7,13 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
+using System.Runtime.Versioning;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Core.Updater
 {
+    [SupportedOSPlatform("windows")]
     public class GitHubAPI
     {
         const string owner = "0x78654c";
@@ -58,17 +59,25 @@ namespace Core.Updater
         private void UnpackZip(string zipFilePath, string extractPath, out bool success)
         {
             success = false;
-            if (File.Exists(zipFilePath))
+            try
             {
-                var fileInfo = new FileInfo(zipFilePath);
-                Console.WriteLine($"Unpacking: {fileInfo.Name} ....");
-                ZipFile.ExtractToDirectory(zipFilePath, extractPath, true);
-                var extractedFiles = $"{extractPath}\\xTerminal.exe";
-                if (File.Exists(extractedFiles))
+                if (File.Exists(zipFilePath))
                 {
-                    success = true;
-                    File.Delete(zipFilePath);
+                    var fileInfo = new FileInfo(zipFilePath);
+                    Console.WriteLine($"Unpacking: {fileInfo.Name} ....");
+                    ZipFile.ExtractToDirectory(zipFilePath, extractPath, true);
+                    var extractedFiles = $"{extractPath}\\xTerminal.exe";
+                    if (File.Exists(extractedFiles))
+                    {
+                        success = true;
+                        File.Delete(zipFilePath);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                success = false;
+                FileSystem.ErrorWriteLine($"Error unpacking zip file: {ex.Message}");
             }
         }
 
@@ -80,29 +89,36 @@ namespace Core.Updater
         /// <param name="destinationPath"></param>
         private void DownloadFile(string url, string destinationPath, out bool success)
         {
-            success = false;
-            if (!Directory.Exists(destinationPath))
-                Directory.CreateDirectory(destinationPath);
-            var client = new HttpClient();
-            var getUri = UriSafety.CreateHttpUri(url);
-            var fileName = UriSafety.GetSafeDownloadPath(getUri, destinationPath);
-            var fileInfo = new FileInfo(fileName);
-            Console.WriteLine($"Downloading: {fileInfo.Name} ....");
-            var response = client.GetAsync(url).Result;
-            response.EnsureSuccessStatusCode();
-            var fs = new FileStream(fileName, FileMode.Create);
-            response.Content.CopyToAsync(fs).Wait();
-            fs.Flush();
-            fs.Close();
-            if (File.Exists(fileName))
+            try
             {
-                var shsum = HashAlgo.GetSHA256(fileName);
-                bool isValid = shsum.Equals(_sha256Hash.Replace("sha256:", ""), StringComparison.OrdinalIgnoreCase);
-                success = isValid;
-                _downloadPath = fileName;
+                success = false;
+                if (!Directory.Exists(destinationPath))
+                    Directory.CreateDirectory(destinationPath);
+                var client = new HttpClient();
+                var getUri = UriSafety.CreateHttpUri(url);
+                var fileName = UriSafety.GetSafeDownloadPath(getUri, destinationPath);
+                var fileInfo = new FileInfo(fileName);
+                Console.WriteLine($"Downloading: {fileInfo.Name} ....");
+                var response = client.GetAsync(url).Result;
+                response.EnsureSuccessStatusCode();
+                var fs = new FileStream(fileName, FileMode.Create);
+                response.Content.CopyToAsync(fs).Wait();
+                fs.Flush();
+                fs.Close();
+                if (File.Exists(fileName))
+                {
+                    var shsum = HashAlgo.GetSHA256(fileName);
+                    bool isValid = shsum.Equals(_sha256Hash.Replace("sha256:", ""), StringComparison.OrdinalIgnoreCase);
+                    success = isValid;
+                    _downloadPath = fileName;
+                }
+            }
+            catch (Exception ex)
+            {
+                success = false;
+                FileSystem.ErrorWriteLine($"Error downloading file: {ex.Message}");
             }
         }
-
 
 
         /// <summary>
@@ -113,32 +129,39 @@ namespace Core.Updater
         /// <returns></returns>
         public async Task CheckNewVersions(string version, string arhitecture)
         {
-            GlobalVariables.isNewVersion = false;
-            using var client = new HttpClient()
+            try
             {
-                BaseAddress = new Uri("https://api.github.com/")
-            };
+                GlobalVariables.isNewVersion = false;
+                using var client = new HttpClient()
+                {
+                    BaseAddress = new Uri("https://api.github.com/")
+                };
 
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("ReleaseLister/1.0");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("ReleaseLister/1.0");
 
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 
-            var realeases = await client.GetFromJsonAsync<List<Release>>(
-                $"repos/{owner}/{repo}/releases?per_page=1"
-                );
+                var realeases = await client.GetFromJsonAsync<List<Release>>(
+                    $"repos/{owner}/{repo}/releases?per_page=1"
+                    );
 
 
-            foreach (var release in realeases)
-            {
-                if (!IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0")))
-                    break;
-                GlobalVariables.isNewVersion = true;
-                foreach (var asset in release.Assets)
-                    if (asset.DownloadUrl.Contains(arhitecture) && asset.Name.StartsWith("xTerminal"))
-                    {
-                        _downloadLink = asset.DownloadUrl;
-                        _sha256Hash = asset.Digest;
-                    }
+                foreach (var release in realeases)
+                {
+                    if (!IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0")))
+                        break;
+                    GlobalVariables.isNewVersion = true;
+                    GlobalVariables.versionNew = GetVersionFromTag(release.TagName ?? "0.0.0");
+                    foreach (var asset in release.Assets)
+                        if (asset.DownloadUrl.Contains(arhitecture) && asset.Name.StartsWith("xTerminal"))
+                        {
+                            _downloadLink = asset.DownloadUrl;
+                            _sha256Hash = asset.Digest;
+                        }
+                }
+            }
+            catch(Exception ex) {
+                FileSystem.ErrorWriteLine($"Error checking for new versions: {ex.Message}");
             }
         }
 
