@@ -70,5 +70,6 @@ namespace Core
         public static string bgProcessListFile = terminalWorkDirectory + "\\bgPids.db";
         public static string workingDirectory { get; set; }
         public static bool isNewVersion { get; set; } = false;  
+        public static string versionNew { get; set; } = string.Empty;
     }
 }
