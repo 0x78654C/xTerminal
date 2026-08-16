@@ -15,6 +15,7 @@
 */
 using Core;
 using Core.Commands;
+using Core.Network;
 using Core.Security;
 using Core.SystemTools;
 using Core.Updater;
@@ -164,21 +165,27 @@ namespace Shell
         /// </summary>
         private static void CheckUpdate()
         {
-            var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
-            var xterminalDll = @$"{pathExecutable}\xTerminal.dll"; 
-            var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe"; 
-           // var xterminalDll = Path.Combine("C:\\Users\\MrX\\Projects\\xTerminal\\Shell\\bin\\x64\\Debug\\net10.0-windows7.0\\xTerminal.dll");
-            var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
-            var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
-            var githubAPI = new GitHubAPI();
-            Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
-            if (GlobalVariables.isNewVersion)
+            if (NetWork.IntertCheck())
             {
-                FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version available for update. Do you want to update?\nYes [Y]/ No [N]: ");
-                var key = Console.ReadKey();
-                if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
+                var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
+                var xterminalDll = @$"{pathExecutable}\xTerminal.dll";
+                var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe";
+                // var xterminalDll = Path.Combine("C:\\Users\\MrX\\Projects\\xTerminal\\Shell\\bin\\x64\\Debug\\net10.0-windows7.0\\xTerminal.dll");
+                var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
+                var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+                var githubAPI = new GitHubAPI();
+                Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
+                if (GlobalVariables.isNewVersion)
                 {
-                    ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version available for update:\n");
+                    FileSystem.ColorConsoleText(ConsoleColor.Yellow,$"Current version: {verExe}\n" +
+                   $"New version: {GlobalVariables.versionNew}\n");
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "Do you want to update?\nYes [Y]/ No [N]: ");
+
+                    var key = Console.ReadKey();
+                    Console.WriteLine();
+                    if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
+                        ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
                 }
             }
         }
@@ -903,7 +910,7 @@ namespace Shell
 
             isValidCommand = !commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory");
 
-            if(isValidCommand || commandInput.StartsWith("chain"))
+            if (isValidCommand || commandInput.StartsWith("chain"))
             {
                 if (!string.IsNullOrWhiteSpace(commandInput) && !string.IsNullOrEmpty(commandInput))
                 {
