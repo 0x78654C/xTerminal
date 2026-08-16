@@ -2,6 +2,7 @@
 using Core.Network;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -174,9 +175,46 @@ namespace Core.Updater
             var isUnpacked = false;
             DownloadFile(_downloadLink, GlobalVariables.unpackUpdate, out isValidDownload);
             UnpackZip(_downloadPath, GlobalVariables.unpackUpdate, out isUnpacked);
+            var fileSize = new FileInfo(_downloadPath).Length;
+            if (fileSize > 0)
+            {
+                //TODO: Copy file
+            }
         }
 
+        public void CopyNewFiles(string sourcePath, string destinationPath)
+        {
+            try
+            {
+                if(!Directory.Exists(destinationPath))
+                    Directory.CreateDirectory(destinationPath);
 
+                // Copy files
+                foreach (string file in Directory.GetFiles(sourcePath))
+                {
+                    string destinationFile = Path.Combine(
+                        destinationPath,
+                        Path.GetFileName(file));
+
+                    File.Copy(file, destinationFile, overwrite: true);
+                }
+
+                // Copy subfolders recursively
+                foreach (string folder in Directory.GetDirectories(sourcePath))
+                {
+                    string destinationSubfolder = Path.Combine(
+                        destinationPath,
+                        Path.GetFileName(folder));
+
+                    CopyNewFiles(folder, destinationSubfolder);
+                }
+            }
+            catch (Exception ex)
+            {
+                FileSystem.ErrorWriteLine($"Error copying file: {ex.Message}");
+            }
+        }
+        
         /// <summary>
         /// Provides information about a release asset, including its name, download URL, and digest.
         /// </summary>
