@@ -19,9 +19,10 @@ namespace AutoUpdater
                     xtermPath = args[0];
                 }
                 catch { }
+                Console.WriteLine($"xTerminal path: {xtermPath}");
                 var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
-                //   var xterminalDll = @$"{xtermPath}\xTerminal.dll"; 
-                var xterminalDll = "C:\\Users\\mrx\\Projects\\xTerminal\\Release\\net10.0-windows7.0\\xTerminal.dll";
+                var xterminalDll = @$"{xtermPath}\xTerminal.dll"; 
+                //var xterminalDll = "C:\\Users\\mrx\\Projects\\xTerminal\\Release\\net10.0-windows7.0\\xTerminal.dll";
                 var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
                 var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
                 var githubAPI = new GitHubAPI();
