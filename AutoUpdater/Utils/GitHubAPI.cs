@@ -1,5 +1,4 @@
-﻿using AutoUpdater.Utils;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -174,19 +173,19 @@ namespace AutoUpdater.Utils
                 {
                     Console.WriteLine($"Copy files....");
                     CopyNewFiles(GlobalVariables.unpackUpdate, xTerminalPath);
-
                     Console.WriteLine($"Finished update. Starting xTerminal....");
                     Process.Start(new ProcessStartInfo
                     {
                         FileName = Path.Combine(xTerminalPath, "xTerminal.exe"),
                         UseShellExecute = true
                     });
+                    Thread.Sleep(2000);
                     Application.Exit();
                 }
             }
             catch (Exception ex)
             {
-                UI.ErrorWriteLine($"Error during update: {ex.ToString()}");
+                UI.ErrorWriteLine(ex.ToString());
                 Console.ReadKey();
             }
         }
