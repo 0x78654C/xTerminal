@@ -1,5 +1,4 @@
-﻿using Core;
-using Core.Updater;
+﻿using AutoUpdater.Utils;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -7,6 +6,10 @@ namespace AutoUpdater
 {
     internal class Program
     {
+        /// <summary>
+        /// Main entry point of the application.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             try
@@ -20,19 +23,18 @@ namespace AutoUpdater
                 }
                 catch { }
                 Console.WriteLine($"xTerminal path: {xtermPath}");
-                var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
                 var xterminalDll = @$"{xtermPath}\xTerminal.dll"; 
                 //var xterminalDll = "C:\\Users\\mrx\\Projects\\xTerminal\\Release\\net10.0-windows7.0\\xTerminal.dll";
                 var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
                 var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
                 var githubAPI = new GitHubAPI();
                 Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
-                githubAPI.DownloadUpdate();
+                githubAPI.DownloadUpdate(xtermPath);
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                FileSystem.ErrorWriteLine(ex.ToString());
+                UI.ErrorWriteLine(ex.ToString());
                 Console.ReadKey();
             }
         }
