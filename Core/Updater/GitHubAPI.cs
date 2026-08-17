@@ -1,10 +1,5 @@
-﻿using Core.Encryption;
-using Core.Network;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -51,77 +46,7 @@ namespace Core.Updater
             return tag;
         }
 
-        /// <summary>
-        /// Extracts the contents of a zip file to a specified directory and checks if the extraction was successful by verifying the existence of a specific file.
-        /// </summary>
-        /// <param name="zipFilePath"></param>
-        /// <param name="extractPath"></param>
-        /// <param name="success"></param>
-        private void UnpackZip(string zipFilePath, string extractPath, out bool success)
-        {
-            success = false;
-            try
-            {
-                if (File.Exists(zipFilePath))
-                {
-                    var fileInfo = new FileInfo(zipFilePath);
-                    Console.WriteLine($"Unpacking: {fileInfo.Name} ....");
-                    ZipFile.ExtractToDirectory(zipFilePath, extractPath, true);
-                    var extractedFiles = $"{extractPath}\\xTerminal.exe";
-                    if (File.Exists(extractedFiles))
-                    {
-                        success = true;
-                        File.Delete(zipFilePath);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                success = false;
-                FileSystem.ErrorWriteLine($"Error unpacking zip file: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Downloads a file from a specified URL and saves it to a specified destination path. If the destination directory does not exist, it creates it.
-        /// After downloading, it checks if the file exists and prints the download location.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="destinationPath"></param>
-        private void DownloadFile(string url, string destinationPath, out bool success)
-        {
-            try
-            {
-                success = false;
-                if (!Directory.Exists(destinationPath))
-                    Directory.CreateDirectory(destinationPath);
-                var client = new HttpClient();
-                var getUri = UriSafety.CreateHttpUri(url);
-                var fileName = UriSafety.GetSafeDownloadPath(getUri, destinationPath);
-                var fileInfo = new FileInfo(fileName);
-                Console.WriteLine($"Downloading: {fileInfo.Name} ....");
-                var response = client.GetAsync(url).Result;
-                response.EnsureSuccessStatusCode();
-                var fs = new FileStream(fileName, FileMode.Create);
-                response.Content.CopyToAsync(fs).Wait();
-                fs.Flush();
-                fs.Close();
-                if (File.Exists(fileName))
-                {
-                    var shsum = HashAlgo.GetSHA256(fileName);
-                    bool isValid = shsum.Equals(_sha256Hash.Replace("sha256:", ""), StringComparison.OrdinalIgnoreCase);
-                    success = isValid;
-                    _downloadPath = fileName;
-                }
-            }
-            catch (Exception ex)
-            {
-                success = false;
-                FileSystem.ErrorWriteLine($"Error downloading file: {ex.Message}");
-            }
-        }
-
-
+      
         /// <summary>
         /// Check repo newst version.
         /// </summary>
@@ -166,55 +91,6 @@ namespace Core.Updater
             }
         }
 
-        /// <summary>
-        /// Download and unpack the new update.
-        /// </summary>
-        public void DownloadUpdate()
-        {
-            var isValidDownload = false;
-            var isUnpacked = false;
-            DownloadFile(_downloadLink, GlobalVariables.unpackUpdate, out isValidDownload);
-            UnpackZip(_downloadPath, GlobalVariables.unpackUpdate, out isUnpacked);
-            var fileSize = new FileInfo(_downloadPath).Length;
-            if (fileSize > 0)
-            {
-                //TODO: Copy file
-            }
-        }
-
-        public void CopyNewFiles(string sourcePath, string destinationPath)
-        {
-            try
-            {
-                if(!Directory.Exists(destinationPath))
-                    Directory.CreateDirectory(destinationPath);
-
-                // Copy files
-                foreach (string file in Directory.GetFiles(sourcePath))
-                {
-                    string destinationFile = Path.Combine(
-                        destinationPath,
-                        Path.GetFileName(file));
-
-                    File.Copy(file, destinationFile, overwrite: true);
-                }
-
-                // Copy subfolders recursively
-                foreach (string folder in Directory.GetDirectories(sourcePath))
-                {
-                    string destinationSubfolder = Path.Combine(
-                        destinationPath,
-                        Path.GetFileName(folder));
-
-                    CopyNewFiles(folder, destinationSubfolder);
-                }
-            }
-            catch (Exception ex)
-            {
-                FileSystem.ErrorWriteLine($"Error copying file: {ex.Message}");
-            }
-        }
-        
         /// <summary>
         /// Provides information about a release asset, including its name, download URL, and digest.
         /// </summary>
