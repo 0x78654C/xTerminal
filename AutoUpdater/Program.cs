@@ -6,6 +6,15 @@ namespace AutoUpdater
 {
     internal class Program
     {
+        private static readonly string[] s_xTerminalLogo = new[]
+        {
+    @"       _____                   _             _ ",
+    @"__  __|_   _|__ _ __ _ __ ___ (_)_ __   __ _| |",
+    @"\ \/ /  | |/ _ \ '__| '_ ` _ \| | '_ \ / _` | |",
+    @" >  <   | |  __/ |  | | | | | | | | | | (_| | |",
+    @"/_/\_\  |_|\___|_|  |_| |_| |_|_|_| |_|\__,_|_|"
+};
+
         /// <summary>
         /// Main entry point of the application.
         /// </summary>
@@ -22,15 +31,22 @@ namespace AutoUpdater
                     xtermPath = args[0];
                 }
                 catch { }
+                Console.WriteLine(string.Join(Environment.NewLine, s_xTerminalLogo));
+                Console.WriteLine("");
+                var version = Assembly.GetExecutingAssembly().GetName().Version;
+                Console.WriteLine("================================================");
+                Console.WriteLine($"=  AutoUpdater for xTerminal version: {version}  =");
+                Console.WriteLine("================================================");
+                Console.WriteLine("");
                 Console.WriteLine($"xTerminal path: {xtermPath}");
-                var xterminalDll = @$"{xtermPath}\xTerminal.dll"; 
+                var xterminalDll = @$"{xtermPath}\xTerminal.dll";
                 //var xterminalDll = "C:\\Users\\mrx\\Projects\\xTerminal\\Release\\net10.0-windows7.0\\xTerminal.dll";
                 var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
                 var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
                 var githubAPI = new GitHubAPI();
                 Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
                 githubAPI.DownloadUpdate(xtermPath);
-                Console.ReadKey();
+                return;
             }
             catch (Exception ex)
             {
