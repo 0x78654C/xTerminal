@@ -19,6 +19,12 @@ namespace Commands.TerminalCommands.DirFiles
             string currentDirectory = File.ReadAllText(GlobalVariables.currentDirectory);
             try
             {
+                if (arg == Name)
+                {
+                    FileSystem.ErrorWriteLine("No file name provided.");
+                    GlobalVariables.isErrorCommand = true;
+                    return;
+                }
                 int argLenght = arg.Length - 7;
                 var param = arg.Substring(7, argLenght);
                 if (param == "-h")
@@ -38,6 +44,7 @@ namespace Commands.TerminalCommands.DirFiles
                     }
                     return;
                 }
+
                 var file = FileSystem.SanitizePath(param, currentDirectory);
                 File.Create(file);
                 FileSystem.SuccessWriteLine($"File {file} was created!");
