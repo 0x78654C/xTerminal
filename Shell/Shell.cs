@@ -161,7 +161,7 @@ namespace Shell
         }
 
         /// <summary>
-        /// Update checker
+        /// Update check for new version available on GitHub.
         /// </summary>
         private static void CheckUpdate()
         {
@@ -177,15 +177,17 @@ namespace Shell
                 Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
                 if (GlobalVariables.isNewVersion)
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version available for update:\n");
-                    FileSystem.ColorConsoleText(ConsoleColor.Yellow,$"Current version: {verExe}\n" +
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version in GitHub available for update:\n");
+                    FileSystem.ColorConsoleText(ConsoleColor.Yellow,$"\nCurrent version: {verExe}\n" +
                    $"New version: {GlobalVariables.versionNew}\n");
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "Do you want to update?\nYes [Y]/ No [N]: ");
-
+                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
                     var key = Console.ReadKey();
                     Console.WriteLine();
+
                     if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
                         ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
+                    else
+                        Console.Clear();
                 }
             }
         }
