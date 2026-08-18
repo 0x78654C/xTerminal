@@ -15,7 +15,7 @@ namespace AutoUpdater.Utils
         private string _sha256Hash = "";
         private string _downloadPath = "";
         private string _downloadLink = "";
-    
+
 
         /// <summary>
         /// Compares two version strings and returns true if the latestVersion is newer than the currentVersion.
@@ -172,15 +172,24 @@ namespace AutoUpdater.Utils
                 if (fileSize > 0)
                 {
                     Console.WriteLine($"Copy files....");
-                    CopyNewFiles(GlobalVariables.unpackUpdate, xTerminalPath);
-                    Console.WriteLine($"Finished update. Starting xTerminal....");
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = Path.Combine(xTerminalPath, "xTerminal.exe"),
-                        UseShellExecute = true
-                    });
+                    ClearFolder(xTerminalPath);
                     Thread.Sleep(2000);
-                    Application.Exit();
+                    CopyNewFiles(GlobalVariables.unpackUpdate, xTerminalPath);
+                    Thread.Sleep(2000);
+                    Console.WriteLine($"Finished update. Starting xTerminal....");
+                    if (File.Exists(Path.Combine(xTerminalPath, "xTerminal.exe")))
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = Path.Combine(xTerminalPath, "xTerminal.exe"),
+                            UseShellExecute = true
+                        });
+                    }
+                    else {
+                        UI.ErrorWriteLine($"xTerminal.exe not found in {xTerminalPath}");
+                        Console.ReadKey();
+                    }
+                    Thread.Sleep(2000);
                 }
             }
             catch (Exception ex)
@@ -189,6 +198,23 @@ namespace AutoUpdater.Utils
                 Console.ReadKey();
             }
         }
+
+        /// <summary>
+        /// Deletes all files and subdirectories within the specified folder path, effectively clearing the folder's contents.
+        /// </summary>
+        /// <param name="folderPath"></param>
+        public static void ClearFolder(string folderPath)
+        {
+            foreach (var file in Directory.GetFiles(folderPath))
+            {
+                if (!file.Contains("xUpdater.exe"))
+                    File.Delete(file);
+            }
+
+            foreach (var directory in Directory.GetDirectories(folderPath))
+                Directory.Delete(directory, recursive: true);
+        }
+
         /// <summary>
         /// Copys all files and subdirectories from the source path to the destination path, creating the destination directory if it does not exist. Existing files in the destination will be overwritten.
         /// </summary>
