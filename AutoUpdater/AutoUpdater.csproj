@@ -5,5 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>xUpdater</AssemblyName>
+    <ApplicationIcon>xUpdater.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Content Include="xUpdater.ico" />
+  </ItemGroup>
 </Project>
