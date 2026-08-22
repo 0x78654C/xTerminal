@@ -71,7 +71,7 @@ namespace AutoUpdater.Utils
             catch (Exception ex)
             {
                 success = false;
-                UI.ErrorWriteLine($"Error unpacking zip file: {ex.Message}");
+                UI.ErrorWriteLine($"Unpacking zip file: {ex.Message}");
             }
         }
 
@@ -110,7 +110,7 @@ namespace AutoUpdater.Utils
             catch (Exception ex)
             {
                 success = false;
-                UI.ErrorWriteLine($"Error downloading file: {ex.Message}");
+                UI.ErrorWriteLine($"Downloading file: {ex.Message}");
             }
         }
 
@@ -233,7 +233,9 @@ namespace AutoUpdater.Utils
                     string destinationFile = Path.Combine(
                         destinationPath,
                         Path.GetFileName(file));
-
+                    // Skip copying xUpdater.exe to avoid overwriting the updater itself
+                    if (file.Contains("xUpdater.exe"))
+                        continue;
                     File.Copy(file, destinationFile, overwrite: true);
                 }
 
