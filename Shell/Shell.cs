@@ -15,6 +15,7 @@
 */
 using Core;
 using Core.Commands;
+using Core.Encryption;
 using Core.Network;
 using Core.Security;
 using Core.SystemTools;
@@ -22,6 +23,7 @@ using Core.Updater;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -165,34 +167,60 @@ namespace Shell
         /// </summary>
         private static void CheckUpdate()
         {
-            if (NetWork.IntertCheck())
+            try
             {
-                var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
-                var xterminalDll = @$"{pathExecutable}\xTerminal.dll";
-                var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe";
-                // var xterminalDll = Path.Combine("C:\\Users\\MrX\\Projects\\xTerminal\\Shell\\bin\\x64\\Debug\\net10.0-windows7.0\\xTerminal.dll");
-                var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
-                var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
-                var githubAPI = new GitHubAPI();
-                Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
-                if (GlobalVariables.isNewVersion)
+                if (NetWork.IntertCheck())
                 {
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version in GitHub available for update:\n");
-                    FileSystem.ColorConsoleText(ConsoleColor.Yellow,$"\nCurrent version: {verExe}\n" +
-                   $"New version: {GlobalVariables.versionNew}\n");
-                    FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
-                    var key = Console.ReadKey();
-                    Console.WriteLine();
+                    var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
+                    var xterminalDll = @$"{pathExecutable}\xTerminal.dll";
+                    var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe";
+                    var xUpdateNew = @$"{GlobalVariables.unpackUpdate}\xUpdateNew.exe";
 
-                    if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
-                        ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
+                    var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
+                    var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+                    var githubAPI = new GitHubAPI();
+                    Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
+                    if (GlobalVariables.isNewVersion)
+                    {
+                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version in GitHub available for update:\n");
+                        FileSystem.ColorConsoleText(ConsoleColor.Yellow, $"\nCurrent version: {verExe}\n" +
+                        $"New version: {GlobalVariables.versionNew}\n");
+                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
+                        var key = Console.ReadKey();
+                        Console.WriteLine();
+
+                        if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
+                            ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
+                        else
+                            Console.Clear();
+                    }
                     else
-                        Console.Clear();
+                    {
+                        if (File.Exists(xUpdateNew))
+                        {
+                            var verNew = AssemblyName.GetAssemblyName(xUpdateNew).Version.ToString();
+                            var verOld = AssemblyName.GetAssemblyName(xUpdaterExe).Version.ToString();
+                            var isNewUpdate = githubAPI.IsNewerVersion(verNew, verOld);
+                            if (isNewUpdate)
+                            {
+                                File.Copy(xUpdateNew, xUpdaterExe, true);
+                            }
+                        }
+                    }
+                    // Delete unpackUpdate directory after update finishes.
+                    if (Directory.Exists(GlobalVariables.unpackUpdate))
+                    {
+                        Directory.Delete(GlobalVariables.unpackUpdate, true);
+                        Directory.CreateDirectory(GlobalVariables.unpackUpdate);
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine($"Checking for new version: {e.Message}");
+            }
+
         }
-
-
         /// <summary>
         /// Execute predifined xTerminal commands.
         /// </summary> 
