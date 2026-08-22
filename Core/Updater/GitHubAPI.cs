@@ -25,7 +25,7 @@ namespace Core.Updater
         /// <param name="currentVersion"></param>
         /// <param name="latestVersion"></param>
         /// <returns></returns>
-        private bool IsNewerVersion(string currentVersion, string latestVersion)
+        public bool IsNewerVersion(string currentVersion, string latestVersion)
         {
             var current = new Version(currentVersion);
             var latest = new Version(latestVersion);
