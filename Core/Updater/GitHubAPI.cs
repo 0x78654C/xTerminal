@@ -91,7 +91,7 @@ namespace Core.Updater
         /// <summary>
         /// Update check for new version available on GitHub.
         /// </summary>
-        public void CheckUpdate()
+        public void CheckUpdate(bool isInCheck=false)
         {
             try
             {
@@ -122,6 +122,9 @@ namespace Core.Updater
                     }
                     else
                     {
+                        if(isInCheck)
+                            FileSystem.SuccessWriteLine("You are using the latest version of xTerminal.");
+
                         // Copy new updater.
                         if (File.Exists(xUpdateNew))
                         {

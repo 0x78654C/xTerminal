@@ -53,7 +53,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 if (arg == "-c")
                 {
                     var gitApi = new GitHubAPI();
-                    gitApi.CheckUpdate();
+                    gitApi.CheckUpdate(true);
                 }
             }
             catch (Exception e)
