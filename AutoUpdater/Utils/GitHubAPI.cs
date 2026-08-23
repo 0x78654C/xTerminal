@@ -3,6 +3,8 @@ using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.Versioning;
+using System.Security;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 namespace AutoUpdater.Utils
@@ -15,7 +17,7 @@ namespace AutoUpdater.Utils
         private string _sha256Hash = "";
         private string _downloadPath = "";
         private string _downloadLink = "";
-
+        private const long MaxUpdateBytes = 512L * 1024 * 1024;
 
         /// <summary>
         /// Compares two version strings and returns true if the latestVersion is newer than the currentVersion.
@@ -74,6 +76,7 @@ namespace AutoUpdater.Utils
                 UI.ErrorWriteLine($"Unpacking zip file: {ex.Message}");
             }
         }
+
 
         /// <summary>
         /// Downloads a file from a specified URL and saves it to a specified destination path. If the destination directory does not exist, it creates it.
@@ -167,7 +170,20 @@ namespace AutoUpdater.Utils
                 var isValidDownload = false;
                 var isUnpacked = false;
                 DownloadFile(_downloadLink, GlobalVariables.unpackUpdate, out isValidDownload);
+                if(!isValidDownload)
+                {
+                    UI.ErrorWriteLine($"Download failed or file is corrupted!");
+                    Console.ReadKey();
+                    return;
+                }
                 UnpackZip(_downloadPath, GlobalVariables.unpackUpdate, out isUnpacked);
+                if(!isUnpacked)
+                {
+                    UI.ErrorWriteLine($"Unpacking failed!");
+                    Console.ReadKey();
+                    return;
+                }
+
                 var fileSize = new DirectoryInfo(GlobalVariables.unpackUpdate).EnumerateFiles("*").Sum(f => f.Length);
                 if (fileSize > 0)
                 {
