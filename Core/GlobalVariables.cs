@@ -25,6 +25,7 @@ namespace Core
         public static string regOpenAI_APIKey = "OpenAI_APIKey";
         public static string regOpenAI_Model = "OpenAI_Model";
         public static string regOllama_Model = "Ollama_Model";
+        public static string regAutoUpdate = "AutoUpdate";
         public static string ollamaUri = "http://localhost:11434/";
         public static List<ChatMessage> chatHistory = new();
         public static string regHistoryLimitSize = "historyLimitSize";
