@@ -153,14 +153,6 @@ namespace Shell
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize, GlobalVariables.historyLimitSize.ToString());
             }
 
-            // Reading AutoUpdate settings.
-            s_autoUpdate = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate);
-            if (s_autoUpdate == "")
-            {
-                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate, "False");
-                s_autoUpdate = "False";
-            }
-
             // Title display application name, version + current directory.
             Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
 
@@ -532,11 +524,21 @@ namespace Shell
 
 
             // Check for updates
-            if(s_autoUpdate == "True")
+
+            // Reading AutoUpdate settings.
+            s_autoUpdate = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate);
+            if (s_autoUpdate == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate, "False");
+                s_autoUpdate = "False";
+            }
+
+            if (s_autoUpdate == "True")
             {
                 var gitApi = new GitHubAPI();
                 gitApi.CheckUpdate();
             }
+            //---------------------------
 
             // We loop until exit commands is hit
             do
