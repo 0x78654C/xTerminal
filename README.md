@@ -325,6 +325,11 @@ Example:
                    uninstall -list <filter>         : List installed applications matching filter text.
                    uninstall <application_name>     : Start the uninstaller for an installed application.
                    Example: uninstall "Google Chrome"
+    xup       -- Check for new version of xTerminal and update it. Use -h for additional help.
+                   xup -e : Enables checking for updates on startup.
+                   xup -d : Disables checking for updates on startup.
+                   xup -s : Check if auto-update is enabled or disabled.
+                   xup -c : Checks for updates and displays the result.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
