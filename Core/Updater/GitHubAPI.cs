@@ -1,12 +1,17 @@
-﻿using System;
+﻿using Core.Network;
+using Core.SystemTools;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Core.Updater
 {
@@ -81,6 +86,66 @@ namespace Core.Updater
                 FileSystem.ErrorWriteLine($"Error checking for new versions: {ex.Message}");
             }
         }
+
+
+        /// <summary>
+        /// Update check for new version available on GitHub.
+        /// </summary>
+        public void CheckUpdate()
+        {
+            try
+            {
+                if (NetWork.IntertCheck())
+                {
+                    var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
+                    var xterminalDll = @$"{pathExecutable}\xTerminal.dll";
+                    var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe";
+                    var xUpdateNew = @$"{GlobalVariables.unpackUpdate}\xUpdateNew.exe";
+
+                    var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
+                    var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+                    var githubAPI = new GitHubAPI();
+                    Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
+                    if (GlobalVariables.isNewVersion)
+                    {
+                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "A new version of xTerminal is available on GitHub:\n");
+                        FileSystem.ColorConsoleText(ConsoleColor.Yellow, $"\nCurrent version: {verExe}\n" +
+                        $"New version: {GlobalVariables.versionNew}\n");
+                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
+                        var key = Console.ReadKey();
+                        Console.WriteLine();
+
+                        if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
+                            ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
+                        else
+                            Console.Clear();
+                    }
+                    else
+                    {
+                        // Copy new updater.
+                        if (File.Exists(xUpdateNew))
+                        {
+                            var verNew = AssemblyName.GetAssemblyName(xUpdateNew).Version.ToString();
+                            var verOld = AssemblyName.GetAssemblyName(xUpdaterExe).Version.ToString();
+                            var isNewUpdate = githubAPI.IsNewerVersion(verNew, verOld);
+                            if (isNewUpdate)
+                                File.Copy(xUpdateNew, xUpdaterExe, true);
+                        }
+                    }
+                    // Delete unpackUpdate directory after update finishes.
+                    if (Directory.Exists(GlobalVariables.unpackUpdate))
+                    {
+                        Directory.Delete(GlobalVariables.unpackUpdate, true);
+                        Directory.CreateDirectory(GlobalVariables.unpackUpdate);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                FileSystem.ErrorWriteLine($"checking for new version: {e.Message}");
+            }
+        }
+
 
         /// <summary>
         /// Provides information about a release asset, including its name, download URL, and digest.
