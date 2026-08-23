@@ -1,13 +1,8 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Diagnostics;
 using System.IO.Compression;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.Versioning;
-using System.Security;
-using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 namespace AutoUpdater.Utils
@@ -20,7 +15,6 @@ namespace AutoUpdater.Utils
         private string _sha256Hash = "";
         private string _downloadPath = "";
         private string _downloadLink = "";
-        private const long MaxUpdateBytes = 512L * 1024 * 1024;
 
         /// <summary>
         /// Compares two version strings and returns true if the latestVersion is newer than the currentVersion.
@@ -58,25 +52,63 @@ namespace AutoUpdater.Utils
         private void UnpackZip(string zipFilePath, string extractPath, out bool success)
         {
             success = false;
+
             try
             {
-                if (File.Exists(zipFilePath))
+                if (!File.Exists(zipFilePath))
                 {
-                    var fileInfo = new FileInfo(zipFilePath);
-                    Console.WriteLine($"Unpacking: {fileInfo.Name} ....");
-                    ZipFile.ExtractToDirectory(zipFilePath, extractPath, true);
-                    var extractedFiles = $"{extractPath}\\xTerminal.exe";
-                    if (File.Exists(extractedFiles))
-                    {
-                        success = true;
-                        File.Delete(zipFilePath);
-                    }
+                    UI.ErrorWriteLine($"Zip file not found: {zipFilePath}");
+                    Console.ReadKey();
+                    return;
                 }
+
+                Directory.CreateDirectory(extractPath);
+
+                var fileInfo = new FileInfo(zipFilePath);
+                Console.WriteLine($"Unpacking: {fileInfo.Name} ....");
+
+                ZipFile.ExtractToDirectory(
+                    zipFilePath,
+                    extractPath,
+                    overwriteFiles: true);
+
+                var extractedFile = Path.Combine(extractPath, "xTerminal.exe");
+
+                if (!File.Exists(extractedFile))
+                {
+                    UI.ErrorWriteLine(
+                        $"Expected file was not found after extraction: {extractedFile}");
+                    Console.ReadKey();
+                    return;
+                }
+
+                success = true;
+
+                File.Delete(zipFilePath);
+            }
+            catch (InvalidDataException ex)
+            {
+                success = false;
+                UI.ErrorWriteLine($"Invalid or corrupted zip file: {ex.Message}");
+                Console.ReadKey();
+            }
+            catch (IOException ex)
+            {
+                success = false;
+                UI.ErrorWriteLine($"Unable to unpack zip file: {ex.Message}");
+                Console.ReadKey();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                success = false;
+                UI.ErrorWriteLine($"Access denied while unpacking zip file: {ex.Message}");
+                Console.ReadKey();
             }
             catch (Exception ex)
             {
                 success = false;
                 UI.ErrorWriteLine($"Unpacking zip file: {ex.Message}");
+                Console.ReadKey();
             }
         }
 
@@ -124,6 +156,7 @@ namespace AutoUpdater.Utils
             {
                 success = false;
                 UI.ErrorWriteLine($"Downloading file: {ex.Message}");
+                Console.ReadKey();
             }
         }
 
@@ -167,6 +200,7 @@ namespace AutoUpdater.Utils
             catch (Exception ex)
             {
                 UI.ErrorWriteLine($"Error checking for new versions: {ex.Message}");
+                Console.ReadKey();
             }
         }
 
@@ -278,6 +312,7 @@ namespace AutoUpdater.Utils
             catch (Exception ex)
             {
                 UI.ErrorWriteLine($"Error copying file: {ex.Message}");
+                Console.ReadKey();
             }
         }
 
