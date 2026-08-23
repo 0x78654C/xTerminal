@@ -13,6 +13,7 @@ namespace Commands.TerminalCommands.ConsoleSystem
 
     xup -e : Enables checking for updates on startup.
     xup -d : Disables checking for updates on startup.
+    xup -s : Check if auto-update is enabled or disabled.
     xup -c : Checks for updates and displays the result.
     xup -h : Displays this help message.
 ";
@@ -40,6 +41,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
                 {
                     RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate, "False");
                     FileSystem.SuccessWriteLine("Auto-update check on startup has been disabled.");
+                }
+
+                // Status
+                if (arg == "-s")
+                {
+                    var status = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate);
+                    FileSystem.SuccessWriteLine($"Auto-update check on startup is: {(status == "True" ? "enabled" : "disabled")}.");
                 }
 
                 if (arg == "-c")
