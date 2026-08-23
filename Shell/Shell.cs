@@ -202,9 +202,7 @@ namespace Shell
                             var verOld = AssemblyName.GetAssemblyName(xUpdaterExe).Version.ToString();
                             var isNewUpdate = githubAPI.IsNewerVersion(verNew, verOld);
                             if (isNewUpdate)
-                            {
                                 File.Copy(xUpdateNew, xUpdaterExe, true);
-                            }
                         }
                     }
                     // Delete unpackUpdate directory after update finishes.
@@ -219,7 +217,6 @@ namespace Shell
             {
                 FileSystem.ErrorWriteLine($"Checking for new version: {e.Message}");
             }
-
         }
         /// <summary>
         /// Execute predifined xTerminal commands.
