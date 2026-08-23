@@ -214,47 +214,68 @@ namespace AutoUpdater.Utils
                 var isValidDownload = false;
                 var isUnpacked = false;
                 DownloadFile(_downloadLink, GlobalVariables.unpackUpdate, out isValidDownload);
-                if(!isValidDownload)
+                if (!isValidDownload)
                 {
                     UI.ErrorWriteLine($"Download failed or file is corrupted!");
                     Console.ReadKey();
                     return;
                 }
                 UnpackZip(_downloadPath, GlobalVariables.unpackUpdate, out isUnpacked);
-                if(!isUnpacked)
+                if (!isUnpacked)
                 {
                     UI.ErrorWriteLine($"Unpacking failed!");
                     Console.ReadKey();
                     return;
                 }
 
-                var fileSize = new DirectoryInfo(GlobalVariables.unpackUpdate).EnumerateFiles("*").Sum(f => f.Length);
-                if (fileSize > 0)
+                bool hasFiles = Directory
+    .EnumerateFiles(
+        GlobalVariables.unpackUpdate,
+        "*",
+        SearchOption.AllDirectories)
+    .Any();
+                if (!hasFiles)
                 {
-                    Console.WriteLine($"Copy files....");
-                    ClearFolder(xTerminalPath);
-                    Thread.Sleep(2000);
-                    CopyNewFiles(GlobalVariables.unpackUpdate, xTerminalPath);
-                    Thread.Sleep(2000);
-                    Console.WriteLine($"Finished update. Starting xTerminal....");
-                    if (File.Exists(Path.Combine(xTerminalPath, "xTerminal.exe")))
-                    {
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = Path.Combine(xTerminalPath, "xTerminal.exe"),
-                            UseShellExecute = true
-                        });
-                    }
-                    else {
-                        UI.ErrorWriteLine($"xTerminal.exe not found in {xTerminalPath}");
-                        Console.ReadKey();
-                    }
-                    Thread.Sleep(2000);
+                    UI.ErrorWriteLine("Update package contains no files!");
+                    Console.ReadKey();
+                    return;
                 }
+
+                Console.WriteLine($"Copy files....");
+                ClearFolder(xTerminalPath);
+                Thread.Sleep(2000);
+                CopyNewFiles(GlobalVariables.unpackUpdate, xTerminalPath);
+                Thread.Sleep(2000);
+                Console.WriteLine($"Finished update. Starting xTerminal....");
+                if (File.Exists(Path.Combine(xTerminalPath, "xTerminal.exe")))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = Path.Combine(xTerminalPath, "xTerminal.exe"),
+                        WorkingDirectory = xTerminalPath,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    UI.ErrorWriteLine($"xTerminal.exe not found in {xTerminalPath}");
+                    Console.ReadKey();
+                }
+                Thread.Sleep(2000);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                UI.ErrorWriteLine($"Access denied during update: {ex.Message}");
+                Console.ReadKey();
+            }
+            catch (IOException ex)
+            {
+                UI.ErrorWriteLine($"File operation failed during update: {ex.Message}");
+                Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UI.ErrorWriteLine(ex.ToString());
+                UI.ErrorWriteLine($"Update failed: {ex.Message}");
                 Console.ReadKey();
             }
         }
