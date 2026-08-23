@@ -54,6 +54,7 @@ namespace Shell
         private static string s_regUI = "";
         private static string s_regUIcd = "";
         private static string s_regUIsc = "";
+        private static string s_autoUpdate = "False";
         private static string s_indicator = "$";
         private static string s_indicatorColor = "white";
         private static string s_userColor = "green";
@@ -152,6 +153,13 @@ namespace Shell
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize, GlobalVariables.historyLimitSize.ToString());
             }
 
+            // Reading AutoUpdate settings.
+            s_autoUpdate = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate);
+            if (s_autoUpdate == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate, "False");
+                s_autoUpdate = "False";
+            }
 
             // Title display application name, version + current directory.
             Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
@@ -160,63 +168,7 @@ namespace Shell
             GlobalVariables.version = Application.ProductVersion;
         }
 
-        /// <summary>
-        /// Update check for new version available on GitHub.
-        /// </summary>
-        private static void CheckUpdate()
-        {
-            try
-            {
-                if (NetWork.IntertCheck())
-                {
-                    var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
-                    var xterminalDll = @$"{pathExecutable}\xTerminal.dll";
-                    var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe";
-                    var xUpdateNew = @$"{GlobalVariables.unpackUpdate}\xUpdateNew.exe";
-
-                    var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
-                    var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
-                    var githubAPI = new GitHubAPI();
-                    Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
-                    if (GlobalVariables.isNewVersion)
-                    {
-                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "A new version of xTerminal is available on GitHub:\n");
-                        FileSystem.ColorConsoleText(ConsoleColor.Yellow, $"\nCurrent version: {verExe}\n" +
-                        $"New version: {GlobalVariables.versionNew}\n");
-                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
-                        var key = Console.ReadKey();
-                        Console.WriteLine();
-
-                        if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
-                            ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
-                        else
-                            Console.Clear();
-                    }
-                    else
-                    {
-                        // Copy new updater.
-                        if (File.Exists(xUpdateNew))
-                        {
-                            var verNew = AssemblyName.GetAssemblyName(xUpdateNew).Version.ToString();
-                            var verOld = AssemblyName.GetAssemblyName(xUpdaterExe).Version.ToString();
-                            var isNewUpdate = githubAPI.IsNewerVersion(verNew, verOld);
-                            if (isNewUpdate)
-                                File.Copy(xUpdateNew, xUpdaterExe, true);
-                        }
-                    }
-                    // Delete unpackUpdate directory after update finishes.
-                    if (Directory.Exists(GlobalVariables.unpackUpdate))
-                    {
-                        Directory.Delete(GlobalVariables.unpackUpdate, true);
-                        Directory.CreateDirectory(GlobalVariables.unpackUpdate);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                FileSystem.ErrorWriteLine($"checking for new version: {e.Message}");
-            }
-        }
+        
         /// <summary>
         /// Execute predifined xTerminal commands.
         /// </summary> 
@@ -580,7 +532,11 @@ namespace Shell
 
 
             // Check for updates
-            CheckUpdate();
+            if(s_autoUpdate == "True")
+            {
+                var gitApi = new GitHubAPI();
+                gitApi.CheckUpdate();
+            }
 
             // We loop until exit commands is hit
             do
