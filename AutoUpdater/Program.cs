@@ -34,9 +34,11 @@ namespace AutoUpdater
                 Console.WriteLine(string.Join(Environment.NewLine, s_xTerminalLogo));
                 Console.WriteLine("");
                 var version = Assembly.GetExecutingAssembly().GetName().Version;
-                Console.WriteLine("================================================");
-                Console.WriteLine($"=  AutoUpdater for xTerminal version: {version}  =");
-                Console.WriteLine("================================================");
+                Console.WriteLine("=================================================");
+                Console.Write($"=  AutoUpdater for xTerminal. Version: ");
+                UI.ColorConsoleText(ConsoleColor.Cyan, version);
+                Console.Write("  =\n");
+                Console.WriteLine("=================================================");
                 Console.WriteLine("");
                 Console.WriteLine($"xTerminal path: {xtermPath}");
                 var xterminalDll = @$"{xtermPath}\xTerminal.dll";
