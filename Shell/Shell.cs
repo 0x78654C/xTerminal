@@ -180,7 +180,7 @@ namespace Shell
                     Task.Run(() => githubAPI.CheckNewVersions(verExe, arch)).Wait();
                     if (GlobalVariables.isNewVersion)
                     {
-                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "There is a new version in GitHub available for update:\n");
+                        FileSystem.ColorConsoleText(ConsoleColor.Cyan, "A new version of xTerminal is available on GitHub:\n");
                         FileSystem.ColorConsoleText(ConsoleColor.Yellow, $"\nCurrent version: {verExe}\n" +
                         $"New version: {GlobalVariables.versionNew}\n");
                         FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
