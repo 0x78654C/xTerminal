@@ -15,7 +15,6 @@
 */
 using Core;
 using Core.Commands;
-using Core.Encryption;
 using Core.Network;
 using Core.Security;
 using Core.SystemTools;
@@ -23,7 +22,6 @@ using Core.Updater;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -196,6 +194,7 @@ namespace Shell
                     }
                     else
                     {
+                        // Copy new updater.
                         if (File.Exists(xUpdateNew))
                         {
                             var verNew = AssemblyName.GetAssemblyName(xUpdateNew).Version.ToString();
@@ -215,7 +214,7 @@ namespace Shell
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine($"Checking for new version: {e.Message}");
+                FileSystem.ErrorWriteLine($"checking for new version: {e.Message}");
             }
         }
         /// <summary>
