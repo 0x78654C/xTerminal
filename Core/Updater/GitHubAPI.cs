@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -14,9 +15,6 @@ namespace Core.Updater
     {
         const string owner = "0x78654c";
         const string repo = "xTerminal";
-        private string _sha256Hash = "";
-        private string _downloadPath = "";
-        private string _downloadLink = "";
 
 
         /// <summary>
@@ -46,7 +44,7 @@ namespace Core.Updater
             return tag;
         }
 
-      
+
         /// <summary>
         /// Check repo newst version.
         /// </summary>
@@ -71,22 +69,15 @@ namespace Core.Updater
                     $"repos/{owner}/{repo}/releases?per_page=1"
                     );
 
-
-                foreach (var release in realeases)
+                var release = realeases.FirstOrDefault();
+                if (IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0")))
                 {
-                    if (!IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0")))
-                        break;
                     GlobalVariables.isNewVersion = true;
                     GlobalVariables.versionNew = GetVersionFromTag(release.TagName ?? "0.0.0");
-                    foreach (var asset in release.Assets)
-                        if (asset.DownloadUrl.Contains(arhitecture) && asset.Name.StartsWith("xTerminal"))
-                        {
-                            _downloadLink = asset.DownloadUrl;
-                            _sha256Hash = asset.Digest;
-                        }
                 }
             }
-            catch(Exception ex) {
+            catch (Exception ex)
+            {
                 FileSystem.ErrorWriteLine($"Error checking for new versions: {ex.Message}");
             }
         }

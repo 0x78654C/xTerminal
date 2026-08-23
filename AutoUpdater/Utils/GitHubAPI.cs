@@ -180,15 +180,13 @@ namespace AutoUpdater.Utils
 
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 
-                var realeases = await client.GetFromJsonAsync<List<Release>>(
+                var releases = await client.GetFromJsonAsync<List<Release>>(
                     $"repos/{owner}/{repo}/releases?per_page=1"
                     );
 
-
-                foreach (var release in realeases)
+                var release = releases.FirstOrDefault();
+                if (IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0")))
                 {
-                    if (!IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0")))
-                        break;
                     foreach (var asset in release.Assets)
                         if (asset.DownloadUrl.Contains(arhitecture) && asset.Name.StartsWith("xTerminal"))
                         {
