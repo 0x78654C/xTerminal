@@ -1,5 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.IO.Compression;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.Versioning;
@@ -96,10 +99,17 @@ namespace AutoUpdater.Utils
                 var fileName = UriSafety.GetSafeDownloadPath(getUri, destinationPath);
                 var fileInfo = new FileInfo(fileName);
                 Console.WriteLine($"Downloading: {fileInfo.Name} ....");
-                var response = client.GetAsync(url).Result;
+                using var response = client.GetAsync(
+       getUri,
+       HttpCompletionOption.ResponseHeadersRead)
+       .GetAwaiter()
+       .GetResult();
+
                 response.EnsureSuccessStatusCode();
                 var fs = new FileStream(fileName, FileMode.Create);
-                response.Content.CopyToAsync(fs).Wait();
+                response.Content.CopyToAsync(fs)
+              .GetAwaiter()
+              .GetResult();
                 fs.Flush();
                 fs.Close();
                 if (File.Exists(fileName))
