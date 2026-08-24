@@ -116,7 +116,15 @@ namespace Core.Updater
                         Console.WriteLine();
 
                         if (key.KeyChar.ToString().Equals("Y", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var isXupdaterRunning = ProcessStart.ProcessCheck("xUpdater");
+                            if (isXupdaterRunning)
+                            {                                
+                                FileSystem.ErrorWriteLine("xUpdater is already running. Please close it and try again!");
+                                return;
+                            }
                             ProcessStart.ProcessExecute(xUpdaterExe, pathExecutable, true, false, false, true, "");
+                        }
                         else
                             Console.Clear();
                     }
