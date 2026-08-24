@@ -529,8 +529,8 @@ namespace Shell
             s_autoUpdate = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate);
             if (s_autoUpdate == "")
             {
-                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate, "False");
-                s_autoUpdate = "False";
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate, "True");
+                s_autoUpdate = "True";
             }
 
             if (s_autoUpdate == "True")
