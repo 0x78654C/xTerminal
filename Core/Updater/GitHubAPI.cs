@@ -83,7 +83,7 @@ namespace Core.Updater
             }
             catch (Exception ex)
             {
-                FileSystem.ErrorWriteLine($"Error checking for new versions: {ex.Message}");
+                FileSystem.ErrorWriteLine($"Checking for new versions: {ex.Message}");
             }
         }
 
@@ -153,7 +153,7 @@ namespace Core.Updater
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine($"checking for new version: {e.Message}");
+                FileSystem.ErrorWriteLine($"Checking for new version: {e.Message}");
             }
         }
 

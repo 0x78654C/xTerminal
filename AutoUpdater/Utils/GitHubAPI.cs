@@ -197,7 +197,7 @@ namespace AutoUpdater.Utils
             }
             catch (Exception ex)
             {
-                UI.ErrorWriteLine($"Error checking for new versions: {ex.Message}");
+                UI.ErrorWriteLine($"Checking for new versions: {ex.Message}");
                 Console.ReadKey();
             }
         }
@@ -330,7 +330,7 @@ namespace AutoUpdater.Utils
             }
             catch (Exception ex)
             {
-                UI.ErrorWriteLine($"Error copying file: {ex.Message}");
+                UI.ErrorWriteLine($"Copying file: {ex.Message}");
                 Console.ReadKey();
             }
         }
