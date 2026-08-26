@@ -15,6 +15,7 @@ namespace AutoUpdater.Utils
         private string _sha256Hash = "";
         private string _downloadPath = "";
         private string _downloadLink = "";
+        private bool _isNewVersionAvailable = false;
 
         /// <summary>
         /// Compares two version strings and returns true if the latestVersion is newer than the currentVersion.
@@ -185,7 +186,8 @@ namespace AutoUpdater.Utils
                     );
 
                 var release = releases.FirstOrDefault();
-                if (IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0")))
+                _isNewVersionAvailable = IsNewerVersion(version, GetVersionFromTag(release.TagName ?? "0.0.0"));
+                if (_isNewVersionAvailable)
                 {
                     foreach (var asset in release.Assets)
                         if (asset.DownloadUrl.Contains(arhitecture) && asset.Name.StartsWith("xTerminal"))
@@ -209,6 +211,22 @@ namespace AutoUpdater.Utils
         {
             try
             {
+                var prc = new Prc();
+                var xterminlFile = Path.Combine(xTerminalPath, "xTerminal.exe");
+                if (!_isNewVersionAvailable)
+                { 
+                    Console.WriteLine($"No new version available.");
+                    Thread.Sleep(2000);
+                    if (File.Exists(xterminlFile))
+                        prc.StartProcess(xterminlFile, "", xTerminalPath);
+                    else
+                    {
+                        UI.ErrorWriteLine($"xTerminal.exe not found in {xTerminalPath}");
+                        Console.ReadKey();
+                    }
+                    Thread.Sleep(2000);
+                    return;
+                }
                 var isValidDownload = false;
                 var isUnpacked = false;
                 DownloadFile(_downloadLink, GlobalVariables.unpackUpdate, out isValidDownload);
@@ -245,15 +263,8 @@ namespace AutoUpdater.Utils
                 CopyNewFiles(GlobalVariables.unpackUpdate, xTerminalPath);
                 Thread.Sleep(2000);
                 Console.WriteLine($"Finished update. Starting xTerminal....");
-                if (File.Exists(Path.Combine(xTerminalPath, "xTerminal.exe")))
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = Path.Combine(xTerminalPath, "xTerminal.exe"),
-                        WorkingDirectory = xTerminalPath,
-                        UseShellExecute = true
-                    });
-                }
+                if (File.Exists(xterminlFile))
+                    prc.StartProcess(xterminlFile, "", xTerminalPath);
                 else
                 {
                     UI.ErrorWriteLine($"xTerminal.exe not found in {xTerminalPath}");
@@ -277,6 +288,8 @@ namespace AutoUpdater.Utils
                 Console.ReadKey();
             }
         }
+
+
 
         /// <summary>
         /// Deletes all files and subdirectories within the specified folder path, effectively clearing the folder's contents.
