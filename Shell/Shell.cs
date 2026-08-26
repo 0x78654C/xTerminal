@@ -15,7 +15,6 @@
 */
 using Core;
 using Core.Commands;
-using Core.Network;
 using Core.Security;
 using Core.SystemTools;
 using Core.Updater;
@@ -24,10 +23,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using ProccessManage = Core.SystemTools.ProcessStart;
 using SetConsoleColor = Core.SystemTools.UI;
