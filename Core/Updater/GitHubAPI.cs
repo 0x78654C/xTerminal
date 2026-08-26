@@ -100,7 +100,9 @@ namespace Core.Updater
                     var pathExecutable = Path.GetDirectoryName(Application.ExecutablePath);
                     var xterminalDll = @$"{pathExecutable}\xTerminal.dll";
                     var xUpdaterExe = @$"{pathExecutable}\xUpdater.exe";
-                    var xUpdateNew = @$"{GlobalVariables.unpackUpdate}\xUpdateNew.exe";
+                    if (!File.Exists(xUpdaterExe))
+                        return;
+                    var xUpdateNew = @$"{GlobalVariables.unpackUpdate}\xUpdater.exe";
 
                     var verExe = File.Exists(xterminalDll) ? AssemblyName.GetAssemblyName(xterminalDll).Version.ToString() : "File does not exist!";
                     var arch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
