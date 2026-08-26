@@ -2,6 +2,7 @@
 using Core.SystemTools;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -138,9 +139,9 @@ namespace Core.Updater
                         // Copy new updater.
                         if (File.Exists(xUpdateNew))
                         {
-                            var verNew = AssemblyName.GetAssemblyName(xUpdateNew).Version.ToString();
-                            var verOld = AssemblyName.GetAssemblyName(xUpdaterExe).Version.ToString();
-                            var isNewUpdate = githubAPI.IsNewerVersion(verNew, verOld);
+                            var verNew = FileVersionInfo.GetVersionInfo(xUpdateNew).FileVersion;
+                            var verOld = FileVersionInfo.GetVersionInfo(xUpdaterExe).FileVersion;
+                            var isNewUpdate = githubAPI.IsNewerVersion(verOld, verNew);
                             if (isNewUpdate)
                                 File.Copy(xUpdateNew, xUpdaterExe, true);
                         }
@@ -155,7 +156,7 @@ namespace Core.Updater
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine($"Checking for new version: {e.Message}");
+                FileSystem.ErrorWriteLine($"Checking2 for new version: {e.ToString()}");
             }
         }
 

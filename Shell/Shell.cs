@@ -535,6 +535,7 @@ namespace Shell
                 var gitApi = new GitHubAPI();
                 gitApi.CheckUpdate();
             }
+             
             //---------------------------
 
             // We loop until exit commands is hit
