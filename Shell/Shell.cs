@@ -14,20 +14,21 @@
       SOFTWARE.
 */
 using Core;
+using Core.Commands;
+using Core.Security;
+using Core.SystemTools;
+using Core.Updater;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
-using Core.Security;
-using SetConsoleColor = Core.SystemTools.UI;
-using ProccessManage = Core.SystemTools.ProcessStart;
-using SystemCmd = Core.Commands.SystemCommands;
 using System.Runtime.Versioning;
-using Core.SystemTools;
-using Core.Commands;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using ProccessManage = Core.SystemTools.ProcessStart;
+using SetConsoleColor = Core.SystemTools.UI;
+using SystemCmd = Core.Commands.SystemCommands;
 
 namespace Shell
 {
@@ -50,6 +51,7 @@ namespace Shell
         private static string s_regUI = "";
         private static string s_regUIcd = "";
         private static string s_regUIsc = "";
+        private static string s_autoUpdate = "False";
         private static string s_indicator = "$";
         private static string s_indicatorColor = "white";
         private static string s_userColor = "green";
@@ -148,7 +150,6 @@ namespace Shell
                 RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regHistoryLimitSize, GlobalVariables.historyLimitSize.ToString());
             }
 
-
             // Title display application name, version + current directory.
             Console.Title = $"{s_terminalTitle} | {s_currentDirectory}";
 
@@ -156,7 +157,7 @@ namespace Shell
             GlobalVariables.version = Application.ProductVersion;
         }
 
-
+        
         /// <summary>
         /// Execute predifined xTerminal commands.
         /// </summary> 
@@ -518,6 +519,24 @@ namespace Shell
 
             if (ExecuteParamCommands(args)) { return; }
 
+
+            // Check for updates
+
+            // Reading AutoUpdate settings.
+            s_autoUpdate = RegistryManagement.regKey_Read(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate);
+            if (s_autoUpdate == "")
+            {
+                RegistryManagement.regKey_WriteSubkey(GlobalVariables.regKeyName, GlobalVariables.regAutoUpdate, "True");
+                s_autoUpdate = "True";
+            }
+
+            if (s_autoUpdate == "True")
+            {
+                var gitApi = new GitHubAPI();
+                gitApi.CheckUpdate();
+            }
+            //---------------------------
+
             // We loop until exit commands is hit
             do
             {
@@ -872,7 +891,7 @@ namespace Shell
 
             isValidCommand = !commandInput.StartsWith("ch") && !commandInput.StartsWith("chistory");
 
-            if(isValidCommand || commandInput.StartsWith("chain"))
+            if (isValidCommand || commandInput.StartsWith("chain"))
             {
                 if (!string.IsNullOrWhiteSpace(commandInput) && !string.IsNullOrEmpty(commandInput))
                 {

@@ -25,6 +25,7 @@ namespace Core
         public static string regOpenAI_APIKey = "OpenAI_APIKey";
         public static string regOpenAI_Model = "OpenAI_Model";
         public static string regOllama_Model = "Ollama_Model";
+        public static string regAutoUpdate = "AutoUpdate";
         public static string ollamaUri = "http://localhost:11434/";
         public static List<ChatMessage> chatHistory = new();
         public static string regHistoryLimitSize = "historyLimitSize";
@@ -37,6 +38,7 @@ namespace Core
         public static readonly string computerName = Environment.MachineName;
         public static string terminalWorkDirectory = $"{Path.GetPathRoot(Environment.SystemDirectory)}Users\\{accountName}\\AppData\\Local\\xTerminal";
         public static string passwordManagerDirectory = $"{terminalWorkDirectory}\\Pwm\\";
+        public static string unpackUpdate = $"{terminalWorkDirectory}\\Unpack\\";
         public static string aliasFile = $"{terminalWorkDirectory}\\alias.json";
         public static string currentDirectory { get; set; } = terminalWorkDirectory + $"\\{process}cDir.t";
         public static string uiSettings = terminalWorkDirectory + $"\\{process}ui.t";
@@ -68,5 +70,7 @@ namespace Core
         public static bool isErrorCommand = false;
         public static string bgProcessListFile = terminalWorkDirectory + "\\bgPids.db";
         public static string workingDirectory { get; set; }
+        public static bool isNewVersion { get; set; } = false;  
+        public static string versionNew { get; set; } = string.Empty;
     }
 }

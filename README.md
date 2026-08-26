@@ -11,6 +11,13 @@ A Linux like shell for windows with some extras. The goal was to have a almost l
 
 .NET 10 SDK
 
+## Automatic updates
+
+xTerminal checks the latest [GitHub release](https://github.com/0x78654C/xTerminal/releases) when an interactive session starts. If a newer version is available, it displays the current and latest versions and asks whether you want to update.
+
+Choose `Y` to start the updater. The updater downloads the package for the detected Windows architecture (`x64` or `x86`), verifies the release asset's SHA-256 digest, installs the new files, and restarts xTerminal. Choose `N` to skip the update and continue the current session.
+
+
  ## Auto suggestion for files and folders
 xTerminal accepts auto suggestion for file and folder (depends on command use case) on following comands: 
 cd, cat, ls, odir, hex, mv, fcopy, fmove, md5, edit, start, cp, del, ccs, sort, xcel, ln, exif
@@ -318,6 +325,11 @@ Example:
                    uninstall -list <filter>         : List installed applications matching filter text.
                    uninstall <application_name>     : Start the uninstaller for an installed application.
                    Example: uninstall "Google Chrome"
+    xup       -- Check for new version of xTerminal and update it. Use -h for additional help.
+                   xup -e : Enables checking for updates on startup.
+                   xup -d : Disables checking for updates on startup.
+                   xup -s : Check if auto-update is enabled or disabled.
+                   xup -c : Checks for updates and displays the result.
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.

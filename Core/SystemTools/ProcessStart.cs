@@ -115,6 +115,17 @@ namespace Core.SystemTools
         }
 
         /// <summary>
+        /// Check process by name if it is running or not.
+        /// </summary>
+        /// <param name="processName"></param>
+        /// <returns></returns>
+        public static bool ProcessCheck(string processName)
+        {
+            var processes = Process.GetProcessesByName(processName);
+            return processes.Length > 0;
+        }
+
+        /// <summary>
         /// Process start info settings.
         /// </summary>
         /// <param name="process"></param>
