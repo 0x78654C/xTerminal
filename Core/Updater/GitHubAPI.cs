@@ -11,6 +11,7 @@ using System.Net.Http.Json;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -92,7 +93,7 @@ namespace Core.Updater
         /// <summary>
         /// Update check for new version available on GitHub.
         /// </summary>
-        public void CheckUpdate(bool isInCheck=false)
+        public void CheckUpdate(bool isInCheck = false)
         {
             try
             {
@@ -122,7 +123,7 @@ namespace Core.Updater
                         {
                             var isXupdaterRunning = ProcessStart.ProcessCheck("xUpdater");
                             if (isXupdaterRunning)
-                            {                                
+                            {
                                 FileSystem.ErrorWriteLine("xUpdater is already running. Please close it and try again!");
                                 return;
                             }
@@ -133,7 +134,7 @@ namespace Core.Updater
                     }
                     else
                     {
-                        if(isInCheck)
+                        if (isInCheck)
                             FileSystem.SuccessWriteLine("You are using the latest version of xTerminal.");
 
                         // Copy new updater.
@@ -143,7 +144,10 @@ namespace Core.Updater
                             var verOld = FileVersionInfo.GetVersionInfo(xUpdaterExe).FileVersion;
                             var isNewUpdate = githubAPI.IsNewerVersion(verOld, verNew);
                             if (isNewUpdate)
+                            {
+                                WaitForXUpdaterAndCopyAsync(xUpdateNew, xUpdaterExe).Wait();
                                 File.Copy(xUpdateNew, xUpdaterExe, true);
+                            }
                         }
                     }
                     // Delete unpackUpdate directory after update finishes.
@@ -156,10 +160,53 @@ namespace Core.Updater
             }
             catch (Exception e)
             {
-                FileSystem.ErrorWriteLine($"Checking2 for new version: {e.ToString()}");
+                FileSystem.ErrorWriteLine($"Checking for new version: {e.ToString()}");
             }
         }
 
+        /// <summary>
+        /// Waits for any running xUpdater processes to exit and then copies the source file to the destination, retrying if necessary.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="destination"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        static async Task WaitForXUpdaterAndCopyAsync(string source, string destination,  CancellationToken cancellationToken = default)
+        {
+            // Wait for any xUpdater processes that currently exist.
+            foreach (var process in Process.GetProcessesByName("xUpdater"))
+            {
+                try
+                {
+                    if (!process.HasExited)
+                        await process.WaitForExitAsync(cancellationToken);
+                }
+                catch
+                {
+                    // Process may have disappeared between enumeration/check.
+                }
+                finally
+                {
+                    process.Dispose();
+                }
+            }
+
+            // The process can be gone while Windows/AV still briefly holds the EXE.
+            for (int attempt = 0; attempt < 20; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    File.Copy(source, destination, overwrite: true);
+                    return;
+                }
+                catch (IOException) when (attempt < 19)
+                {
+                    await Task.Delay(250, cancellationToken);
+                }
+            }
+        }
 
         /// <summary>
         /// Provides information about a release asset, including its name, download URL, and digest.
