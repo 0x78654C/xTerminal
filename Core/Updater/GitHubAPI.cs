@@ -81,6 +81,7 @@ namespace Core.Updater
                 {
                     GlobalVariables.isNewVersion = true;
                     GlobalVariables.versionNew = GetVersionFromTag(release.TagName ?? "0.0.0");
+                    GlobalVariables.releaseBody = release.Body ?? "";
                 }
             }
             catch (Exception ex)
@@ -115,6 +116,7 @@ namespace Core.Updater
                         FileSystem.ColorConsoleText(ConsoleColor.Cyan, "A new version of xTerminal is available on GitHub:\n");
                         FileSystem.ColorConsoleText(ConsoleColor.Yellow, $"\nCurrent version: {verExe}\n" +
                         $"New version: {GlobalVariables.versionNew}\n");
+                        Console.WriteLine($"\nRELEASE NOTES\n________________________________________________\n {GlobalVariables.releaseBody}\n________________________________________________\n \n\n");
                         FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
                         var key = Console.ReadKey();
                         Console.WriteLine();
@@ -234,7 +236,8 @@ namespace Core.Updater
             [property: JsonPropertyName("tag_name")] string? TagName,
             [property: JsonPropertyName("zipball_url")] string? ZipballUrl,
             [property: JsonPropertyName("tarball_url")] string? TarballUrl,
-            [property: JsonPropertyName("assets")] List<ReleaseAsset> Assets
+            [property: JsonPropertyName("assets")] List<ReleaseAsset> Assets,
+            [property: JsonPropertyName("body")] string? Body
         );
 
     }
