@@ -117,6 +117,7 @@ namespace Core.Updater
                         FileSystem.ColorConsoleText(ConsoleColor.Yellow, $"\nCurrent version: {verExe}\n" +
                         $"New version: {GlobalVariables.versionNew}\n");
                         Console.WriteLine($"\nRELEASE NOTES\n________________________________________________\n {GlobalVariables.releaseBody}\n________________________________________________\n \n\n");
+                        GlobalVariables.releaseBody = "";
                         FileSystem.ColorConsoleText(ConsoleColor.Cyan, "\nDo you want to update? Yes [Y]/ No [N]: ");
                         var key = Console.ReadKey();
                         Console.WriteLine();
