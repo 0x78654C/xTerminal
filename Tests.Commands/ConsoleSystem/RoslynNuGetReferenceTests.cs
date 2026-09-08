@@ -11,6 +11,22 @@ namespace Tests.Commands.ConsoleSystem;
 public class RoslynNuGetReferenceTests
 {
     [Fact]
+    public void References_ReuseRuntimeMetadataWithoutSharingMutableLists()
+    {
+        var first = RoslynHelper.References();
+        var second = RoslynHelper.References();
+
+        first.Should().NotBeEmpty();
+        second.Should().NotBeSameAs(first);
+        second.Count.Should().Be(first.Count);
+        for (int index = 0; index < first.Count; index++)
+            second[index].Should().BeSameAs(first[index]);
+
+        first.Clear();
+        RoslynHelper.References().Count.Should().Be(second.Count);
+    }
+
+    [Fact]
     public void GetNuGetPackageReferences_ParsesCommentAndScriptDirectives()
     {
         string source = @"// nuget: Newtonsoft.Json 13.0.3

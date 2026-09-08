@@ -14,6 +14,117 @@ namespace Tests.Commands.ConsoleSystem;
 public class TermXTEditorSyntaxTests
 {
     [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CSharpDiagnostics_RenderDoesNotAnalyzeWhenIdleDelayHasExpired(bool delayDiagnostics)
+    {
+        var editor = new TermXTEditor(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".cs"));
+        InvokePrivate(editor, "InvalidateDiagnosticsCache", delayDiagnostics);
+        SetPrivateField(editor, "_csharpSemanticDiagnosticsReadyUtc", DateTime.MinValue);
+
+        InvokePrivate(editor, "RenderHeader", 120);
+        InvokePrivate<string>(editor, "DefaultStatus").Should().Be("ready");
+
+        GetPrivateField<bool>(editor, "_csharpSemanticDiagnosticsPending").Should().BeTrue();
+        GetPrivateField<Task?>(editor, "_csharpDiagnosticsTask").Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CSharpDiagnostics_RenderDoesNotWaitForRunningAnalysis()
+    {
+        var editor = new TermXTEditor(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".cs"));
+        Type resultType = typeof(TermXTEditor).GetNestedType("CSharpDiagnosticResult", BindingFlags.NonPublic)!;
+        object completion = Activator.CreateInstance(typeof(TaskCompletionSource<>).MakeGenericType(resultType))!;
+        var pendingTask = (Task)completion.GetType().GetProperty("Task")!.GetValue(completion)!;
+        var cancellation = new CancellationTokenSource();
+        SetPrivateField(editor, "_csharpDiagnosticsTask", pendingTask);
+        SetPrivateField(editor, "_csharpDiagnosticsCancellation", cancellation);
+
+        try
+        {
+            await Task.Run(() => InvokePrivate(editor, "RenderHeader", 120)).WaitAsync(TimeSpan.FromSeconds(5));
+            pendingTask.IsCompleted.Should().BeFalse();
+            GetPrivateField<bool>(editor, "_csharpSemanticDiagnosticsPending").Should().BeTrue();
+            InvokePrivate(editor, "InvalidateDiagnosticsCache", true);
+            cancellation.IsCancellationRequested.Should().BeTrue();
+            GetPrivateField<Task?>(editor, "_csharpDiagnosticsTask").Should().BeNull();
+        }
+        finally
+        {
+            InvokePrivate(editor, "CancelCSharpDiagnostics");
+            completion.GetType().GetMethod("SetCanceled", Type.EmptyTypes)!.Invoke(completion, null);
+        }
+    }
+
+    [Fact]
+    public async Task CSharpDiagnostics_IdleAnalysisPublishesSemanticErrorsAndWarnings()
+    {
+        var editor = new TermXTEditor(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".cs"));
+        Lines(editor)[0] = "class C { void M() { int unused = 1; missing(); } }";
+        SetPrivateField(editor, "_csharpSemanticDiagnosticsReadyUtc", DateTime.MinValue);
+
+        try
+        {
+            InvokePrivate<bool>(editor, "CheckDiagnosticsOnIdle").Should().BeFalse();
+            await GetPrivateField<Task>(editor, "_csharpDiagnosticsTask").WaitAsync(TimeSpan.FromSeconds(20));
+            InvokePrivate<bool>(editor, "CheckDiagnosticsOnIdle").Should().BeTrue();
+
+            GetPrivateField<bool>(editor, "_csharpSemanticDiagnosticsPending").Should().BeFalse();
+            GetPrivateField<bool>(editor, "_diagnosticsCacheDirty").Should().BeFalse();
+            GetPrivateField<Task?>(editor, "_csharpDiagnosticsTask").Should().BeNull();
+            Diagnostics(editor).Should().Contain(diagnostic => diagnostic.Code == "CS0103");
+            Diagnostics(editor).Should().Contain(diagnostic => diagnostic.Code == "CS0219");
+        }
+        finally
+        {
+            InvokePrivate(editor, "CancelCSharpDiagnostics");
+        }
+    }
+
+    [Theory]
+    [InlineData("edit")]
+    [InlineData("reload")]
+    [InlineData("syntax")]
+    public async Task CSharpDiagnostics_ChangedBufferDiscardsCompletedAnalysis(string change)
+    {
+        var editor = new TermXTEditor(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".cs"));
+        Lines(editor)[0] = "class C { void M() { missing(); } }";
+        SetPrivateField(editor, "_csharpSemanticDiagnosticsReadyUtc", DateTime.MinValue);
+
+        try
+        {
+            InvokePrivate(editor, "CheckDiagnosticsOnIdle");
+            await GetPrivateField<Task>(editor, "_csharpDiagnosticsTask").WaitAsync(TimeSpan.FromSeconds(20));
+
+            if (change == "reload")
+            {
+                InvokePrivate(editor, "LoadFile");
+            }
+            else
+            {
+                Lines(editor)[0] = "";
+                if (change == "syntax")
+                {
+                    SetPrivateField(editor, "_syntax", TermXTEditorSyntax.Python);
+                    InvokePrivate(editor, "InvalidateSyntaxStateCache");
+                }
+                else
+                {
+                    InvokePrivate(editor, "InvalidateDiagnosticsCache", true);
+                }
+            }
+
+            GetPrivateField<Task?>(editor, "_csharpDiagnosticsTask").Should().BeNull();
+            InvokePrivate<bool>(editor, "TryApplyCSharpDiagnostics").Should().BeFalse();
+            Diagnostics(editor).Should().NotContain(diagnostic => diagnostic.Code == "CS0103");
+        }
+        finally
+        {
+            InvokePrivate(editor, "CancelCSharpDiagnostics");
+        }
+    }
+
+    [Theory]
     [InlineData("main.rs")]
     [InlineData("MAIN.RS")]
     public void DetectSyntaxFromPath_RustFiles_ReturnsRust(string path)

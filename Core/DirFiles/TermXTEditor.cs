@@ -17,6 +17,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Core.SystemTools;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -645,6 +646,8 @@ namespace Core.DirFiles
         private bool _diagnosticsCacheDirty = true;
         private bool _csharpSemanticDiagnosticsPending;
         private DateTime _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
+        private Task<CSharpDiagnosticResult> _csharpDiagnosticsTask;
+        private CancellationTokenSource _csharpDiagnosticsCancellation;
         private bool _completionActive;
         private bool _completionMemberAccess;
         private int _completionSelectedIndex;
@@ -841,6 +844,7 @@ namespace Core.DirFiles
             }
             finally
             {
+                CancelCSharpDiagnostics();
                 try
                 {
                     Console.Write(Reset + ShowCursor + NormalScreen);
@@ -910,13 +914,58 @@ namespace Core.DirFiles
 
         private bool CheckDiagnosticsOnIdle()
         {
+            if (TryApplyCSharpDiagnostics())
+                return true;
+
             if (_syntax != TermXTEditorSyntax.CSharp || !_csharpSemanticDiagnosticsPending)
                 return false;
 
-            if (DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc)
+            if (_csharpDiagnosticsTask != null || DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc)
                 return false;
 
-            _diagnosticsCacheDirty = true;
+            // Snapshot on the input thread; the worker must never read mutable editor state.
+            string path = _path;
+            string documentText = BuildDocumentText();
+            var cancellation = new CancellationTokenSource();
+            _csharpDiagnosticsCancellation = cancellation;
+            _csharpDiagnosticsTask = Task.Run(
+                () => AnalyzeCSharpDiagnostics(path, documentText, cancellation.Token),
+                cancellation.Token);
+            return false;
+        }
+
+        private void CancelCSharpDiagnostics()
+        {
+            var task = _csharpDiagnosticsTask;
+            var cancellation = _csharpDiagnosticsCancellation;
+            _csharpDiagnosticsTask = null;
+            _csharpDiagnosticsCancellation = null;
+            if (cancellation == null)
+                return;
+
+            cancellation.Cancel();
+            // Discard results after edits, reloads, syntax changes, and exit. Dispose only
+            // after Roslyn has finished using the token, without waiting on the input thread.
+            _ = task.ContinueWith(
+                _ => cancellation.Dispose(),
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+        }
+
+        private bool TryApplyCSharpDiagnostics()
+        {
+            if (_csharpDiagnosticsTask == null || !_csharpDiagnosticsTask.IsCompleted)
+                return false;
+
+            CSharpDiagnosticResult result = _csharpDiagnosticsTask.GetAwaiter().GetResult();
+            _csharpDiagnosticsTask = null;
+            _csharpDiagnosticsCancellation.Dispose();
+            _csharpDiagnosticsCancellation = null;
+            ClearDiagnostics();
+            ApplyCSharpDiagnostics(result);
+            _diagnostics.Sort(CompareDiagnostics);
+            _diagnosticsCacheDirty = false;
             return true;
         }
 
@@ -1405,6 +1454,7 @@ namespace Core.DirFiles
 
         private void InvalidateDiagnosticsCache(bool delayCSharpSemanticDiagnostics)
         {
+            CancelCSharpDiagnostics();
             if (_syntax == TermXTEditorSyntax.CSharp)
             {
                 _csharpSemanticDiagnosticsPending = true;
@@ -1443,6 +1493,8 @@ namespace Core.DirFiles
 
         private void Render()
         {
+            // Publish once per frame so header counts and line markers use the same results.
+            TryApplyCSharpDiagnostics();
             (int width, int height) = WindowSize();
 
             if (width != _lastWidth || height != _lastHeight)
@@ -3700,18 +3752,27 @@ namespace Core.DirFiles
 
         private CSharpCompilation CreateCSharpCompilation(SyntaxTree syntaxTree, SourceCodeKind sourceKind)
         {
-            List<MetadataReference> references = Core.SystemTools.Roslyn.References(_path, BuildDocumentText());
+            return CreateCSharpCompilation(syntaxTree, sourceKind, _path, BuildDocumentText());
+        }
+
+        private static CSharpCompilation CreateCSharpCompilation(
+            SyntaxTree syntaxTree,
+            SourceCodeKind sourceKind,
+            string path,
+            string documentText)
+        {
+            List<MetadataReference> references = Core.SystemTools.Roslyn.References(path, documentText);
             CSharpCompilationOptions compilationOptions =
                 new CSharpCompilationOptions(GetCSharpOutputKind(syntaxTree, sourceKind));
 
             return sourceKind == SourceCodeKind.Script
                 ? CSharpCompilation.CreateScriptCompilation(
-                    Path.GetFileNameWithoutExtension(_path),
+                    Path.GetFileNameWithoutExtension(path),
                     syntaxTree,
                     references,
                     compilationOptions)
                 : CSharpCompilation.Create(
-                    Path.GetFileNameWithoutExtension(_path),
+                    Path.GetFileNameWithoutExtension(path),
                     new[] { syntaxTree },
                     references,
                     compilationOptions);
@@ -7262,6 +7323,14 @@ namespace Core.DirFiles
 
         private void EnsureDiagnostics()
         {
+            if (_csharpDiagnosticsTask != null)
+            {
+                // Explicit diagnostic commands may wait for the current analysis. Rendering
+                // and idle processing only consume results that have already completed.
+                _csharpDiagnosticsTask.GetAwaiter().GetResult();
+                TryApplyCSharpDiagnostics();
+            }
+
             if (!_diagnosticsCacheDirty)
             {
                 if (_syntax == TermXTEditorSyntax.CSharp && _csharpSemanticDiagnosticsPending)
@@ -7280,13 +7349,8 @@ namespace Core.DirFiles
 
         private void EnsureDiagnosticsForRender()
         {
-            if (_syntax == TermXTEditorSyntax.CSharp &&
-                _csharpSemanticDiagnosticsPending &&
-                DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc &&
-                !_diagnosticsCacheDirty)
-            {
+            if (_syntax == TermXTEditorSyntax.CSharp)
                 return;
-            }
 
             if (!_diagnosticsCacheDirty)
                 return;
@@ -7332,30 +7396,55 @@ namespace Core.DirFiles
 
         private void CollectCSharpDiagnostics()
         {
+            ApplyCSharpDiagnostics(AnalyzeCSharpDiagnostics(_path, BuildDocumentText(), CancellationToken.None));
+        }
+
+        private static CSharpDiagnosticResult AnalyzeCSharpDiagnostics(
+            string path,
+            string documentText,
+            CancellationToken cancellationToken)
+        {
             try
             {
-                SourceCodeKind sourceKind = GetCSharpSourceKind();
+                cancellationToken.ThrowIfCancellationRequested();
+                SourceCodeKind sourceKind = string.Equals(Path.GetExtension(path), ".csx", StringComparison.OrdinalIgnoreCase)
+                    ? SourceCodeKind.Script
+                    : SourceCodeKind.Regular;
                 CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
-                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
-                bool includeSemanticDiagnostics =
-                    !_csharpSemanticDiagnosticsPending ||
-                    DateTime.UtcNow >= _csharpSemanticDiagnosticsReadyUtc;
-
-                if (!includeSemanticDiagnostics)
-                {
-                    AddCSharpDiagnostics(syntaxTree.GetDiagnostics());
-                    return;
-                }
-
-                CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind);
-                AddCSharpDiagnostics(compilation.GetDiagnostics());
-                _csharpSemanticDiagnosticsPending = false;
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
+                    documentText, parseOptions, path, cancellationToken: cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind, path, documentText);
+                return new CSharpDiagnosticResult(compilation.GetDiagnostics(cancellationToken), null);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                _csharpSemanticDiagnosticsPending = false;
-                AddDiagnostic(0, string.Empty, "C# diagnostics unavailable: " + ex.Message);
+                return new CSharpDiagnosticResult(Array.Empty<Diagnostic>(), ex.Message);
             }
+        }
+
+        private void ApplyCSharpDiagnostics(CSharpDiagnosticResult result)
+        {
+            AddCSharpDiagnostics(result.Diagnostics);
+            if (result.Error != null)
+                AddDiagnostic(0, string.Empty, "C# diagnostics unavailable: " + result.Error);
+            _csharpSemanticDiagnosticsPending = false;
+        }
+
+        private sealed class CSharpDiagnosticResult
+        {
+            public CSharpDiagnosticResult(IEnumerable<Diagnostic> diagnostics, string error)
+            {
+                Diagnostics = diagnostics;
+                Error = error;
+            }
+
+            public IEnumerable<Diagnostic> Diagnostics { get; }
+            public string Error { get; }
         }
 
         private void AddCSharpDiagnostics(IEnumerable<Diagnostic> diagnostics)
@@ -7596,7 +7685,7 @@ namespace Core.DirFiles
             out EditorDiagnostic diagnostic,
             out int diagnosticIndex)
         {
-            EnsureDiagnostics();
+            EnsureDiagnosticsForRender();
 
             for (int i = 0; i < _diagnostics.Count; i++)
             {
