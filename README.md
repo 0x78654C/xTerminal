@@ -256,10 +256,13 @@ Example:
     wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
                  -h: Display this help message.
                  Inside the wtop command:
-                    q   : Quit the wtop interface.
+                    q / Esc / Ctrl+C : Quit the wtop interface.
                     ↑/↓ : To navigate through the process list.
+                    PageUp/PageDown, Home/End : Move by a page or jump to the first/last process.
                     k   : Kill the selected process.
-                    /   : Search for a process by name.
+                    /   : Search for a process by name or exact PID.
+                    F3  : Jump to the next search match. Empty Enter repeats the previous search.
+                    R   : Refresh process data immediately.
                     C   : Sort processes by CPU usage.
                     M   : Sort processes by memory usage.
                     N   : Sort processes by name.

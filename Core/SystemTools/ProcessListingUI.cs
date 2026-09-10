@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -7,6 +8,7 @@ using System.Runtime.Versioning;
 using System.Security.Principal;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Core.SystemTools
 {
@@ -57,15 +59,20 @@ namespace Core.SystemTools
         private readonly object _lock = new();
         private volatile bool _exitRequested;
         private int _selectedIndex;
-        private int _lastProcessCount;
+        private ProcessIdentity? _selectedIdentity;
         private bool _inSearchMode;
         private string _searchQuery = string.Empty;
+        private string _lastSearchQuery = string.Empty;
         private SortMode _sortMode = SortMode.Name;
 
-        private Dictionary<int, double> _cpuUsages = new();
-        private readonly Dictionary<int, TimeSpan> _prevCpuTimes = new();
-        private readonly Dictionary<int, string> _userCache = new();
-        private readonly HashSet<int> _pendingUserLookups = new();
+        private readonly Dictionary<ProcessIdentity, (long CpuTicks, long Timestamp)> _prevCpuTimes = new();
+        private readonly Dictionary<ProcessIdentity, string> _userCache = new();
+        private readonly HashSet<ProcessIdentity> _pendingUserLookups = new();
+        private const int MaxUserLookups = 2;
+        private const int MaxSearchLength = 256;
+        private AutoResetEvent _sampleWake;
+        private bool _hasSample;
+        private bool _killPending;
 
         private double _cpuPct;
         private double _memPct;
@@ -83,9 +90,12 @@ namespace Core.SystemTools
         // Eliminates per-row Console.Write syscalls and all mid-frame repaints.
         private readonly StringBuilder _fb = new(1 << 17);
 
-        // Process list cached by the sampler so the render thread never calls
-        // Process.GetProcesses() itself (that call is slow and was happening every 100 ms).
-        private Process[] _cachedProcs = Array.Empty<Process>();
+        // Only immutable values cross threads. Process handles belong to the sampler
+        // and are disposed before the next sample; drawing never queries a live process.
+        private ProcessSnapshot[] _cachedProcs = Array.Empty<ProcessSnapshot>();
+        private ProcessSnapshot[] _sortedProcs = Array.Empty<ProcessSnapshot>();
+        private ProcessSnapshot[] _sortedSource;
+        private SortMode _sortedMode;
 
         private const int TOKEN_QUERY = 0x0008;
 
@@ -109,6 +119,21 @@ namespace Core.SystemTools
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr h);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(uint access, bool inheritHandle, int processId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetProcessTimes(IntPtr process, out long created, out long exited, out long kernel, out long user);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetSystemTimes(out long idle, out long kernel, out long user);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool TerminateProcess(IntPtr process, uint exitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
+
         // ── ANSI helpers ─────────────────────────────────────────────────────
         private static string F(int c) => $"{CSI}38;5;{c}m";
         private static string B(int c) => $"{CSI}48;5;{c}m";
@@ -116,41 +141,78 @@ namespace Core.SystemTools
         private static string Faint => $"{CSI}2m";
         private static string At(int col, int row) => $"{CSI}{row + 1};{col + 1}H";
 
-        // ── Entry point ──────────────────────────────────────────────────────
+        // The calling thread owns all console input/output. Only sampling and
+        // bounded owner lookups run in the background, so exit cannot leave a
+        // renderer drawing over the shell or an input thread consuming its keys.
         public void Run()
         {
             if (!OperatingSystem.IsWindows())
                 throw new PlatformNotSupportedException("Windows only.");
+            if (Console.IsInputRedirected || Console.IsOutputRedirected)
+                throw new InvalidOperationException("wtop requires an interactive terminal.");
 
             using var virtualTerminalOutput = VirtualTerminalOutput.Enable();
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.TreatControlCAsInput = true;
-            Console.Write(AltScreen + HideCursor);
+            Encoding originalEncoding = Console.OutputEncoding;
+            bool originalControlC = Console.TreatControlCAsInput;
+            using var wake = new AutoResetEvent(false);
+            var sampler = new Thread(SampleLoop) { IsBackground = true, Name = "wtop-Sample" };
+            bool started = false;
+            _exitRequested = false;
+            _sampleWake = wake;
 
             try
             {
-                _cpuPctDraw = 0;
-                _memPctDraw = 0;
+                Console.OutputEncoding = Encoding.UTF8;
+                Console.TreatControlCAsInput = true;
+                Console.Write(AltScreen + HideCursor + CSI + "2J");
+                RenderFrame();
+                sampler.Start();
+                started = true;
 
-                new Thread(SampleLoop) { IsBackground = true, Name = "wTpp-Sample" }.Start();
-                new Thread(InputLoop) { IsBackground = true, Name = "wTpp-Input" }.Start();
-                new Thread(RenderLoop) { IsBackground = true, Name = "wTpp-Render" }.Start();
-
+                long lastFrame = Stopwatch.GetTimestamp();
                 while (!_exitRequested)
-                    Thread.Sleep(50);
+                {
+                    bool inputChanged = false;
+                    // Limit each input batch so a held key cannot starve rendering.
+                    for (int i = 0; i < 32 && !_exitRequested && Console.KeyAvailable; i++)
+                    {
+                        HandleKey(Console.ReadKey(intercept: true));
+                        inputChanged = true;
+                    }
+
+                    if (_exitRequested) break;
+                    if (inputChanged || Stopwatch.GetElapsedTime(lastFrame).TotalMilliseconds >= 100)
+                    {
+                        RenderFrame();
+                        lastFrame = Stopwatch.GetTimestamp();
+                    }
+                    Thread.Sleep(15);
+                }
             }
             finally
             {
-                try { Console.Write(ShowCursor + NormalScreen); } catch { }
+                _exitRequested = true;
+                wake.Set();
+                if (started) sampler.Join();
+                lock (_lock) _sampleWake = null;
+                try { Console.Write(R + ShowCursor + NormalScreen); } catch { }
+                try { Console.TreatControlCAsInput = originalControlC; } catch { }
+                try { Console.OutputEncoding = originalEncoding; } catch { }
             }
         }
 
-        // ── Sampler thread ───────────────────────────────────────────────────
         private void SampleLoop()
         {
-            DateTime prev = DateTime.UtcNow;
-            PerformanceCounter? cpuCounter = null;
-            bool cpuCounterPrimed = false;
+            PerformanceCounter groupCounter = null;
+            bool primed = false;
+            (long Idle, long Kernel, long User) previous = default;
+            bool useCounter = Environment.ProcessorCount > 64;
+
+            // GetSystemTimes includes idle time in kernel time. For machines with
+            // more than 64 CPUs, retain the all-processor counter: GetSystemTimes
+            // only covers the calling thread's processor group on those machines.
+            if (!useCounter)
+                primed = GetSystemTimes(out previous.Idle, out previous.Kernel, out previous.User);
 
             try
             {
@@ -158,268 +220,296 @@ namespace Core.SystemTools
                 {
                     try
                     {
-                        Process[] procs = Process.GetProcesses();
-                        DateTime now = DateTime.UtcNow;
-                        double dt = Math.Max((now - prev).TotalSeconds, 0.001);
-                        prev = now;
-
-                        (double mUsed, double mTotal, double mPct) = GetMemInfo();
-
+                        ProcessSnapshot[] processes = CaptureProcesses();
+                        if (_exitRequested) break;
+                        var memory = GetMemInfo();
                         lock (_lock)
                         {
-                            _cachedProcs = procs; // render can draw as soon as the cheap snapshot is available
-                            _memUsed = mUsed;
-                            _memTotal = mTotal;
-                            _memPct = Math.Clamp(mPct, 0, 100);
+                            _memUsed = memory.used;
+                            _memTotal = memory.total;
+                            _memPct = Math.Clamp(memory.pct, 0, 100);
+                            PublishProcesses(processes);
                         }
 
-                        var newCpu = new Dictionary<int, double>(procs.Length);
-                        var liveIds = new HashSet<int>(procs.Length);
-
-                        foreach (Process p in procs)
+                        double cpu = 0;
+                        bool hasCpu = false;
+                        if (useCounter)
+                            hasCpu = TryReadSystemCpu(ref groupCounter, ref primed, out cpu);
+                        else if (GetSystemTimes(out long idle, out long kernel, out long user))
                         {
-                            try
-                            {
-                                liveIds.Add(p.Id);
-                                TimeSpan t = p.TotalProcessorTime;
-
-                                newCpu[p.Id] = _prevCpuTimes.TryGetValue(p.Id, out TimeSpan prevT)
-                                    ? Math.Clamp((t - prevT).TotalSeconds / dt / Environment.ProcessorCount * 100.0, 0, 100)
-                                    : 0.0;
-
-                                _prevCpuTimes[p.Id] = t;
-                            }
-                            catch { }
+                            hasCpu = primed && TryCalculateSystemCpu(previous.Idle, previous.Kernel, previous.User,
+                                idle, kernel, user, out cpu);
+                            previous = (idle, kernel, user);
+                            primed = true;
                         }
 
-                        foreach (int dead in _prevCpuTimes.Keys.Except(liveIds).ToArray())
-                            _prevCpuTimes.Remove(dead);
-
-                        bool hasCpu = TryReadSystemCpu(ref cpuCounter, ref cpuCounterPrimed, out double cpu);
-
-                        lock (_lock)
-                        {
-                            _cpuUsages = newCpu;
-
-                            if (hasCpu)
-                                _cpuPct = Math.Clamp(cpu, 0, 100);
-
-                            foreach (int dead in _userCache.Keys.Except(liveIds).ToArray())
-                                _userCache.Remove(dead);
-
-                            foreach (int dead in _pendingUserLookups.Except(liveIds).ToArray())
-                                _pendingUserLookups.Remove(dead);
-                        }
+                        if (hasCpu)
+                            lock (_lock) _cpuPct = Math.Clamp(cpu, 0, 100);
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Status("Refresh failed  ·  " + Clip(ex.Message, 80));
+                    }
 
-                    Thread.Sleep(1000);
+                    if (!_exitRequested) _sampleWake.WaitOne(1000);
                 }
             }
             finally
             {
-                cpuCounter?.Dispose();
+                groupCounter?.Dispose();
+                _prevCpuTimes.Clear();
             }
         }
 
-        // ── Input thread ─────────────────────────────────────────────────────
-        private void InputLoop()
+        private ProcessSnapshot[] CaptureProcesses()
         {
-            while (!_exitRequested)
+            Process[] processes = Process.GetProcesses();
+            var rows = new List<ProcessSnapshot>(processes.Length);
+            var live = new HashSet<ProcessIdentity>();
+            try
             {
-                try
+                foreach (Process process in processes)
                 {
-                    if (!Console.KeyAvailable)
+                    if (_exitRequested) break;
+                    try
                     {
-                        Thread.Sleep(10);
-                        continue;
-                    }
-
-                    ConsoleKeyInfo k = Console.ReadKey(intercept: true);
-
-                    lock (_lock)
-                    {
-                        if (_inSearchMode)
+                        int pid = process.Id;
+                        string name = process.ProcessName;
+                        long memory = 0, started = 0;
+                        int threads = 0;
+                        double cpu = 0;
+                        try { memory = process.PrivateMemorySize64; } catch { }
+                        try { threads = process.Threads.Count; } catch { }
+                        try
                         {
-                            HandleSearch(k);
-                            continue;
+                            started = process.StartTime.ToUniversalTime().Ticks;
+                            long ticks = process.TotalProcessorTime.Ticks;
+                            long timestamp = Stopwatch.GetTimestamp();
+                            var identity = new ProcessIdentity(pid, started);
+                            live.Add(identity);
+                            if (_prevCpuTimes.TryGetValue(identity, out var previous))
+                                cpu = CalculateProcessCpu(previous.CpuTicks, ticks,
+                                    (timestamp - previous.Timestamp) / (double)Stopwatch.Frequency, Environment.ProcessorCount);
+                            _prevCpuTimes[identity] = (ticks, timestamp);
                         }
-
-                        int max = Math.Max(0, _lastProcessCount - 1);
-
-                        switch (k.Key)
-                        {
-                            case ConsoleKey.UpArrow:
-                                _selectedIndex = Math.Max(0, _selectedIndex - 1);
-                                break;
-
-                            case ConsoleKey.DownArrow:
-                                _selectedIndex = Math.Min(max, _selectedIndex + 1);
-                                break;
-
-                            case ConsoleKey.PageUp:
-                                _selectedIndex = Math.Max(0, _selectedIndex - 10);
-                                break;
-
-                            case ConsoleKey.PageDown:
-                                _selectedIndex = Math.Min(max, _selectedIndex + 10);
-                                break;
-
-                            case ConsoleKey.Home:
-                                _selectedIndex = 0;
-                                break;
-
-                            case ConsoleKey.End:
-                                _selectedIndex = max;
-                                break;
-
-                            case ConsoleKey.K:
-                                ThreadPool.QueueUserWorkItem(_ => KillSelected());
-                                break;
-
-                            case ConsoleKey.Q:
-                            case ConsoleKey.Escape:
-                                _exitRequested = true;
-                                break;
-
-                            case ConsoleKey.C:
-                                _sortMode = SortMode.CPU;
-                                Status("Sort  ·  CPU");
-                                break;
-
-                            case ConsoleKey.M:
-                                _sortMode = SortMode.Memory;
-                                Status("Sort  ·  Memory");
-                                break;
-
-                            case ConsoleKey.N:
-                                _sortMode = SortMode.Name;
-                                Status("Sort  ·  Name");
-                                break;
-
-                            case ConsoleKey.Oem2:
-                                _inSearchMode = true;
-                                _searchQuery = string.Empty;
-                                Status("Search  —  type name  ·  Enter to jump  ·  Esc to cancel");
-                                break;
-                        }
+                        catch { }
+                        rows.Add(new ProcessSnapshot(pid, name, memory, threads, started, cpu));
                     }
+                    catch { } // An exiting process must not discard the rest of the sample.
+                    finally { process.Dispose(); }
                 }
-                catch { }
+            }
+            finally
+            {
+                // Also release any objects not visited after cancellation.
+                foreach (Process process in processes) process.Dispose();
+            }
+            foreach (var dead in _prevCpuTimes.Keys.Except(live).ToArray())
+                _prevCpuTimes.Remove(dead);
+            return rows.ToArray();
+        }
+
+        private void PublishProcesses(ProcessSnapshot[] processes)
+        {
+            lock (_lock)
+            {
+                _cachedProcs = processes;
+                _hasSample = true;
+                var live = processes.Select(p => p.Identity).ToHashSet();
+                foreach (var dead in _userCache.Keys.Except(live).ToArray())
+                    _userCache.Remove(dead);
             }
         }
 
-        private void HandleSearch(ConsoleKeyInfo k)
+        private void HandleKey(ConsoleKeyInfo key)
         {
-            switch (k.Key)
+            lock (_lock)
+            {
+                if (key.Key == ConsoleKey.C && key.Modifiers.HasFlag(ConsoleModifiers.Control))
+                {
+                    _exitRequested = true;
+                    return;
+                }
+                if (_inSearchMode)
+                {
+                    HandleSearch(key);
+                    return;
+                }
+
+                int pageSize = Math.Max(1, WinSize().h - 8);
+                switch (key.Key)
+                {
+                    case ConsoleKey.UpArrow: MoveSelection(-1); break;
+                    case ConsoleKey.DownArrow: MoveSelection(1); break;
+                    case ConsoleKey.PageUp: MoveSelection(-pageSize); break;
+                    case ConsoleKey.PageDown: MoveSelection(pageSize); break;
+                    case ConsoleKey.Home: SelectIndex(0); break;
+                    case ConsoleKey.End: SelectIndex(int.MaxValue); break;
+                    case ConsoleKey.K:
+                        // Capture the displayed identity now, before queuing work.
+                        // Re-enumerating later could kill a different row after a sort.
+                        ProcessSnapshot target = SelectedProcess();
+                        if (target == null) Status("Nothing to kill");
+                        else if (!_killPending)
+                        {
+                            _killPending = true;
+                            Task.Run(() => KillSelected(target));
+                        }
+                        break;
+                    case ConsoleKey.Q:
+                    case ConsoleKey.Escape: _exitRequested = true; break;
+                    case ConsoleKey.C: ChangeSort(SortMode.CPU); break;
+                    case ConsoleKey.M: ChangeSort(SortMode.Memory); break;
+                    case ConsoleKey.N: ChangeSort(SortMode.Name); break;
+                    case ConsoleKey.R: RequestSample(); Status("Refreshing processes…"); break;
+                    case ConsoleKey.F3: JumpToProcess(_lastSearchQuery, next: true); break;
+                    case ConsoleKey.Oem2:
+                        _inSearchMode = true;
+                        _searchQuery = string.Empty;
+                        Status("Search  —  name or PID  ·  Enter to jump  ·  Esc to cancel");
+                        break;
+                }
+            }
+        }
+
+        private void ChangeSort(SortMode mode)
+        {
+            _sortMode = mode;
+            SortedProcesses();
+            Status("Sort  ·  " + mode);
+        }
+
+        private void MoveSelection(int delta)
+        {
+            SortedProcesses();
+            SelectIndex(_selectedIndex + delta);
+        }
+
+        private void SelectIndex(int index)
+        {
+            ProcessSnapshot[] processes = SortedProcesses();
+            _selectedIndex = Math.Clamp(index, 0, Math.Max(0, processes.Length - 1));
+            _selectedIdentity = processes.Length == 0 ? null : processes[_selectedIndex].Identity;
+        }
+
+        private void HandleSearch(ConsoleKeyInfo key)
+        {
+            switch (key.Key)
             {
                 case ConsoleKey.Enter:
-                    JumpToProcess(_searchQuery.Trim());
+                    string query = _searchQuery.Trim();
+                    JumpToProcess(query.Length == 0 ? _lastSearchQuery : query, next: query.Length == 0);
                     _inSearchMode = false;
                     _searchQuery = string.Empty;
                     break;
-
                 case ConsoleKey.Escape:
                     _inSearchMode = false;
                     _searchQuery = string.Empty;
                     Status("Search cancelled");
                     break;
-
                 case ConsoleKey.Backspace:
-                    if (_searchQuery.Length > 0)
-                        _searchQuery = _searchQuery[..^1];
+                    if (_searchQuery.Length > 0) _searchQuery = _searchQuery[..^1];
                     break;
-
                 default:
-                    if (!char.IsControl(k.KeyChar))
-                        _searchQuery += k.KeyChar;
+                    if (!char.IsControl(key.KeyChar) && _searchQuery.Length < MaxSearchLength &&
+                        !key.Modifiers.HasFlag(ConsoleModifiers.Control) && !key.Modifiers.HasFlag(ConsoleModifiers.Alt))
+                        _searchQuery += key.KeyChar;
                     break;
             }
         }
 
-        private void JumpToProcess(string q)
+        private void JumpToProcess(string query, bool next)
         {
-            if (string.IsNullOrWhiteSpace(q))
+            if (string.IsNullOrWhiteSpace(query))
             {
-                Status("Type a name to search");
+                Status("Type a name or PID to search");
                 return;
             }
 
-            Process[] procs = SortedProcesses();
-
-            for (int i = 0; i < procs.Length; i++)
+            ProcessSnapshot[] processes = SortedProcesses();
+            _lastSearchQuery = query;
+            int start = next ? _selectedIndex + 1 : 0;
+            for (int offset = 0; offset < processes.Length; offset++)
             {
-                try
+                int index = (start + offset) % processes.Length;
+                ProcessSnapshot process = processes[index];
+                if (process.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || process.Id.ToString() == query)
                 {
-                    if (procs[i].ProcessName.Contains(q, StringComparison.OrdinalIgnoreCase))
-                    {
-                        _selectedIndex = i;
-                        Status($"Found  ·  {procs[i].ProcessName}  [{procs[i].Id}]");
-                        return;
-                    }
-                }
-                catch { }
-            }
-
-            Status($"No match for {q}");
-        }
-
-        private void KillSelected()
-        {
-            try
-            {
-                Process[] procs = SortedProcesses();
-
-                int idx;
-                lock (_lock)
-                    idx = Math.Clamp(_selectedIndex, 0, Math.Max(0, procs.Length - 1));
-
-                if (procs.Length == 0)
-                {
-                    Status("Nothing to kill");
+                    SelectIndex(index);
+                    Status($"Found  ·  {process.Name}  [{process.Id}]");
                     return;
                 }
+            }
+            Status($"No match for {query}");
+        }
 
-                Process p = procs[idx];
-                string name = p.ProcessName;
-                int pid = p.Id;
+        private ProcessSnapshot SelectedProcess()
+        {
+            // Use the visible view, without replacing it with a newer sample.
+            return _selectedIndex >= 0 && _selectedIndex < _sortedProcs.Length
+                ? _sortedProcs[_selectedIndex] : null;
+        }
 
-                p.Kill(entireProcessTree: false);
-                p.WaitForExit(2000);
-
-                Status($"Killed  ·  {name}  [{pid}]", 3500);
+        private void KillSelected(ProcessSnapshot target)
+        {
+            IntPtr process = IntPtr.Zero;
+            try
+            {
+                // Request only query, terminate and wait rights. Keep this same handle
+                // through validation and termination, even if Windows recycles the PID.
+                const uint access = 0x1000 | 0x0001 | 0x00100000;
+                process = OpenProcess(access, false, target.Id);
+                if (process == IntPtr.Zero)
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                if (target.StartTimeTicks == 0 || !GetProcessTimes(process, out long created, out _, out _, out _) ||
+                    DateTime.FromFileTimeUtc(created).Ticks != target.StartTimeTicks)
+                    throw new InvalidOperationException("The selected process has exited or its identity cannot be verified.");
+                if (!TerminateProcess(process, uint.MaxValue))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                uint wait = WaitForSingleObject(process, 2000);
+                if (wait == uint.MaxValue)
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                bool exited = wait == 0;
+                Status($"{(exited ? "Killed" : "Termination requested")}  ·  {target.Name}  [{target.Id}]", 3500);
+                RequestSample();
             }
             catch (Exception ex)
             {
-                Status($"Kill failed  ·  {Clip(ex.Message, 50)}", 3500);
+                Status($"Kill failed  ·  {Clip(ex.Message, 80)}", 3500);
+            }
+            finally
+            {
+                if (process != IntPtr.Zero) CloseHandle(process);
+                lock (_lock) _killPending = false;
             }
         }
 
-        // ── Render thread ────────────────────────────────────────────────────
-        private void RenderLoop()
+        private void RequestSample()
         {
-            while (!_exitRequested)
-            {
-                try { RenderFrame(); } catch { }
-                Thread.Sleep(100);
-            }
+            lock (_lock)
+                if (!_exitRequested) _sampleWake?.Set();
         }
 
         private void RenderFrame()
         {
-            Process[] cachedProcs;
-            Dictionary<int, double> cpuSnap;
+            (int W, int H) = WinSize();
+            Console.Write(BuildFrame(W, H));
+        }
+
+        private string BuildFrame(int W, int H)
+        {
+            ProcessSnapshot[] procs;
             double cpuPct, memPct, memUsed, memTotal;
             int sel;
             bool searching;
             string query, statusText;
             SortMode sort;
             int spin;
+            bool hasSample;
 
             lock (_lock)
             {
-                cachedProcs = _cachedProcs;
-                cpuSnap = _cpuUsages;
+                procs = SortedProcesses();
                 cpuPct = _cpuPct;
                 memPct = _memPct;
                 memUsed = _memUsed;
@@ -429,27 +519,16 @@ namespace Core.SystemTools
                 query = _searchQuery;
                 sort = _sortMode;
                 spin = _spinIdx++ % Spin.Length;
+                hasSample = _hasSample;
 
                 statusText = DateTime.UtcNow <= _statusExp
                     ? _status
-                    : "↑↓  navigate    K  kill    /  search    C M N  sort    Q  quit";
+                    : "↑↓ navigate  K kill  / search  F3 next  C M N sort  R refresh  Q quit";
             }
-
-            Process[] procs = SortProcesses(cachedProcs, cpuSnap, sort);
-
-            lock (_lock)
-            {
-                _lastProcessCount = procs.Length;
-                _selectedIndex = Math.Clamp(_selectedIndex, 0, Math.Max(0, procs.Length - 1));
-                sel = _selectedIndex;
-            }
-
-            (int W, int H) = WinSize();
 
             if (W < 60 || H < 12)
             {
-                Console.Write($"{At(0, 0)}{F(C_WARN)}{B(BG_BASE)} Terminal too small — resize to ≥ 60 × 12 {R}{EOL}");
-                return;
+                return $"{At(0, 0)}{F(C_WARN)}{B(BG_BASE)}{Clip("Terminal too small — resize to ≥ 60 × 12", Math.Max(0, W - 1))}{R}{EOL}";
             }
 
             int tableTop = 5;
@@ -483,7 +562,7 @@ namespace Core.SystemTools
                     $"{F(FG_DIM)}{Faint}{Spin[spin]}{R}" +
                     $"{B(BG_TOPBAR)}{F(FG_DIM)}  {DateTime.Now:HH:mm:ss}  ·  {F(FG_PRIMARY)}{procs.Length}{F(FG_DIM)} procs {R}";
 
-                int rightVisible = 16 + procs.Length.ToString().Length;
+                int rightVisible = 23 + procs.Length.ToString().Length;
                 int rightCol = Math.Max(0, W - rightVisible);
 
                 _fb.Append(At(0, 0)).Append(left).Append(EOL)
@@ -492,7 +571,8 @@ namespace Core.SystemTools
 
             // ── Row 1 : gauges ─────────────────────────────────────────────
             {
-                int gaugeW = Math.Max(4, (W - 58) / 2);
+                bool showMemoryTotals = W >= 80;
+                int gaugeW = Math.Max(4, (W - (showMemoryTotals ? 58 : 34)) / 2);
 
                 _cpuPctDraw = Smooth(_cpuPctDraw, cpuPct, 0.30);
                 _memPctDraw = Smooth(_memPctDraw, memPct, 0.20);
@@ -515,10 +595,11 @@ namespace Core.SystemTools
                    .Append(B(BG_TOPBAR)).Append(F(FG_MUTED)).Append("    ")
                    .Append(F(FG_DIM)).Append("MEM  ")
                    .Append(memBar)
-                   .Append(F(memC)).Append(Bold).Append("  ").Append(memStr)
-                   .Append(B(BG_TOPBAR)).Append(F(FG_MUTED))
-                   .Append("  ").Append(usedStr).Append(" / ").Append(totStr).Append(" MB")
-                   .Append(R).Append(EOL);
+                   .Append(F(memC)).Append(Bold).Append("  ").Append(memStr);
+                if (showMemoryTotals)
+                    _fb.Append(B(BG_TOPBAR)).Append(F(FG_MUTED))
+                       .Append("  ").Append(usedStr).Append(" / ").Append(totStr).Append(" MB");
+                _fb.Append(R).Append(EOL);
             }
 
             // ── Row 2 : blank separator ────────────────────────────────────
@@ -530,7 +611,7 @@ namespace Core.SystemTools
 
                 string ColHdr(SortMode m, string label, int w, bool rightAlign = false)
                 {
-                    string suffix = sort == m ? " ↓" : "  ";
+                    string suffix = sort == m ? (m == SortMode.Name ? " ↑" : " ↓") : "  ";
                     string padded = rightAlign
                         ? (label + suffix).PadLeft(w)
                         : (label + suffix).PadRight(w);
@@ -567,11 +648,14 @@ namespace Core.SystemTools
 
                 if (procIdx >= procs.Length)
                 {
-                    _fb.Append(At(0, y)).Append(BgReset).Append(EOL);
+                    _fb.Append(At(0, y)).Append(BgReset);
+                    if (row == 0 && procs.Length == 0)
+                        _fb.Append(F(FG_DIM)).Append(hasSample ? "  No processes available" : "  Loading processes…").Append(R);
+                    _fb.Append(EOL);
                     continue;
                 }
 
-                Process p = procs[procIdx];
+                ProcessSnapshot p = procs[procIdx];
                 bool isSel = procIdx == sel;
                 string rowBgEsc = isSel ? B(BG_SEL) : BgReset;
 
@@ -579,10 +663,10 @@ namespace Core.SystemTools
 
                 try
                 {
-                    double procCpu = cpuSnap.TryGetValue(p.Id, out double c) ? c : 0.0;
-                    double procMem = SafeMemMb(p);
+                    double procCpu = p.CpuPercent;
+                    double procMem = p.MemoryBytes / 1_048_576.0;
                     string user = Clip(CachedUser(p), userW).PadRight(userW);
-                    string name = Clip(p.ProcessName, nameW).PadRight(nameW);
+                    string name = Clip(p.Name, nameW).PadRight(nameW);
 
                     int aw = pidW, bw = cpuW, cw = memW - 2, dw = thrW;
 
@@ -601,7 +685,7 @@ namespace Core.SystemTools
                        .Append(F(FG_PRIMARY)).Append(rowBgEsc).Append(name).Append("  ")
                        .Append(F(cpuC)).Append(rowBgEsc).Append(procCpu.ToString("0.0").PadLeft(bw)).Append("  ")
                        .Append(F(memC)).Append(rowBgEsc).Append(procMem.ToString("0.0").PadLeft(cw)).Append("  ")
-                       .Append(F(thrC)).Append(rowBgEsc).Append(p.Threads.Count.ToString().PadLeft(dw)).Append("  ")
+                       .Append(F(thrC)).Append(rowBgEsc).Append(p.ThreadCount.ToString().PadLeft(dw)).Append("  ")
                        .Append(F(userC)).Append(rowBgEsc).Append(user)
                        .Append(R).Append(EOL);
                 }
@@ -628,8 +712,10 @@ namespace Core.SystemTools
             _fb.Append(At(0, statusRow));
             if (searching)
             {
+                int queryWidth = Math.Max(1, W - 40);
+                string visibleQuery = query.Length <= queryWidth ? query : "…" + query[^(queryWidth - 1)..];
                 _fb.Append(BgReset).Append(F(C_SEARCH)).Append(Bold).Append(" / ").Append(R)
-                   .Append(F(C_SEARCH)).Append(BgReset).Append(query)
+                   .Append(F(C_SEARCH)).Append(BgReset).Append(visibleQuery)
                    .Append(F(FG_MUTED)).Append('█').Append(R)
                    .Append(F(FG_MUTED)).Append("   Enter to jump  ·  Esc to cancel").Append(R)
                    .Append(EOL);
@@ -644,15 +730,14 @@ namespace Core.SystemTools
             {
                 string label = procs.Length == 0 || sel >= procs.Length
                     ? $"{F(FG_MUTED)}—{R}"
-                    : SafeLabel(procs, sel);
+                    : F(FG_PRIMARY) + Clip(SafeLabel(procs[sel]), W - 4);
 
                 _fb.Append(At(0, labelRow)).Append(BgReset)
                    .Append(F(C_ACCENT2)).Append(" ▸ ").Append(R)
                    .Append(BgReset).Append(label).Append(R).Append(EOL);
             }
 
-            // ── Single atomic write — the whole frame lands at once ────────
-            Console.Write(_fb);
+            return _fb.ToString();
         }
 
         // ── Visual primitives ────────────────────────────────────────────────
@@ -694,95 +779,102 @@ namespace Core.SystemTools
 
         // ── Process helpers ──────────────────────────────────────────────────
 
-        private static Process[] SortProcesses(Process[] all, Dictionary<int, double> snap, SortMode sort)
+        private static ProcessSnapshot[] SortProcesses(ProcessSnapshot[] processes, SortMode sort)
         {
             return sort switch
             {
-                SortMode.CPU => all.OrderByDescending(p => snap.TryGetValue(p.Id, out double c) ? c : 0)
-                                   .ThenBy(SafeName).ToArray(),
-                SortMode.Memory => all.OrderByDescending(SafeMemBytes).ThenBy(SafeName).ToArray(),
-                _ => all.OrderBy(SafeName).ToArray()
+                SortMode.CPU => processes.OrderByDescending(p => p.CpuPercent)
+                    .ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ThenBy(p => p.Id).ToArray(),
+                SortMode.Memory => processes.OrderByDescending(p => p.MemoryBytes)
+                    .ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ThenBy(p => p.Id).ToArray(),
+                _ => processes.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ThenBy(p => p.Id).ToArray()
             };
         }
 
-        // Used by KillSelected / JumpToProcess — always fetches a fresh list.
-        private Process[] SortedProcesses()
+        private ProcessSnapshot[] SortedProcesses()
         {
-            SortMode sort;
-            Dictionary<int, double> snap;
-
             lock (_lock)
             {
-                sort = _sortMode;
-                snap = _cpuUsages;
+                if (ReferenceEquals(_sortedSource, _cachedProcs) && _sortedMode == _sortMode)
+                    return _sortedProcs;
+
+                _sortedProcs = SortProcesses(_cachedProcs, _sortMode);
+                _sortedSource = _cachedProcs;
+                _sortedMode = _sortMode;
+                int selected = _selectedIdentity.HasValue
+                    ? Array.FindIndex(_sortedProcs, p => p.Identity == _selectedIdentity.Value) : -1;
+                _selectedIndex = selected >= 0 ? selected : Math.Clamp(_selectedIndex, 0, Math.Max(0, _sortedProcs.Length - 1));
+                _selectedIdentity = _sortedProcs.Length == 0 ? null : _sortedProcs[_selectedIndex].Identity;
+                return _sortedProcs;
             }
-
-            Process[] all = Process.GetProcesses();
-
-            return SortProcesses(all, snap, sort);
         }
 
-        private string CachedUser(Process p)
+        private string CachedUser(ProcessSnapshot process)
         {
-            int pid;
-
-            try { pid = p.Id; }
-            catch { return "—"; }
-
-            bool shouldQueueLookup = false;
-
+            if (process.StartTimeTicks == 0) return "—";
+            ProcessIdentity identity = process.Identity;
             lock (_lock)
             {
-                if (_userCache.TryGetValue(pid, out string? u))
-                    return u;
-
-                shouldQueueLookup = _pendingUserLookups.Add(pid);
+                if (_userCache.TryGetValue(identity, out string user)) return user;
+                if (!_exitRequested && _pendingUserLookups.Count < MaxUserLookups && _pendingUserLookups.Add(identity))
+                    Task.Run(() => ResolveUser(identity));
             }
-
-            if (shouldQueueLookup)
-                ThreadPool.QueueUserWorkItem(_ => ResolveUser(pid, p));
-
             return "…";
         }
 
-        private void ResolveUser(int pid, Process p)
+        private void ResolveUser(ProcessIdentity identity)
         {
-            string user = GetUser(p);
-
+            string user = GetUser(identity);
             lock (_lock)
             {
-                _pendingUserLookups.Remove(pid);
-                _userCache[pid] = user;
+                _pendingUserLookups.Remove(identity);
+                if (!_exitRequested && _cachedProcs.Any(p => p.Identity == identity))
+                    _userCache[identity] = user;
             }
         }
 
-        private string GetUser(Process p)
+        private static string GetUser(ProcessIdentity identity)
         {
-            IntPtr tok = IntPtr.Zero;
-
+            const uint queryLimitedInformation = 0x1000;
+            IntPtr process = IntPtr.Zero, token = IntPtr.Zero;
             try
             {
-                if (!OpenProcessToken(p.Handle, TOKEN_QUERY, out tok))
+                process = OpenProcess(queryLimitedInformation, false, identity.Id);
+                if (process == IntPtr.Zero ||
+                    !GetProcessTimes(process, out long created, out _, out _, out _) ||
+                    DateTime.FromFileTimeUtc(created).Ticks != identity.StartTimeTicks ||
+                    !OpenProcessToken(process, TOKEN_QUERY, out token))
                     return "—";
 
-                using var id = new WindowsIdentity(tok);
-                string? full = id.Name;
-
-                if (string.IsNullOrWhiteSpace(full))
-                    return "—";
-
+                using var owner = new WindowsIdentity(token);
+                string full = owner.Name;
+                if (string.IsNullOrWhiteSpace(full)) return "—";
                 int slash = full.IndexOf('\\');
                 return slash >= 0 ? full[(slash + 1)..] : full;
             }
-            catch
-            {
-                return "—";
-            }
+            catch { return "—"; }
             finally
             {
-                if (tok != IntPtr.Zero)
-                    CloseHandle(tok);
+                if (token != IntPtr.Zero) CloseHandle(token);
+                if (process != IntPtr.Zero) CloseHandle(process);
             }
+        }
+
+        private static double CalculateProcessCpu(long previousTicks, long currentTicks, double seconds, int processors)
+        {
+            if (seconds <= 0 || processors <= 0 || currentTicks < previousTicks) return 0;
+            return Math.Clamp((currentTicks - previousTicks) / (double)TimeSpan.TicksPerSecond / seconds / processors * 100, 0, 100);
+        }
+
+        private static bool TryCalculateSystemCpu(long previousIdle, long previousKernel, long previousUser,
+            long idle, long kernel, long user, out double cpu)
+        {
+            cpu = 0;
+            if (idle < previousIdle || kernel < previousKernel || user < previousUser) return false;
+            long total = (kernel - previousKernel) + (user - previousUser);
+            if (total <= 0) return false;
+            cpu = Math.Clamp((total - (idle - previousIdle)) / (double)total * 100, 0, 100);
+            return true;
         }
 
         private static (double used, double total, double pct) GetMemInfo()
@@ -800,7 +892,7 @@ namespace Core.SystemTools
         }
 
         private static bool TryReadSystemCpu(
-            ref PerformanceCounter? counter,
+            ref PerformanceCounter counter,
             ref bool primed,
             out double cpu)
         {
@@ -831,41 +923,24 @@ namespace Core.SystemTools
 
         private void Status(string msg, int ms = 2400)
         {
-            _status = msg;
-            _statusExp = DateTime.UtcNow.AddMilliseconds(ms);
-        }
-
-        private string SafeLabel(Process[] procs, int idx)
-        {
-            try
+            lock (_lock)
             {
-                Process p = procs[idx];
-                return
-                    $"{F(FG_PRIMARY)}{p.ProcessName}{R}" +
-                    $"{F(FG_DIM)}   pid {p.Id}  ·  mem {SafeMemMb(p):0.0} MB  ·  thr {p.Threads.Count}{R}";
-            }
-            catch
-            {
-                return $"{F(FG_MUTED)}—{R}";
+                if (_exitRequested) return;
+                _status = msg;
+                _statusExp = DateTime.UtcNow.AddMilliseconds(ms);
             }
         }
 
-        private static string SafeName(Process p)
+        private static string SafeLabel(ProcessSnapshot process)
         {
-            try { return p.ProcessName; }
-            catch { return "~"; }
+            return $"{process.Name}   pid {process.Id}  ·  mem {process.MemoryBytes / 1_048_576.0:0.0} MB  ·  thr {process.ThreadCount}";
         }
 
-        private static long SafeMemBytes(Process p)
-        {
-            try { return p.PrivateMemorySize64; }
-            catch { return 0L; }
-        }
+        private readonly record struct ProcessIdentity(int Id, long StartTimeTicks);
 
-        private static double SafeMemMb(Process p)
+        private sealed record ProcessSnapshot(int Id, string Name, long MemoryBytes, int ThreadCount, long StartTimeTicks, double CpuPercent)
         {
-            try { return p.PrivateMemorySize64 / 1_048_576.0; }
-            catch { return 0.0; }
+            public ProcessIdentity Identity => new(Id, StartTimeTicks);
         }
 
         private static (int w, int h) WinSize()
@@ -875,12 +950,15 @@ namespace Core.SystemTools
         }
 
         // ── String helpers ───────────────────────────────────────────────────
-        private static string Clip(string? s, int max)
+        private static string Clip(string s, int max)
         {
             s ??= string.Empty;
 
             if (max <= 0)
                 return string.Empty;
+
+            if (s.Any(char.IsControl))
+                s = new string(s.Select(c => char.IsControl(c) ? ' ' : c).ToArray());
 
             if (s.Length <= max)
                 return s;
