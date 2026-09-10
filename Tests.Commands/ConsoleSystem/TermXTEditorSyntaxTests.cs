@@ -11,7 +11,7 @@ using Xunit;
 namespace Tests.Commands.ConsoleSystem;
 
 [SupportedOSPlatform("Windows")]
-public class TermXTEditorSyntaxTests
+public partial class TermXTEditorSyntaxTests
 {
     [Theory]
     [InlineData(true)]

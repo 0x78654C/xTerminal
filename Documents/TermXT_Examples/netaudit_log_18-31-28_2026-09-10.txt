@@ -1,0 +1,534 @@
+NetAudit Log - 2026-09-10 18:31:28
+Host: mrx@MRX-PC
+════════════════════════════════════════════════════
+
+
+════════════════════════════════════════════════════
+  ◆  NetAudit v2.1 — Network Diagnostics Toolkit
+  ◆  Host: mrx@MRX-PC
+  ◆  Date: 2026-09-10  Time: 18:31:28
+════════════════════════════════════════════════════
+
+
+────────────────────────────────────────────────────
+  ▶ PHASE 1: Local Network Interfaces
+────────────────────────────────────────────────────
+  Querying NIC configuration...
+
+-------------- Local Area Connection* 9 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter
+IPv4:          169.254.135.149 
+IPv6:          fe80::a440:f2:fb32:7a0c%8 
+MASK:          255.255.0.0
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:B0
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 10 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter #2
+IPv4:          169.254.201.232 
+IPv6:          fe80::129:524b:c95d:7a61%11 
+MASK:          255.255.0.0
+Gateway:       
+MAC Address:   A2:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- VMware Network Adapter VMnet1 --------------
+
+Description:   VMware Virtual Ethernet Adapter for VMnet1
+IPv4:          192.168.23.1 
+IPv6:          fe80::b2a7:cb93:9d1f:7540%14 
+MASK:          255.255.255.0
+Gateway:       
+MAC Address:   00:50:56:C0:00:01
+DNS:           
+
+-------------------------------------
+
+
+-------------- VMware Network Adapter VMnet8 --------------
+
+Description:   VMware Virtual Ethernet Adapter for VMnet8
+IPv4:          192.168.19.1 
+IPv6:          fe80::d25:d054:f2da:8c4e%17 
+MASK:          255.255.255.0
+Gateway:       
+MAC Address:   00:50:56:C0:00:08
+DNS:           
+
+-------------------------------------
+
+
+-------------- Wi-Fi --------------
+
+Description:   Intel(R) Wi-Fi 6 AX203
+IPv4:          192.168.1.143 
+IPv6:          2a02:2f08:b707:8e00:ab98:5888:fc02:469d
+               2a02:2f08:b707:8e00:bdc6:e28f:c0c5:a82b
+               fe80::5ada:d8e0:bd3:e270%12 
+MASK:          255.255.255.0
+Gateway:       192.168.1.1
+MAC Address:   A0:B3:39:DC:8C:AF
+DNS:           100.100.1.1
+               100.100.0.1
+
+-------------------------------------
+
+
+-------------- Bluetooth Network Connection --------------
+
+Description:   Bluetooth Device (Personal Area Network)
+IPv4:          169.254.197.255 
+IPv6:          fe80::650:c8e0:44:2a2b%19 
+MASK:          255.255.0.0
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:B3
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 6-WFP Native MAC Layer LightWeight Filter-0000 --------------
+
+Description:   WAN Miniport (IP)-WFP Native MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 6-QoS Packet Scheduler-0000 --------------
+
+Description:   WAN Miniport (IP)-QoS Packet Scheduler-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 7-WFP Native MAC Layer LightWeight Filter-0000 --------------
+
+Description:   WAN Miniport (IPv6)-WFP Native MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 7-QoS Packet Scheduler-0000 --------------
+
+Description:   WAN Miniport (IPv6)-QoS Packet Scheduler-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 8-WFP Native MAC Layer LightWeight Filter-0000 --------------
+
+Description:   WAN Miniport (Network Monitor)-WFP Native MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 8-QoS Packet Scheduler-0000 --------------
+
+Description:   WAN Miniport (Network Monitor)-QoS Packet Scheduler-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Ethernet (Kernel Debugger) --------------
+
+Description:   Microsoft Kernel Debug Network Adapter
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 6 --------------
+
+Description:   WAN Miniport (IP)
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 7 --------------
+
+Description:   WAN Miniport (IPv6)
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 8 --------------
+
+Description:   WAN Miniport (Network Monitor)
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   
+DNS:           
+
+-------------------------------------
+
+
+-------------- Wi-Fi-WFP Native MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Intel(R) Wi-Fi 6 AX203-WFP Native MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Wi-Fi-Virtual WiFi Filter Driver-0000 --------------
+
+Description:   Intel(R) Wi-Fi 6 AX203-Virtual WiFi Filter Driver-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Wi-Fi-Native WiFi Filter Driver-0000 --------------
+
+Description:   Intel(R) Wi-Fi 6 AX203-Native WiFi Filter Driver-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Wi-Fi-QoS Packet Scheduler-0000 --------------
+
+Description:   Intel(R) Wi-Fi 6 AX203-QoS Packet Scheduler-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Wi-Fi-WFP 802.3 MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Intel(R) Wi-Fi 6 AX203-WFP 802.3 MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 10-WFP Native MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter #2-WFP Native MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A2:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 9-WFP Native MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter-WFP Native MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:B0
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 9-Native WiFi Filter Driver-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter-Native WiFi Filter Driver-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:B0
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 9-QoS Packet Scheduler-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter-QoS Packet Scheduler-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:B0
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 9-WFP 802.3 MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter-WFP 802.3 MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A0:B3:39:DC:8C:B0
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 10-Native WiFi Filter Driver-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter #2-Native WiFi Filter Driver-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A2:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 10-QoS Packet Scheduler-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter #2-QoS Packet Scheduler-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A2:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+
+
+-------------- Local Area Connection* 10-WFP 802.3 MAC Layer LightWeight Filter-0000 --------------
+
+Description:   Microsoft Wi-Fi Direct Virtual Adapter #2-WFP 802.3 MAC Layer LightWeight Filter-0000
+IPv4:           
+IPv6:           
+MASK:          
+Gateway:       
+MAC Address:   A2:B3:39:DC:8C:AF
+DNS:           
+
+-------------------------------------
+  PASS: Network interface query succeeded
+
+────────────────────────────────────────────────────
+  ▶ PHASE 2: External Connectivity
+────────────────────────────────────────────────────
+  Resolving public IP address...
+  PASS: Public IP resolved: Your external IP address is: 79.118.65.57
+
+────────────────────────────────────────────────────
+  ▶ PHASE 3: DNS & Reachability Sweep
+────────────────────────────────────────────────────
+
+  ── Pinging 8.8.8.8 ──
+Status: Success | Buffer: 32 | Time: 10 ms | TTL: 64 | Adress: 8.8.8.8
+Status: Success | Buffer: 32 | Time: 11 ms | TTL: 64 | Adress: 8.8.8.8
+Status: Success | Buffer: 32 | Time: 11 ms | TTL: 64 | Adress: 8.8.8.8
+Status: Success | Buffer: 32 | Time: 11 ms | TTL: 64 | Adress: 8.8.8.8
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: 8.8.8.8 responded
+
+  ── Pinging 1.1.1.1 ──
+Status: Success | Buffer: 32 | Time: 12 ms | TTL: 64 | Adress: 1.1.1.1
+Status: Success | Buffer: 32 | Time: 12 ms | TTL: 64 | Adress: 1.1.1.1
+Status: Success | Buffer: 32 | Time: 13 ms | TTL: 64 | Adress: 1.1.1.1
+Status: Success | Buffer: 32 | Time: 13 ms | TTL: 64 | Adress: 1.1.1.1
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: 1.1.1.1 responded
+
+  ── Pinging 208.67.222.222 ──
+Status: Success | Buffer: 32 | Time: 40 ms | TTL: 64 | Adress: 208.67.222.222
+Status: Success | Buffer: 32 | Time: 37 ms | TTL: 64 | Adress: 208.67.222.222
+Status: Success | Buffer: 32 | Time: 41 ms | TTL: 64 | Adress: 208.67.222.222
+Status: Success | Buffer: 32 | Time: 36 ms | TTL: 64 | Adress: 208.67.222.222
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: 208.67.222.222 responded
+
+  ── Pinging google.com ──
+Status: Success | Buffer: 32 | Time: 16 ms | TTL: 64 | Adress: 2a00:1450:400d:80b::200e
+Status: Success | Buffer: 32 | Time: 16 ms | TTL: 64 | Adress: 2a00:1450:400d:80b::200e
+Status: Success | Buffer: 32 | Time: 16 ms | TTL: 64 | Adress: 2a00:1450:400d:80b::200e
+Status: Success | Buffer: 32 | Time: 15 ms | TTL: 64 | Adress: 2a00:1450:400d:80b::200e
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: google.com responded
+
+  ── Pinging github.com ──
+Status: Success | Buffer: 32 | Time: 43 ms | TTL: 64 | Adress: 140.82.121.3
+Status: Success | Buffer: 32 | Time: 43 ms | TTL: 64 | Adress: 140.82.121.3
+Status: Success | Buffer: 32 | Time: 43 ms | TTL: 64 | Adress: 140.82.121.3
+Status: Success | Buffer: 32 | Time: 43 ms | TTL: 64 | Adress: 140.82.121.3
+
+---------------------------------------------------
+
+ Total status count: Success 4 Failure 0
+  PASS: github.com responded
+
+  Reachable: 5 hosts
+
+────────────────────────────────────────────────────
+  ▶ PHASE 4: Port Scan
+────────────────────────────────────────────────────
+  Target : 8.8.8.8
+  Ports  : 53,80,443
+
+    Port 53 : ERROR — Unclosed double quote in condition.
+    Port 80 : ERROR — Unclosed double quote in condition.
+    Port 443 : ERROR — Unclosed double quote in condition.
+
+  Open: 0  |  Closed: 3
+  FAIL: No open ports detected on 8.8.8.8
+
+────────────────────────────────────────────────────
+  ▶ PHASE 5: Traceroute to google.com
+────────────────────────────────────────────────────
+  Tracing route to google.com (max 15 hops)...
+
+Starting traceroute for: google.com, Hops: 15, TimeOut: 100, IPv6: Enabled
+Hop 1 - Host: N/A (2a02:2f08:b707:8e00:9ea2:f4ff:fe8b:bae0), RoundTrip: 0 ms, Status: Forwarded
+Hop 2 - Host: N/A (2a02:2f08:b7ff:ff00::2), RoundTrip: 0 ms, Status: Forwarded
+Hop 3 - Host: N/A (2a02:2f08:b0ff:ff00::1), RoundTrip: 0 ms, Status: Forwarded
+Hop 4 - Host: N/A (2a02:2f0c:dff0:a::), RoundTrip: 0 ms, Status: Forwarded
+Hop 5 - Host: N/A (2a02:2f00:8708:2:2:0:6:0), RoundTrip: 0 ms, Status: Forwarded
+Hop 6 - Host: N/A (2a02:2f00:8700::10c), RoundTrip: 0 ms, Status: Forwarded
+Hop 7 - Host: N/A (::), RoundTrip: 0 ms, Status: TimedOut
+Hop 8 - Host: N/A (2001:4860:1:1::17ba), RoundTrip: 0 ms, Status: Forwarded
+Hop 9 - Host: N/A (2001:4860:0:1::7653), RoundTrip: 0 ms, Status: Forwarded
+Hop 10 - Host: N/A (2001:4860:0:1::1e81), RoundTrip: 0 ms, Status: Forwarded
+Hop 11 - Host: lcbuda-am-in-x0e.1e100.net (2a00:1450:400d:80b::200e), RoundTrip: 17 ms, Status: Success
+Trace completed successfully to google.com.
+
+  Hops with response: 11
+  PASS: Traceroute completed (11 responsive hops)
+
+────────────────────────────────────────────────────
+  ▶ PHASE 6: DNS Resolution Benchmark
+────────────────────────────────────────────────────
+  ✓ google.com — resolved
+  ✓ github.com — resolved
+  ✓ cloudflare.com — resolved
+  ✓ amazone.com — resolved
+
+  Resolved: 4  |  Failed: 0
+  PASS: All DNS lookups succeeded
+
+────────────────────────────────────────────────────
+  ▶ PHASE 7: ARP Spoof Detection
+────────────────────────────────────────────────────
+-------------------------------------
+Gateway IP: 192.168.1.1
+Gateway MAC: 9c:a2:f4:8b:ba:e0
+-------------------------------------
+[+] Seems all good!
+  PASS: Spoof check completed
+
+────────────────────────────────────────────────────
+  ▶ PHASE 8: Audit Summary
+────────────────────────────────────────────────────
+
+  ════════════════════════════════════════════════════
+  ◆  NETWORK AUDIT COMPLETE
+  ════════════════════════════════════════════════════
+  Total checks : 11
+  Results: 10/11 passed (90.9090909090909%)  |  1 failed
+
+  Status: MINOR ISSUES DETECTED
+  ════════════════════════════════════════════════════
+  Completed at 18:32:04 on 2026-09-10
+════════════════════════════════════════════════════

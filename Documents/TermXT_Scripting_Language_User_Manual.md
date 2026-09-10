@@ -31,6 +31,20 @@ also provides function-call diagnostics and keyword suggestions.
 A successful check does not guarantee that expressions, commands or file paths
 will succeed at runtime.
 
+### Editor suggestions
+
+In `xte script.xt`, enter insert mode with `i` or `Insert`. IntelliSense suggests
+TermXT keywords after two characters, built-in functions at the start of a `set`
+value, and declared functions after `call `. Typing `{` opens variable suggestions,
+including inside quoted text. These include built-in variables and names declared
+by `set`, `input`, `read`, `capture` and `each`. Variables are also suggested after
+`lines:` in an `each` loop. Suggestions ignore case and comments.
+
+Use **Ctrl+Space** to open suggestions manually, **Up/Down** to select an item,
+and **Enter** or **Tab** to accept it. Variable completion supplies the closing
+`}` or reuses an existing one. **Esc** closes the popup; press it again to return
+to normal mode. The popup shows usage hints beside each suggestion.
+
 ## Arguments and variables
 
 Arguments after `-p` become `{1}`, `{2}`, and so on. Double quotes keep an argument

@@ -608,7 +608,9 @@ Example:
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
 	                Shows editor diagnostics with red error and yellow warning notifications; press F2 for the complete scrollable list.
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
+	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
+	                Ctrl+Space opens suggestions; arrows select, Enter/Tab accepts, and Esc closes the popup.
 	                In C# buffers, use :nuget <package> to add the latest stable package, or :nuget list packages, :nuget add <package> [version], :nuget remove <package>, and :nuget restore to manage package usage.
 	                Ctrl+A selects the entire document.
 	                Ctrl+X cuts the selection, or the current line when nothing is selected.
