@@ -242,6 +242,24 @@ public class TermXTEditorSyntaxTests
         }
     }
 
+    [Theory]
+    [InlineData("if true\nelse\nelif true\nend", 3, "cannot follow 'else'")]
+    [InlineData("try\ncatch\ncatch\nend", 3, "cannot follow 'catch'")]
+    [InlineData("loop 1\nfunc wrong\nbreak\nend\nend", 3, "outside of a loop")]
+    [InlineData("set = value", 1, "variable name")]
+    [InlineData("func one\nend\nfunc ONE\nend", 3, "already defined")]
+    public void TermXtDiagnostics_MatchesInterpreterStructureChecks(string script, int line, string message)
+    {
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".xt");
+        try
+        {
+            File.WriteAllText(path, script);
+            Diagnostics(new TermXTEditor(path, TermXTEditorSyntax.TermXt)).Should().Contain(diagnostic =>
+                diagnostic.LineNumber == line && diagnostic.Description.Contains(message));
+        }
+        finally { File.Delete(path); }
+    }
+
     [Fact]
     public void CSharpDiagnostics_ReportLineCodeAndDescription()
     {

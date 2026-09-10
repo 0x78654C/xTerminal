@@ -1,0 +1,36 @@
+# TermXT 1.0.2: optional arguments, conditions, function scope and error recovery.
+# Run: xt language_features.xt -p "Ada Lovelace"
+# Creates "TermXT demo output.txt" in the current xTerminal directory.
+
+set name = reader
+if {argc} >= 1
+    set name = {1}
+end
+
+func greet
+    return Hello {1}
+end
+
+call greet {name}
+print "{result}"
+
+# Compact operators and parentheses work; operators inside quotes are text.
+set label = "ready||waiting"
+each n in 1..3
+    if ({n}>=2&&{n}<=3) && {label} contains "||"
+        print "Selected: {n}"
+    end
+end
+
+# File paths can contain spaces.
+write "TermXT demo output.txt" "Hello {name}"
+append "TermXT demo output.txt" "Selected: 2, 3"
+
+# The failing statement immediately transfers control to catch.
+try
+    set invalid = eval 1 / 0
+    print "This line is skipped."
+catch
+    print "Recovered: {error_message}"
+end
+print "Done. Error state: {error}"

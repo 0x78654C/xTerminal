@@ -154,7 +154,7 @@ print """"
 print ""  Reachable: {reachable_count} hosts""
 append {log_file} ""
 append {log_file} "  Reachable: {reachable_count} hosts"
-if {unreachable_hosts} != 
+if {unreachable_hosts} != ""
     print ""  Unreachable:{unreachable_hosts}""
     append {log_file} "  Unreachable:{unreachable_hosts}"
 end
@@ -165,13 +165,13 @@ end
 call section_header "PHASE 4: Port Scan"
 
 # Use CLI parameters if provided, otherwise scan common ports on 8.8.8.8
-if {1} != null
+if {argc} >= 1
     set scan_host = {1}
 else
     set scan_host = 8.8.8.8
 end
 
-if {2} != null
+if {argc} >= 2
     set scan_ports = {2}
 else
     set scan_ports = 53,80,443

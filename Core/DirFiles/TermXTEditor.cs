@@ -7503,81 +7503,19 @@ namespace Core.DirFiles
 
         private void CollectTermXtDiagnostics()
         {
-            var blockStack = new Stack<TermXtBlock>();
-            HashSet<string> functionNames = CollectTermXtFunctionNames();
+            foreach (var diagnostic in TermXtSyntax.Validate(_lines))
+                AddDiagnostic(diagnostic.Line - 1, string.Empty, diagnostic.Message);
 
+            HashSet<string> functionNames = CollectTermXtFunctionNames();
             for (int i = 0; i < _lines.Count; i++)
             {
                 string line = _lines[i].Trim();
-                if (string.IsNullOrEmpty(line) || line.StartsWith("#", StringComparison.Ordinal))
-                    continue;
-
-                string keyword = FirstWord(line).ToLowerInvariant();
-
-                switch (keyword)
-                {
-                    case "if":
-                    case "loop":
-                    case "each":
-                    case "try":
-                    case "while":
-                        blockStack.Push(new TermXtBlock(keyword, i));
-                        break;
-                    case "end":
-                        if (blockStack.Count == 0)
-                            AddDiagnostic(i, string.Empty, "'end' without matching block opener.");
-                        else
-                            blockStack.Pop();
-                        break;
-                    case "elif":
-                    case "else":
-                        if (blockStack.Count == 0 || blockStack.Peek().Type != "if")
-                            AddDiagnostic(i, string.Empty, "'" + keyword + "' without matching 'if'.");
-                        break;
-                    case "catch":
-                        if (blockStack.Count == 0 || blockStack.Peek().Type != "try")
-                            AddDiagnostic(i, string.Empty, "'catch' without matching 'try'.");
-                        break;
-                    case "set":
-                    case "capture":
-                    case "read":
-                    case "input":
-                        if (!line.Contains("="))
-                            AddDiagnostic(i, string.Empty, "'" + keyword + "' missing '=' assignment.");
-                        break;
-                    case "func":
-                        if (string.IsNullOrWhiteSpace(GetTermXtFunctionName(line)))
-                            AddDiagnostic(i, string.Empty, "'func' missing function name.");
-                        blockStack.Push(new TermXtBlock(keyword, i));
-                        break;
-                    case "call":
-                        ValidateTermXtCall(i, line, functionNames);
-                        break;
-                    case "break":
-                    case "continue":
-                        if (!IsInsideAnyBlock(blockStack, "loop", "each", "while"))
-                            AddDiagnostic(i, string.Empty, "'" + keyword + "' outside of a loop.");
-                        break;
-                    case "return":
-                        if (!IsInsideAnyBlock(blockStack, "func"))
-                            AddDiagnostic(i, string.Empty, "'return' outside of a function.");
-                        break;
-                    default:
-                        if (TrySuggestTermXtKeyword(keyword, line, functionNames, out string suggestedKeyword))
-                        {
-                            AddDiagnostic(
-                                i,
-                                string.Empty,
-                                "Unknown TermXT keyword '" + keyword + "'. Did you mean '" + suggestedKeyword + "'?");
-                        }
-                        break;
-                }
-            }
-
-            while (blockStack.Count > 0)
-            {
-                TermXtBlock block = blockStack.Pop();
-                AddDiagnostic(block.LineIndex, string.Empty, "'" + block.Type + "' block never closed with 'end'.");
+                if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal)) continue;
+                string keyword = TermXtSyntax.Keyword(line);
+                if (keyword == "call") ValidateTermXtCall(i, line, functionNames);
+                else if (TrySuggestTermXtKeyword(keyword, line, functionNames, out string suggestedKeyword))
+                    AddDiagnostic(i, string.Empty, "Unknown TermXT keyword '" + keyword +
+                        "'. Did you mean '" + suggestedKeyword + "'?");
             }
         }
 
@@ -7775,20 +7713,6 @@ namespace Core.DirFiles
                 return severity;
 
             return string.Compare(left.Code, right.Code, StringComparison.Ordinal);
-        }
-
-        private static bool IsInsideAnyBlock(Stack<TermXtBlock> blocks, params string[] blockTypes)
-        {
-            foreach (TermXtBlock block in blocks)
-            {
-                for (int i = 0; i < blockTypes.Length; i++)
-                {
-                    if (block.Type == blockTypes[i])
-                        return true;
-                }
-            }
-
-            return false;
         }
 
         private static string FirstWord(string value)
@@ -12424,18 +12348,6 @@ namespace Core.DirFiles
                 int close = value.IndexOf(')', open + 1);
                 return open >= 0 && close > open + 1;
             }
-        }
-
-        private readonly struct TermXtBlock
-        {
-            public TermXtBlock(string type, int lineIndex)
-            {
-                Type = type;
-                LineIndex = lineIndex;
-            }
-
-            public string Type { get; }
-            public int LineIndex { get; }
         }
 
         private readonly struct TextPosition

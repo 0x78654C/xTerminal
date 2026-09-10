@@ -7,7 +7,8 @@ using Xunit;
 namespace Tests.Commands.ConsoleSystem;
 
 [SupportedOSPlatform("Windows")]
-public class XTScriptTests : IDisposable
+[Collection("TermXT interpreter")]
+public partial class XTScriptTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly string _currentDirFile;
@@ -47,8 +48,10 @@ public class XTScriptTests : IDisposable
     private string RunScript(string scriptPath, string extraArgs = "")
     {
         var originalOut = Console.Out;
+        var originalError = Console.Error;
         using var sw = new StringWriter();
         Console.SetOut(sw);
+        Console.SetError(sw);
         try
         {
             string args = string.IsNullOrEmpty(extraArgs)
@@ -59,6 +62,7 @@ public class XTScriptTests : IDisposable
         finally
         {
             Console.SetOut(originalOut);
+            Console.SetError(originalError);
         }
         return sw.ToString().TrimEnd();
     }
@@ -72,8 +76,10 @@ public class XTScriptTests : IDisposable
     private string RunCheck(string scriptPath)
     {
         var originalOut = Console.Out;
+        var originalError = Console.Error;
         using var sw = new StringWriter();
         Console.SetOut(sw);
+        Console.SetError(sw);
         try
         {
             _sut.Execute($"xt -check {scriptPath}");
@@ -81,6 +87,7 @@ public class XTScriptTests : IDisposable
         finally
         {
             Console.SetOut(originalOut);
+            Console.SetError(originalError);
         }
         return sw.ToString();
     }
@@ -1385,3 +1392,7 @@ public class XTScriptTests : IDisposable
         RunCheck(path).Should().Contain("error");
     }
 }
+
+// The interpreter uses process-wide console streams and xTerminal command state.
+[CollectionDefinition("TermXT interpreter", DisableParallelization = true)]
+public sealed class XTScriptTestCollection { }

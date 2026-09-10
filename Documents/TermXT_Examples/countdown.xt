@@ -10,13 +10,13 @@
 # ═══════════════════════════════════════════════════════════════
 
 # ── Parameters ───────────────────────────────────────────────
-if {1} != {1}
+if {argc} >= 1
     set seconds = {1}
 else
     set seconds = 10
 end
 
-if {2} != {2}
+if {argc} >= 2
     set label = {2}
 else
     set label = Countdown

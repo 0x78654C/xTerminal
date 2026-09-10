@@ -10,16 +10,14 @@
 #  when no parameters are supplied.
 # ═══════════════════════════════════════════════════════════════
 
-# Print first argument.
-print {1}
 # ── Parameters (with defaults) ───────────────────────────────
-if {1} != null
+if {argc} >= 1
     set host = {1}
 else
     set host = 8.8.8.8
 end
 
-if {2} != null
+if {argc} >= 2
     set ports = {2}
 else
     set ports = 53,80,443
