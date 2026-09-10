@@ -191,7 +191,7 @@ each port in {scan_ports}
     try
         capture port_result = cport {scan_host} -p {port}
         set port_upper = upper {port_result}
-        if {port_upper} contains OPEN
+        if {port_upper} contains "| OPEN
             set open_ports = eval {open_ports} + 1
             print ""    Port {port} : 🟢 OPEN""
             append {log_file} "    Port {port} : OPEN"
