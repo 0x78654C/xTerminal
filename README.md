@@ -608,7 +608,9 @@ Example:
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
 	                Shows editor diagnostics with red error and yellow warning notifications; press F2 for the complete scrollable list.
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
+	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
+	                Ctrl+Space opens suggestions; arrows select, Enter/Tab accepts, and Esc closes the popup.
 	                In C# buffers, use :nuget <package> to add the latest stable package, or :nuget list packages, :nuget add <package> [version], :nuget remove <package>, and :nuget restore to manage package usage.
 	                Ctrl+A selects the entire document.
 	                Ctrl+X cuts the selection, or the current line when nothing is selected.
@@ -747,7 +749,9 @@ For that we use following command:
 
 TermXT is the xTerminal scripting language. It runs `.xt` files and can execute any xTerminal command, capture command output, use variables, branch, loop, call functions, and read/write files.
 
-Full manual: [Documents/TermXT_Scripting_Language_User_Manual_v1.0.0.pdf](Documents/TermXT_Scripting_Language_User_Manual_v1.0.0.pdf)
+Current manual (TermXT 1.0.2): [Documents/TermXT_Scripting_Language_User_Manual.md](Documents/TermXT_Scripting_Language_User_Manual.md)
+
+PDF edition: [TermXT Scripting Language User Manual v1.0.2](Documents/TermXT_Scripting_Language_User_Manual_v1.0.2.pdf)
 
 ### Running Scripts
 
@@ -760,7 +764,7 @@ xt -check script.xt
 xt -h
 ```
 
-Arguments passed after `-p` are available as `{1}`, `{2}`, and so on.
+Arguments passed after `-p` are available as `{1}`, `{2}`, and so on. Use `{argc}` to check how many were supplied, for example `if {argc} >= 1`. Missing arguments remain literal placeholders.
 
 ### Language Reference
 
@@ -796,7 +800,7 @@ Arguments passed after `-p` are available as `{1}`, `{2}`, and so on.
 
 ### Conditions
 
-TermXT supports truthy checks, `not`, logical operators, numeric comparisons, and text comparisons.
+TermXT supports truthy checks, `not`, logical operators, numeric comparisons, and text comparisons. Parentheses group conditions; precedence is `not`, then `&&`, then `||`. Compact forms such as `{count}>=2&&{count}<5` work. Operators inside quoted text or variable values remain literal.
 
 ```text
 if {env} == production
@@ -825,6 +829,7 @@ Supported operators:
 | `{PC}` | Computer name. |
 | `{CWD}` | Current xTerminal working directory. |
 | `{i}` | Current loop iteration. |
+| `{argc}` | Number of arguments in the current script or function call. |
 | `{result}` | Return value from the last function call. |
 | `{error}` | `true` when the last command failed, otherwise `false`. |
 | `{error_message}` | Message from the last caught error. |
@@ -871,6 +876,7 @@ Ready-to-run `.xt` scripts are provided in the [`Documents/TermXT_Examples/`](Do
 | [`portcheck.xt`](Documents/TermXT_Examples/portcheck.xt) | Checks a comma-separated list of ports on a target host and summarises open / closed results. | `xt portcheck.xt -p github.com 22,80,443` |
 | [`sysreport.xt`](Documents/TermXT_Examples/sysreport.xt) | Collects PC, BIOS, storage, network interface, and external-IP info and saves a timestamped report file. | `xt sysreport.xt` |
 | [`netaudit.xt`](Documents/TermXT_Examples/netaudit.xt) | Advanced network audit — NIC inventory, DNS reachability sweep, port scan, traceroute analysis, and a scored summary log. | `xt netaudit.xt -p google.com 80,443` |
+| [`language_features.xt`](Documents/TermXT_Examples/language_features.xt) | Local demo of optional arguments, grouped conditions, functions, quoted file paths and error recovery. Creates `TermXT demo output.txt`. | `xt language_features.xt -p "Ada Lovelace"` |
 
 
 ## Usage of pipe commands

@@ -30,4 +30,8 @@
     <ProjectReference Include="..\Commands\Commands.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\Documents\TermXT_Examples\*.xt" Link="TermXT_Examples\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

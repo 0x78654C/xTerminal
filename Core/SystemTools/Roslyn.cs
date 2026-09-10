@@ -55,6 +55,8 @@ namespace Core.SystemTools
 
         private const string AlternateNuGetDirectivePrefix = "// xte-nuget:";
         private const int DotNetRestoreTimeoutMs = 120000;
+        private static readonly Lazy<List<MetadataReference>> s_trustedPlatformReferences =
+            new Lazy<List<MetadataReference>>(TrustedPlatformReferences);
         private static readonly Regex s_packageIdRegex = new Regex(
             @"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$",
             RegexOptions.Compiled);
@@ -80,7 +82,9 @@ namespace Core.SystemTools
 
         public static RoslynReferenceSet ReferenceSet(string sourcePath, string sourceText)
         {
-            var references = TrustedPlatformReferences();
+            // Runtime assemblies do not change during the process lifetime. Share their
+            // immutable metadata, but give each caller its own list for package references.
+            var references = new List<MetadataReference>(s_trustedPlatformReferences.Value);
             var assemblyPaths = new List<string>();
             var warnings = new List<string>();
             var addedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

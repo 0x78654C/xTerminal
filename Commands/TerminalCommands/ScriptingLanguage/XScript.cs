@@ -20,11 +20,11 @@ namespace Commands.TerminalCommands.ScriptingLanguage
             conditionals, loops, functions, error handling and output capture.
             Every xTerminal command works as-is inside a script.
         */
-        private static Version s_version = new(1, 0, 1);
+        private static readonly Version s_version = new(1, 0, 2);
         public string Name => "xt";
 
         private static readonly string s_helpMessage = @"Usage of xt command:
-    xt <script.xt>              : Run an TermXT Script file.
+    xt <script.xt>              : Run a TermXT Script file.
     xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
     xt -h                       : Display this help message.
     xt -new <script.xt>         : Create a new empty script template.
@@ -48,7 +48,8 @@ TermXT Script Language Reference:
     input <var> = ""prompt""             : Read user input into a variable.
     if <a> <op> <b> / elif / else / end : Conditional block.
        Operators: ==  !=  >  <  >=  <=  contains  startswith  endswith
-       Logical:   && (and)   || (or)   not <cond>   — evaluated left to right
+       Logical:   not, then && (and), then || (or); parentheses group conditions.
+       Operators outside quoted text support compact forms such as {n}>=2&&{n}<5.
     loop <n> / end                     : Repeat block N times. {i} = iteration.
     while <condition> / end            : Repeat while condition is true.
     each <var> in <a,b,c> / end        : Iterate comma-separated values.
@@ -73,6 +74,7 @@ Built-in variables:
     {PC}     : Computer name.
     {CWD}    : Current working directory.
     {i}      : Current loop iteration (1-based).
+    {argc}   : Number of arguments in the current script or function call.
     {result} : Return value from last function call.
     {error}  : Set to ""true"" when last command failed.
     {error_message} : Error message from last caught exception.
@@ -152,7 +154,7 @@ print ""Done!""
                 if (args == $"{Name} -h") { Console.WriteLine(s_helpMessage); return; }
                 if (args == Name) { FileSystem.SuccessWriteLine($"Use -h param for {Name} command usage!"); return; }
 
-                string currentDir = File.ReadAllText(GlobalVariables.currentDirectory);
+                string currentDir = File.ReadAllText(GlobalVariables.currentDirectory).Trim();
                 string rest = args.Substring(Name.Length).TrimStart();
 
                 if (rest.StartsWith("-ver"))
@@ -164,7 +166,7 @@ print ""Done!""
                 // xt -new <file>
                 if (rest.StartsWith("-new "))
                 {
-                    string newFile = FileSystem.SanitizePath(rest.Substring(5).Trim(), currentDir);
+                    string newFile = FileSystem.SanitizePath(TermXtSyntax.Unquote(rest.Substring(5).Trim()), currentDir);
                     File.WriteAllText(newFile, s_template.Replace("{DATE}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
                     FileSystem.SuccessWriteLine($"Script template created: {newFile}");
                     return;
@@ -181,8 +183,8 @@ print ""Done!""
                 // xt -check <file>
                 if (rest.StartsWith("-check "))
                 {
-                    string checkFile = FileSystem.SanitizePath(rest.Substring(7).Trim(), currentDir);
-                    CheckScript(checkFile);
+                    string checkFile = FileSystem.SanitizePath(TermXtSyntax.Unquote(rest.Substring(7).Trim()), currentDir);
+                    GlobalVariables.isErrorCommand = CheckScript(checkFile) > 0;
                     return;
                 }
 
@@ -190,16 +192,16 @@ print ""Done!""
                 string[] scriptArgs = Array.Empty<string>();
                 string scriptPath;
 
-                int pIdx = rest.LastIndexOf(" -p ");
+                int pIdx = TermXtSyntax.FindParameterMarker(rest);
                 if (pIdx >= 0)
                 {
-                    scriptPath = FileSystem.SanitizePath(rest[..pIdx].Trim(), currentDir);
-                    string paramStr = rest[(pIdx + 4)..].Trim();
+                    scriptPath = FileSystem.SanitizePath(TermXtSyntax.Unquote(rest[..pIdx].Trim()), currentDir);
+                    string paramStr = rest[(pIdx + 2)..].Trim();
                     scriptArgs = ParseArgs(paramStr);
                 }
                 else
                 {
-                    scriptPath = FileSystem.SanitizePath(rest, currentDir);
+                    scriptPath = FileSystem.SanitizePath(TermXtSyntax.Unquote(rest.Trim()), currentDir);
                 }
 
                 if (!File.Exists(scriptPath))
@@ -228,28 +230,7 @@ print ""Done!""
 
         private static string[] ParseArgs(string input)
         {
-            var result = new List<string>();
-            int i = 0;
-            while (i < input.Length)
-            {
-                while (i < input.Length && input[i] == ' ') i++;
-                if (i >= input.Length) break;
-                if (input[i] == '"')
-                {
-                    int end = input.IndexOf('"', i + 1);
-                    if (end == -1) { result.Add(input[(i + 1)..].Trim()); break; }
-                    result.Add(input[(i + 1)..end]);
-                    i = end + 1;
-                }
-                else
-                {
-                    int end = input.IndexOf(' ', i);
-                    if (end == -1) { result.Add(input[i..]); break; }
-                    result.Add(input[i..end]);
-                    i = end + 1;
-                }
-            }
-            return result.ToArray();
+            return TermXtSyntax.ParseArguments(input);
         }
 
         /// <summary>
@@ -265,106 +246,12 @@ print ""Done!""
             }
 
             string[] lines = File.ReadAllLines(path);
-            int errors = 0;
-            var blockStack = new Stack<(string type, int line)>();
-
-            for (int i = 0; i < lines.Length; i++)
+            var diagnostics = TermXtSyntax.Validate(lines);
+            int errors = diagnostics.Count;
+            foreach (var diagnostic in diagnostics)
             {
-                string line = lines[i].Trim();
-                if (string.IsNullOrEmpty(line) || line.StartsWith('#')) continue;
-                string keyword = line.Split(' ')[0].ToLower();
-
-                switch (keyword)
-                {
-                    case "if":
-                    case "loop":
-                    case "each":
-                    case "func":
-                    case "try":
-                    case "while":
-                        blockStack.Push((keyword, i + 1));
-                        break;
-                    case "end":
-                        if (blockStack.Count == 0)
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
-                            Console.WriteLine("'end' without matching block opener.");
-                            errors++;
-                        }
-                        else
-                            blockStack.Pop();
-                        break;
-                    case "elif":
-                    case "else":
-                        if (blockStack.Count == 0 || blockStack.Peek().type != "if")
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
-                            Console.WriteLine($"'{keyword}' without matching 'if'.");
-                            errors++;
-                        }
-                        break;
-                    case "catch":
-                        if (blockStack.Count == 0 || blockStack.Peek().type != "try")
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
-                            Console.WriteLine("'catch' without matching 'try'.");
-                            errors++;
-                        }
-                        break;
-                    case "set":
-                    case "capture":
-                    case "read":
-                        if (!line.Contains('='))
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
-                            Console.WriteLine($"'{keyword}' missing '=' assignment.");
-                            errors++;
-                        }
-                        break;
-                    case "break":
-                    case "continue":
-                        bool inLoop = false;
-                        foreach (var entry in blockStack)
-                        {
-                            if (entry.type is "loop" or "each" or "while") { inLoop = true; break; }
-                        }
-                        if (!inLoop)
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
-                            Console.WriteLine($"'{keyword}' outside of a loop.");
-                            errors++;
-                        }
-                        break;
-                    case "return":
-                        bool inFunc = false;
-                        foreach (var entry in blockStack)
-                        {
-                            if (entry.type == "func") { inFunc = true; break; }
-                        }
-                        if (!inFunc)
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
-                            Console.WriteLine("'return' outside of a function.");
-                            errors++;
-                        }
-                        break;
-                    case "input":
-                        if (!line.Contains('='))
-                        {
-                            FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {i + 1}: ");
-                            Console.WriteLine("'input' missing '=' assignment.");
-                            errors++;
-                        }
-                        break;
-                }
-            }
-
-            while (blockStack.Count > 0)
-            {
-                var (type, lineNum) = blockStack.Pop();
-                FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {lineNum}: ");
-                Console.WriteLine($"'{type}' block never closed with 'end'.");
-                errors++;
+                FileSystem.ColorConsoleText(ConsoleColor.Red, $"  Line {diagnostic.Line}: ");
+                Console.WriteLine(diagnostic.Message);
             }
 
             if (errors == 0 && !silent)
@@ -380,7 +267,6 @@ print ""Done!""
         private sealed class ScriptEngine
         {
             private readonly string[] _lines;
-            private readonly string[] _scriptArgs;
             private readonly Dictionary<string, string> _vars = new(StringComparer.OrdinalIgnoreCase);
             private readonly Dictionary<string, (int Start, int End)> _funcs = new(StringComparer.OrdinalIgnoreCase);
             private int _pc;
@@ -388,6 +274,9 @@ print ""Done!""
             private bool _breakRequested;
             private bool _continueRequested;
             private bool _returnRequested;
+            private int _tryDepth;
+            private int _callDepth;
+            private int _loopDepth;
 
 
             private readonly DataTable _calc = new DataTable();
@@ -395,14 +284,13 @@ print ""Done!""
             public ScriptEngine(string path, string[] scriptArgs)
             {
                 _lines = File.ReadAllLines(path);
-                _scriptArgs = scriptArgs;
-
-                for (int i = 0; i < _scriptArgs.Length; i++)
-                    _vars[$"{i + 1}"] = _scriptArgs[i];
+                for (int i = 0; i < scriptArgs.Length; i++)
+                    _vars[$"{i + 1}"] = scriptArgs[i];
 
                 _vars["USER"] = GlobalVariables.accountName;
                 _vars["PC"] = GlobalVariables.computerName;
                 _vars["result"] = "";
+                _vars["argc"] = scriptArgs.Length.ToString(CultureInfo.InvariantCulture);
                 _vars["error"] = "false";
                 _vars["error_message"] = "";
 
@@ -411,7 +299,8 @@ print ""Done!""
 
             public void Run()
             {
-                ExecuteBlock(0, _lines.Length - 1);
+                try { ExecuteBlock(0, _lines.Length - 1); }
+                finally { _calc.Dispose(); }
             }
 
             private void ExecuteBlock(int start, int end)
@@ -428,7 +317,7 @@ print ""Done!""
                     }
 
                     string line = Interpolate(raw);
-                    string keyword = line.Split(' ')[0].ToLower();
+                    string keyword = TermXtSyntax.Keyword(line);
 
                     switch (keyword)
                     {
@@ -446,10 +335,10 @@ print ""Done!""
                         case "continue": _continueRequested = true; _pc++; break;
                         case "return": ExecReturn(line); break;
                         case "if": ExecIf(end); break;
-                        case "loop": ExecLoop(end); break;
-                        case "while": ExecWhile(end); break;
-                        case "each": ExecEach(end); break;
-                        case "call": ExecCall(line); _pc++; break;
+                        case "loop": ExecuteLoop(ExecLoop, end); break;
+                        case "while": ExecuteLoop(ExecWhile, end); break;
+                        case "each": ExecuteLoop(ExecEach, end); break;
+                        case "call": ExecCall(raw); _pc++; break;
                         case "try": ExecTry(end); break;
                         case "func": SkipBlock(); break;
                         default:
@@ -516,11 +405,12 @@ print ""Done!""
                 {
                     if (!Regex.IsMatch(expression, @"^[\d\s\+\-\*\/\%\(\)\.]+$"))
                     {
-                        PrintError(_pc + 1, $"Math expression contains invalid characters: '{expression}'");
-                        return "0";
+                        throw new FormatException("Math expression contains invalid characters.");
                     }
                     object result = _calc.Compute(expression, null);
-                    return Convert.ToDouble(result).ToString(CultureInfo.InvariantCulture);
+                    double value = Convert.ToDouble(result, CultureInfo.InvariantCulture);
+                    if (!double.IsFinite(value)) throw new ArithmeticException("Math result is not finite.");
+                    return value.ToString(CultureInfo.InvariantCulture);
                 }
                 catch (Exception ex)
                 {
@@ -531,7 +421,7 @@ print ""Done!""
 
             private string EvalSubstr(string args)
             {
-                string[] tokens = args.Split(' ');
+                string[] tokens = TermXtSyntax.ParseArguments(args);
                 if (tokens.Length < 3)
                 {
                     PrintError(_pc + 1, "substr expects: substr <text> <start> <length>");
@@ -543,9 +433,14 @@ print ""Done!""
                     return args;
                 }
                 string text = string.Join(' ', tokens.Take(tokens.Length - 2)).Trim('"');
+                if (length < 0)
+                {
+                    PrintError(_pc + 1, "substr: length must not be negative.");
+                    return "";
+                }
                 if (start < 0) start = 0;
                 if (start >= text.Length) return "";
-                if (start + length > text.Length) length = text.Length - start;
+                if (length > text.Length - start) length = text.Length - start;
                 return text.Substring(start, length);
             }
 
@@ -560,28 +455,7 @@ print ""Done!""
 
             private static List<string> ParseQuotedTokens(string input)
             {
-                var result = new List<string>();
-                int i = 0;
-                while (i < input.Length)
-                {
-                    while (i < input.Length && input[i] == ' ') i++;
-                    if (i >= input.Length) break;
-                    if (input[i] == '"')
-                    {
-                        int end = input.IndexOf('"', i + 1);
-                        if (end == -1) { result.Add(input[(i + 1)..].Trim()); break; }
-                        result.Add(input[(i + 1)..end]);
-                        i = end + 1;
-                    }
-                    else
-                    {
-                        int end = input.IndexOf(' ', i);
-                        if (end == -1) { result.Add(input[i..]); break; }
-                        result.Add(input[i..end]);
-                        i = end + 1;
-                    }
-                }
-                return result;
+                return TermXtSyntax.ParseArguments(input).ToList();
             }
 
             private void ExecPrint(string rawLine)
@@ -675,6 +549,9 @@ print ""Done!""
                 ResetCommandState();
                 ExecutePipeline(cmdLine);
                 _vars["error"] = GlobalVariables.isErrorCommand ? "true" : "false";
+                if (GlobalVariables.isErrorCommand)
+                    PrintError(_pc + 1, $"Command failed: {cmdLine}");
+                else _vars["error_message"] = "";
             }
 
             private void ExecCapture(string line)
@@ -711,6 +588,9 @@ print ""Done!""
                 GlobalVariables.pipeCmdCount = 0;
                 GlobalVariables.pipeCmdCountTemp = 0;
                 GlobalVariables.isPipeCommand = false;
+                if (GlobalVariables.isErrorCommand)
+                    PrintError(_pc + 1, $"Command failed: {cmdLine}");
+                else _vars["error_message"] = "";
             }
 
             private void ExecInput(string line)
@@ -744,13 +624,13 @@ print ""Done!""
                 if (!File.Exists(filePath))
                 {
                     PrintError(_pc + 1, $"File not found: {filePath}");
-                    _vars["error"] = "true";
-                    _vars["error_message"] = $"File not found: {filePath}";
                     return;
                 }
 
                 _vars[varName] = File.ReadAllText(filePath);
                 _vars["error"] = "false";
+                _vars["error_message"] = "";
+                GlobalVariables.isErrorCommand = false;
             }
 
             private void ExecFileWrite(string rawLine, bool append)
@@ -758,15 +638,15 @@ print ""Done!""
                 string keyword = append ? "append" : "write";
                 string rest = rawLine[keyword.Length..].Trim();
 
-                int sep = rest.IndexOf(' ');
-                if (sep < 0)
+                int position = 0;
+                string filePath = Interpolate(TermXtSyntax.ReadArgument(rest, ref position));
+                if (position >= rest.Length)
                 {
                     PrintError(_pc + 1, $"'{keyword}' expects: {keyword} <file> \"text\"");
                     return;
                 }
 
-                string filePath = Interpolate(rest[..sep].Trim());
-                string text = rest[(sep + 1)..].Trim().Trim('"');
+                string text = TermXtSyntax.Unquote(rest[position..].Trim());
                 text = ProcessEscapes(text);
                 text = Interpolate(text);
 
@@ -778,6 +658,9 @@ print ""Done!""
                     File.AppendAllText(filePath, text + Environment.NewLine);
                 else
                     File.WriteAllText(filePath, text + Environment.NewLine);
+                GlobalVariables.isErrorCommand = false;
+                _vars["error"] = "false";
+                _vars["error_message"] = "";
             }
 
             private void ExecReturn(string line)
@@ -822,8 +705,8 @@ print ""Done!""
 
             private int FindMatchingEnd(int start, int blockEnd, List<(int, string, string)> branches)
             {
-                string firstLine = Interpolate(_lines[start].Trim());
-                string firstKeyword = firstLine.Split(' ')[0].ToLower();
+                string firstLine = _lines[start].Trim();
+                string firstKeyword = TermXtSyntax.Keyword(firstLine);
                 string firstCond = firstLine.Length > firstKeyword.Length ? firstLine[(firstKeyword.Length + 1)..].Trim() : "";
                 branches.Add((start, firstKeyword, firstCond));
 
@@ -832,7 +715,7 @@ print ""Done!""
                 while (i <= blockEnd && depth > 0)
                 {
                     string trimmed = _lines[i].Trim();
-                    string kw = trimmed.Split(' ')[0].ToLower();
+                    string kw = TermXtSyntax.Keyword(trimmed);
 
                     if (kw is "if" or "loop" or "each" or "func" or "try" or "while")
                         depth++;
@@ -843,7 +726,7 @@ print ""Done!""
                     }
                     else if (depth == 1 && (kw == "elif" || kw == "else" || kw == "catch"))
                     {
-                        string cond = trimmed.Length > kw.Length ? Interpolate(trimmed[(kw.Length + 1)..].Trim()) : "";
+                        string cond = trimmed.Length > kw.Length ? trimmed[(kw.Length + 1)..].Trim() : "";
                         branches.Add((i, kw, cond));
                     }
                     i++;
@@ -851,70 +734,55 @@ print ""Done!""
                 return i;
             }
 
-            private bool EvalCondition(string condition)
+            private bool EvalCondition(string condition, int depth = 0)
             {
-                // not <condition>
-                string trimmedCond = condition.Trim();
-                if (trimmedCond.StartsWith("not ", StringComparison.OrdinalIgnoreCase))
-                    return !EvalCondition(trimmedCond[4..].Trim());
+                if (depth > 128) throw new FormatException("Condition nesting is too deep.");
+                condition = condition.Trim();
 
-                if (condition.Contains("||"))
+                // Parse syntax before interpolation: operators inside variable values are data.
+                foreach (string logical in new[] { "||", "&&" })
                 {
-                    string[] orParts = Regex.Split(condition, @"\s+\|\|\s+");
-                    foreach (string part in orParts)
+                    var (index, _) = FindConditionOperator(condition, new[] { logical });
+                    if (index >= 0)
                     {
-                        if (EvalCondition(part.Trim()))
-                            return true;
-                    }
-                    return false;
-                }
-
-                if (condition.Contains("&&"))
-                {
-                    string[] andParts = Regex.Split(condition, @"\s+&&\s+");
-                    foreach (string part in andParts)
-                    {
-                        if (!EvalCondition(part.Trim()))
-                            return false;
-                    }
-                    return true;
-                }
-
-                string[] operators = { "==", "!=", ">=", "<=", ">", "<", "contains", "startswith", "endswith" };
-
-                string foundOp = null;
-                int opStart = -1;
-                int opEnd = -1;
-
-                foreach (string op in operators)
-                {
-                    string pattern = $" {op} ";
-                    int idx = condition.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
-                    if (idx >= 0)
-                    {
-                        foundOp = op;
-                        opStart = idx;
-                        opEnd = idx + pattern.Length;
-                        break;
+                        string leftCondition = condition[..index].Trim();
+                        string rightCondition = condition[(index + 2)..].Trim();
+                        if (leftCondition.Length == 0 || rightCondition.Length == 0)
+                            throw new FormatException($"'{logical}' requires two conditions.");
+                        return logical == "||"
+                            ? EvalCondition(leftCondition, depth + 1) || EvalCondition(rightCondition, depth + 1)
+                            : EvalCondition(leftCondition, depth + 1) && EvalCondition(rightCondition, depth + 1);
                     }
                 }
 
-                if (foundOp == null)
+                if (condition.StartsWith("not", StringComparison.OrdinalIgnoreCase) &&
+                    (condition.Length == 3 || char.IsWhiteSpace(condition[3]) || condition[3] == '('))
                 {
-                    string val = condition.Trim().Trim('"');
-                    return !string.IsNullOrEmpty(val) && val != "0" && val.ToLower() != "false";
+                    if (condition.Length == 3) throw new FormatException("'not' requires a condition.");
+                    return !EvalCondition(condition[3..], depth + 1);
+                }
+                if (condition.StartsWith('(') && condition.EndsWith(')'))
+                    return EvalCondition(condition[1..^1], depth + 1);
+
+                var (opStart, foundOp) = FindConditionOperator(condition,
+                    new[] { "==", "!=", ">=", "<=", ">", "<", "contains", "startswith", "endswith" });
+                if (opStart < 0)
+                {
+                    string val = Interpolate(TermXtSyntax.Unquote(condition));
+                    return val.Length > 0 && val != "0" && !val.Equals("false", StringComparison.OrdinalIgnoreCase);
                 }
 
-                string left = condition[..opStart].Trim().Trim('"');
-                string right = condition[opEnd..].Trim().Trim('"');
-                string opLower = foundOp.ToLower();
+                string leftRaw = condition[..opStart].Trim();
+                string rightRaw = condition[(opStart + foundOp.Length)..].Trim();
+                if (leftRaw.Length == 0 || rightRaw.Length == 0)
+                    throw new FormatException($"'{foundOp}' requires two operands.");
+                string left = Interpolate(TermXtSyntax.Unquote(leftRaw));
+                string right = Interpolate(TermXtSyntax.Unquote(rightRaw));
+                double numL = 0, numR = 0;
+                bool isNumeric = double.TryParse(left, NumberStyles.Float, CultureInfo.InvariantCulture, out numL)
+                              && double.TryParse(right, NumberStyles.Float, CultureInfo.InvariantCulture, out numR);
 
-                double numL = 0;
-                double numR = 0;
-                bool isNumeric = double.TryParse(left, NumberStyles.Any, CultureInfo.InvariantCulture, out numL)
-                              && double.TryParse(right, NumberStyles.Any, CultureInfo.InvariantCulture, out numR);
-
-                return opLower switch
+                return foundOp switch
                 {
                     "==" => left.Equals(right, StringComparison.OrdinalIgnoreCase),
                     "!=" => !left.Equals(right, StringComparison.OrdinalIgnoreCase),
@@ -929,7 +797,58 @@ print ""Done!""
                 };
             }
 
+            private static (int Index, string Operator) FindConditionOperator(string condition, string[] operators)
+            {
+                bool quoted = false;
+                int nesting = 0;
+                (int, string) found = (-1, null);
+                for (int i = 0; i < condition.Length; i++)
+                {
+                    char ch = condition[i];
+                    if (ch == '"') { quoted = !quoted; continue; }
+                    if (quoted) continue;
+                    if (ch == '(') { nesting++; continue; }
+                    if (ch == ')')
+                    {
+                        if (--nesting < 0) throw new FormatException("Unmatched ')' in condition.");
+                        continue;
+                    }
+                    if (nesting != 0 || found.Item1 >= 0) continue;
+                    foreach (string op in operators)
+                    {
+                        if (i + op.Length > condition.Length ||
+                            !condition.AsSpan(i, op.Length).Equals(op.AsSpan(), StringComparison.OrdinalIgnoreCase)) continue;
+                        if (char.IsLetter(op[0]) &&
+                            (i == 0 || !char.IsWhiteSpace(condition[i - 1]) ||
+                             i + op.Length == condition.Length || !char.IsWhiteSpace(condition[i + op.Length]))) continue;
+                        found = (i, op);
+                        break;
+                    }
+                }
+                if (quoted) throw new FormatException("Unclosed double quote in condition.");
+                if (nesting != 0) throw new FormatException("Unclosed '(' in condition.");
+                return found;
+            }
+
             // ── Loop N / end ─────────────────────────────────────────────────
+
+            private void ExecuteLoop(Action<int> execute, int blockEnd)
+            {
+                bool hadIteration = _vars.TryGetValue("i", out string savedIteration);
+                _loopDepth++;
+                try { execute(blockEnd); }
+                finally
+                {
+                    _loopDepth--;
+                    if (_loopDepth > 0)
+                    {
+                        if (hadIteration) _vars["i"] = savedIteration;
+                        else _vars.Remove("i");
+                    }
+                    _breakRequested = false;
+                    _continueRequested = false;
+                }
+            }
 
             private void ExecLoop(int blockEnd)
             {
@@ -946,7 +865,7 @@ print ""Done!""
                 int bodyStart = _pc + 1;
                 int bodyEnd = endLine - 1;
 
-                for (int iter = 1; iter <= count && !_stopRequested; iter++)
+                for (long iter = 1; iter <= count && !_stopRequested; iter++)
                 {
                     _vars["i"] = iter.ToString();
                     _continueRequested = false;
@@ -970,14 +889,13 @@ print ""Done!""
                 int bodyStart = _pc + 1;
                 int bodyEnd = endLine - 1;
 
-                int iter = 0;
+                long iter = 0;
 
                 while (!_stopRequested)
                 {
                     iter++;
                     string condRaw = _lines[condLine].Trim();
-                    string condInterp = Interpolate(condRaw);
-                    string condStr = condInterp.Length > 5 ? condInterp[5..].Trim() : "";
+                    string condStr = condRaw.Length > 5 ? condRaw[5..].Trim() : "";
 
                     if (!EvalCondition(condStr))
                         break;
@@ -1001,7 +919,7 @@ print ""Done!""
                 string raw = _lines[_pc].Trim();
 
                 // Check for lines:<varname> pattern BEFORE interpolation
-                var linesMatch = Regex.Match(raw, @"^each\s+(\w+)\s+in\s+lines:\{?(\w+)\}?$", RegexOptions.IgnoreCase);
+                var linesMatch = Regex.Match(raw, @"^each\s+(\w+)\s+in\s+lines:\{?(\w+)\}?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                 if (linesMatch.Success)
                 {
                     string varName = linesMatch.Groups[1].Value;
@@ -1035,7 +953,7 @@ print ""Done!""
 
                 // Standard each: interpolate for comma-separated values
                 string line = Interpolate(raw);
-                var match = Regex.Match(line, @"^each\s+(\w+)\s+in\s+(.+)$", RegexOptions.IgnoreCase);
+                var match = Regex.Match(line, @"^each\s+(\w+)\s+in\s+(.+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                 if (!match.Success)
                 {
                     PrintError(_pc + 1, "Invalid 'each' syntax. Expected: each <var> in <a,b,c>");
@@ -1060,8 +978,8 @@ print ""Done!""
                     int bodyStartRange = _pc + 1;
                     int bodyEndRange = endLineRange - 1;
 
-                    int idxRange = 0;
-                    for (int n = rangeStart; step > 0 ? n <= rangeEnd : n >= rangeEnd; n += step)
+                    long idxRange = 0;
+                    for (long n = rangeStart; step > 0 ? n <= rangeEnd : n >= rangeEnd; n += step)
                     {
                         if (_stopRequested) break;
                         idxRange++;
@@ -1111,14 +1029,14 @@ print ""Done!""
                 for (int i = 0; i < _lines.Length; i++)
                 {
                     string trimmed = _lines[i].Trim();
-                    if (trimmed.StartsWith("func ", StringComparison.OrdinalIgnoreCase))
+                    if (TermXtSyntax.Keyword(trimmed) == "func")
                     {
                         string funcName = trimmed[5..].Trim();
                         int depth = 1;
                         int j = i + 1;
                         while (j < _lines.Length && depth > 0)
                         {
-                            string kw = _lines[j].Trim().Split(' ')[0].ToLower();
+                            string kw = TermXtSyntax.Keyword(_lines[j].Trim());
                             if (kw is "if" or "loop" or "each" or "func" or "try" or "while") depth++;
                             else if (kw == "end") depth--;
                             if (depth > 0) j++;
@@ -1131,7 +1049,7 @@ print ""Done!""
             private void ExecCall(string line)
             {
                 string rest = line[4..].Trim();
-                var parts = ParseQuotedTokens(rest);
+                var parts = ParseQuotedTokens(rest).Select(Interpolate).ToList();
                 if (parts.Count == 0) { PrintError(_pc + 1, "'call' missing function name."); return; }
 
                 string funcName = parts[0];
@@ -1142,37 +1060,38 @@ print ""Done!""
                 }
 
                 int argCount = parts.Count - 1;
-                var savedArgs = new Dictionary<string, string>();
-
-                // Save and set positional args for this call.
-                for (int a = 1; a <= argCount; a++)
+                if (_callDepth >= 128)
                 {
-                    string key = a.ToString();
-                    if (_vars.ContainsKey(key)) savedArgs[key] = _vars[key];
-                    _vars[key] = parts[a];
+                    PrintError(_pc + 1, "Function call nesting exceeds the limit of 128.");
+                    return;
                 }
-
-                // Remove any leftover positional args beyond what we're passing
-                // so they don't leak from a previous call.
-                for (int a = argCount + 1; a <= 20; a++)
-                {
-                    string key = a.ToString();
-                    if (!_vars.ContainsKey(key)) break;
-                    savedArgs[key] = _vars[key];
-                    _vars.Remove(key);
-                }
-
+                var savedArgs = _vars.Where(kv => IsPositionalArgument(kv.Key)).ToArray();
+                string savedArgc = _vars["argc"];
                 int savedPc = _pc;
-                _returnRequested = false;
-                ExecuteBlock(range.Start, range.End);
-                _returnRequested = false;
-                _pc = savedPc;
-
-                // Restore previous positional args.
-                foreach (var kv in savedArgs)
-                    _vars[kv.Key] = kv.Value;
-
+                _callDepth++;
+                try
+                {
+                    foreach (var kv in savedArgs) _vars.Remove(kv.Key);
+                    for (int a = 1; a <= argCount; a++)
+                        _vars[a.ToString(CultureInfo.InvariantCulture)] = parts[a];
+                    _vars["argc"] = argCount.ToString(CultureInfo.InvariantCulture);
+                    _vars["result"] = "";
+                    _returnRequested = false;
+                    ExecuteBlock(range.Start, range.End);
+                }
+                finally
+                {
+                    foreach (string key in _vars.Keys.Where(IsPositionalArgument).ToArray())
+                        _vars.Remove(key);
+                    foreach (var kv in savedArgs) _vars[kv.Key] = kv.Value;
+                    _vars["argc"] = savedArgc;
+                    _returnRequested = false;
+                    _pc = savedPc;
+                    _callDepth--;
+                }
             }
+
+            private static bool IsPositionalArgument(string key) => key.Length > 0 && key.All(char.IsDigit);
 
             // ── Try / catch / end ────────────────────────────────────────────
 
@@ -1186,27 +1105,32 @@ print ""Done!""
                 int catchBodyStart = branches.Count > 1 ? branches[1].Item1 + 1 : -1;
                 int catchBodyEnd = endLine - 1;
 
-                bool savedError = GlobalVariables.isErrorCommand;
                 GlobalVariables.isErrorCommand = false;
+                _vars["error"] = "false";
+                _vars["error_message"] = "";
+                bool failed = false;
 
+                _tryDepth++;
                 try
                 {
                     ExecuteBlock(tryBodyStart, tryBodyEnd);
                 }
                 catch (Exception ex)
                 {
+                    failed = true;
                     GlobalVariables.isErrorCommand = true;
+                    _vars["error"] = "true";
                     _vars["error_message"] = ex.Message;
                 }
+                finally { _tryDepth--; }
 
-                if (GlobalVariables.isErrorCommand && catchBodyStart >= 0)
+                if (failed && catchBodyStart >= 0)
                 {
                     GlobalVariables.isErrorCommand = false;
                     ExecuteBlock(catchBodyStart, catchBodyEnd);
                 }
-
-                if (!GlobalVariables.isErrorCommand)
-                    GlobalVariables.isErrorCommand = savedError;
+                else if (failed && _tryDepth > 0)
+                    throw new InvalidOperationException(_vars["error_message"]);
 
                 _vars["error"] = GlobalVariables.isErrorCommand ? "true" : "false";
                 _pc = endLine + 1;
@@ -1220,7 +1144,7 @@ print ""Done!""
                 _pc++;
                 while (_pc < _lines.Length && depth > 0)
                 {
-                    string kw = _lines[_pc].Trim().Split(' ')[0].ToLower();
+                    string kw = TermXtSyntax.Keyword(_lines[_pc].Trim());
                     if (kw is "if" or "loop" or "each" or "func" or "try" or "while") depth++;
                     else if (kw == "end") depth--;
                     _pc++;
@@ -1237,10 +1161,14 @@ print ""Done!""
                 GlobalVariables.isErrorCommand = false;
             }
 
-            private static void PrintError(int lineNum, string msg)
+            private void PrintError(int lineNum, string msg)
             {
+                GlobalVariables.isErrorCommand = true;
+                _vars["error"] = "true";
+                _vars["error_message"] = msg;
                 FileSystem.ColorConsoleText(ConsoleColor.Red, $"  [xt line {lineNum}] ");
                 Console.WriteLine(msg);
+                if (_tryDepth > 0) throw new InvalidOperationException(msg);
             }
 
             /// <summary>
@@ -1251,9 +1179,11 @@ print ""Done!""
             {
                 var segments = new List<string>();
                 int segStart = 0;
+                bool quoted = false;
                 for (int i = 0; i < cmdLine.Length; i++)
                 {
-                    if (cmdLine[i] == '|')
+                    if (cmdLine[i] == '"') quoted = !quoted;
+                    if (!quoted && cmdLine[i] == '|')
                     {
                         if (i + 1 < cmdLine.Length && cmdLine[i + 1] == '|')
                         {
@@ -1280,19 +1210,26 @@ print ""Done!""
                     GlobalVariables.pipeCmdCount = stages.Length - 1;
                     GlobalVariables.pipeCmdCountTemp = GlobalVariables.pipeCmdCount;
 
-                    foreach (var stage in stages)
+                    try
                     {
-                        string stageTrimmed = stage.Trim();
-                        var cmd = CommandRepository.GetCommand(stageTrimmed);
-                        if (cmd != null)
-                            cmd.Execute(stageTrimmed);
-                        GlobalVariables.pipeCmdCount--;
+                        foreach (var stage in stages)
+                        {
+                            string stageTrimmed = stage.Trim();
+                            if (stageTrimmed.Length == 0)
+                                throw new FormatException("A pipeline stage cannot be empty.");
+                            var cmd = CommandRepository.GetCommand(stageTrimmed);
+                            if (cmd != null) cmd.Execute(stageTrimmed);
+                            GlobalVariables.pipeCmdCount--;
+                            if (GlobalVariables.isErrorCommand) break;
+                        }
                     }
-
-                    GlobalVariables.isPipeCommand = false;
-                    GlobalVariables.pipeCmdOutput = string.Empty;
-                    GlobalVariables.pipeCmdCount = 0;
-                    GlobalVariables.pipeCmdCountTemp = 0;
+                    finally
+                    {
+                        GlobalVariables.isPipeCommand = false;
+                        GlobalVariables.pipeCmdOutput = string.Empty;
+                        GlobalVariables.pipeCmdCount = 0;
+                        GlobalVariables.pipeCmdCountTemp = 0;
+                    }
                 }
                 else
                 {

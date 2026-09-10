@@ -17,6 +17,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Core.SystemTools;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -36,7 +37,7 @@ namespace Core.DirFiles
     }
 
     [SupportedOSPlatform("windows")]
-    public sealed class TermXTEditor
+    public sealed partial class TermXTEditor
     {
         private const string CSI = "\x1b[";
         private const string AltScreen = "\x1b[?1049h";
@@ -49,8 +50,8 @@ namespace Core.DirFiles
         private const string IndentText = "    ";
         private const int ExternalChangeCheckIntervalMs = 750;
         private const int CSharpSemanticDiagnosticDelayMs = 900;
-        private const int CSharpCompletionMaxItems = 80;
-        private const int CSharpCompletionMaxVisibleItems = 8;
+        private const int CompletionMaxItems = 80;
+        private const int CompletionMaxVisibleItems = 8;
         private const int CSharpAutomaticGlobalCompletionMinPrefixLength = 2;
         private const long MaxEditorFileBytes = 50L * 1024 * 1024;
         private const int MaxEditorLineCount = 500000;
@@ -640,11 +641,13 @@ namespace Core.DirFiles
         private readonly List<EditorDiagnostic> _diagnostics = new List<EditorDiagnostic>();
         private readonly HashSet<int> _diagnosticLineIndexes = new HashSet<int>();
         private readonly Dictionary<int, EditorDiagnosticSeverity> _diagnosticLineSeverities = new Dictionary<int, EditorDiagnosticSeverity>();
-        private readonly List<CSharpCompletionItem> _completionItems = new List<CSharpCompletionItem>();
-        private readonly List<CSharpCompletionItem> _completionAllItems = new List<CSharpCompletionItem>();
+        private readonly List<CompletionItem> _completionItems = new List<CompletionItem>();
+        private readonly List<CompletionItem> _completionAllItems = new List<CompletionItem>();
         private bool _diagnosticsCacheDirty = true;
         private bool _csharpSemanticDiagnosticsPending;
         private DateTime _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
+        private Task<CSharpDiagnosticResult> _csharpDiagnosticsTask;
+        private CancellationTokenSource _csharpDiagnosticsCancellation;
         private bool _completionActive;
         private bool _completionMemberAccess;
         private int _completionSelectedIndex;
@@ -841,6 +844,7 @@ namespace Core.DirFiles
             }
             finally
             {
+                CancelCSharpDiagnostics();
                 try
                 {
                     Console.Write(Reset + ShowCursor + NormalScreen);
@@ -910,13 +914,58 @@ namespace Core.DirFiles
 
         private bool CheckDiagnosticsOnIdle()
         {
+            if (TryApplyCSharpDiagnostics())
+                return true;
+
             if (_syntax != TermXTEditorSyntax.CSharp || !_csharpSemanticDiagnosticsPending)
                 return false;
 
-            if (DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc)
+            if (_csharpDiagnosticsTask != null || DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc)
                 return false;
 
-            _diagnosticsCacheDirty = true;
+            // Snapshot on the input thread; the worker must never read mutable editor state.
+            string path = _path;
+            string documentText = BuildDocumentText();
+            var cancellation = new CancellationTokenSource();
+            _csharpDiagnosticsCancellation = cancellation;
+            _csharpDiagnosticsTask = Task.Run(
+                () => AnalyzeCSharpDiagnostics(path, documentText, cancellation.Token),
+                cancellation.Token);
+            return false;
+        }
+
+        private void CancelCSharpDiagnostics()
+        {
+            var task = _csharpDiagnosticsTask;
+            var cancellation = _csharpDiagnosticsCancellation;
+            _csharpDiagnosticsTask = null;
+            _csharpDiagnosticsCancellation = null;
+            if (cancellation == null)
+                return;
+
+            cancellation.Cancel();
+            // Discard results after edits, reloads, syntax changes, and exit. Dispose only
+            // after Roslyn has finished using the token, without waiting on the input thread.
+            _ = task.ContinueWith(
+                _ => cancellation.Dispose(),
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+        }
+
+        private bool TryApplyCSharpDiagnostics()
+        {
+            if (_csharpDiagnosticsTask == null || !_csharpDiagnosticsTask.IsCompleted)
+                return false;
+
+            CSharpDiagnosticResult result = _csharpDiagnosticsTask.GetAwaiter().GetResult();
+            _csharpDiagnosticsTask = null;
+            _csharpDiagnosticsCancellation.Dispose();
+            _csharpDiagnosticsCancellation = null;
+            ClearDiagnostics();
+            ApplyCSharpDiagnostics(result);
+            _diagnostics.Sort(CompareDiagnostics);
+            _diagnosticsCacheDirty = false;
             return true;
         }
 
@@ -1405,6 +1454,7 @@ namespace Core.DirFiles
 
         private void InvalidateDiagnosticsCache(bool delayCSharpSemanticDiagnostics)
         {
+            CancelCSharpDiagnostics();
             if (_syntax == TermXTEditorSyntax.CSharp)
             {
                 _csharpSemanticDiagnosticsPending = true;
@@ -1443,6 +1493,8 @@ namespace Core.DirFiles
 
         private void Render()
         {
+            // Publish once per frame so header counts and line markers use the same results.
+            TryApplyCSharpDiagnostics();
             (int width, int height) = WindowSize();
 
             if (width != _lastWidth || height != _lastHeight)
@@ -1518,7 +1570,7 @@ namespace Core.DirFiles
             switch (_mode)
             {
                 case Mode.Insert:
-                    help = " INSERT  F2 diagnostics | Esc normal | Enter/Tab complete | Tab indent | Ctrl+A select all | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
+                    help = " INSERT  F2 diagnostics | Esc normal | Ctrl+Space suggest | Enter/Tab complete | Tab indent | Ctrl+A select all | Ctrl+C/X/V copy/cut/paste | Ctrl+D duplicate | Ctrl+Z/Y";
                     break;
                 case Mode.Command:
                     help = " COMMAND  F2 diagnostics | e explorer | w save | w! overwrite | e! reload | q quit | diagnostics | warnings | next-error | next-warning | syntax xt|cs|c|cpp|rust|js|py | Esc";
@@ -1570,7 +1622,7 @@ namespace Core.DirFiles
             if (!_completionActive || _completionItems.Count == 0 || _mode != Mode.Insert)
                 return;
 
-            int visibleRows = Math.Min(CSharpCompletionMaxVisibleItems, _completionItems.Count);
+            int visibleRows = Math.Min(CompletionMaxVisibleItems, _completionItems.Count);
             EnsureCompletionSelectionVisible(visibleRows);
 
             int cursorVisualRow = GetCursorVisualRow(textWidth);
@@ -1642,7 +1694,7 @@ namespace Core.DirFiles
             int top,
             int width,
             int labelWidth,
-            CSharpCompletionItem item,
+            CompletionItem item,
             bool selected)
         {
             int bg = selected ? CCompletionSelectedBg : CCompletionBg;
@@ -1660,7 +1712,7 @@ namespace Core.DirFiles
                 .Append(Reset);
         }
 
-        private static string CompletionPopupDetail(CSharpCompletionItem item)
+        private static string CompletionPopupDetail(CompletionItem item)
         {
             string kind = (item.Kind ?? string.Empty).Trim();
             string detail = (item.Detail ?? string.Empty).Trim();
@@ -1927,6 +1979,15 @@ namespace Core.DirFiles
 
             if ((key.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control)
             {
+                if (key.Key == ConsoleKey.Spacebar && _mode == Mode.Insert)
+                {
+                    if (IsTermXtCompletionContext())
+                        RefreshTermXtCompletion(manual: true);
+                    else
+                        StartCSharpCompletion(manual: true);
+                    return;
+                }
+
                 if (key.Key == ConsoleKey.A)
                 {
                     SelectAll();
@@ -2515,7 +2576,7 @@ namespace Core.DirFiles
                 return false;
             }
 
-            if (!TryBuildCSharpCompletionSession(manual, out CSharpCompletionSession session) ||
+            if (!TryBuildCSharpCompletionSession(manual, out CompletionSession session) ||
                 session.Items.Count == 0)
             {
                 DismissCompletion();
@@ -2532,8 +2593,10 @@ namespace Core.DirFiles
             return true;
         }
 
-        private void SetCompletionSession(CSharpCompletionSession session, string selectedLabel)
+        private void SetCompletionSession(CompletionSession session, string selectedLabel)
         {
+            _termXtCompletionKind = TermXtCompletionKind.None;
+            _termXtCompletionManual = false;
             _completionAllItems.Clear();
             _completionAllItems.AddRange(session.AllItems);
             _completionItems.Clear();
@@ -2557,11 +2620,17 @@ namespace Core.DirFiles
                 }
             }
 
-            EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+            EnsureCompletionSelectionVisible(CompletionMaxVisibleItems);
         }
 
         private void RefreshCompletionAfterText(string text)
         {
+            if (IsTermXtCompletionContext())
+            {
+                RefreshTermXtCompletion(manual: false);
+                return;
+            }
+
             if (!IsCSharpCompletionContext())
                 return;
 
@@ -2577,6 +2646,12 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterEdit()
         {
+            if (IsTermXtCompletionContext())
+            {
+                RefreshTermXtCompletion(manual: false);
+                return;
+            }
+
             if (_completionActive)
             {
                 RefreshCSharpCompletion();
@@ -3047,6 +3122,10 @@ namespace Core.DirFiles
                 if (text.Length == 0)
                     continue;
 
+                if (_syntax == TermXTEditorSyntax.TermXt &&
+                    (text.StartsWith("#", StringComparison.Ordinal) || IsTermXtLineKeyword(FirstWord(text))))
+                    continue;
+
                 if (!string.IsNullOrWhiteSpace(TryGetCSharpUsingNamespace(text)) ||
                     LooksLikeCSharpUsingDirectiveStart(text) ||
                     text.StartsWith("using static ", StringComparison.Ordinal) ||
@@ -3099,7 +3178,7 @@ namespace Core.DirFiles
             if (TryRefreshCSharpCompletionFromCache(selectedLabel))
                 return;
 
-            if (!TryBuildCSharpCompletionSession(allowEmptyGlobalPrefix: true, out CSharpCompletionSession session) ||
+            if (!TryBuildCSharpCompletionSession(allowEmptyGlobalPrefix: true, out CompletionSession session) ||
                 session.Items.Count == 0)
             {
                 DismissCompletion();
@@ -3124,7 +3203,7 @@ namespace Core.DirFiles
                 return true;
             }
 
-            var filtered = FilterCSharpCompletionItems(_completionAllItems, prefix);
+            var filtered = FilterCompletionItems(_completionAllItems, prefix);
             if (filtered.Count == 0)
             {
                 DismissCompletion();
@@ -3148,7 +3227,7 @@ namespace Core.DirFiles
                 }
             }
 
-            EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+            EnsureCompletionSelectionVisible(CompletionMaxVisibleItems);
             return true;
         }
 
@@ -3196,22 +3275,22 @@ namespace Core.DirFiles
                     MoveCompletionSelection(1);
                     return true;
                 case ConsoleKey.PageUp:
-                    MoveCompletionSelection(-CSharpCompletionMaxVisibleItems);
+                    MoveCompletionSelection(-CompletionMaxVisibleItems);
                     return true;
                 case ConsoleKey.PageDown:
-                    MoveCompletionSelection(CSharpCompletionMaxVisibleItems);
+                    MoveCompletionSelection(CompletionMaxVisibleItems);
                     return true;
                 case ConsoleKey.Home:
                     _completionSelectedIndex = 0;
-                    EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+                    EnsureCompletionSelectionVisible(CompletionMaxVisibleItems);
                     return true;
                 case ConsoleKey.End:
                     _completionSelectedIndex = Math.Max(0, _completionItems.Count - 1);
-                    EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+                    EnsureCompletionSelectionVisible(CompletionMaxVisibleItems);
                     return true;
                 case ConsoleKey.Enter:
                 case ConsoleKey.Tab:
-                    CommitCSharpCompletion();
+                    CommitCompletion();
                     return true;
                 default:
                     return false;
@@ -3230,7 +3309,7 @@ namespace Core.DirFiles
                 _completionSelectedIndex + delta,
                 0,
                 _completionItems.Count - 1);
-            EnsureCompletionSelectionVisible(CSharpCompletionMaxVisibleItems);
+            EnsureCompletionSelectionVisible(CompletionMaxVisibleItems);
         }
 
         private void EnsureCompletionSelectionVisible(int visibleRows)
@@ -3256,7 +3335,7 @@ namespace Core.DirFiles
                 Math.Max(0, _completionItems.Count - rows));
         }
 
-        private bool CommitCSharpCompletion()
+        private bool CommitCompletion()
         {
             if (!_completionActive || _completionItems.Count == 0)
                 return false;
@@ -3273,8 +3352,27 @@ namespace Core.DirFiles
             string line = CurrentLine();
             int start = ClampValue(_completionStartCol, 0, line.Length);
             int end = ClampValue(_cursorCol, start, line.Length);
-            CSharpCompletionItem item = _completionItems[_completionSelectedIndex];
+            CompletionItem item = _completionItems[_completionSelectedIndex];
             string replacement = item.InsertionText;
+
+            if (_termXtCompletionKind != TermXtCompletionKind.None)
+            {
+                // Replace the whole token when completing in the middle of a word.
+                while (end < line.Length && IsTermXtCompletionPart(line[end], _termXtCompletionKind))
+                    end++;
+
+                if (_termXtCompletionKind == TermXtCompletionKind.Variable)
+                {
+                    if (end < line.Length && line[end] == '}')
+                        end++;
+                    replacement += "}";
+                }
+                else if (_termXtCompletionKind == TermXtCompletionKind.EachSource &&
+                    end < line.Length && line[end] == ':')
+                {
+                    end++;
+                }
+            }
 
             PushInsertUndo();
             _lines[_cursorLine] =
@@ -3292,6 +3390,8 @@ namespace Core.DirFiles
 
         private void DismissCompletion()
         {
+            _termXtCompletionKind = TermXtCompletionKind.None;
+            _termXtCompletionManual = false;
             _completionActive = false;
             _completionAllItems.Clear();
             _completionItems.Clear();
@@ -3302,17 +3402,17 @@ namespace Core.DirFiles
             _completionStartCol = 0;
         }
 
-        private List<CSharpCompletionItem> GetCSharpCompletionItems()
+        private List<CompletionItem> GetCSharpCompletionItems()
         {
-            if (TryBuildCSharpCompletionSession(allowEmptyGlobalPrefix: true, out CSharpCompletionSession session))
+            if (TryBuildCSharpCompletionSession(allowEmptyGlobalPrefix: true, out CompletionSession session))
                 return session.Items;
 
-            return new List<CSharpCompletionItem>();
+            return new List<CompletionItem>();
         }
 
         private bool TryBuildCSharpCompletionSession(
             bool allowEmptyGlobalPrefix,
-            out CSharpCompletionSession session)
+            out CompletionSession session)
         {
             session = null;
 
@@ -3357,7 +3457,7 @@ namespace Core.DirFiles
 
                 CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind);
                 SemanticModel semanticModel = compilation.GetSemanticModel(syntaxTree);
-                var allItems = new List<CSharpCompletionItem>();
+                var allItems = new List<CompletionItem>();
                 var labels = new HashSet<string>(StringComparer.Ordinal);
 
                 int dotPosition = GetDocumentPosition(_cursorLine, startCol - 1);
@@ -3376,10 +3476,10 @@ namespace Core.DirFiles
                     allItems,
                     labels);
 
-                SortCSharpCompletionItems(allItems, string.Empty);
-                List<CSharpCompletionItem> items = FilterCSharpCompletionItems(allItems, prefix);
+                SortCompletionItems(allItems, string.Empty);
+                List<CompletionItem> items = FilterCompletionItems(allItems, prefix);
 
-                session = new CSharpCompletionSession(
+                session = new CompletionSession(
                     _cursorLine,
                     startCol,
                     memberAccess,
@@ -3421,16 +3521,16 @@ namespace Core.DirFiles
         private bool TryBuildCSharpGlobalCompletionSession(
             string prefix,
             int startColumn,
-            out CSharpCompletionSession session)
+            out CompletionSession session)
         {
-            var allItems = new List<CSharpCompletionItem>();
+            var allItems = new List<CompletionItem>();
             var labels = new HashSet<string>(StringComparer.Ordinal);
 
             AddCSharpGlobalCompletions(prefix: string.Empty, allItems, labels);
-            SortCSharpCompletionItems(allItems, string.Empty);
+            SortCompletionItems(allItems, string.Empty);
 
-            List<CSharpCompletionItem> items = FilterCSharpCompletionItems(allItems, prefix);
-            session = new CSharpCompletionSession(
+            List<CompletionItem> items = FilterCompletionItems(allItems, prefix);
+            session = new CompletionSession(
                 _cursorLine,
                 startColumn,
                 memberAccess: false,
@@ -3442,7 +3542,7 @@ namespace Core.DirFiles
         private bool TryBuildCSharpUsingDirectiveCompletionSession(
             string prefix,
             int startColumn,
-            out CSharpCompletionSession session)
+            out CompletionSession session)
         {
             session = null;
 
@@ -3460,7 +3560,7 @@ namespace Core.DirFiles
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
                 CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind);
 
-                var allItems = new List<CSharpCompletionItem>();
+                var allItems = new List<CompletionItem>();
                 var labels = new HashSet<string>(StringComparer.Ordinal);
                 INamespaceSymbol namespaceSymbol = FindCSharpNamespaceSymbol(
                     compilation.GlobalNamespace,
@@ -3470,10 +3570,10 @@ namespace Core.DirFiles
                     AddCSharpNamespaceMemberCompletions(namespaceSymbol, includeTypes, allItems, labels);
 
                 AddCSharpKnownNamespaceMemberCompletions(targetNamespace, includeTypes, allItems, labels);
-                SortCSharpCompletionItems(allItems, string.Empty);
+                SortCompletionItems(allItems, string.Empty);
 
-                List<CSharpCompletionItem> items = FilterCSharpCompletionItems(allItems, prefix);
-                session = new CSharpCompletionSession(
+                List<CompletionItem> items = FilterCompletionItems(allItems, prefix);
+                session = new CompletionSession(
                     _cursorLine,
                     startColumn,
                     memberAccess: true,
@@ -3591,7 +3691,7 @@ namespace Core.DirFiles
         private static void AddCSharpNamespaceMemberCompletions(
             INamespaceSymbol namespaceSymbol,
             bool includeTypes,
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels)
         {
             foreach (INamespaceSymbol namespaceMember in namespaceSymbol.GetNamespaceMembers())
@@ -3625,7 +3725,7 @@ namespace Core.DirFiles
         private static void AddCSharpKnownNamespaceMemberCompletions(
             string targetNamespace,
             bool includeTypes,
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels)
         {
             string namespacePrefix = targetNamespace + ".";
@@ -3700,18 +3800,27 @@ namespace Core.DirFiles
 
         private CSharpCompilation CreateCSharpCompilation(SyntaxTree syntaxTree, SourceCodeKind sourceKind)
         {
-            List<MetadataReference> references = Core.SystemTools.Roslyn.References(_path, BuildDocumentText());
+            return CreateCSharpCompilation(syntaxTree, sourceKind, _path, BuildDocumentText());
+        }
+
+        private static CSharpCompilation CreateCSharpCompilation(
+            SyntaxTree syntaxTree,
+            SourceCodeKind sourceKind,
+            string path,
+            string documentText)
+        {
+            List<MetadataReference> references = Core.SystemTools.Roslyn.References(path, documentText);
             CSharpCompilationOptions compilationOptions =
                 new CSharpCompilationOptions(GetCSharpOutputKind(syntaxTree, sourceKind));
 
             return sourceKind == SourceCodeKind.Script
                 ? CSharpCompilation.CreateScriptCompilation(
-                    Path.GetFileNameWithoutExtension(_path),
+                    Path.GetFileNameWithoutExtension(path),
                     syntaxTree,
                     references,
                     compilationOptions)
                 : CSharpCompilation.Create(
-                    Path.GetFileNameWithoutExtension(_path),
+                    Path.GetFileNameWithoutExtension(path),
                     new[] { syntaxTree },
                     references,
                     compilationOptions);
@@ -3888,7 +3997,7 @@ namespace Core.DirFiles
             ExpressionSyntax targetExpression,
             int position,
             string prefix,
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels)
         {
             SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(targetExpression);
@@ -4067,7 +4176,7 @@ namespace Core.DirFiles
 
         private void AddCSharpGlobalCompletions(
             string prefix,
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels)
         {
             AddCSharpDocumentIdentifierCompletions(items, labels, prefix);
@@ -4163,7 +4272,7 @@ namespace Core.DirFiles
         }
 
         private void AddCSharpDocumentIdentifierCompletions(
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels,
             string prefix)
         {
@@ -4238,7 +4347,7 @@ namespace Core.DirFiles
         }
 
         private static void AddCSharpSymbolCompletion(
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels,
             ISymbol symbol,
             string prefix,
@@ -4251,7 +4360,7 @@ namespace Core.DirFiles
                 return;
 
             string label = CSharpSymbolLabel(symbol);
-            if (!MatchesCSharpCompletionPrefix(label, prefix))
+            if (!MatchesCompletionPrefix(label, prefix))
                 return;
 
             AddCSharpCompletionItem(
@@ -4426,7 +4535,7 @@ namespace Core.DirFiles
         }
 
         private static void AddCSharpWordCompletion(
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels,
             string label,
             string prefix,
@@ -4434,14 +4543,14 @@ namespace Core.DirFiles
             string detail,
             int priority)
         {
-            if (!MatchesCSharpCompletionPrefix(label, prefix))
+            if (!MatchesCompletionPrefix(label, prefix))
                 return;
 
             AddCSharpCompletionItem(items, labels, label, label, kind, detail, priority);
         }
 
         private static void AddCSharpCompletionItem(
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             HashSet<string> labels,
             string label,
             string insertionText,
@@ -4456,28 +4565,28 @@ namespace Core.DirFiles
             }
 
             labels.Add(label);
-            items.Add(new CSharpCompletionItem(label, insertionText, kind, detail, priority));
+            items.Add(new CompletionItem(label, insertionText, kind, detail, priority));
         }
 
         private static void MergeCSharpCompletionItem(
-            List<CSharpCompletionItem> items,
+            List<CompletionItem> items,
             string label,
             string kind,
             string detail,
             int priority)
         {
-            CSharpCompletionItem existing = FindCSharpCompletionItem(items, label);
+            CompletionItem existing = FindCSharpCompletionItem(items, label);
             if (existing == null)
                 return;
 
             existing.MergeDuplicate(kind, detail, priority);
         }
 
-        private static CSharpCompletionItem FindCSharpCompletionItem(
-            List<CSharpCompletionItem> items,
+        private static CompletionItem FindCSharpCompletionItem(
+            List<CompletionItem> items,
             string label)
         {
-            foreach (CSharpCompletionItem item in items)
+            foreach (CompletionItem item in items)
             {
                 if (string.Equals(item.Label, label, StringComparison.Ordinal))
                     return item;
@@ -4486,42 +4595,42 @@ namespace Core.DirFiles
             return null;
         }
 
-        private static bool MatchesCSharpCompletionPrefix(string label, string prefix)
+        private static bool MatchesCompletionPrefix(string label, string prefix)
         {
             return string.IsNullOrEmpty(prefix) ||
                 (!string.IsNullOrEmpty(label) && label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static List<CSharpCompletionItem> FilterCSharpCompletionItems(
-            List<CSharpCompletionItem> allItems,
+        private static List<CompletionItem> FilterCompletionItems(
+            List<CompletionItem> allItems,
             string prefix)
         {
-            var items = new List<CSharpCompletionItem>();
-            foreach (CSharpCompletionItem item in allItems)
+            var items = new List<CompletionItem>();
+            foreach (CompletionItem item in allItems)
             {
-                if (MatchesCSharpCompletionPrefix(item.Label, prefix))
+                if (MatchesCompletionPrefix(item.Label, prefix))
                     items.Add(item);
             }
 
-            SortCSharpCompletionItems(items, prefix);
-            if (items.Count > CSharpCompletionMaxItems)
-                items.RemoveRange(CSharpCompletionMaxItems, items.Count - CSharpCompletionMaxItems);
+            SortCompletionItems(items, prefix);
+            if (items.Count > CompletionMaxItems)
+                items.RemoveRange(CompletionMaxItems, items.Count - CompletionMaxItems);
 
             return items;
         }
 
-        private static void SortCSharpCompletionItems(List<CSharpCompletionItem> items, string prefix)
+        private static void SortCompletionItems(List<CompletionItem> items, string prefix)
         {
-            items.Sort((left, right) => CompareCSharpCompletionItems(left, right, prefix));
+            items.Sort((left, right) => CompareCompletionItems(left, right, prefix));
         }
 
-        private static int CompareCSharpCompletionItems(
-            CSharpCompletionItem left,
-            CSharpCompletionItem right,
+        private static int CompareCompletionItems(
+            CompletionItem left,
+            CompletionItem right,
             string prefix)
         {
-            int rank = CSharpCompletionMatchRank(left.Label, prefix)
-                .CompareTo(CSharpCompletionMatchRank(right.Label, prefix));
+            int rank = CompletionMatchRank(left.Label, prefix)
+                .CompareTo(CompletionMatchRank(right.Label, prefix));
             if (rank != 0)
                 return rank;
 
@@ -4532,7 +4641,7 @@ namespace Core.DirFiles
             return string.Compare(left.Label, right.Label, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static int CSharpCompletionMatchRank(string label, string prefix)
+        private static int CompletionMatchRank(string label, string prefix)
         {
             if (string.IsNullOrEmpty(prefix))
                 return 2;
@@ -7262,6 +7371,14 @@ namespace Core.DirFiles
 
         private void EnsureDiagnostics()
         {
+            if (_csharpDiagnosticsTask != null)
+            {
+                // Explicit diagnostic commands may wait for the current analysis. Rendering
+                // and idle processing only consume results that have already completed.
+                _csharpDiagnosticsTask.GetAwaiter().GetResult();
+                TryApplyCSharpDiagnostics();
+            }
+
             if (!_diagnosticsCacheDirty)
             {
                 if (_syntax == TermXTEditorSyntax.CSharp && _csharpSemanticDiagnosticsPending)
@@ -7280,13 +7397,8 @@ namespace Core.DirFiles
 
         private void EnsureDiagnosticsForRender()
         {
-            if (_syntax == TermXTEditorSyntax.CSharp &&
-                _csharpSemanticDiagnosticsPending &&
-                DateTime.UtcNow < _csharpSemanticDiagnosticsReadyUtc &&
-                !_diagnosticsCacheDirty)
-            {
+            if (_syntax == TermXTEditorSyntax.CSharp)
                 return;
-            }
 
             if (!_diagnosticsCacheDirty)
                 return;
@@ -7332,30 +7444,55 @@ namespace Core.DirFiles
 
         private void CollectCSharpDiagnostics()
         {
+            ApplyCSharpDiagnostics(AnalyzeCSharpDiagnostics(_path, BuildDocumentText(), CancellationToken.None));
+        }
+
+        private static CSharpDiagnosticResult AnalyzeCSharpDiagnostics(
+            string path,
+            string documentText,
+            CancellationToken cancellationToken)
+        {
             try
             {
-                SourceCodeKind sourceKind = GetCSharpSourceKind();
+                cancellationToken.ThrowIfCancellationRequested();
+                SourceCodeKind sourceKind = string.Equals(Path.GetExtension(path), ".csx", StringComparison.OrdinalIgnoreCase)
+                    ? SourceCodeKind.Script
+                    : SourceCodeKind.Regular;
                 CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
-                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
-                bool includeSemanticDiagnostics =
-                    !_csharpSemanticDiagnosticsPending ||
-                    DateTime.UtcNow >= _csharpSemanticDiagnosticsReadyUtc;
-
-                if (!includeSemanticDiagnostics)
-                {
-                    AddCSharpDiagnostics(syntaxTree.GetDiagnostics());
-                    return;
-                }
-
-                CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind);
-                AddCSharpDiagnostics(compilation.GetDiagnostics());
-                _csharpSemanticDiagnosticsPending = false;
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
+                    documentText, parseOptions, path, cancellationToken: cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind, path, documentText);
+                return new CSharpDiagnosticResult(compilation.GetDiagnostics(cancellationToken), null);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                _csharpSemanticDiagnosticsPending = false;
-                AddDiagnostic(0, string.Empty, "C# diagnostics unavailable: " + ex.Message);
+                return new CSharpDiagnosticResult(Array.Empty<Diagnostic>(), ex.Message);
             }
+        }
+
+        private void ApplyCSharpDiagnostics(CSharpDiagnosticResult result)
+        {
+            AddCSharpDiagnostics(result.Diagnostics);
+            if (result.Error != null)
+                AddDiagnostic(0, string.Empty, "C# diagnostics unavailable: " + result.Error);
+            _csharpSemanticDiagnosticsPending = false;
+        }
+
+        private sealed class CSharpDiagnosticResult
+        {
+            public CSharpDiagnosticResult(IEnumerable<Diagnostic> diagnostics, string error)
+            {
+                Diagnostics = diagnostics;
+                Error = error;
+            }
+
+            public IEnumerable<Diagnostic> Diagnostics { get; }
+            public string Error { get; }
         }
 
         private void AddCSharpDiagnostics(IEnumerable<Diagnostic> diagnostics)
@@ -7414,81 +7551,19 @@ namespace Core.DirFiles
 
         private void CollectTermXtDiagnostics()
         {
-            var blockStack = new Stack<TermXtBlock>();
-            HashSet<string> functionNames = CollectTermXtFunctionNames();
+            foreach (var diagnostic in TermXtSyntax.Validate(_lines))
+                AddDiagnostic(diagnostic.Line - 1, string.Empty, diagnostic.Message);
 
+            HashSet<string> functionNames = CollectTermXtFunctionNames();
             for (int i = 0; i < _lines.Count; i++)
             {
                 string line = _lines[i].Trim();
-                if (string.IsNullOrEmpty(line) || line.StartsWith("#", StringComparison.Ordinal))
-                    continue;
-
-                string keyword = FirstWord(line).ToLowerInvariant();
-
-                switch (keyword)
-                {
-                    case "if":
-                    case "loop":
-                    case "each":
-                    case "try":
-                    case "while":
-                        blockStack.Push(new TermXtBlock(keyword, i));
-                        break;
-                    case "end":
-                        if (blockStack.Count == 0)
-                            AddDiagnostic(i, string.Empty, "'end' without matching block opener.");
-                        else
-                            blockStack.Pop();
-                        break;
-                    case "elif":
-                    case "else":
-                        if (blockStack.Count == 0 || blockStack.Peek().Type != "if")
-                            AddDiagnostic(i, string.Empty, "'" + keyword + "' without matching 'if'.");
-                        break;
-                    case "catch":
-                        if (blockStack.Count == 0 || blockStack.Peek().Type != "try")
-                            AddDiagnostic(i, string.Empty, "'catch' without matching 'try'.");
-                        break;
-                    case "set":
-                    case "capture":
-                    case "read":
-                    case "input":
-                        if (!line.Contains("="))
-                            AddDiagnostic(i, string.Empty, "'" + keyword + "' missing '=' assignment.");
-                        break;
-                    case "func":
-                        if (string.IsNullOrWhiteSpace(GetTermXtFunctionName(line)))
-                            AddDiagnostic(i, string.Empty, "'func' missing function name.");
-                        blockStack.Push(new TermXtBlock(keyword, i));
-                        break;
-                    case "call":
-                        ValidateTermXtCall(i, line, functionNames);
-                        break;
-                    case "break":
-                    case "continue":
-                        if (!IsInsideAnyBlock(blockStack, "loop", "each", "while"))
-                            AddDiagnostic(i, string.Empty, "'" + keyword + "' outside of a loop.");
-                        break;
-                    case "return":
-                        if (!IsInsideAnyBlock(blockStack, "func"))
-                            AddDiagnostic(i, string.Empty, "'return' outside of a function.");
-                        break;
-                    default:
-                        if (TrySuggestTermXtKeyword(keyword, line, functionNames, out string suggestedKeyword))
-                        {
-                            AddDiagnostic(
-                                i,
-                                string.Empty,
-                                "Unknown TermXT keyword '" + keyword + "'. Did you mean '" + suggestedKeyword + "'?");
-                        }
-                        break;
-                }
-            }
-
-            while (blockStack.Count > 0)
-            {
-                TermXtBlock block = blockStack.Pop();
-                AddDiagnostic(block.LineIndex, string.Empty, "'" + block.Type + "' block never closed with 'end'.");
+                if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal)) continue;
+                string keyword = TermXtSyntax.Keyword(line);
+                if (keyword == "call") ValidateTermXtCall(i, line, functionNames);
+                else if (TrySuggestTermXtKeyword(keyword, line, functionNames, out string suggestedKeyword))
+                    AddDiagnostic(i, string.Empty, "Unknown TermXT keyword '" + keyword +
+                        "'. Did you mean '" + suggestedKeyword + "'?");
             }
         }
 
@@ -7596,7 +7671,7 @@ namespace Core.DirFiles
             out EditorDiagnostic diagnostic,
             out int diagnosticIndex)
         {
-            EnsureDiagnostics();
+            EnsureDiagnosticsForRender();
 
             for (int i = 0; i < _diagnostics.Count; i++)
             {
@@ -7686,20 +7761,6 @@ namespace Core.DirFiles
                 return severity;
 
             return string.Compare(left.Code, right.Code, StringComparison.Ordinal);
-        }
-
-        private static bool IsInsideAnyBlock(Stack<TermXtBlock> blocks, params string[] blockTypes)
-        {
-            foreach (TermXtBlock block in blocks)
-            {
-                for (int i = 0; i < blockTypes.Length; i++)
-                {
-                    if (block.Type == blockTypes[i])
-                        return true;
-                }
-            }
-
-            return false;
         }
 
         private static string FirstWord(string value)
@@ -12235,27 +12296,27 @@ namespace Core.DirFiles
             public EditorDiagnosticSeverity Severity { get; private set; }
         }
 
-        private sealed class CSharpCompletionSession
+        private sealed class CompletionSession
         {
-            public CSharpCompletionSession(
+            public CompletionSession(
                 int startLine,
                 int startColumn,
                 bool memberAccess,
-                List<CSharpCompletionItem> allItems,
-                List<CSharpCompletionItem> items)
+                List<CompletionItem> allItems,
+                List<CompletionItem> items)
             {
                 StartLine = startLine;
                 StartColumn = startColumn;
                 MemberAccess = memberAccess;
-                AllItems = allItems ?? new List<CSharpCompletionItem>();
-                Items = items ?? new List<CSharpCompletionItem>();
+                AllItems = allItems ?? new List<CompletionItem>();
+                Items = items ?? new List<CompletionItem>();
             }
 
             public int StartLine { get; private set; }
             public int StartColumn { get; private set; }
             public bool MemberAccess { get; private set; }
-            public List<CSharpCompletionItem> AllItems { get; private set; }
-            public List<CSharpCompletionItem> Items { get; private set; }
+            public List<CompletionItem> AllItems { get; private set; }
+            public List<CompletionItem> Items { get; private set; }
         }
 
         private struct CSharpCompletionLexicalState
@@ -12271,9 +12332,9 @@ namespace Core.DirFiles
             }
         }
 
-        private sealed class CSharpCompletionItem
+        private sealed class CompletionItem
         {
-            public CSharpCompletionItem(
+            public CompletionItem(
                 string label,
                 string insertionText,
                 string kind,
@@ -12335,18 +12396,6 @@ namespace Core.DirFiles
                 int close = value.IndexOf(')', open + 1);
                 return open >= 0 && close > open + 1;
             }
-        }
-
-        private readonly struct TermXtBlock
-        {
-            public TermXtBlock(string type, int lineIndex)
-            {
-                Type = type;
-                LineIndex = lineIndex;
-            }
-
-            public string Type { get; }
-            public int LineIndex { get; }
         }
 
         private readonly struct TextPosition

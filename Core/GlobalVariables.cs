@@ -72,5 +72,6 @@ namespace Core
         public static string workingDirectory { get; set; }
         public static bool isNewVersion { get; set; } = false;  
         public static string versionNew { get; set; } = string.Empty;
+        public static string releaseBody { get; set; } = string.Empty;
     }
 }
