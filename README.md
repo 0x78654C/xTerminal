@@ -255,6 +255,7 @@ Example:
                   hash -sha512 <file_path> : display the sha512 hash for the file.
     wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
                  -h: Display this help message.
+                 -tree: Open in process tree view.
                  Inside the wtop command:
                     q / Esc / Ctrl+C : Quit the wtop interface.
                     ↑/↓ : To navigate through the process list.
@@ -263,9 +264,14 @@ Example:
                     /   : Search for a process by name or exact PID.
                     F3  : Jump to the next search match. Empty Enter repeats the previous search.
                     R   : Refresh process data immediately.
+                    T / F5 : Toggle flat list and process tree view.
+                    ←/→ : In tree view, collapse/expand or move to the parent/first child.
+                    Space : Toggle the selected tree branch.
                     C   : Sort processes by CPU usage.
                     M   : Sort processes by memory usage.
                     N   : Sort processes by name.
+                 Tree view sorts siblings together; search reveals matches in collapsed branches.
+                 K kills only the selected process, including in tree view.
     ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
     env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
                    env                                     : List all variables across Process, User and System sections.

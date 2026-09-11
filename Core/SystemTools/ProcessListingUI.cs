@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Core.SystemTools
 {
     [SupportedOSPlatform("windows")]
-    public sealed class ProcessListingUI
+    public sealed partial class ProcessListingUI
     {
         // ── VT / ANSI primitives ─────────────────────────────────────────────
         private const string CSI = "\x1b[";
@@ -263,6 +263,8 @@ namespace Core.SystemTools
 
         private ProcessSnapshot[] CaptureProcesses()
         {
+            long parentSnapshotTime = DateTime.UtcNow.Ticks;
+            Dictionary<int, int> parents = CaptureParentProcessIds();
             Process[] processes = Process.GetProcesses();
             var rows = new List<ProcessSnapshot>(processes.Length);
             var live = new HashSet<ProcessIdentity>();
@@ -293,7 +295,10 @@ namespace Core.SystemTools
                             _prevCpuTimes[identity] = (ticks, timestamp);
                         }
                         catch { }
-                        rows.Add(new ProcessSnapshot(pid, name, memory, threads, started, cpu));
+                        // A process created after the parent snapshot may have reused a
+                        // PID from that snapshot. Leave its parent unknown until refresh.
+                        int parentId = started <= parentSnapshotTime ? parents.GetValueOrDefault(pid) : 0;
+                        rows.Add(new ProcessSnapshot(pid, name, memory, threads, started, cpu) { ParentId = parentId });
                     }
                     catch { } // An exiting process must not discard the rest of the sample.
                     finally { process.Dispose(); }
@@ -318,6 +323,7 @@ namespace Core.SystemTools
                 var live = processes.Select(p => p.Identity).ToHashSet();
                 foreach (var dead in _userCache.Keys.Except(live).ToArray())
                     _userCache.Remove(dead);
+                _collapsedProcesses.RemoveWhere(identity => !live.Contains(identity));
             }
         }
 
@@ -361,6 +367,11 @@ namespace Core.SystemTools
                     case ConsoleKey.C: ChangeSort(SortMode.CPU); break;
                     case ConsoleKey.M: ChangeSort(SortMode.Memory); break;
                     case ConsoleKey.N: ChangeSort(SortMode.Name); break;
+                    case ConsoleKey.T:
+                    case ConsoleKey.F5: ToggleTreeView(); break;
+                    case ConsoleKey.LeftArrow: NavigateTree(expand: false); break;
+                    case ConsoleKey.RightArrow: NavigateTree(expand: true); break;
+                    case ConsoleKey.Spacebar: ToggleSelectedBranch(); break;
                     case ConsoleKey.R: RequestSample(); Status("Refreshing processes…"); break;
                     case ConsoleKey.F3: JumpToProcess(_lastSearchQuery, next: true); break;
                     case ConsoleKey.Oem2:
@@ -426,16 +437,25 @@ namespace Core.SystemTools
                 return;
             }
 
-            ProcessSnapshot[] processes = SortedProcesses();
+            SortedProcesses();
+            ProcessSnapshot[] processes = _treeView ? _treeAllProcs : _sortedProcs;
             _lastSearchQuery = query;
-            int start = next ? _selectedIndex + 1 : 0;
+            int current = _selectedIdentity.HasValue
+                ? Array.FindIndex(processes, p => p.Identity == _selectedIdentity.Value) : -1;
+            int start = next ? current + 1 : 0;
             for (int offset = 0; offset < processes.Length; offset++)
             {
                 int index = (start + offset) % processes.Length;
                 ProcessSnapshot process = processes[index];
                 if (process.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || process.Id.ToString() == query)
                 {
-                    SelectIndex(index);
+                    if (_treeView)
+                    {
+                        _selectedIdentity = process.Identity;
+                        _sortedSource = null;
+                        SortedProcesses(); // Reveals the selected process's ancestors.
+                    }
+                    else SelectIndex(index);
                     Status($"Found  ·  {process.Name}  [{process.Id}]");
                     return;
                 }
@@ -506,6 +526,8 @@ namespace Core.SystemTools
             SortMode sort;
             int spin;
             bool hasSample;
+            bool treeView;
+            int totalCount;
 
             lock (_lock)
             {
@@ -520,10 +542,13 @@ namespace Core.SystemTools
                 sort = _sortMode;
                 spin = _spinIdx++ % Spin.Length;
                 hasSample = _hasSample;
+                treeView = _treeView;
+                totalCount = _cachedProcs.Length;
 
                 statusText = DateTime.UtcNow <= _statusExp
                     ? _status
-                    : "↑↓ navigate  K kill  / search  F3 next  C M N sort  R refresh  Q quit";
+                    : treeView ? "←/→ fold  T flat  / search  C/M/N sort  K kill  Q quit"
+                        : "T tree  / search  C/M/N sort  R refresh  K kill  Q quit";
             }
 
             if (W < 60 || H < 12)
@@ -556,13 +581,13 @@ namespace Core.SystemTools
             {
                 string left =
                     $"{B(BG_TOPBAR)}{F(C_ACCENT)}{Bold} WTOP {R}" +
-                    $"{B(BG_TOPBAR)}{F(FG_DIM)}  ·  {F(FG_PRIMARY)}Process manager";
+                    $"{B(BG_TOPBAR)}{F(FG_DIM)}  ·  {F(FG_PRIMARY)}{(treeView ? "Process tree" : "Process manager")}";
 
                 string right =
                     $"{F(FG_DIM)}{Faint}{Spin[spin]}{R}" +
-                    $"{B(BG_TOPBAR)}{F(FG_DIM)}  {DateTime.Now:HH:mm:ss}  ·  {F(FG_PRIMARY)}{procs.Length}{F(FG_DIM)} procs {R}";
+                    $"{B(BG_TOPBAR)}{F(FG_DIM)}  {DateTime.Now:HH:mm:ss}  ·  {F(FG_PRIMARY)}{totalCount}{F(FG_DIM)} procs {R}";
 
-                int rightVisible = 23 + procs.Length.ToString().Length;
+                int rightVisible = 23 + totalCount.ToString().Length;
                 int rightCol = Math.Max(0, W - rightVisible);
 
                 _fb.Append(At(0, 0)).Append(left).Append(EOL)
@@ -666,7 +691,7 @@ namespace Core.SystemTools
                     double procCpu = p.CpuPercent;
                     double procMem = p.MemoryBytes / 1_048_576.0;
                     string user = Clip(CachedUser(p), userW).PadRight(userW);
-                    string name = Clip(p.Name, nameW).PadRight(nameW);
+                    string name = ProcessDisplayName(p, nameW).PadRight(nameW);
 
                     int aw = pidW, bw = cpuW, cw = memW - 2, dw = thrW;
 
@@ -798,7 +823,8 @@ namespace Core.SystemTools
                 if (ReferenceEquals(_sortedSource, _cachedProcs) && _sortedMode == _sortMode)
                     return _sortedProcs;
 
-                _sortedProcs = SortProcesses(_cachedProcs, _sortMode);
+                ProcessSnapshot[] ordered = SortProcesses(_cachedProcs, _sortMode);
+                _sortedProcs = _treeView ? BuildTreeView(ordered) : ordered;
                 _sortedSource = _cachedProcs;
                 _sortedMode = _sortMode;
                 int selected = _selectedIdentity.HasValue
@@ -941,6 +967,7 @@ namespace Core.SystemTools
         private sealed record ProcessSnapshot(int Id, string Name, long MemoryBytes, int ThreadCount, long StartTimeTicks, double CpuPercent)
         {
             public ProcessIdentity Identity => new(Id, StartTimeTicks);
+            public int ParentId { get; init; }
         }
 
         private static (int w, int h) WinSize()

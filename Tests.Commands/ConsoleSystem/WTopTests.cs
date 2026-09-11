@@ -10,7 +10,7 @@ using Xunit;
 namespace Tests.Commands.ConsoleSystem;
 
 [SupportedOSPlatform("windows")]
-public class WTopTests
+public partial class WTopTests
 {
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic;
     private static readonly Type SnapshotType = typeof(ProcessListingUI).GetNestedType("ProcessSnapshot", Private)!;
@@ -102,6 +102,8 @@ public class WTopTests
         })!;
         try
         {
+            var parents = (Dictionary<int, int>)Call(null, "CaptureParentProcessIds")!;
+            parents[child.Id].Should().Be(Environment.ProcessId);
             using var wake = new AutoResetEvent(false);
             var ui = new ProcessListingUI();
             SetField(ui, "_sampleWake", wake);
@@ -301,8 +303,12 @@ public class WTopTests
         }
     }
 
-    private static object Row(int id, string name, long memory = 0, double cpu = 0, long started = 100)
-        => Activator.CreateInstance(SnapshotType, id, name, memory, 7, started, cpu)!;
+    private static object Row(int id, string name, long memory = 0, double cpu = 0, long started = 100, int parent = 0)
+    {
+        object row = Activator.CreateInstance(SnapshotType, id, name, memory, 7, started, cpu)!;
+        SnapshotType.GetProperty("ParentId")!.SetValue(row, parent);
+        return row;
+    }
 
     private static void Publish(ProcessListingUI ui, params object[] rows)
     {
