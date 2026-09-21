@@ -12,6 +12,7 @@
   <ItemGroup>
     <Content Include="xterminal2.ico" />
     <Content Include="app.manifest" />
+    <Content Include="..\media\xterminal_logo.png" Link="media\xterminal_logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="7.0.2" />
