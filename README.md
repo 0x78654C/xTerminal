@@ -506,6 +506,7 @@ Example:
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
+                    -i : Display network interfaces names, Type, IP range and status.
     ispeed    -- Checks the internet speed with Google.
     icheck    -- Checks if a Domain or IP address is online.
     extip     -- Displays the current external IP address.
