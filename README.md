@@ -494,7 +494,7 @@ Example:
                      -gf : Get uploaded file information. waifu -gf <file_token>
                      -lr : List wifuvault restrictions types.
                  Example: waifu -u <file_path> -p <password> -b <bucket_token> -o -e 1h -h
-    fxp       -- Opens built in console file explorer.
+    fxp       -- Opens built in console file explorer; accepts an optional folder. Use fxp --help for controls.
     snap      -- Directory snapshot and diff. Use -h for additional help.
                    snap save [name]  : Snapshot the current directory (default name: 'default').
                    snap diff [name]  : Compare the current state against a saved snapshot.

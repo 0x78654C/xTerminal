@@ -96,7 +96,7 @@ This is the full list of commands that can be used in xTerminal:
     attr      -- Displays/Sets/Removes the current attributes of a file or directory. Use -h for additional help.
     cmp       -- Check if two files are identical by comparing MD5 hash. Use -h for additional help.
     waifu     -- Host temporary files on https://waifuvault.moe/. Use -h for additional help.
-    fxp       -- Opens built in console file explorer.
+    fxp       -- Opens built in console file explorer; accepts an optional folder. Use fxp --help for controls.
     snap      -- Directory snapshot + diff: save state and compare later to see what changed. Use -h for additional help.
 
     ---------------------- Networking ----------------------

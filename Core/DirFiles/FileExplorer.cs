@@ -1,11 +1,11 @@
-﻿using Castle.Components.DictionaryAdapter.Xml;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Threading;
 using Core.SystemTools;
 
 namespace Core.DirFiles
@@ -14,6 +14,19 @@ namespace Core.DirFiles
     public class FileExplorer
     {
         private const long PreviewByteLimit = 64 * 1024;
+        private const int FrameIntervalMs = 16;
+        private const int DetailDelayMs = 120;
+        private const int RowsPerWheelNotch = 3;
+
+        private readonly StringBuilder _frame = new StringBuilder(32768);
+        private bool _rendering;
+        private int _frameWidth;
+        private int _frameHeight;
+        private int _wheelRemainder;
+        private bool _detailsPending = true;
+        private long _detailsDue;
+        private List<string> _cachedPreview;
+        private int _cachedPreviewLines;
 
         private class Item
         {
@@ -40,11 +53,8 @@ namespace Core.DirFiles
         private static readonly ConsoleColor ClrBorder    = ConsoleColor.DarkGray;
         private static readonly ConsoleColor ClrPath      = ConsoleColor.Yellow;
         private static readonly ConsoleColor ClrHelp      = ConsoleColor.DarkGray;
-        private static readonly ConsoleColor ClrDirItem   = ConsoleColor.Cyan;
         private static readonly ConsoleColor ClrInfoLabel = ConsoleColor.DarkYellow;
         private static readonly ConsoleColor ClrInfoValue = ConsoleColor.White;
-        private static readonly ConsoleColor ClrStatusFg  = ConsoleColor.Black;
-        private static readonly ConsoleColor ClrStatusBg  = ConsoleColor.DarkGray;
 
         // Match the XTE explorer's 256-color file palette.
         private const int CTitle = 45;
@@ -102,7 +112,10 @@ namespace Core.DirFiles
         public void Run()
         {
             using var virtualTerminalOutput = VirtualTerminalOutput.Enable();
+            using var input = new FileExplorerInput();
             bool running = true;
+            bool dirty = true;
+            long nextFrame = 0;
             bool oldCursorVisible = Console.CursorVisible;
             Console.Write("\x1b[?1049h"); // alternate screen
             Console.CursorVisible = false;
@@ -111,18 +124,45 @@ namespace Core.DirFiles
             {
                 while (running)
                 {
-                    if (_searchMode)
+                    EnsureItemsLoaded();
+                    // Bound each batch so a held key cannot starve rendering. Actions
+                    // end the batch, preserving their order relative to navigation.
+                    for (int i = 0; i < 64 && input.TryRead(out var key, out int repeats, out int wheel); i++)
                     {
-                        RenderSearchScreen();
-                        var key = Console.ReadKey(intercept: true);
-                        running = HandleSearchKey(key);
+                        int previousSelection = _selectedIndex;
+                        if (wheel != 0)
+                            dirty |= ScrollByWheelDelta(wheel, PageSize());
+                        if (key.HasValue)
+                        {
+                            bool movement = IsMovementKey(key.Value);
+                            int count = movement ? repeats : 1;
+                            for (int repeat = 0; repeat < count && running; repeat++)
+                                running = _searchMode ? HandleSearchKey(key.Value) : HandleMainKey(key.Value);
+                            dirty = true;
+                            if (previousSelection != _selectedIndex)
+                                DeferDetails();
+                            if (!movement)
+                                break;
+                        }
+                        else if (previousSelection != _selectedIndex)
+                            DeferDetails();
                     }
-                    else
+
+                    if (!running)
+                        break;
+
+                    long now = Environment.TickCount64;
+                    var size = WindowSize();
+                    dirty |= size.width != _lastRenderWidth || size.height != _lastRenderHeight;
+                    dirty |= !_searchMode && size.width >= 60 && size.height >= 20 &&
+                        _detailsPending && now >= _detailsDue;
+                    if (dirty && now >= nextFrame)
                     {
-                        RenderMainScreen();
-                        var key = Console.ReadKey(intercept: true);
-                        running = HandleMainKey(key);
+                        RenderFrame();
+                        dirty = false;
+                        nextFrame = Environment.TickCount64 + FrameIntervalMs;
                     }
+                    Thread.Sleep(8);
                 }
             }
             finally
@@ -130,6 +170,61 @@ namespace Core.DirFiles
                 try { Console.Write("\x1b[?1049l"); } catch { } // restore normal screen
                 try { Console.CursorVisible = oldCursorVisible; } catch { }
             }
+        }
+
+        private void RenderFrame()
+        {
+            _frame.Clear();
+            (_frameWidth, _frameHeight) = WindowSize();
+            _rendering = true;
+            try
+            {
+                if (_searchMode) RenderSearchScreen();
+                else RenderMainScreen();
+                Console.Write(_frame.ToString());
+            }
+            finally { _rendering = false; }
+        }
+
+        private void DeferDetails()
+        {
+            _detailsPending = true;
+            _detailsDue = Environment.TickCount64 + DetailDelayMs;
+        }
+
+        private static int PageSize() => Math.Max(1, WindowSize().height - 5);
+
+        private static bool IsMovementKey(ConsoleKeyInfo key) =>
+            key.Key == ConsoleKey.UpArrow || key.Key == ConsoleKey.DownArrow ||
+            key.Key == ConsoleKey.Home || key.Key == ConsoleKey.End ||
+            key.Key == ConsoleKey.PageDown ||
+            (key.Key == ConsoleKey.PageUp && (key.Modifiers & ConsoleModifiers.Control) != 0);
+
+        private bool MoveSelection(int delta, int rows)
+        {
+            return _searchMode
+                ? MoveListSelection(delta, _searchResults.Count, rows, ref _searchSelectedIndex, ref _searchScrollOffset)
+                : MoveListSelection(delta, _items.Count, rows, ref _selectedIndex, ref _scrollOffset);
+        }
+
+        private static bool MoveListSelection(int delta, int count, int rows, ref int selected, ref int offset)
+        {
+            int oldSelected = selected;
+            int oldOffset = offset;
+            rows = Math.Max(1, rows);
+            selected = (int)Math.Clamp((long)selected + delta, 0, Math.Max(0, count - 1));
+            offset = Clamp(offset, Math.Max(0, selected - rows + 1), selected);
+            offset = Clamp(offset, 0, Math.Max(0, count - rows));
+            return selected != oldSelected || offset != oldOffset;
+        }
+
+        private bool ScrollByWheelDelta(int delta, int rows)
+        {
+            // Accumulate partial notches from high-resolution wheels/trackpads.
+            _wheelRemainder += delta;
+            int notches = _wheelRemainder / 120;
+            _wheelRemainder %= 120;
+            return notches != 0 && MoveSelection(-notches * RowsPerWheelNotch, rows);
         }
 
         public static void ColorConsoleTextLine(ConsoleColor color, string text)
@@ -150,12 +245,12 @@ namespace Core.DirFiles
 
         // ========================= MAIN SCREEN =========================
 
-        // Returns true when a full Console.Clear() was performed.
+        // Returns true when the full screen needs repainting.
         private bool ConditionalClear(int width, int height)
         {
             if (width != _lastRenderWidth || height != _lastRenderHeight)
             {
-                Console.Clear();
+                WriteOutput("\x1b[2J\x1b[H");
                 _lastRenderWidth  = width;
                 _lastRenderHeight = height;
                 return true;
@@ -169,6 +264,7 @@ namespace Core.DirFiles
             _lastRenderHeight = -1;
             _lastSelectedIndex = -2;
             _lastScrollOffset  = -2;
+            DeferDetails();
         }
 
         private void EnterSearchMode()
@@ -187,7 +283,7 @@ namespace Core.DirFiles
         {
             EnsureItemsLoaded();
 
-            (int width, int height) = WindowSize();
+            (int width, int height) = RenderSize();
             bool fullClear = ConditionalClear(width, height);
 
             if (width < 60 || height < 20)
@@ -236,12 +332,12 @@ namespace Core.DirFiles
             if (titleLine.Length > width) titleLine = titleLine.Substring(0, width);
             WriteTrimmedAtColor(0, 0, titleLine, width, ClrTitle);
 
-            if (!canPartialUpdate)
+            if (fullClear || _lastSelectedIndex < 0)
             {
                 WriteTrimmedAtColor(0, 1, new string('═', width), width, ClrBorder);
                 WriteTrimmedAtColor(0, 2, " ▶ " + _currentRoot, width, ClrPath);
                 WriteTrimmedAtColor(0, 3,
-                    " ↑↓:move  ↵:open  ⌫:back  PgUp:up  Del:del  /:search  Tab:drives  `:quit",
+                    " ↑↓/Wheel:move  Ctrl+↑↓:page  ↵:open  ⌫:back  PgUp:up  /:search  Tab:drives  F5:refresh  Esc:quit",
                     width, ClrHelp);
             }
 
@@ -264,7 +360,7 @@ namespace Core.DirFiles
             }
 
             // ── Right pane ──────────────────────────────────────────────────
-            if (!canPartialUpdate || selectionChanged)
+            if (fullClear || selectionChanged || (_detailsPending && Environment.TickCount64 >= _detailsDue))
                 RenderInfoPane(rightStartCol, contentTop, rightWidth, contentHeight);
 
             // ── Status bar ──────────────────────────────────────────────────
@@ -301,19 +397,13 @@ namespace Core.DirFiles
                 }
             }
 
-            Console.SetCursorPosition(0, y);
-            WritePadded(text, leftWidth, idx == _selectedIndex, color);
-
-            var oldFg = Console.ForegroundColor;
-            Console.SetCursorPosition(separatorCol, y);
-            Console.ForegroundColor = ClrBorder;
-            Console.Write("║");
-            Console.ForegroundColor = oldFg;
+            WriteListRow(0, y, text, leftWidth, idx == _selectedIndex && idx < _items.Count, color);
+            WriteTrimmedAtColor(separatorCol, y, "║", 1, ClrBorder);
         }
 
         private void RenderStatusBar(int y, int width)
         {
-            if (y >= Console.WindowHeight) return;
+            if (y >= RenderSize().height) return;
 
             // Re-read drive free space only when the directory changes.
             if (_currentRoot != _cachedDriveRoot)
@@ -337,14 +427,7 @@ namespace Core.DirFiles
             if (status.Length > width) status = status.Substring(0, width);
             else status = status.PadRight(width);
 
-            Console.SetCursorPosition(0, y);
-            var oldFg = Console.ForegroundColor;
-            var oldBg = Console.BackgroundColor;
-            Console.ForegroundColor = ClrStatusFg;
-            Console.BackgroundColor = ClrStatusBg;
-            Console.Write(status);
-            Console.ForegroundColor = oldFg;
-            Console.BackgroundColor = oldBg;
+            WriteAt(0, y, status, width, "\x1b[30;100m");
         }
 
         private void EnsureItemsLoaded()
@@ -355,37 +438,43 @@ namespace Core.DirFiles
             // Invalidate detail caches; force full redraw on next frame.
             _cachedFolderPath  = null;
             _cachedFilePath    = null;
+            _cachedPreview = null;
+            _cachedDriveRoot = null;
             _lastSelectedIndex = -2;
             _lastScrollOffset  = -2;
+            DeferDetails();
         }
 
         private void LoadItems()
         {
             _items.Clear();
-            _cachedDirCount  = 0;
+            _cachedDirCount = 0;
             _cachedFileCount = 0;
-
             try
             {
-                foreach (var d in Directory.GetDirectories(_currentRoot))
+                // Enumeration supplies cached file metadata, avoiding one extra
+                // filesystem query per file just to display its size.
+                foreach (var entry in new DirectoryInfo(_currentRoot).EnumerateFileSystemInfos())
                 {
-                    _items.Add(new Item { Path = d, IsDirectory = true });
-                    _cachedDirCount++;
-                }
-            }
-            catch { }
-
-            try
-            {
-                foreach (var f in Directory.GetFiles(_currentRoot))
-                {
+                    bool directory = (entry.Attributes & FileAttributes.Directory) != 0;
                     long? size = null;
-                    try { size = new FileInfo(f).Length; } catch { }
-                    _items.Add(new Item { Path = f, IsDirectory = false, SizeBytes = size });
-                    _cachedFileCount++;
+                    if (!directory && entry is FileInfo file)
+                    {
+                        try { size = file.Length; } catch { }
+                    }
+                    _items.Add(new Item { Path = entry.FullName, IsDirectory = directory, SizeBytes = size });
+                    if (directory) _cachedDirCount++;
+                    else _cachedFileCount++;
                 }
             }
-            catch { }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+
+            _items.Sort((a, b) =>
+            {
+                int byType = b.IsDirectory.CompareTo(a.IsDirectory);
+                return byType != 0 ? byType : StringComparer.OrdinalIgnoreCase.Compare(a.Path, b.Path);
+            });
         }
 
         private void RenderInfoPane(int left, int top, int width, int height)
@@ -398,18 +487,26 @@ namespace Core.DirFiles
 
             if (_items.Count == 0 || _selectedIndex < 0 || _selectedIndex >= _items.Count)
             {
+                _detailsPending = false;
                 WriteTrimmedAtColor(left, top + 1, "  (empty)", width, ClrBorder);
                 return;
             }
 
             var item = _items[_selectedIndex];
+            if (_detailsPending && Environment.TickCount64 < _detailsDue)
+            {
+                WriteTrimmedAtColor(left, top + 1, "  " + Path.GetFileName(item.Path), width, ClrInfoValue);
+                WriteTrimmedAtColor(left, top + 2, "  Loading preview...", width, ClrBorder);
+                return;
+            }
+            _detailsPending = false;
             if (item.IsDirectory)
                 ShowFolderDetails(item.Path, left, top + 1, width, height - 1);
             else
                 ShowFileDetails(item.Path, left, top + 1, width, height - 1);
         }
 
-        private void SetCurretnDirectory(string path)
+        private void SetCurrentDirectory(string path)
         {
             if (path.EndsWith(":\\"))
                 File.WriteAllText(GlobalVariables.currentDirectory, path);
@@ -422,16 +519,15 @@ namespace Core.DirFiles
             switch (key.Key)
             {
                 case ConsoleKey.Oem3:
+                case ConsoleKey.Escape:
                     return false;
 
                 case ConsoleKey.UpArrow:
-                    if (_items.Count > 0)
-                        _selectedIndex = Clamp(_selectedIndex - 1, 0, _items.Count - 1);
+                    MoveSelection((key.Modifiers & ConsoleModifiers.Control) != 0 ? -PageSize() : -1, PageSize());
                     return true;
 
                 case ConsoleKey.DownArrow:
-                    if (_items.Count > 0)
-                        _selectedIndex = Clamp(_selectedIndex + 1, 0, _items.Count - 1);
+                    MoveSelection((key.Modifiers & ConsoleModifiers.Control) != 0 ? PageSize() : 1, PageSize());
                     return true;
 
                 case ConsoleKey.Home:
@@ -449,7 +545,6 @@ namespace Core.DirFiles
                         if (item.IsDirectory)
                         {
                             NavigateTo(item.Path);
-                            SetCurretnDirectory(item.Path);
                             _selectedIndex = 0;
                             _scrollOffset  = 0;
                         }
@@ -466,9 +561,22 @@ namespace Core.DirFiles
                     return true;
 
                 case ConsoleKey.PageUp:
+                    if ((key.Modifiers & ConsoleModifiers.Control) != 0)
+                    {
+                        MoveSelection(-PageSize(), PageSize());
+                        return true;
+                    }
                     GoUp();
                     _selectedIndex = 0;
                     _scrollOffset  = 0;
+                    return true;
+
+                case ConsoleKey.PageDown:
+                    MoveSelection(PageSize(), PageSize());
+                    return true;
+
+                case ConsoleKey.F5:
+                    _itemsDirty = true;
                     return true;
 
                 case ConsoleKey.Oem2:
@@ -715,7 +823,7 @@ namespace Core.DirFiles
             EnterSearchMode();
         }
 
-        private static string ReadSearchTerm(int left, int top, int width)
+        private string ReadSearchTerm(int left, int top, int width)
         {
             var term = new StringBuilder();
             int inputWidth = Math.Max(1, width);
@@ -752,7 +860,7 @@ namespace Core.DirFiles
             }
         }
 
-        private static void RenderSearchTermInput(string term, int left, int top, int width)
+        private void RenderSearchTermInput(string term, int left, int top, int width)
         {
             int inputWidth = Math.Max(1, width);
             string visible = term.Length > inputWidth
@@ -766,83 +874,57 @@ namespace Core.DirFiles
 
         private void RenderSearchScreen()
         {
-            (int width, int height) = WindowSize();
-            ConditionalClear(width, height);
-
+            (int width, int height) = RenderSize();
+            bool fullClear = ConditionalClear(width, height);
             if (width < 60 || height < 20)
             {
                 RenderTooSmall(width, height);
                 return;
             }
 
-            int headerLines   = 4;
-            int contentTop    = headerLines;
-            int contentHeight = height - headerLines - 1;
-            if (contentHeight < 4) contentHeight = 4;
-            int statusBarY = contentTop + contentHeight;
+            int contentHeight = height - 5;
+            MoveListSelection(0, _searchResults.Count, contentHeight, ref _searchSelectedIndex, ref _searchScrollOffset);
+            bool fullList = fullClear || _lastSelectedIndex < 0 || _searchScrollOffset != _lastScrollOffset;
+            string counter = _searchResults.Count > 0 ? $"[{_searchSelectedIndex + 1}/{_searchResults.Count}]" : "[0/0]";
+            string title = " ◈ Search Results";
+            WriteTrimmedAtColor(0, 0, title + new string(' ', Math.Max(0, width - title.Length - counter.Length - 1)) + counter,
+                width, ClrTitle);
 
-            int    count   = _searchResults.Count;
-            string counter = count > 0 ? $"[{_searchSelectedIndex + 1}/{count}]" : "[0/0]";
-            string titleBase = " ◈ Search Results";
-            int    padLen  = Math.Max(0, width - titleBase.Length - counter.Length - 1);
-            string titleLine = titleBase + new string(' ', padLen) + counter + " ";
-            if (titleLine.Length > width) titleLine = titleLine.Substring(0, width);
-            WriteTrimmedAtColor(0, 0, titleLine, width, ClrTitle);
-
-            WriteTrimmedAtColor(0, 1, new string('═', width), width, ClrBorder);
-            WriteTrimmedAtColor(0, 2, $"  Base: {_currentRoot}", width, ClrPath);
-            WriteTrimmedAtColor(0, 3,
-                " ↑↓:move  ↵:open  Del:del  Esc/Q:exit  ⌫:back  U:up",
-                width, ClrHelp);
-
-            if (_searchResults.Count > 0)
-                _searchSelectedIndex = Clamp(_searchSelectedIndex, 0, _searchResults.Count - 1);
-            else
-                _searchSelectedIndex = 0;
-
-            int maxOffset = Math.Max(0, _searchResults.Count - contentHeight);
-            if (_searchSelectedIndex < _searchScrollOffset)
-                _searchScrollOffset = _searchSelectedIndex;
-            else if (_searchSelectedIndex >= _searchScrollOffset + contentHeight)
-                _searchScrollOffset = _searchSelectedIndex - contentHeight + 1;
-            _searchScrollOffset = Clamp(_searchScrollOffset, 0, maxOffset);
-
-            for (int row = 0; row < contentHeight; row++)
+            if (fullClear || _lastSelectedIndex < 0)
             {
-                Console.SetCursorPosition(0, contentTop + row);
-
-                int idx = _searchScrollOffset + row;
-                string       text  = "";
-                int color = CNormal;
-
-                if (idx >= 0 && idx < _searchResults.Count)
-                {
-                    var item = _searchResults[idx];
-                    text  = (item.IsDirectory ? "▶ " : "· ") + item.Path;
-                    color = item.IsDirectory ? CTitle : FileColor(item.Path);
-                }
-
-                WritePadded(text, width, idx == _searchSelectedIndex, color);
+                WriteTrimmedAtColor(0, 1, new string('═', width), width, ClrBorder);
+                WriteTrimmedAtColor(0, 2, "  Base: " + _currentRoot, width, ClrPath);
+                WriteTrimmedAtColor(0, 3, " ↑↓/Wheel:move  Ctrl+↑↓/PgDn:page  ↵:open  Del:del  Esc:back  U:up", width, ClrHelp);
+                int dirs = _searchResults.Count(i => i.IsDirectory);
+                int files = _searchResults.Count - dirs;
+                WriteAt(0, height - 1, $"  {dirs} folders · {files} files matched", width, "\x1b[30;100m");
             }
 
-            // Status bar for search
-            if (statusBarY < Console.WindowHeight)
+            if (fullList)
             {
-                int dirCount  = _searchResults.Count(i => i.IsDirectory);
-                int fileCount = _searchResults.Count(i => !i.IsDirectory);
-                string status = $"  {dirCount} folder{(dirCount != 1 ? "s" : "")} · {fileCount} file{(fileCount != 1 ? "s" : "")} matched";
-                if (status.Length > width) status = status.Substring(0, width);
-                else status = status.PadRight(width);
-
-                Console.SetCursorPosition(0, statusBarY);
-                var oldFg = Console.ForegroundColor;
-                var oldBg = Console.BackgroundColor;
-                Console.ForegroundColor = ClrStatusFg;
-                Console.BackgroundColor = ClrStatusBg;
-                Console.Write(status);
-                Console.ForegroundColor = oldFg;
-                Console.BackgroundColor = oldBg;
+                for (int row = 0; row < contentHeight; row++)
+                    RenderSearchRow(_searchScrollOffset + row, 4 + row, width);
             }
+            else if (_searchSelectedIndex != _lastSelectedIndex)
+            {
+                RenderSearchRow(_lastSelectedIndex, 4 + _lastSelectedIndex - _searchScrollOffset, width);
+                RenderSearchRow(_searchSelectedIndex, 4 + _searchSelectedIndex - _searchScrollOffset, width);
+            }
+            _lastSelectedIndex = _searchSelectedIndex;
+            _lastScrollOffset = _searchScrollOffset;
+        }
+
+        private void RenderSearchRow(int index, int row, int width)
+        {
+            string text = "";
+            int color = CNormal;
+            if (index >= 0 && index < _searchResults.Count)
+            {
+                var item = _searchResults[index];
+                text = (item.IsDirectory ? "▶ " : "· ") + item.Path;
+                color = item.IsDirectory ? CTitle : FileColor(item.Path);
+            }
+            WriteListRow(0, row, text, width, index == _searchSelectedIndex && index < _searchResults.Count, color);
         }
 
         private bool HandleSearchKey(ConsoleKeyInfo key)
@@ -855,13 +937,19 @@ namespace Core.DirFiles
                     return true;
 
                 case ConsoleKey.UpArrow:
-                    if (_searchResults.Count > 0)
-                        _searchSelectedIndex = Clamp(_searchSelectedIndex - 1, 0, _searchResults.Count - 1);
+                    MoveSelection((key.Modifiers & ConsoleModifiers.Control) != 0 ? -PageSize() : -1, PageSize());
                     return true;
 
                 case ConsoleKey.DownArrow:
-                    if (_searchResults.Count > 0)
-                        _searchSelectedIndex = Clamp(_searchSelectedIndex + 1, 0, _searchResults.Count - 1);
+                    MoveSelection((key.Modifiers & ConsoleModifiers.Control) != 0 ? PageSize() : 1, PageSize());
+                    return true;
+
+                case ConsoleKey.PageUp:
+                    MoveSelection(-PageSize(), PageSize());
+                    return true;
+
+                case ConsoleKey.PageDown:
+                    MoveSelection(PageSize(), PageSize());
                     return true;
 
                 case ConsoleKey.Home:
@@ -1005,6 +1093,7 @@ namespace Core.DirFiles
 
                 _currentRoot = newRoot;
                 _itemsDirty  = true;
+                SetCurrentDirectory(newRoot);
             }
             catch { }
         }
@@ -1016,7 +1105,6 @@ namespace Core.DirFiles
             var entry = _historyBack.Pop();
             _suppressHistory = true;
             NavigateTo(entry.Path);
-            SetCurretnDirectory(entry.Path);
             _suppressHistory = false;
 
             _selectedIndex = entry.SelectedIndex;
@@ -1031,7 +1119,6 @@ namespace Core.DirFiles
                 string parent = Directory.GetParent(_currentRoot)?.FullName;
                 if (parent == null) return;
                 NavigateTo(parent);
-                SetCurretnDirectory(parent);
                 _itemsDirty = true;
             }
             catch { }
@@ -1112,21 +1199,10 @@ namespace Core.DirFiles
             void WriteRow(string label, string value, int valueColor)
             {
                 if (line >= maxLines) return;
-                ClearLineAt(left, top + line, width);
-                string lp = $"  {label,-8}│ ";
-                if (lp.Length >= width) { line++; return; }
-                Console.SetCursorPosition(left, top + line);
-                var old = Console.ForegroundColor;
-                Console.ForegroundColor = ClrInfoLabel;
-                Console.Write(lp);
-                int rem = width - lp.Length;
-                if (rem > 0)
-                {
-                    string v = value ?? "";
-                    if (v.Length > rem) v = v.Substring(0, rem);
-                    Console.Write(F(valueColor) + v + Reset);
-                }
-                Console.ForegroundColor = old;
+                string prefix = $"  {label,-8}│ ";
+                WriteTrimmedAtColor(left, top + line, prefix, width, ClrInfoLabel);
+                if (prefix.Length < width)
+                    WriteTrimmedAtAnsiColor(left + prefix.Length, top + line, value, width - prefix.Length, valueColor);
                 line++;
             }
 
@@ -1135,6 +1211,7 @@ namespace Core.DirFiles
             {
                 _cachedFilePath = filePath;
                 _cachedFileInfo = null;
+                _cachedPreview = null;
                 try { _cachedFileInfo = new FileInfo(filePath); } catch { }
             }
 
@@ -1182,7 +1259,13 @@ namespace Core.DirFiles
                     line++;
                 }
 
-                List<string> previewLines = BuildFilePreview(filePath, info.Length, maxLines - line);
+                int previewRows = maxLines - line;
+                if (_cachedPreview == null || _cachedPreviewLines != previewRows)
+                {
+                    _cachedPreview = BuildFilePreview(filePath, info.Length, previewRows);
+                    _cachedPreviewLines = previewRows;
+                }
+                List<string> previewLines = _cachedPreview;
                 foreach (string previewLine in previewLines)
                 {
                     if (line >= maxLines)
@@ -1298,21 +1381,10 @@ namespace Core.DirFiles
             void WriteRow(string label, string value, int valueColor)
             {
                 if (line >= maxLines) return;
-                ClearLineAt(left, top + line, width);
-                string lp = $"  {label,-8}│ ";
-                if (lp.Length >= width) { line++; return; }
-                Console.SetCursorPosition(left, top + line);
-                var old = Console.ForegroundColor;
-                Console.ForegroundColor = ClrInfoLabel;
-                Console.Write(lp);
-                int rem = width - lp.Length;
-                if (rem > 0)
-                {
-                    string v = value ?? "";
-                    if (v.Length > rem) v = v.Substring(0, rem);
-                    Console.Write(F(valueColor) + v + Reset);
-                }
-                Console.ForegroundColor = old;
+                string prefix = $"  {label,-8}│ ";
+                WriteTrimmedAtColor(left, top + line, prefix, width, ClrInfoLabel);
+                if (prefix.Length < width)
+                    WriteTrimmedAtAnsiColor(left + prefix.Length, top + line, value, width - prefix.Length, valueColor);
                 line++;
             }
 
@@ -1341,7 +1413,9 @@ namespace Core.DirFiles
             WriteRow("Type",     "Folder", CTitle);
             WriteRow("Subs",     dirs.Length.ToString(), CNormal);
             WriteRow("Files",    files.Length.ToString(), CNormal);
-            WriteRow("Modified", dirInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), CNormal);
+            try { WriteRow("Modified", dirInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), CNormal); }
+            catch (IOException) { WriteRow("Modified", "unavailable", CNormal); }
+            catch (UnauthorizedAccessException) { WriteRow("Modified", "unavailable", CNormal); }
 
             if (line < maxLines)
             {
@@ -1387,6 +1461,7 @@ namespace Core.DirFiles
 
         private void RenderModal(string title, string line1, string line2, ConsoleColor accentColor)
         {
+            ForceFullRedraw();
             int width = WindowSize().width;
             Console.Clear();
             WriteTrimmedAtColor(0, 0, title, width, accentColor);
@@ -1474,61 +1549,59 @@ namespace Core.DirFiles
             }
         }
 
-        private static void WriteTrimmedAt(int left, int top, string text, int width)
+        private void WriteOutput(string text)
         {
-            if (top < 0 || top >= Console.WindowHeight)
-                return;
-
-            if (text == null) text = "";
-            int maxWidth = Math.Max(0, Math.Min(width, Console.WindowWidth - left));
-            if (maxWidth <= 0) return;
-            if (text.Length > maxWidth) text = text.Substring(0, maxWidth);
-            else if (text.Length < maxWidth) text = text.PadRight(maxWidth);
-            Console.SetCursorPosition(left, top);
-            Console.Write(text);
+            if (_rendering) _frame.Append(text);
+            else Console.Write(text);
         }
 
-        private static void WriteTrimmedAtColor(int left, int top, string text, int width, ConsoleColor color)
+        private void WriteAt(int left, int top, string text, int width, string style)
         {
-            var old = Console.ForegroundColor;
-            Console.ForegroundColor = color;
-            WriteTrimmedAt(left, top, text, width);
-            Console.ForegroundColor = old;
+            var size = RenderSize();
+            if (left < 0 || top < 0 || top >= size.height) return;
+            width = Math.Max(0, Math.Min(width, size.width - left));
+            if (width == 0) return;
+            text = SanitizeText(text ?? "");
+            text = text.Length > width ? text.Substring(0, width) : text.PadRight(width);
+            WriteOutput($"\x1b[{top + 1};{left + 1}H" + style + text + Reset);
         }
 
-        private static void WriteTrimmedAtAnsiColor(int left, int top, string text, int width, int color)
+        private void WriteListRow(int left, int top, string text, int width, bool selected, int color)
         {
-            if (top < 0 || top >= Console.WindowHeight)
-                return;
-
-            text = text ?? string.Empty;
-            int maxWidth = Math.Max(0, Math.Min(width, Console.WindowWidth - left));
-            if (maxWidth <= 0)
-                return;
-
-            if (text.Length > maxWidth)
-                text = text.Substring(0, maxWidth);
-            else if (text.Length < maxWidth)
-                text = text.PadRight(maxWidth);
-
-            Console.SetCursorPosition(left, top);
-            Console.Write(F(color) + text + Reset);
+            if (selected)
+            {
+                string body = text.Length > 1 ? text.Substring(1) : "";
+                WriteAt(left, top, "▌" + body, width, "\x1b[48;5;23m\x1b[1m\x1b[38;5;253m");
+                WriteAt(left, top, "▌", 1, "\x1b[38;5;45m\x1b[48;5;24m");
+            }
+            else WriteAt(left, top, text, width, F(color));
         }
 
-        private static string F(int color)
+        private void WriteTrimmedAt(int left, int top, string text, int width) =>
+            WriteAt(left, top, text, width, Reset);
+
+        private void WriteTrimmedAtColor(int left, int top, string text, int width, ConsoleColor color) =>
+            WriteAt(left, top, text, width, ConsoleForeground(color));
+
+        private void WriteTrimmedAtAnsiColor(int left, int top, string text, int width, int color) =>
+            WriteAt(left, top, text, width, F(color));
+
+        private static string ConsoleForeground(ConsoleColor color)
         {
-            return "\x1b[38;5;" + color + "m";
+            int value = (int)color;
+            int ansi = ((value & 1) << 2) | (value & 2) | ((value & 4) >> 2);
+            return "\x1b[" + (ansi + (value >= 8 ? 90 : 30)) + "m";
         }
 
-        private static void ClearLineAt(int left, int top, int width)
-        {
-            if (top < 0 || top >= Console.WindowHeight)
-                return;
+        private static string F(int color) => "\x1b[38;5;" + color + "m";
 
-            int maxWidth = Math.Max(0, Math.Min(width, Console.WindowWidth - left));
-            if (maxWidth <= 0) return;
-            Console.SetCursorPosition(left, top);
-            Console.Write(new string(' ', maxWidth));
+        private void ClearLineAt(int left, int top, int width) => WriteAt(left, top, "", width, Reset);
+
+        private static string SanitizeText(string text)
+        {
+            // Preview contents must not inject cursor movement or terminal escapes.
+            if (!text.Any(char.IsControl)) return text;
+            return new string(text.Select(c => char.IsControl(c) ? ' ' : c).ToArray());
         }
 
         private static (int width, int height) WindowSize()
@@ -1542,6 +1615,9 @@ namespace Core.DirFiles
                 return (80, 25);
             }
         }
+
+        private (int width, int height) RenderSize() =>
+            _rendering ? (_frameWidth, _frameHeight) : WindowSize();
 
         private static int Clamp(int value, int min, int max)
         {
