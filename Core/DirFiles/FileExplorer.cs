@@ -105,7 +105,7 @@ namespace Core.DirFiles
 
         public FileExplorer(string startPath)
         {
-            _currentRoot = Path.GetFullPath(startPath);
+            _currentRoot = NormalizeDirectoryPath(startPath);
             _itemsDirty = true;
         }
 
@@ -164,6 +164,7 @@ namespace Core.DirFiles
                     }
                     Thread.Sleep(8);
                 }
+                SetCurrentDirectory(_currentRoot);
             }
             finally
             {
@@ -508,10 +509,21 @@ namespace Core.DirFiles
 
         private void SetCurrentDirectory(string path)
         {
-            if (path.EndsWith(":\\"))
-                File.WriteAllText(GlobalVariables.currentDirectory, path);
-            else
-                File.WriteAllText(GlobalVariables.currentDirectory, path + "\\");
+            string directory = NormalizeDirectoryPath(path);
+            if (!Path.EndsInDirectorySeparator(directory))
+                directory += Path.DirectorySeparatorChar;
+            File.WriteAllText(GlobalVariables.currentDirectory, directory);
+        }
+
+        private static string NormalizeDirectoryPath(string path)
+        {
+            string directory = Path.GetFullPath(path);
+            int rootLength = Path.GetPathRoot(directory).Length;
+            // Keep drive/UNC roots intact, but remove trailing separators from
+            // folders so GetParent always moves up one level.
+            while (directory.Length > rootLength && Path.EndsInDirectorySeparator(directory))
+                directory = directory.Substring(0, directory.Length - 1);
+            return directory;
         }
 
         private bool HandleMainKey(ConsoleKeyInfo key)
@@ -1078,7 +1090,7 @@ namespace Core.DirFiles
         {
             try
             {
-                newRoot = Path.GetFullPath(newRoot);
+                newRoot = NormalizeDirectoryPath(newRoot);
                 if (!Directory.Exists(newRoot)) return;
 
                 if (!_suppressHistory && _currentRoot != null)
@@ -1116,7 +1128,7 @@ namespace Core.DirFiles
         {
             try
             {
-                string parent = Directory.GetParent(_currentRoot)?.FullName;
+                string parent = Directory.GetParent(NormalizeDirectoryPath(_currentRoot))?.FullName;
                 if (parent == null) return;
                 NavigateTo(parent);
                 _itemsDirty = true;
