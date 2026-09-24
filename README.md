@@ -272,6 +272,9 @@ Example:
                     N   : Sort processes by name.
                  Tree view sorts siblings together; search reveals matches in collapsed branches.
                  K kills only the selected process, including in tree view.
+                 System and service accounts are also shown in normal-user mode.
+                 USER ending in * is a service's configured logon account when its process owner cannot be read.
+                 Some protected owners still require administrator privileges; unavailable owners show —.
     ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
     env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
                    env                                     : List all variables across Process, User and System sections.

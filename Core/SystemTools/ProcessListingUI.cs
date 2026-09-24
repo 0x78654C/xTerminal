@@ -263,6 +263,8 @@ namespace Core.SystemTools
 
         private ProcessSnapshot[] CaptureProcesses()
         {
+            long serviceSnapshotTime = DateTime.UtcNow.Ticks;
+            Dictionary<int, string> serviceAccounts = CaptureServiceAccounts();
             long parentSnapshotTime = DateTime.UtcNow.Ticks;
             Dictionary<int, int> parents = CaptureParentProcessIds();
             Process[] processes = Process.GetProcesses();
@@ -298,7 +300,11 @@ namespace Core.SystemTools
                         // A process created after the parent snapshot may have reused a
                         // PID from that snapshot. Leave its parent unknown until refresh.
                         int parentId = started <= parentSnapshotTime ? parents.GetValueOrDefault(pid) : 0;
-                        rows.Add(new ProcessSnapshot(pid, name, memory, threads, started, cpu) { ParentId = parentId });
+                        rows.Add(new ProcessSnapshot(pid, name, memory, threads, started, cpu)
+                        {
+                            ParentId = parentId,
+                            ServiceAccount = ServiceAccountForProcess(pid, started, serviceSnapshotTime, serviceAccounts)
+                        });
                     }
                     catch { } // An exiting process must not discard the rest of the sample.
                     finally { process.Dispose(); }
@@ -690,7 +696,9 @@ namespace Core.SystemTools
                 {
                     double procCpu = p.CpuPercent;
                     double procMem = p.MemoryBytes / 1_048_576.0;
-                    string user = Clip(CachedUser(p), userW).PadRight(userW);
+                    string user = CachedUser(p);
+                    // Keep the configured-account marker visible in narrow terminals.
+                    user = (user.EndsWith('*') ? Clip(user[..^1], userW - 1) + "*" : Clip(user, userW)).PadRight(userW);
                     string name = ProcessDisplayName(p, nameW).PadRight(nameW);
 
                     int aw = pidW, bw = cpuW, cw = memW - 2, dw = thrW;
@@ -837,15 +845,18 @@ namespace Core.SystemTools
 
         private string CachedUser(ProcessSnapshot process)
         {
-            if (process.StartTimeTicks == 0) return "—";
+            // PID 4 is the kernel System process, whose token cannot be opened.
+            if (process.Id == 4 && string.Equals(process.Name, "System", StringComparison.OrdinalIgnoreCase)) return "SYSTEM";
+            string fallback = string.IsNullOrWhiteSpace(process.ServiceAccount) ? "—" : process.ServiceAccount + "*";
+            if (process.StartTimeTicks == 0) return fallback;
             ProcessIdentity identity = process.Identity;
             lock (_lock)
             {
-                if (_userCache.TryGetValue(identity, out string user)) return user;
+                if (_userCache.TryGetValue(identity, out string user)) return user == "—" ? fallback : user;
                 if (!_exitRequested && _pendingUserLookups.Count < MaxUserLookups && _pendingUserLookups.Add(identity))
                     Task.Run(() => ResolveUser(identity));
             }
-            return "…";
+            return fallback == "—" ? "…" : fallback;
         }
 
         private void ResolveUser(ProcessIdentity identity)
@@ -968,6 +979,7 @@ namespace Core.SystemTools
         {
             public ProcessIdentity Identity => new(Id, StartTimeTicks);
             public int ParentId { get; init; }
+            public string ServiceAccount { get; init; }
         }
 
         private static (int w, int h) WinSize()

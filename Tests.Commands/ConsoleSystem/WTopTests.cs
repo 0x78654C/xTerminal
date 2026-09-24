@@ -137,6 +137,83 @@ public partial class WTopTests
         cache.Count.Should().Be(0);
     }
 
+    [Theory]
+    [InlineData("LocalSystem", "SYSTEM")]
+    [InlineData("nt authority\\system", "SYSTEM")]
+    [InlineData("NT AUTHORITY\\LocalService", "LOCAL SERVICE")]
+    [InlineData("NT AUTHORITY\\NetworkService", "NETWORK SERVICE")]
+    [InlineData(".\\serviceUser", "serviceUser")]
+    [InlineData("DOMAIN\\worker", "worker")]
+    [InlineData("worker@example.test", "worker@example.test")]
+    [InlineData("", null)]
+    [InlineData(" ", null)]
+    public void ServiceAccountNamesMatchTheUserColumn(string account, string? expected)
+    {
+        Call(null, "NormalizeServiceAccount", account).Should().Be(expected);
+    }
+
+    [Fact]
+    public void InaccessibleServiceProcessesShowConfiguredAccountsWithoutTokenLookups()
+    {
+        var ui = new ProcessListingUI();
+        var service = Row(123, "svchost", started: 0);
+        SnapshotType.GetProperty("ServiceAccount")!.SetValue(service, "NETWORK SERVICE");
+        Publish(ui, service);
+
+        Call(ui, "CachedUser", service).Should().Be("NETWORK SERVICE*");
+        Frame(ui).Should().Contain("NETWORK SERVICE*");
+        ((string)Call(ui, "BuildFrame", 80, 24)!).Should().Contain("NETWORK S…*");
+        Property<int>(Field<object>(ui, "_pendingUserLookups"), "Count").Should().Be(0);
+        Field<IDictionary>(ui, "_userCache").Count.Should().Be(0);
+
+        var replacement = Row(123, "svchost", started: 0);
+        Publish(ui, replacement);
+        Call(ui, "CachedUser", replacement).Should().Be("—");
+    }
+
+    [Fact]
+    public void VerifiedOwnerTakesPrecedenceAndDeniedOwnerUsesTheCurrentServiceAccount()
+    {
+        var ui = new ProcessListingUI();
+        var service = Row(123, "service");
+        SnapshotType.GetProperty("ServiceAccount")!.SetValue(service, "SYSTEM");
+        Publish(ui, service);
+        object identity = SnapshotType.GetProperty("Identity")!.GetValue(service)!;
+        var cache = Field<IDictionary>(ui, "_userCache");
+
+        cache[identity] = "actualOwner";
+        Call(ui, "CachedUser", service).Should().Be("actualOwner");
+        cache[identity] = "—";
+        Call(ui, "CachedUser", service).Should().Be("SYSTEM*");
+
+        var refreshed = Row(123, "service");
+        SnapshotType.GetProperty("ServiceAccount")!.SetValue(refreshed, "LOCAL SERVICE");
+        Publish(ui, refreshed);
+        Call(ui, "CachedUser", refreshed).Should().Be("LOCAL SERVICE*");
+        var withoutService = Row(123, "service");
+        Publish(ui, withoutService);
+        Call(ui, "CachedUser", withoutService).Should().Be("—");
+    }
+
+    [Fact]
+    public void NewProcessesCannotInheritAnOlderServiceSnapshot()
+    {
+        var accounts = new Dictionary<int, string> { [123] = "SYSTEM" };
+        Call(null, "ServiceAccountForProcess", 123, 200L, 100L, accounts).Should().BeNull();
+        Call(null, "ServiceAccountForProcess", 123, 50L, 100L, accounts).Should().Be("SYSTEM");
+        Call(null, "ServiceAccountForProcess", 123, 0L, 100L, accounts).Should().Be("SYSTEM");
+        Call(null, "ServiceAccountForProcess", 456, 0L, 100L, accounts).Should().BeNull();
+    }
+
+    [Fact]
+    public void KernelSystemOwnerIsVisibleWithoutGuessingOtherProcessOwners()
+    {
+        var ui = new ProcessListingUI();
+        Call(ui, "CachedUser", Row(4, "System", started: 0)).Should().Be("SYSTEM");
+        Call(ui, "CachedUser", Row(123, "System", started: 0)).Should().Be("—");
+        Call(ui, "CachedUser", Row(123, "svchost", started: 0)).Should().Be("—");
+    }
+
     [Fact]
     public void SearchMatchesNameOrExactPidAndRepeatsWithWraparound()
     {
@@ -269,6 +346,8 @@ public partial class WTopTests
         Property<string>(self, "Name").Should().Be(current.ProcessName);
         Property<int>(self, "ThreadCount").Should().BeGreaterThan(0);
         Property<long>(self, "StartTimeTicks").Should().Be(current.StartTime.ToUniversalTime().Ticks);
+        rows.Cast<object>().Select(row => Property<string>(row, "ServiceAccount"))
+            .Should().Contain("SYSTEM").And.Contain("LOCAL SERVICE").And.Contain("NETWORK SERVICE");
     }
 
     [Fact]

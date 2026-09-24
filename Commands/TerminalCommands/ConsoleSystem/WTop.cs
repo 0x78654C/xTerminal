@@ -32,7 +32,9 @@ Inside the wtop command:
 Tree view sorts sibling processes together. Search reveals matches in collapsed branches.
 K kills only the selected process, including in tree view.
 
-Run with administrator privileges to see all users.
+System and service accounts are also shown when running as a normal user.
+USER ending in * is the service's configured logon account when its process owner cannot be read.
+Some protected process owners still require administrator privileges; unavailable owners show —.
 ";
 
         public void Execute(string arg)
