@@ -41,6 +41,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
                             var dirInfo = new DirectoryInfo(pathSeparator);
                             var dirCssensitive = FileDirManager.GetExactDirectoryName(dirInfo) + "\\";
+                            if (s_newLocation.Length == 2 && s_newLocation.EndsWith(":"))
+                                dirCssensitive = FileDirManager.GetExactDirectoryName(dirInfo);
                             File.WriteAllText(GlobalVariables.currentDirectory, dirCssensitive);
                             return;
                         }
@@ -96,6 +98,12 @@ namespace Commands.TerminalCommands.ConsoleSystem
                             pathSeparator = pathSeparator.Replace("\\\\", "\\");
                             var dirInfo = new DirectoryInfo(pathSeparator);
                             var dirCssensitive =FileDirManager.GetExactDirectoryName(dirInfo)+"\\";
+                            var rootDelimiter = pathCombine.ToCharArray()[1];
+                            if (rootDelimiter == ':' && pathCombine.Contains(":") && pathCombine.EndsWith("\\"))
+                            {
+                                dirCssensitive = dirCssensitive.Replace("\\\\", "\\");
+                                dirCssensitive = FileDirManager.GetExactDirectoryName(dirInfo);
+                            }
                             File.WriteAllText(GlobalVariables.currentDirectory, dirCssensitive);
                             return;
                         }
