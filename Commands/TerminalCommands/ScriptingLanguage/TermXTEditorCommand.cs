@@ -32,8 +32,12 @@ Inside the editor:
     Normal mode : h/j/k/l or arrows move, e opens file explorer, i or Insert enters insert, dd delete line, / search, n or F3 search next.
     Explorer    : Starts from xTerminal current directory and uses fxp controls. Enter opens the selected file in xte.
     Search      : Enter finds, empty Enter repeats the previous search.
-    Insert mode : TermXT/C# IntelliSense opens automatically; Ctrl+Space opens suggestions, arrows select, Enter/Tab accepts, Esc closes suggestions or returns to normal mode.
+    Insert mode : TermXT/C#/Rust IntelliSense opens automatically; Ctrl+Space opens suggestions, arrows select, Enter/Tab accepts, Esc closes suggestions or returns to normal mode.
                   TermXT suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
+                  Rust suggests keywords, macros, current-file names, and common standard-library paths/members after :: or .; no Rust toolchain required.
+                  With rust-analyzer, dot completion resolves variables, call results, and chains in Cargo projects and saved standalone .rs files.
+                  Cargo dependencies, imported types, fields, and trait methods are resolved from Cargo.toml and the unsaved code.
+                  Setup: rustup component add rust-analyzer rust-src. xte discovers PATH/rustup/VS Code tools; XTE_RUST_ANALYZER selects a server.
                   Ctrl+D duplicates line, Ctrl+X cuts selection/line, Ctrl+Z undo, Ctrl+Y redo.
     Commands    : :e explorer, :w save, :w! overwrite changed disk file, :e! reload, :q quit, :q! quit without saving, :wq save and quit.
                   :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py switch highlight.

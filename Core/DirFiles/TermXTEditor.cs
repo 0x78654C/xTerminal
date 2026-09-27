@@ -845,6 +845,7 @@ namespace Core.DirFiles
             finally
             {
                 CancelCSharpDiagnostics();
+                StopRustAnalyzer();
                 try
                 {
                     Console.Write(Reset + ShowCursor + NormalScreen);
@@ -904,6 +905,9 @@ namespace Core.DirFiles
                     return false;
 
                 if (CheckDiagnosticsOnIdle())
+                    return false;
+
+                if (CheckRustCompletionOnIdle())
                     return false;
 
                 Thread.Sleep(30);
@@ -1429,6 +1433,8 @@ namespace Core.DirFiles
 
         private void InvalidateDocumentCaches(bool delayCSharpSemanticDiagnostics)
         {
+            _rustDocumentVersion++;
+            CancelRustProjectCompletion();
             _wrapCacheDirty = true;
             InvalidateDiagnosticsCache(delayCSharpSemanticDiagnostics);
             InvalidateSyntaxLineStateCaches();
@@ -1981,7 +1987,9 @@ namespace Core.DirFiles
             {
                 if (key.Key == ConsoleKey.Spacebar && _mode == Mode.Insert)
                 {
-                    if (IsTermXtCompletionContext())
+                    if (_syntax == TermXTEditorSyntax.Rust)
+                        RefreshRustCompletion(manual: true);
+                    else if (IsTermXtCompletionContext())
                         RefreshTermXtCompletion(manual: true);
                     else
                         StartCSharpCompletion(manual: true);
@@ -2595,6 +2603,7 @@ namespace Core.DirFiles
 
         private void SetCompletionSession(CompletionSession session, string selectedLabel)
         {
+            _rustCompletionManual = false;
             _termXtCompletionKind = TermXtCompletionKind.None;
             _termXtCompletionManual = false;
             _completionAllItems.Clear();
@@ -2625,6 +2634,12 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterText(string text)
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+            {
+                RefreshRustCompletion(manual: false);
+                return;
+            }
+
             if (IsTermXtCompletionContext())
             {
                 RefreshTermXtCompletion(manual: false);
@@ -2646,6 +2661,12 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterEdit()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+            {
+                RefreshRustCompletion(manual: false);
+                return;
+            }
+
             if (IsTermXtCompletionContext())
             {
                 RefreshTermXtCompletion(manual: false);
@@ -3108,6 +3129,9 @@ namespace Core.DirFiles
 
         private bool IsCSharpCompletionContext()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+                return false;
+
             if (_syntax == TermXTEditorSyntax.CSharp)
                 return true;
 
@@ -3355,7 +3379,19 @@ namespace Core.DirFiles
             CompletionItem item = _completionItems[_completionSelectedIndex];
             string replacement = item.InsertionText;
 
-            if (_termXtCompletionKind != TermXtCompletionKind.None)
+            if (_syntax == TermXTEditorSyntax.Rust && item.RustEditStart >= 0)
+            {
+                start = item.RustEditStart;
+                end = item.RustEditEnd;
+            }
+            else if (_syntax == TermXTEditorSyntax.Rust)
+            {
+                while (end < line.Length && IsRustWordPart(line[end]))
+                    end++;
+                if (replacement.EndsWith("!", StringComparison.Ordinal) && end < line.Length && line[end] == '!')
+                    end++;
+            }
+            else if (_termXtCompletionKind != TermXtCompletionKind.None)
             {
                 // Replace the whole token when completing in the middle of a word.
                 while (end < line.Length && IsTermXtCompletionPart(line[end], _termXtCompletionKind))
@@ -3390,6 +3426,8 @@ namespace Core.DirFiles
 
         private void DismissCompletion()
         {
+            CancelRustProjectCompletion();
+            _rustCompletionManual = false;
             _termXtCompletionKind = TermXtCompletionKind.None;
             _termXtCompletionManual = false;
             _completionActive = false;
@@ -4608,7 +4646,7 @@ namespace Core.DirFiles
             var items = new List<CompletionItem>();
             foreach (CompletionItem item in allItems)
             {
-                if (MatchesCompletionPrefix(item.Label, prefix))
+                if (MatchesCompletionPrefix(item.FilterText, prefix))
                     items.Add(item);
             }
 
@@ -4629,8 +4667,8 @@ namespace Core.DirFiles
             CompletionItem right,
             string prefix)
         {
-            int rank = CompletionMatchRank(left.Label, prefix)
-                .CompareTo(CompletionMatchRank(right.Label, prefix));
+            int rank = CompletionMatchRank(left.FilterText, prefix)
+                .CompareTo(CompletionMatchRank(right.FilterText, prefix));
             if (rank != 0)
                 return rank;
 
@@ -5641,6 +5679,7 @@ namespace Core.DirFiles
                 return true;
             }
 
+            StopRustAnalyzer();
             _syntax = syntax;
             DismissCompletion();
             InvalidateSyntaxStateCache();
@@ -5756,6 +5795,7 @@ namespace Core.DirFiles
 
             try
             {
+                StopRustAnalyzer();
                 _path = fullPath;
                 _syntax = DetectSyntaxFromPath(_path);
                 LoadFile();
@@ -8962,7 +9002,12 @@ namespace Core.DirFiles
                         continue;
                     }
 
-                    tokens.Add(new Token(start, i - start, RustWordColor(word, IsCallableIdentifier(line, i))));
+                    int previous = start - 1;
+                    while (previous >= 0 && char.IsWhiteSpace(line[previous])) previous--;
+                    bool functionDeclaration = previous >= 1 && line[previous] == 'n' && line[previous - 1] == 'f' &&
+                        (previous < 2 || !IsRustWordPart(line[previous - 2]));
+                    tokens.Add(new Token(start, i - start,
+                        RustWordColor(word, functionDeclaration || IsCallableIdentifier(line, i))));
                     continue;
                 }
 
@@ -12342,6 +12387,7 @@ namespace Core.DirFiles
                 int priority)
             {
                 Label = label ?? string.Empty;
+                FilterText = Label;
                 InsertionText = string.IsNullOrEmpty(insertionText) ? Label : insertionText;
                 Kind = kind ?? string.Empty;
                 Detail = detail ?? string.Empty;
@@ -12350,6 +12396,9 @@ namespace Core.DirFiles
             }
 
             public string Label { get; private set; }
+            public string FilterText { get; set; }
+            public int RustEditStart { get; set; } = -1;
+            public int RustEditEnd { get; set; } = -1;
             public string InsertionText { get; private set; }
             public string Kind { get; private set; }
             public string Detail { get; private set; }
