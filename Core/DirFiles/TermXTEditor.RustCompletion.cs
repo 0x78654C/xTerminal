@@ -39,9 +39,9 @@ namespace Core.DirFiles
                 ["Rc::"] = new[] { "new(value) -> Rc<T>", "clone(value) -> Rc<T>" },
                 ["Path::"] = new[] { "new(path) -> &Path" },
                 ["PathBuf::"] = new[] { "new() -> PathBuf", "from(path) -> PathBuf" },
-                ["String."] = new[] { "len() -> usize", "is_empty() -> bool", "push(ch)", "push_str(string)", "pop() -> Option<char>", "clear()", "capacity() -> usize", "as_str() -> &str", "as_bytes() -> &[u8]", "chars() -> Chars", "trim() -> &str", "split(pattern) -> Split", "contains(pattern) -> bool", "starts_with(pattern) -> bool", "ends_with(pattern) -> bool", "replace(from, to) -> String", "to_lowercase() -> String", "to_uppercase() -> String", "clone() -> String" },
+                ["String."] = new[] { "len() -> usize", "is_empty() -> bool", "push(ch)", "push_str(string)", "pop() -> Option<char>", "clear()", "truncate(new_len: usize)", "capacity() -> usize", "as_str() -> &str", "as_bytes() -> &[u8]", "chars() -> Chars", "trim() -> &str", "split(pattern) -> Split", "contains(pattern) -> bool", "starts_with(pattern) -> bool", "ends_with(pattern) -> bool", "replace(from, to) -> String", "to_lowercase() -> String", "to_uppercase() -> String", "clone() -> String" },
                 ["str."] = new[] { "len() -> usize", "is_empty() -> bool", "as_bytes() -> &[u8]", "chars() -> Chars", "lines() -> Lines", "trim() -> &str", "split(pattern) -> Split", "contains(pattern) -> bool", "starts_with(pattern) -> bool", "ends_with(pattern) -> bool", "replace(from, to) -> String", "to_string() -> String", "to_owned() -> String", "parse<F>() -> Result<F, F::Err>" },
-                ["Vec."] = new[] { "push(value)", "pop() -> Option<T>", "len() -> usize", "is_empty() -> bool", "capacity() -> usize", "clear()", "insert(index, value)", "remove(index) -> T", "get(index) -> Option<&T>", "first() -> Option<&T>", "last() -> Option<&T>", "iter() -> Iter<T>", "iter_mut() -> IterMut<T>", "into_iter() -> IntoIter<T>", "as_slice() -> &[T]", "sort()", "retain(f)", "extend(iter)" },
+                ["Vec."] = new[] { "push(value)", "pop() -> Option<T>", "len() -> usize", "is_empty() -> bool", "capacity() -> usize", "clear()", "truncate(len: usize)", "insert(index, value)", "remove(index) -> T", "get(index) -> Option<&T>", "first() -> Option<&T>", "last() -> Option<&T>", "iter() -> Iter<T>", "iter_mut() -> IterMut<T>", "into_iter() -> IntoIter<T>", "as_slice() -> &[T]", "sort()", "retain(f)", "extend(iter)" },
                 ["HashMap."] = new[] { "insert(key, value) -> Option<V>", "get(key) -> Option<&V>", "get_mut(key) -> Option<&mut V>", "contains_key(key) -> bool", "remove(key) -> Option<V>", "entry(key) -> Entry<K, V>", "keys() -> Keys<K, V>", "values() -> Values<K, V>", "iter() -> Iter<K, V>", "len() -> usize", "is_empty() -> bool", "clear()" },
                 ["HashSet."] = new[] { "insert(value) -> bool", "contains(value) -> bool", "remove(value) -> bool", "iter() -> Iter<T>", "len() -> usize", "is_empty() -> bool", "clear()" },
                 ["Option."] = new[] { "is_some() -> bool", "is_none() -> bool", "unwrap() -> T", "expect(message) -> T", "unwrap_or(default) -> T", "unwrap_or_else(f) -> T", "unwrap_or_default() -> T", "map(f) -> Option<U>", "and_then(f) -> Option<U>", "as_ref() -> Option<&T>", "take() -> Option<T>", "ok_or(error) -> Result<T, E>" },
@@ -126,7 +126,7 @@ namespace Core.DirFiles
                 AddRustGlobalCompletions(tokens, position, source, items, labels);
             }
 
-            List<CompletionItem> filtered = FilterCompletionItems(items, prefix);
+            List<CompletionItem> filtered = FilterCompletionItems(items, prefix, maxItems: int.MaxValue);
             if (filtered.Count == 0)
             {
                 DismissCompletion();

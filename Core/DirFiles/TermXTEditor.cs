@@ -88,94 +88,97 @@ namespace Core.DirFiles
         private const int CMuted = 238;
         private const int CLineNo = 240;
         private const int CCurrentLineNo = 45;
-        private const int CKeyword = 81;
-        private const int CFlow = 111;
-        private const int CFunction = 121;
+        // Shared ANSI 256-color syntax palette. Keep punctuation neutral and use
+        // softer accents consistently across languages so dense code stays readable.
+        private const int CKeyword = 110;      // soft blue
+        private const int CFlow = 139;         // muted mauve
+        private const int CType = 109;         // teal
+        private const int CFunction = 180;     // warm sand
         private const int CString = 150;
-        private const int CVariable = 219;
-        private const int CNumber = 209;
-        private const int COperator = 220;
-        private const int CComment = 108;
+        private const int CVariable = 146;     // lavender
+        private const int CNumber = 174;       // soft coral
+        private const int COperator = 248;
+        private const int CComment = 245;
         private const int CError = 203;
         private const int CWarning = 214;
         private const int CSearch = 227;
-        private const int CPreprocessor = 183;
+        private const int CPreprocessor = CFlow;
         private const int CSelectionFg = 232;
         private const int CSelectionBg = 153;
         private const int CCompletionBg = 236;
         private const int CCompletionSelectedBg = 45;
         private const int CCompletionLabel = 231;
         private const int CCompletionDetail = 250;
-        private const int CSourceFlow = 39;
-        private const int CSourceKeyword = 75;
-        private const int CSourceType = 179;
-        private const int CSourceStd = 117;
-        private const int CSourceDirective = 208;
+        private const int CSourceFlow = CFlow;
+        private const int CSourceKeyword = CKeyword;
+        private const int CSourceType = CType;
+        private const int CSourceStd = CType;
+        private const int CSourceDirective = CPreprocessor;
         private const int CSourceFunction = CFunction;
-        private const int CSourceInclude = 159;
-        private const int CSourceString = 186;
-        private const int CSourceNumber = 203;
-        private const int CSourceOperator = 250;
-        private const int CSourceComment = 101;
-        private const int CppSourceFlow = 75;
-        private const int CppSourceKeyword = 141;
-        private const int CppSourceType = 111;
-        private const int CppSourceStd = 219;
-        private const int CppSourceDirective = 105;
+        private const int CSourceInclude = CString;
+        private const int CSourceString = CString;
+        private const int CSourceNumber = CNumber;
+        private const int CSourceOperator = COperator;
+        private const int CSourceComment = CComment;
+        private const int CppSourceFlow = CFlow;
+        private const int CppSourceKeyword = CKeyword;
+        private const int CppSourceType = CType;
+        private const int CppSourceStd = CType;
+        private const int CppSourceDirective = CPreprocessor;
         private const int CppSourceFunction = CFunction;
-        private const int CppSourceInclude = 183;
-        private const int CppSourceString = 150;
-        private const int CppSourceNumber = 214;
-        private const int CppSourceOperator = 222;
-        private const int CppSourceComment = 103;
-        private const int CSharpFlow = 39;
-        private const int CSharpKeyword = 81;
-        private const int CSharpType = 68;
-        private const int CSharpDeclaration = 214;
+        private const int CppSourceInclude = CString;
+        private const int CppSourceString = CString;
+        private const int CppSourceNumber = CNumber;
+        private const int CppSourceOperator = COperator;
+        private const int CppSourceComment = CComment;
+        private const int CSharpFlow = CFlow;
+        private const int CSharpKeyword = CKeyword;
+        private const int CSharpType = CType;
+        private const int CSharpDeclaration = CKeyword;
         private const int CSharpFunction = CFunction;
-        private const int CSharpModifier = 117;
-        private const int CSharpBcl = 159;
-        private const int CSharpDirective = 183;
-        private const int CSharpAttribute = 213;
-        private const int CSharpString = 150;
-        private const int CSharpNumber = 209;
-        private const int CSharpOperator = 220;
-        private const int CSharpComment = 108;
-        private const int CRustFlow = 39;
-        private const int CRustKeyword = 81;
-        private const int CRustType = 179;
-        private const int CRustDeclaration = 214;
+        private const int CSharpModifier = CKeyword;
+        private const int CSharpBcl = CType;
+        private const int CSharpDirective = CPreprocessor;
+        private const int CSharpAttribute = CPreprocessor;
+        private const int CSharpString = CString;
+        private const int CSharpNumber = CNumber;
+        private const int CSharpOperator = COperator;
+        private const int CSharpComment = CComment;
+        private const int CRustFlow = CFlow;
+        private const int CRustKeyword = CKeyword;
+        private const int CRustType = CType;
+        private const int CRustDeclaration = CKeyword;
         private const int CRustFunction = CFunction;
-        private const int CRustModifier = 117;
-        private const int CRustStd = 159;
-        private const int CRustAttribute = 213;
-        private const int CRustMacro = 183;
-        private const int CRustLifetime = 219;
-        private const int CRustString = 150;
-        private const int CRustNumber = 209;
-        private const int CRustOperator = 220;
-        private const int CRustComment = 108;
-        private const int CJavaScriptFlow = 39;
-        private const int CJavaScriptKeyword = 81;
-        private const int CJavaScriptDeclaration = 214;
+        private const int CRustModifier = CKeyword;
+        private const int CRustStd = CType;
+        private const int CRustAttribute = CPreprocessor;
+        private const int CRustMacro = CFunction;
+        private const int CRustLifetime = CVariable;
+        private const int CRustString = CString;
+        private const int CRustNumber = CNumber;
+        private const int CRustOperator = COperator;
+        private const int CRustComment = CComment;
+        private const int CJavaScriptFlow = CFlow;
+        private const int CJavaScriptKeyword = CKeyword;
+        private const int CJavaScriptDeclaration = CKeyword;
         private const int CJavaScriptFunction = CFunction;
-        private const int CJavaScriptBuiltin = 159;
-        private const int CJavaScriptDirective = 183;
-        private const int CJavaScriptString = 150;
-        private const int CJavaScriptNumber = 209;
-        private const int CJavaScriptOperator = 220;
-        private const int CJavaScriptComment = 108;
-        private const int CJavaScriptRegex = 213;
-        private const int CPythonFlow = 39;
-        private const int CPythonKeyword = 81;
-        private const int CPythonDeclaration = 214;
+        private const int CJavaScriptBuiltin = CType;
+        private const int CJavaScriptDirective = CPreprocessor;
+        private const int CJavaScriptString = CString;
+        private const int CJavaScriptNumber = CNumber;
+        private const int CJavaScriptOperator = COperator;
+        private const int CJavaScriptComment = CComment;
+        private const int CJavaScriptRegex = CString;
+        private const int CPythonFlow = CFlow;
+        private const int CPythonKeyword = CKeyword;
+        private const int CPythonDeclaration = CKeyword;
         private const int CPythonFunction = CFunction;
-        private const int CPythonBuiltin = 159;
-        private const int CPythonDecorator = 213;
-        private const int CPythonString = 150;
-        private const int CPythonNumber = 209;
-        private const int CPythonOperator = 220;
-        private const int CPythonComment = 108;
+        private const int CPythonBuiltin = CType;
+        private const int CPythonDecorator = CPreprocessor;
+        private const int CPythonString = CString;
+        private const int CPythonNumber = CNumber;
+        private const int CPythonOperator = COperator;
+        private const int CPythonComment = CComment;
 
         [DllImport("kernel32.dll", ExactSpelling = true)]
         private static extern IntPtr GetConsoleWindow();
@@ -661,16 +664,16 @@ namespace Core.DirFiles
         private int _wrapCacheTextWidth = -1;
         private int[] _wrapPrefixRows = Array.Empty<int>();
         private bool _wrapCacheDirty = true;
-        private bool[] _csharpBlockCommentLineStarts = Array.Empty<bool>();
+        private readonly List<bool> _csharpBlockCommentLineStarts = new List<bool>();
         private bool _csharpBlockCommentCacheDirty = true;
         private bool _csharpBlockCommentStateAfterCachedLines;
-        private int[] _rustBlockCommentDepthLineStarts = Array.Empty<int>();
+        private readonly List<int> _rustBlockCommentDepthLineStarts = new List<int>();
         private bool _rustBlockCommentCacheDirty = true;
         private int _rustBlockCommentDepthAfterCachedLines;
-        private bool[] _javaScriptBlockCommentLineStarts = Array.Empty<bool>();
+        private readonly List<bool> _javaScriptBlockCommentLineStarts = new List<bool>();
         private bool _javaScriptBlockCommentCacheDirty = true;
         private bool _javaScriptBlockCommentStateAfterCachedLines;
-        private int[] _pythonMultilineStringQuoteLineStarts = Array.Empty<int>();
+        private readonly List<int> _pythonMultilineStringQuoteLineStarts = new List<int>();
         private bool _pythonMultilineStringCacheDirty = true;
         private int _pythonMultilineStringQuoteAfterCachedLines;
 
@@ -1448,6 +1451,8 @@ namespace Core.DirFiles
 
         private void InvalidateSyntaxLineStateCaches()
         {
+            _highlightTokenCache.Clear();
+            _renderedEditorRows = Array.Empty<EditorRowState>();
             _csharpBlockCommentCacheDirty = true;
             _csharpBlockCommentStateAfterCachedLines = false;
             _rustBlockCommentCacheDirty = true;
@@ -1507,6 +1512,7 @@ namespace Core.DirFiles
             {
                 _lastWidth = width;
                 _lastHeight = height;
+                _renderedEditorRows = Array.Empty<EditorRowState>();
                 Console.Write(HideCursor + ClearScreen);
             }
             else
@@ -1537,8 +1543,7 @@ namespace Core.DirFiles
             _frame.Clear();
             RenderHeader(width);
 
-            for (int row = 0; row < textRows; row++)
-                RenderEditorRow(_scrollTop + row, textTop + row, numberWidth, textLeft, textWidth, width);
+            RenderEditorRows(textTop, textRows, numberWidth, textLeft, textWidth, width);
 
             RenderCompletionPopup(textTop, textLeft, textRows, textWidth, width);
             RenderMessageDetails(width, height);
@@ -4641,7 +4646,8 @@ namespace Core.DirFiles
 
         private static List<CompletionItem> FilterCompletionItems(
             List<CompletionItem> allItems,
-            string prefix)
+            string prefix,
+            int maxItems = CompletionMaxItems)
         {
             var items = new List<CompletionItem>();
             foreach (CompletionItem item in allItems)
@@ -4651,8 +4657,8 @@ namespace Core.DirFiles
             }
 
             SortCompletionItems(items, prefix);
-            if (items.Count > CompletionMaxItems)
-                items.RemoveRange(CompletionMaxItems, items.Count - CompletionMaxItems);
+            if (items.Count > maxItems)
+                items.RemoveRange(maxItems, items.Count - maxItems);
 
             return items;
         }
@@ -7948,7 +7954,7 @@ namespace Core.DirFiles
             if (width <= 0)
                 return string.Empty;
 
-            var tokens = Tokenize(line, lineIndex);
+            var tokens = GetHighlightTokens(line, lineIndex);
             var sb = new StringBuilder(width + 128);
             int end = start + width;
             int visible = 0;
@@ -8048,31 +8054,27 @@ namespace Core.DirFiles
             if (targetCount <= 0)
                 return;
 
-            if (_csharpBlockCommentCacheDirty || _csharpBlockCommentLineStarts.Length > _lines.Count)
+            if (_csharpBlockCommentCacheDirty || _csharpBlockCommentLineStarts.Count > _lines.Count)
             {
-                _csharpBlockCommentLineStarts = Array.Empty<bool>();
+                _csharpBlockCommentLineStarts.Clear();
                 _csharpBlockCommentStateAfterCachedLines = false;
                 _csharpBlockCommentCacheDirty = false;
             }
 
-            if (_csharpBlockCommentLineStarts.Length >= targetCount)
+            if (_csharpBlockCommentLineStarts.Count >= targetCount)
             {
                 return;
             }
 
-            int start = _csharpBlockCommentLineStarts.Length;
-            var lineStarts = new bool[targetCount];
-            if (start > 0)
-                Array.Copy(_csharpBlockCommentLineStarts, lineStarts, start);
+            int start = _csharpBlockCommentLineStarts.Count;
 
             bool inBlockComment = _csharpBlockCommentStateAfterCachedLines;
             for (int i = start; i < targetCount; i++)
             {
-                lineStarts[i] = inBlockComment;
+                _csharpBlockCommentLineStarts.Add(inBlockComment);
                 inBlockComment = ScanCSharpBlockCommentState(_lines[i], inBlockComment);
             }
 
-            _csharpBlockCommentLineStarts = lineStarts;
             _csharpBlockCommentStateAfterCachedLines = inBlockComment;
         }
 
@@ -8136,31 +8138,27 @@ namespace Core.DirFiles
             if (targetCount <= 0)
                 return;
 
-            if (_rustBlockCommentCacheDirty || _rustBlockCommentDepthLineStarts.Length > _lines.Count)
+            if (_rustBlockCommentCacheDirty || _rustBlockCommentDepthLineStarts.Count > _lines.Count)
             {
-                _rustBlockCommentDepthLineStarts = Array.Empty<int>();
+                _rustBlockCommentDepthLineStarts.Clear();
                 _rustBlockCommentDepthAfterCachedLines = 0;
                 _rustBlockCommentCacheDirty = false;
             }
 
-            if (_rustBlockCommentDepthLineStarts.Length >= targetCount)
+            if (_rustBlockCommentDepthLineStarts.Count >= targetCount)
             {
                 return;
             }
 
-            int start = _rustBlockCommentDepthLineStarts.Length;
-            var lineStarts = new int[targetCount];
-            if (start > 0)
-                Array.Copy(_rustBlockCommentDepthLineStarts, lineStarts, start);
+            int start = _rustBlockCommentDepthLineStarts.Count;
 
             int blockCommentDepth = _rustBlockCommentDepthAfterCachedLines;
             for (int i = start; i < targetCount; i++)
             {
-                lineStarts[i] = blockCommentDepth;
+                _rustBlockCommentDepthLineStarts.Add(blockCommentDepth);
                 blockCommentDepth = ScanRustBlockCommentDepth(_lines[i], blockCommentDepth);
             }
 
-            _rustBlockCommentDepthLineStarts = lineStarts;
             _rustBlockCommentDepthAfterCachedLines = blockCommentDepth;
         }
 
@@ -8233,31 +8231,27 @@ namespace Core.DirFiles
             if (targetCount <= 0)
                 return;
 
-            if (_javaScriptBlockCommentCacheDirty || _javaScriptBlockCommentLineStarts.Length > _lines.Count)
+            if (_javaScriptBlockCommentCacheDirty || _javaScriptBlockCommentLineStarts.Count > _lines.Count)
             {
-                _javaScriptBlockCommentLineStarts = Array.Empty<bool>();
+                _javaScriptBlockCommentLineStarts.Clear();
                 _javaScriptBlockCommentStateAfterCachedLines = false;
                 _javaScriptBlockCommentCacheDirty = false;
             }
 
-            if (_javaScriptBlockCommentLineStarts.Length >= targetCount)
+            if (_javaScriptBlockCommentLineStarts.Count >= targetCount)
             {
                 return;
             }
 
-            int start = _javaScriptBlockCommentLineStarts.Length;
-            var lineStarts = new bool[targetCount];
-            if (start > 0)
-                Array.Copy(_javaScriptBlockCommentLineStarts, lineStarts, start);
+            int start = _javaScriptBlockCommentLineStarts.Count;
 
             bool inBlockComment = _javaScriptBlockCommentStateAfterCachedLines;
             for (int i = start; i < targetCount; i++)
             {
-                lineStarts[i] = inBlockComment;
+                _javaScriptBlockCommentLineStarts.Add(inBlockComment);
                 inBlockComment = ScanJavaScriptBlockCommentState(_lines[i], inBlockComment);
             }
 
-            _javaScriptBlockCommentLineStarts = lineStarts;
             _javaScriptBlockCommentStateAfterCachedLines = inBlockComment;
         }
 
@@ -8321,31 +8315,27 @@ namespace Core.DirFiles
             if (targetCount <= 0)
                 return;
 
-            if (_pythonMultilineStringCacheDirty || _pythonMultilineStringQuoteLineStarts.Length > _lines.Count)
+            if (_pythonMultilineStringCacheDirty || _pythonMultilineStringQuoteLineStarts.Count > _lines.Count)
             {
-                _pythonMultilineStringQuoteLineStarts = Array.Empty<int>();
+                _pythonMultilineStringQuoteLineStarts.Clear();
                 _pythonMultilineStringQuoteAfterCachedLines = 0;
                 _pythonMultilineStringCacheDirty = false;
             }
 
-            if (_pythonMultilineStringQuoteLineStarts.Length >= targetCount)
+            if (_pythonMultilineStringQuoteLineStarts.Count >= targetCount)
             {
                 return;
             }
 
-            int start = _pythonMultilineStringQuoteLineStarts.Length;
-            var lineStarts = new int[targetCount];
-            if (start > 0)
-                Array.Copy(_pythonMultilineStringQuoteLineStarts, lineStarts, start);
+            int start = _pythonMultilineStringQuoteLineStarts.Count;
 
             int quote = _pythonMultilineStringQuoteAfterCachedLines;
             for (int i = start; i < targetCount; i++)
             {
-                lineStarts[i] = quote;
+                _pythonMultilineStringQuoteLineStarts.Add(quote);
                 quote = ScanPythonMultilineStringQuote(_lines[i], quote);
             }
 
-            _pythonMultilineStringQuoteLineStarts = lineStarts;
             _pythonMultilineStringQuoteAfterCachedLines = quote;
         }
 

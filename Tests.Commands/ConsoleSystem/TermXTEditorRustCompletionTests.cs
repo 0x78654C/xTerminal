@@ -6,6 +6,43 @@ namespace Tests.Commands.ConsoleSystem;
 
 public partial class TermXTEditorSyntaxTests
 {
+    private const string RustVaultCompletionExample = """
+        use std::io::stdin;
+        fn main() {
+            let mut vault_name = String::new();
+            let mut master_password1 = String::new();
+            let mut master_password2 = String::new();
+            let mut tries:i32 =0;
+            println!("{}", "Enter vault name:");
+            let _=stdin().read_line(&mut vault_name);
+            let len = vault_name.len();
+            vault_name$$
+        }
+        """;
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("tr")]
+    [InlineData("trunc")]
+    public void RustCompletion_VaultExampleSuggestsTruncateWithoutAnalyzer(string prefix)
+    {
+        var editor = RustEditorAtMarker(RustVaultCompletionExample.Replace("vault_name$$", "vault_name." + prefix + "$$(len-1);"));
+        InvokePrivate(editor, "RefreshCompletionAfterEdit");
+        var items = ActiveCSharpCompletions(editor);
+        items.Should().Contain(item => item.Label == "truncate" && item.Kind == "method");
+        SetPrivateField(editor, "_completionSelectedIndex", items.FindIndex(item => item.Label == "truncate"));
+        InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('\t', ConsoleKey.Tab, false, false, false));
+        Lines(editor).Should().Contain("    vault_name.truncate(len-1);");
+    }
+
+    [Fact]
+    public void RustCompletion_VectorAlsoSuggestsTruncate()
+    {
+        var editor = RustEditorAtMarker("let mut values = vec![1, 2, 3];\nvalues.tr$$");
+        InvokePrivate(editor, "RefreshCompletionAfterEdit");
+        ActiveCSharpCompletions(editor).Should().Contain(item => item.Label == "truncate");
+    }
+
     [Theory]
     [InlineData("ma$$", "match", "keyword")]
     [InlineData("pri$$", "println!", "macro")]

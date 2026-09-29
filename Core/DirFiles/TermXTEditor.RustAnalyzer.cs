@@ -90,7 +90,9 @@ namespace Core.DirFiles
             }
             if (result.Items == null) return false;
             string prefix = CurrentLine().Substring(result.StartColumn, result.Column - result.StartColumn);
-            List<CompletionItem> items = FilterCompletionItems(result.Items, prefix);
+            // Rust types can expose hundreds of methods. The popup already scrolls;
+            // keep every match so lower-ranked methods remain reachable after '.'.
+            List<CompletionItem> items = FilterCompletionItems(result.Items, prefix, maxItems: int.MaxValue);
             if (items.Count == 0)
             {
                 if (result.Notify || result.Manual) BottomStatus(string.IsNullOrEmpty(result.ProjectStatus)

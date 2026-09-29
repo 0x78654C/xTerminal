@@ -10,6 +10,55 @@ namespace Tests.Commands.ConsoleSystem;
 public partial class TermXTEditorSyntaxTests
 {
     [Fact]
+    public void RustCargoCompletion_AllServerMethodsCanBeSelectedAfterDot()
+    {
+        var editor = RustEditorAtMarker("vault_name.$$(len-1);");
+        var names = Enumerable.Range(0, 100).Select(index => "method" + index).Append("truncate");
+        string json = JsonSerializer.Serialize(names.Select((name, index) => new
+        {
+            label = name, kind = 2, sortText = index.ToString("D3"),
+            textEdit = new { newText = name, range = new { start = new { line = 0, character = 11 }, end = new { line = 0, character = 11 } } }
+        }));
+        InstallRustProjectResult(editor, json, 11);
+        InvokePrivate<bool>(editor, "CheckRustCompletionOnIdle").Should().BeTrue();
+        ActiveCSharpCompletions(editor).Should().HaveCount(101).And.Contain(item => item.Label == "truncate");
+        InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('\0', ConsoleKey.End, false, false, false));
+        var frame = GetPrivateField<System.Text.StringBuilder>(editor, "_frame");
+        frame.Clear();
+        InvokePrivate(editor, "RenderCompletionPopup", 2, 5, 20, 100, 105);
+        frame.ToString().Should().Contain("truncate");
+        InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('\t', ConsoleKey.Tab, false, false, false));
+        Lines(editor)[0].Should().Be("vault_name.truncate(len-1);");
+    }
+
+    [RustAnalyzerIntegrationFact]
+    public async Task RustCompletion_VaultExampleSuggestsTruncateAfterDotAndPrefix()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "xte-rust-vault-" + Guid.NewGuid());
+        Directory.CreateDirectory(root);
+        string path = Path.Combine(root, "main.rs");
+        File.WriteAllText(path, "fn main() {}\n");
+        var editor = new TermXTEditor(path);
+        try
+        {
+            SetRustProjectSource(editor, RustVaultCompletionExample);
+            InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('.', ConsoleKey.OemPeriod, false, false, false));
+            await AssertRustSemanticSuggestion(editor, "truncate");
+            foreach (char c in "trunc")
+                InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo(c, ConsoleKey.NoName, false, false, false));
+            await AssertRustSemanticSuggestion(editor, "truncate");
+            InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('\t', ConsoleKey.Tab, false, false, false));
+            Lines(editor).Should().Contain("    vault_name.truncate");
+            File.ReadAllText(path).Should().Be("fn main() {}\n");
+        }
+        finally
+        {
+            InvokePrivate(editor, "StopRustAnalyzer");
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void RustCargoCompletion_UsesFilterTextAndServerReplacementRange()
     {
         var editor = RustEditorAtMarker("value.sp$$elling()");
