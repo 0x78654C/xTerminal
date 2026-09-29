@@ -255,14 +255,26 @@ Example:
                   hash -sha512 <file_path> : display the sha512 hash for the file.
     wtop      -- Displays a list of running processes in a terminal UI. Use -h for additional help.
                  -h: Display this help message.
+                 -tree: Open in process tree view.
                  Inside the wtop command:
-                    q   : Quit the wtop interface.
+                    q / Esc / Ctrl+C : Quit the wtop interface.
                     ↑/↓ : To navigate through the process list.
+                    PageUp/PageDown, Home/End : Move by a page or jump to the first/last process.
                     k   : Kill the selected process.
-                    /   : Search for a process by name.
+                    /   : Search for a process by name or exact PID.
+                    F3  : Jump to the next search match. Empty Enter repeats the previous search.
+                    R   : Refresh process data immediately.
+                    T / F5 : Toggle flat list and process tree view.
+                    ←/→ : In tree view, collapse/expand or move to the parent/first child.
+                    Space : Toggle the selected tree branch.
                     C   : Sort processes by CPU usage.
                     M   : Sort processes by memory usage.
                     N   : Sort processes by name.
+                 Tree view sorts siblings together; search reveals matches in collapsed branches.
+                 K kills only the selected process, including in tree view.
+                 System and service accounts are also shown in normal-user mode.
+                 USER ending in * is a service's configured logon account when its process owner cannot be read.
+                 Some protected owners still require administrator privileges; unavailable owners show —.
     ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
     env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
                    env                                     : List all variables across Process, User and System sections.
@@ -485,7 +497,7 @@ Example:
                      -gf : Get uploaded file information. waifu -gf <file_token>
                      -lr : List wifuvault restrictions types.
                  Example: waifu -u <file_path> -p <password> -b <bucket_token> -o -e 1h -h
-    fxp       -- Opens built in console file explorer.
+    fxp       -- Opens built in console file explorer; accepts an optional folder. Use fxp --help for controls.
     snap      -- Directory snapshot and diff. Use -h for additional help.
                    snap save [name]  : Snapshot the current directory (default name: 'default').
                    snap diff [name]  : Compare the current state against a saved snapshot.
@@ -497,6 +509,7 @@ Example:
 
     ---------------------- Networking ----------------------
     ifconfig  -- Display onboard Network Interface Cards configuration (Ethernet and Wireless)
+                    -i : Display network interfaces names, Type, IP range and status.
     ispeed    -- Checks the internet speed with Google.
     icheck    -- Checks if a Domain or IP address is online.
     extip     -- Displays the current external IP address.
@@ -610,6 +623,12 @@ Example:
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
 	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
+	                In Rust buffers (.rs or -syntax rust), suggestions open after two characters, '::', or '.'.
+	                Rust suggests keywords, macros, names from the current file, local fields/methods, and common standard-library paths/members without installing a Rust toolchain.
+	                With rust-analyzer, dot completion resolves variables, fields, function results, indexed values, and method chains in Cargo projects and standalone .rs files. Save a new standalone file once to enable analysis.
+	                Cargo completion includes dependency paths, imported/re-exported types, aliases, fields, and trait methods using the unsaved buffer. Declare dependencies in Cargo.toml.
+	                Setup: install Rust and run rustup component add rust-analyzer rust-src. xte discovers tools on PATH, rustup installations, and the VS Code Rust Analyzer extension. XTE_RUST_ANALYZER can select a server executable.
+	                Project loading runs in the background. Built-in suggestions remain available while analysis loads; the status bar reports loading or setup failures when dot completion has no immediate suggestions.
 	                Ctrl+Space opens suggestions; arrows select, Enter/Tab accepts, and Esc closes the popup.
 	                In C# buffers, use :nuget <package> to add the latest stable package, or :nuget list packages, :nuget add <package> [version], :nuget remove <package>, and :nuget restore to manage package usage.
 	                Ctrl+A selects the entire document.

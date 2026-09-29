@@ -18,7 +18,15 @@ namespace Core.SystemTools
         /// <param name="replace"></param>
         /// <param name="act"></param>
         /// <returns></returns>
-        public static string KeyConvertor(string keycode, string startWith, int len, string replace, Action act = null) { if (keycode.StartsWith(startWith) && keycode.Length == len) { act?.Invoke(); return keycode.Replace(startWith, replace); } return string.Empty; }
+        public static string KeyConvertor(string keycode, string startWith, int len, string replace, Action act = null)
+        {
+            if (keycode.StartsWith(startWith) && keycode.Length == len)
+            {
+                act?.Invoke();
+                return keycode.Replace(startWith, replace);
+            }
+            return string.Empty;
+        }
 
 
         /// <summary>
@@ -26,9 +34,9 @@ namespace Core.SystemTools
         /// </summary>
         /// <param name="startChar">Start letters.</param>
         /// <param name="currentDirectory">Current directory path.</param>
-        public static void FileDirCompletion(string startChar, string currentDirectory , GlobalVariables.TypeSuggestions typeSuggestions, ref string addedCompletion)
+        public static void FileDirCompletion(string startChar, string currentDirectory, GlobalVariables.TypeSuggestions typeSuggestions, ref string addedCompletion)
         {
-            switch(typeSuggestions)
+            switch (typeSuggestions)
             {
                 case GlobalVariables.TypeSuggestions.File:
                     FileCompletion(startChar, currentDirectory, ref addedCompletion);
@@ -129,11 +137,11 @@ namespace Core.SystemTools
                 var splitStart = startChar.Split('\\').ToList();
                 var endChars = splitStart[splitStart.Count - 1];
                 splitStart.RemoveAt(splitStart.Count - 1);
-                continuePath  = string.Join("\\", splitStart);
-                currentDirectory = currentDirectory+continuePath+"\\";
+                continuePath = string.Join("\\", splitStart);
+                currentDirectory = currentDirectory + continuePath + "\\";
                 startChar = endChars;
             }
-            
+
             var directories = Directory.GetDirectories(currentDirectory);
             int tabs = 5;
             addedCompletion = "";

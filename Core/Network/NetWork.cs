@@ -189,13 +189,15 @@ namespace Core.Network
         /// Output NIC's configuration (Ethernet and Wireless).
         /// </summary>
         /// <returns>string</returns>
-        public static string ShowNicConfiguragion()
+        public static string ShowNicConfiguragion(bool isHWOnly)
         {
             string nicOuptut = string.Empty;
             string ipAddress = string.Empty;
+            string ipAddressClean = string.Empty;
             string ipAddressV6 = string.Empty;
             string gateway = string.Empty;
             string mask = string.Empty;
+            string maskClean = string.Empty;
             string dnsAddr = string.Empty;
             var count = 0;
 
@@ -213,6 +215,8 @@ namespace Core.Network
                     }
                     foreach (UnicastIPAddressInformation unicastIPAddress in networkInterface.GetIPProperties().UnicastAddresses)
                     {
+                        ipAddressClean = unicastIPAddress.Address.ToString();
+                        maskClean = unicastIPAddress.IPv4Mask.ToString();
                         if (unicastIPAddress.Address.ToString().Contains("."))
                             ipAddress += "".PadRight(15, ' ') + unicastIPAddress.Address + "\n";
                         if (unicastIPAddress.Address.ToString().Contains(":"))
@@ -230,15 +234,36 @@ namespace Core.Network
                     }
 
                     var mac = string.Join(":", (from z in networkInterface.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray());
-                    nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
-                    nicOuptut += $"Description:".PadRight(15, ' ') + $"{networkInterface.Description}\n";
-                    nicOuptut += $"IPv4:".PadRight(15, ' ') + $"{ipAddress.Trim()} \n";
-                    nicOuptut += $"IPv6:".PadRight(15, ' ') + $"{ipAddressV6.Trim()} \n";
-                    nicOuptut += $"MASK:".PadRight(15, ' ') + $"{mask.Trim()}\n";
-                    nicOuptut += $"Gateway:".PadRight(15, ' ') + $"{gateway.Trim()}\n";
-                    nicOuptut += $"MAC Address:".PadRight(15, ' ') + $"{mac}\n";
-                    nicOuptut += $"DNS:".PadRight(15, ' ') + $"{dnsAddr.Trim()}\n";
-                    nicOuptut += $"\n-------------------------------------\n\n";
+
+                    //Interface only display
+                    if (isHWOnly) 
+                    {
+                        var range = "";
+                        if (string.IsNullOrEmpty(ipAddressClean) || string.IsNullOrEmpty(maskClean))
+                            range = "0/0";
+                        else
+                        {
+                            var network = GetNetworkAddress(IPAddress.Parse(ipAddressClean), IPAddress.Parse(maskClean));
+                            var prefixLength = GetPrefixLength(IPAddress.Parse(maskClean));
+                            range = $"{network}/{prefixLength}";
+                            ipAddressClean = "";
+                            maskClean = "";
+                        }
+
+                        nicOuptut += $"{networkInterface.Description}  |  {networkInterface.NetworkInterfaceType.ToString()}  |  {range}  |  {networkInterface.OperationalStatus} \n";
+                    }
+                    else
+                    {
+                        nicOuptut += $"\n-------------- {networkInterface.Name} --------------\n\n";
+                        nicOuptut += $"Description:".PadRight(15, ' ') + $"{networkInterface.Description}\n";
+                        nicOuptut += $"IPv4:".PadRight(15, ' ') + $"{ipAddress.Trim()} \n";
+                        nicOuptut += $"IPv6:".PadRight(15, ' ') + $"{ipAddressV6.Trim()} \n";
+                        nicOuptut += $"MASK:".PadRight(15, ' ') + $"{mask.Trim()}\n";
+                        nicOuptut += $"Gateway:".PadRight(15, ' ') + $"{gateway.Trim()}\n";
+                        nicOuptut += $"MAC Address:".PadRight(15, ' ') + $"{mac}\n";
+                        nicOuptut += $"DNS:".PadRight(15, ' ') + $"{dnsAddr.Trim()}\n";
+                        nicOuptut += $"\n-------------------------------------\n\n";
+                    }
 
                 }
                 ipAddress = string.Empty;
@@ -358,6 +383,35 @@ namespace Core.Network
                 }).ToList();
         }
 
+        /// <summary>
+        /// Get network address from ip and mask.
+        /// </summary>
+        /// <param name="ip"></param>
+        /// <param name="mask"></param>
+        /// <returns></returns>
+        static IPAddress GetNetworkAddress(IPAddress ip, IPAddress mask)
+        {
+            byte[] ipBytes = ip.GetAddressBytes();
+            byte[] maskBytes = mask.GetAddressBytes();
+
+            byte[] networkBytes = new byte[ipBytes.Length];
+
+            for (int i = 0; i < ipBytes.Length; i++)
+                networkBytes[i] = (byte)(ipBytes[i] & maskBytes[i]);
+
+            return new IPAddress(networkBytes);
+        }
+
+        /// <summary>
+        /// Prefix length of address.
+        /// </summary>
+        /// <param name="mask"></param>
+        /// <returns></returns>
+        static int GetPrefixLength(IPAddress mask)
+        {
+            return mask.GetAddressBytes()
+                .Sum(b => Convert.ToString(b, 2).Count(c => c == '1'));
+        }
         public class IPAndMac
         {
             public string IP { get; set; }

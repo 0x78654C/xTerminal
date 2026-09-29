@@ -21,13 +21,8 @@ namespace Core.Commands
             {
                 int commandLenght = command.Length + 1;
                 if (consoleInput == command)
-                {
-                    GlobalVariables.autoSuggestion = true;
-                    GlobalVariables.commandOut = command;
-                    Console.WriteLine("\r\n For auto suggestion use: command<SPACE KEY>start characters of files/directories");
-                    SendKeys.SendWait("{ENTER}");
-                    SendKeys.SendWait(consoleInput);
-                }
+                    consoleInput = command + " ";
+
                 if (consoleInput.Split(' ')[0] == command && consoleInput.Length > command.Length)
                 {
                     consoleInput = consoleInput.Substring(commandLenght, consoleInput.Length - commandLenght);
