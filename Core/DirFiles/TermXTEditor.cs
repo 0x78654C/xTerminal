@@ -921,6 +921,9 @@ namespace Core.DirFiles
 
         private bool CheckDiagnosticsOnIdle()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+                return CheckRustDiagnosticsOnIdle();
+
             if (TryApplyCSharpDiagnostics())
                 return true;
 
@@ -1466,6 +1469,7 @@ namespace Core.DirFiles
         private void InvalidateDiagnosticsCache(bool delayCSharpSemanticDiagnostics)
         {
             CancelCSharpDiagnostics();
+            InvalidateRustDiagnostics(delayCSharpSemanticDiagnostics);
             if (_syntax == TermXTEditorSyntax.CSharp)
             {
                 _csharpSemanticDiagnosticsPending = true;
@@ -1506,6 +1510,7 @@ namespace Core.DirFiles
         {
             // Publish once per frame so header counts and line markers use the same results.
             TryApplyCSharpDiagnostics();
+            TryApplyRustDiagnostics();
             (int width, int height) = WindowSize();
 
             if (width != _lastWidth || height != _lastHeight)
@@ -2162,6 +2167,13 @@ namespace Core.DirFiles
                 severity = HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, null)
                     ? EditorNotificationSeverity.Error
                     : EditorNotificationSeverity.Warning;
+                return true;
+            }
+
+            if (_syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null)
+            {
+                message = _rustDiagnosticsStatus;
+                diagnosticsList = true;
                 return true;
             }
 
@@ -4932,7 +4944,8 @@ namespace Core.DirFiles
 
             if (diagnosticCount == 0)
             {
-                string message = NoDiagnosticsMessage(severity);
+                string message = _syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null
+                    ? _rustDiagnosticsStatus : NoDiagnosticsMessage(severity);
                 Status(message);
                 BottomStatus(message + " in " + SyntaxDisplayName(_syntax));
                 return;
@@ -4970,7 +4983,8 @@ namespace Core.DirFiles
 
             if (diagnosticCount == 0)
             {
-                string message = NoDiagnosticsMessage(severity);
+                string message = _syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null
+                    ? _rustDiagnosticsStatus : NoDiagnosticsMessage(severity);
                 Status(message);
                 BottomStatus(message + " in " + SyntaxDisplayName(_syntax));
                 return;
@@ -5716,6 +5730,13 @@ namespace Core.DirFiles
                 _externalChangePending = false;
                 _nextExternalChangeCheckUtc = DateTime.UtcNow.AddMilliseconds(ExternalChangeCheckIntervalMs);
                 _insertUndoStarted = false;
+                if (_syntax == TermXTEditorSyntax.Rust)
+                {
+                    CancelRustDiagnostics();
+                    _rustDiagnosticsPending = true;
+                    _rustDiagnosticsSavePending = true;
+                    _rustDiagnosticsReadyUtc = DateTime.MinValue;
+                }
                 Status("Saved current data");
                 return true;
             }
@@ -7378,6 +7399,9 @@ namespace Core.DirFiles
                     " | next " + FormatDiagnosticLocation(_diagnostics[0]);
             }
 
+            if (_syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null)
+                return ModifiedPrefix() + _rustDiagnosticsStatus;
+
             if (_dirty)
                 return "modified";
 
@@ -7417,6 +7441,11 @@ namespace Core.DirFiles
 
         private void EnsureDiagnostics()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+            {
+                TryApplyRustDiagnostics();
+                return;
+            }
             if (_csharpDiagnosticsTask != null)
             {
                 // Explicit diagnostic commands may wait for the current analysis. Rendering
@@ -7443,7 +7472,7 @@ namespace Core.DirFiles
 
         private void EnsureDiagnosticsForRender()
         {
-            if (_syntax == TermXTEditorSyntax.CSharp)
+            if (_syntax == TermXTEditorSyntax.CSharp || _syntax == TermXTEditorSyntax.Rust)
                 return;
 
             if (!_diagnosticsCacheDirty)
@@ -7479,6 +7508,12 @@ namespace Core.DirFiles
 
         private void EnsureFullDiagnostics()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+            {
+                _rustDiagnosticsReadyUtc = DateTime.MinValue;
+                CheckRustDiagnosticsOnIdle();
+                return;
+            }
             if (_syntax == TermXTEditorSyntax.CSharp && _csharpSemanticDiagnosticsPending)
             {
                 _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;

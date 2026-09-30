@@ -253,7 +253,7 @@ public partial class TermXTEditorSyntaxTests
 
     private static TermXTEditor RustEditorAtMarker(string text)
     {
-        var editor = TermXtEditorAtMarker(text);
+        var editor = TermXtEditorAtMarker(text.Replace("\r\n", "\n"));
         SetPrivateField(editor, "_syntax", TermXTEditorSyntax.Rust);
         return editor;
     }

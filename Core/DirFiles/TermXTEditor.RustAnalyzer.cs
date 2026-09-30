@@ -23,34 +23,15 @@ namespace Core.DirFiles
         {
             CancelRustProjectCompletion();
             if (!manual && DateTime.UtcNow < _rustAnalyzerRetryUtc) return false;
-            string root = FindRustCargoRoot(_path);
-            string standalone = null;
-            if (root == null)
-            {
-                // Linked standalone files get the same semantic completion as Cargo files.
-                // A new file is analyzed after its first save; do not write it implicitly.
-                if (!File.Exists(_path)) return false;
-                root = System.IO.Path.GetDirectoryName(_path);
-                standalone = _path;
-            }
             bool notify = manual || (!_completionActive && startColumn == _cursorCol);
-            if (_rustAnalyzer == null)
-            {
-                string executable = FindRustAnalyzerExecutable(root);
-                if (executable == null)
-                {
-                    _rustAnalyzerRetryUtc = DateTime.UtcNow.AddSeconds(30);
-                    if (notify) BottomStatus("Rust completion needs rust-analyzer. Run: rustup component add rust-analyzer rust-src", warning: true);
-                    return false;
-                }
-                _rustAnalyzer = new RustAnalyzerClient(root, executable, standalone);
-            }
+            if (!EnsureRustAnalyzer(notify)) return false;
+            string analysisName = FindRustCargoRoot(_path) == null ? "Rust" : "Cargo";
 
             var snapshot = new RustProjectCompletionResult
             {
                 Path = _path, Line = _cursorLine, Column = _cursorCol,
                 StartColumn = startColumn, Version = _rustDocumentVersion, Manual = manual, Notify = notify,
-                AnalysisName = standalone == null ? "Cargo" : "Rust"
+                AnalysisName = analysisName
             };
             var cancellation = new CancellationTokenSource();
             _rustProjectCompletionCancellation = cancellation;
@@ -60,7 +41,7 @@ namespace Core.DirFiles
                 try
                 {
                     await Task.Delay(manual ? 0 : 180, cancellation.Token).ConfigureAwait(false);
-                    snapshot.Items = await client.CompleteAsync(snapshot.Path, source, snapshot.Line, snapshot.Column,
+                    snapshot.Items = await client.CompleteAsync(snapshot.Path, source, snapshot.Version, snapshot.Line, snapshot.Column,
                         cancellation.Token).ConfigureAwait(false);
                     snapshot.ProjectStatus = client.ProjectStatus;
                 }
@@ -69,6 +50,39 @@ namespace Core.DirFiles
                 return snapshot;
             });
             if (notify) BottomStatus("Loading " + snapshot.AnalysisName + " suggestions...");
+            return true;
+        }
+
+        private bool EnsureRustAnalyzer(bool notify)
+        {
+            if (_rustAnalyzer != null) return true;
+            string root = FindRustCargoRoot(_path);
+            string standalone = null;
+            if (root == null)
+            {
+                // Linked standalone files get the same semantic completion as Cargo files.
+                // A new file is analyzed after its first save; do not write it implicitly.
+                if (!File.Exists(_path))
+                {
+                    _rustDiagnosticsStatus = "Save this Rust file once to enable analysis";
+                    return false;
+                }
+                root = System.IO.Path.GetDirectoryName(_path);
+                standalone = _path;
+            }
+            if (_rustAnalyzer == null)
+            {
+                string executable = FindRustAnalyzerExecutable(root);
+                if (executable == null)
+                {
+                    _rustAnalyzerRetryUtc = DateTime.UtcNow.AddSeconds(30);
+                    _rustDiagnosticsStatus = "Rust analysis needs rust-analyzer. Run: rustup component add rust-analyzer rust-src";
+                    if (notify) BottomStatus(_rustDiagnosticsStatus, warning: true);
+                    return false;
+                }
+                _rustAnalyzer = new RustAnalyzerClient(root, executable, standalone);
+            }
+
             return true;
         }
 
@@ -121,9 +135,11 @@ namespace Core.DirFiles
         private void StopRustAnalyzer()
         {
             CancelRustProjectCompletion();
+            CancelRustDiagnostics();
             _rustAnalyzer?.Dispose();
             _rustAnalyzer = null;
             _rustAnalyzerRetryUtc = DateTime.MinValue;
+            _rustDiagnosticsPending = _syntax == TermXTEditorSyntax.Rust;
         }
 
         private static string FindRustCargoRoot(string path)
@@ -196,7 +212,7 @@ namespace Core.DirFiles
 
         // A single stdio LSP session per editor. All protocol work runs off the input
         // thread; editor snapshots and completion publication stay on the input thread.
-        private sealed class RustAnalyzerClient : IDisposable
+        private sealed partial class RustAnalyzerClient : IDisposable
         {
             private readonly string _root;
             private readonly string _executable;
@@ -265,13 +281,17 @@ namespace Core.DirFiles
                     {
                         general = new { positionEncodings = new[] { "utf-16" } },
                         workspace = new { workspaceFolders = true },
-                        textDocument = new { completion = new { completionItem = new { snippetSupport = false, insertReplaceSupport = true, labelDetailsSupport = true } } },
+                        textDocument = new
+                        {
+                            completion = new { completionItem = new { snippetSupport = false, insertReplaceSupport = true, labelDetailsSupport = true } },
+                            publishDiagnostics = new { versionSupport = true }
+                        },
                         experimental = new { serverStatusNotification = true }
                     },
                     initializationOptions = new
                     {
                         linkedProjects = projects,
-                        checkOnSave = false,
+                        checkOnSave = true,
                         files = new { watcher = "server" },
                         completion = new
                         {
@@ -287,28 +307,18 @@ namespace Core.DirFiles
                 if (initialized.TryGetProperty("capabilities", out JsonElement capabilities) &&
                     capabilities.TryGetProperty("positionEncoding", out JsonElement encoding) && encoding.GetString() != "utf-16")
                     throw new IOException("rust-analyzer must support UTF-16 positions");
+                _supportsDiagnosticRequests = capabilities.ValueKind == JsonValueKind.Object &&
+                    capabilities.TryGetProperty("diagnosticProvider", out JsonElement diagnosticProvider) &&
+                    diagnosticProvider.ValueKind == JsonValueKind.Object;
                 await NotifyAsync("initialized", new { }, _shutdown).ConfigureAwait(false);
             }
 
-            public async Task<List<CompletionItem>> CompleteAsync(string path, string source, int line, int column, CancellationToken cancellation)
+            public async Task<List<CompletionItem>> CompleteAsync(string path, string source, int editorVersion, int line, int column, CancellationToken cancellation)
             {
                 await _completionGate.WaitAsync(cancellation).ConfigureAwait(false);
                 try
                 {
-                    await _initialization.Value.WaitAsync(cancellation).ConfigureAwait(false);
-                    string uri = new Uri(System.IO.Path.GetFullPath(path)).AbsoluteUri;
-                    if (_documentUri != uri)
-                    {
-                        if (_documentUri != null) await NotifyAsync("textDocument/didClose", new { textDocument = new { uri = _documentUri } }, cancellation).ConfigureAwait(false);
-                        await NotifyAsync("textDocument/didOpen", new { textDocument = new { uri, languageId = "rust", version = ++_documentVersion, text = source } }, cancellation).ConfigureAwait(false);
-                        _documentUri = uri;
-                        _documentText = source;
-                    }
-                    else if (_documentText != source)
-                    {
-                        await NotifyAsync("textDocument/didChange", new { textDocument = new { uri, version = ++_documentVersion }, contentChanges = new[] { new { text = source } } }, cancellation).ConfigureAwait(false);
-                        _documentText = source;
-                    }
+                    string uri = await SynchronizeDocumentAsync(path, source, editorVersion, cancellation).ConfigureAwait(false);
                     Task ready;
                     lock (_stateLock) ready = _ready.Task;
                     await ready.WaitAsync(TimeSpan.FromSeconds(90), cancellation).ConfigureAwait(false);
@@ -408,6 +418,8 @@ namespace Core.DirFiles
                         {
                             if (message.TryGetProperty("id", out JsonElement requestId))
                                 await RespondToServerAsync(requestId.Clone(), method.GetString(), message).ConfigureAwait(false);
+                            else if (method.GetString() == "textDocument/publishDiagnostics" && message.TryGetProperty("params", out JsonElement diagnostics))
+                                ReceiveDiagnostics(diagnostics);
                             else if (method.GetString() == "experimental/serverStatus" && message.TryGetProperty("params", out JsonElement status))
                             {
                                 _serverHealth = RustJsonString(status, "health");
