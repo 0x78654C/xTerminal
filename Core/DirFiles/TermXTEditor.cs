@@ -622,7 +622,7 @@ namespace Core.DirFiles
         private int _lastHeight = -1;
         private bool _pendingDelete;
         private string _commandText = string.Empty;
-        private string _searchText = string.Empty;
+        private readonly SearchTextInput _searchInput = new SearchTextInput();
         private string _lastSearch = string.Empty;
         private string _status = "NORMAL";
         private DateTime _statusUntil = DateTime.MinValue;
@@ -1893,7 +1893,8 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Search)
             {
-                _frame.Append(F(CSearch)).Append("/").Append(Clip(_searchText, width - 1)).Append(Reset).Append(ClearEol);
+                _frame.Append(F(CSearch)).Append("/")
+                    .Append(_searchInput.VisibleText(Math.Max(1, width - 1), out _)).Append(Reset).Append(ClearEol);
                 return;
             }
 
@@ -1929,8 +1930,10 @@ namespace Core.DirFiles
             }
             else if (_mode == Mode.Search)
             {
-                y = Math.Max(0, Console.WindowHeight - 1);
-                x = Math.Min(Console.WindowWidth - 1, _searchText.Length + 1);
+                (int width, int height) = WindowSize();
+                y = Math.Max(0, height - 1);
+                _searchInput.VisibleText(Math.Max(1, width - 1), out int searchColumn);
+                x = Math.Min(width - 1, searchColumn + 1);
             }
             else
             {
@@ -1967,6 +1970,18 @@ namespace Core.DirFiles
             if (key.Key == ConsoleKey.F2)
             {
                 OpenMessageDetails();
+                return;
+            }
+
+            // Search keys belong to the prompt. Document shortcuts must not move
+            // or modify the source while the user is editing the search term.
+            if (_mode == Mode.Search)
+            {
+                if (key.Key == ConsoleKey.V && (key.Modifiers & ConsoleModifiers.Control) != 0 &&
+                    (key.Modifiers & ConsoleModifiers.Alt) == 0)
+                    PasteFromClipboard();
+                else
+                    HandleSearchKey(key);
                 return;
             }
 
@@ -2071,9 +2086,6 @@ namespace Core.DirFiles
                     break;
                 case Mode.Command:
                     HandleCommandKey(key);
-                    break;
-                case Mode.Search:
-                    HandleSearchKey(key);
                     break;
                 default:
                     HandleNormalKey(key);
@@ -2434,7 +2446,7 @@ namespace Core.DirFiles
                     break;
                 case '/':
                     _mode = Mode.Search;
-                    _searchText = string.Empty;
+                    _searchInput.Clear();
                     break;
                 case 'n':
                     SearchNext();
@@ -2555,32 +2567,30 @@ namespace Core.DirFiles
 
         private void HandleSearchKey(ConsoleKeyInfo key)
         {
+            if (_searchInput.HandleEditingKey(key)) return;
             switch (key.Key)
             {
                 case ConsoleKey.Escape:
                     _mode = Mode.Normal;
-                    _searchText = string.Empty;
+                    _searchInput.Clear();
                     Status("Search cancelled");
                     break;
                 case ConsoleKey.Enter:
                 {
-                    bool repeatLastSearch = string.IsNullOrWhiteSpace(_searchText);
-                    string queryText = repeatLastSearch ? _lastSearch : _searchText;
+                    bool repeatLastSearch = string.IsNullOrWhiteSpace(_searchInput.Text);
+                    string queryText = repeatLastSearch ? _lastSearch : _searchInput.Text;
                     if (!repeatLastSearch)
-                        _lastSearch = _searchText;
+                        _lastSearch = _searchInput.Text;
 
                     FindNext(queryText, startAfterCursor: repeatLastSearch);
-                    _searchText = string.Empty;
+                    _searchInput.Clear();
                     _mode = Mode.Normal;
                     break;
                 }
-                case ConsoleKey.Backspace:
-                    if (_searchText.Length > 0)
-                        _searchText = _searchText.Substring(0, _searchText.Length - 1);
-                    break;
                 default:
-                    if (TryGetInputText(key, out string searchText))
-                        TryAppendLimitedText(ref _searchText, searchText, MaxSearchTextLength, "Search");
+                    if (((key.Modifiers & ConsoleModifiers.Control) == 0 || (key.Modifiers & ConsoleModifiers.Alt) != 0) &&
+                        TryGetInputText(key, out string searchText))
+                        InsertSearchText(searchText);
                     break;
             }
         }
@@ -6399,7 +6409,7 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Search)
             {
-                TryAppendLimitedText(ref _searchText, ToSingleLine(text), MaxSearchTextLength, "Search");
+                InsertSearchText(ToSingleLine(text));
                 return;
             }
 
@@ -11817,7 +11827,7 @@ namespace Core.DirFiles
 
             private static string ReadSearchTerm(int left, int top, int width)
             {
-                var term = new StringBuilder();
+                var term = new SearchTextInput();
                 int inputWidth = Math.Max(1, width);
 
                 while (true)
@@ -11827,32 +11837,25 @@ namespace Core.DirFiles
                     switch (key.Key)
                     {
                         case ConsoleKey.Enter:
-                            return term.ToString();
+                            return term.Text;
                         case ConsoleKey.Escape:
                             return null;
-                        case ConsoleKey.Backspace:
-                            if (term.Length == 0)
-                                return null;
-
-                            term.Remove(term.Length - 1, 1);
-                            RenderSearchTermInput(term.ToString(), left, top, inputWidth);
-                            break;
                         default:
-                            if (!char.IsControl(key.KeyChar))
+                            if (key.Key == ConsoleKey.Backspace && term.Text.Length == 0) return null;
+                            if (term.HandleEditingKey(key) ||
+                                (!char.IsControl(key.KeyChar) && term.TryInsert(key.KeyChar.ToString(), MaxSearchTextLength)))
                             {
-                                term.Append(key.KeyChar);
-                                RenderSearchTermInput(term.ToString(), left, top, inputWidth);
+                                RenderSearchTermInput(term, left, top, inputWidth);
                             }
                             break;
                     }
                 }
             }
 
-            private static void RenderSearchTermInput(string term, int left, int top, int width)
+            private static void RenderSearchTermInput(SearchTextInput term, int left, int top, int width)
             {
-                string visible = term.Length > width ? term.Substring(term.Length - width) : term;
-                Console.Write(At(left, top) + Clip(visible, width).PadRight(width));
-                int cursorOffset = Math.Min(visible.Length, Math.Max(0, width - 1));
+                string visible = term.VisibleText(width, out int cursorOffset);
+                Console.Write(At(left, top) + visible.PadRight(width));
                 Console.Write(At(left + cursorOffset, top));
             }
 
