@@ -181,6 +181,61 @@ public partial class TermXTEditorSyntaxTests
             SetRustProjectSource(editor, "fn main() {}$$");
             InvokePrivate<bool>(editor, "Save", false).Should().BeTrue();
             await WaitForRustDiagnostics(editor, diagnostics => diagnostics.Count == 0);
+
+            SetRustProjectSource(editor, "fn main() {\n    let unused = 1;$$\n}");
+            InvokePrivate<bool>(editor, "Save", false).Should().BeTrue();
+            await WaitForRustDiagnostics(editor, diagnostics => diagnostics.Any(d => d.Severity == "Warning" && d.Code == "unused_variables"));
+
+            // Cargo may publish nothing when the same warning survives a check.
+            SetRustProjectSource(editor, "fn main() {\n    let unused = 1;$$\n}\n");
+            InvokePrivate<bool>(editor, "Save", false).Should().BeTrue();
+            await WaitForRustDiagnostics(editor, diagnostics => diagnostics.Any(d => d.Severity == "Warning" && d.Code == "unused_variables"));
+
+            SetRustProjectSource(editor, "fn main() {}$$");
+            InvokePrivate<bool>(editor, "Save", false).Should().BeTrue();
+            await WaitForRustDiagnostics(editor, diagnostics => diagnostics.Count == 0);
+        }
+        finally
+        {
+            InvokePrivate(editor, "StopRustAnalyzer");
+            await DeleteRustDiagnosticFixture(root);
+        }
+    }
+
+    [RustAnalyzerIntegrationFact]
+    public Task RustDiagnostics_CommentedBindingIsReportedWithoutSavingInCargo()
+    {
+        return VerifyRustCommentedBinding(cargo: true);
+    }
+
+    [RustAnalyzerIntegrationFact]
+    public Task RustDiagnostics_CommentedBindingIsReportedWithoutSavingStandalone()
+    {
+        return VerifyRustCommentedBinding(cargo: false);
+    }
+
+    private static async Task VerifyRustCommentedBinding(bool cargo)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "xte-rust-diagnostics-" + Guid.NewGuid());
+        string directory = cargo ? Path.Combine(root, "src") : root;
+        Directory.CreateDirectory(directory);
+        if (cargo)
+            File.WriteAllText(Path.Combine(root, "Cargo.toml"), "[package]\nname = \"xte-arg1\"\nversion = \"0.1.0\"\nedition = \"2021\"\n");
+        const string source = "const HELP_MESSAGE: &str = \"help\";\nfn main() {\n    let args: Vec<String> = std::env::args().collect();\n    let arg1 = &args[1];\n    if arg1 == \"-h\" {\n        println!(\"{}\", HELP_MESSAGE);\n    }\n}";
+        string path = Path.Combine(directory, "main.rs");
+        File.WriteAllText(path, source);
+        var editor = new TermXTEditor(path);
+        try
+        {
+            SetRustProjectSource(editor, source.Replace("let arg1", "// let arg1") + "$$");
+            await WaitForRustDiagnostics(editor, diagnostics => diagnostics.Any(d =>
+                d.Severity == "Error" && d.Code == "E0425" && d.LineNumber == 5));
+            File.ReadAllText(path).Should().Be(source, "live semantic diagnostics must not save the buffer");
+            InvokePrivate<string>(editor, "BuildDiagnosticsDetails").Should().Contain("E0425");
+
+            SetRustProjectSource(editor, source + "$$");
+            await WaitForRustDiagnostics(editor, diagnostics => diagnostics.All(d => d.Code != "E0425"));
+            File.ReadAllText(path).Should().Be(source);
         }
         finally
         {

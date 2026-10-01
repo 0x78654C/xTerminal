@@ -140,6 +140,7 @@ namespace Core.DirFiles
             _rustAnalyzer = null;
             _rustAnalyzerRetryUtc = DateTime.MinValue;
             _rustDiagnosticsPending = _syntax == TermXTEditorSyntax.Rust;
+            _rustDiagnosticsSavePending = false;
         }
 
         private static string FindRustCargoRoot(string path)
@@ -221,11 +222,12 @@ namespace Core.DirFiles
             private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
             private readonly CancellationToken _shutdown;
             private readonly SemaphoreSlim _writeGate = new SemaphoreSlim(1, 1);
-            private readonly SemaphoreSlim _completionGate = new SemaphoreSlim(1, 1);
+            private readonly SemaphoreSlim _documentGate = new SemaphoreSlim(1, 1);
             private readonly ConcurrentDictionary<int, TaskCompletionSource<JsonElement>> _requests = new ConcurrentDictionary<int, TaskCompletionSource<JsonElement>>();
             private readonly Lazy<Task> _initialization;
-            private TaskCompletionSource<bool> _ready = NewReadySignal();
+            private readonly TaskCompletionSource<bool> _ready = NewReadySignal();
             private Process _process;
+            private Stream _input;
             private int _nextId;
             private int _documentVersion;
             private string _documentUri;
@@ -269,6 +271,7 @@ namespace Core.DirFiles
                     };
                     ConfigureRustAnalyzerTools(_process.StartInfo, _root);
                     _process.Start();
+                    _input = _process.StandardInput.BaseStream;
                 }
                 _ = ReadMessagesAsync(_process.StandardOutput.BaseStream);
                 _ = DrainErrorsAsync(_process.StandardError);
@@ -280,11 +283,12 @@ namespace Core.DirFiles
                     capabilities = new
                     {
                         general = new { positionEncodings = new[] { "utf-16" } },
-                        workspace = new { workspaceFolders = true },
+                        workspace = new { workspaceFolders = true, diagnostics = new { refreshSupport = true } },
                         textDocument = new
                         {
                             completion = new { completionItem = new { snippetSupport = false, insertReplaceSupport = true, labelDetailsSupport = true } },
-                            publishDiagnostics = new { versionSupport = true }
+                            publishDiagnostics = new { versionSupport = true },
+                            diagnostic = new { dynamicRegistration = false, relatedDocumentSupport = false }
                         },
                         experimental = new { serverStatusNotification = true }
                     },
@@ -292,6 +296,9 @@ namespace Core.DirFiles
                     {
                         linkedProjects = projects,
                         checkOnSave = true,
+                        // Unresolved values (E0425) and type mismatches in unsaved
+                        // buffers are part of rust-analyzer's semantic diagnostics.
+                        diagnostics = new { experimental = new { enable = true } },
                         files = new { watcher = "server" },
                         completion = new
                         {
@@ -315,30 +322,31 @@ namespace Core.DirFiles
 
             public async Task<List<CompletionItem>> CompleteAsync(string path, string source, int editorVersion, int line, int column, CancellationToken cancellation)
             {
-                await _completionGate.WaitAsync(cancellation).ConfigureAwait(false);
-                try
+                string uri = await SynchronizeDocumentAsync(path, source, editorVersion, cancellation).ConfigureAwait(false);
+                for (int attempt = 0; ; attempt++)
                 {
-                    string uri = await SynchronizeDocumentAsync(path, source, editorVersion, cancellation).ConfigureAwait(false);
-                    Task ready;
-                    lock (_stateLock) ready = _ready.Task;
-                    await ready.WaitAsync(TimeSpan.FromSeconds(90), cancellation).ConfigureAwait(false);
-                    for (int attempt = 0; ; attempt++)
+                    cancellation.ThrowIfCancellationRequested();
+                    try
                     {
-                        try
+                        JsonElement result = await RequestAsync("textDocument/completion", new { textDocument = new { uri }, position = new { line, character = column } }, cancellation).ConfigureAwait(false);
+                        List<CompletionItem> items = ParseRustAnalyzerCompletions(result, source.Split('\n')[line], line, column);
+                        // Ask immediately. Only an empty result during initial project
+                        // loading needs a retry after the workspace becomes available.
+                        if (items.Count == 0 && !_ready.Task.IsCompleted && attempt == 0)
                         {
-                            JsonElement result = await RequestAsync("textDocument/completion", new { textDocument = new { uri }, position = new { line, character = column } }, cancellation).ConfigureAwait(false);
-                            List<CompletionItem> items = ParseRustAnalyzerCompletions(result, source.Split('\n')[line], line, column);
-                            if (items.Count == 0 && _serverHealth == "error")
-                                throw new IOException(_projectStatus ?? "rust-analyzer could not load the Cargo project");
-                            return items;
+                            await _ready.Task.WaitAsync(TimeSpan.FromSeconds(90), cancellation).ConfigureAwait(false);
+                            continue;
                         }
-                        catch (RustAnalyzerResponseException ex) when ((ex.Code == -32801 || ex.Code == -32800) && attempt < 2)
-                        {
-                            await Task.Delay(150, cancellation).ConfigureAwait(false);
-                        }
+                        if (items.Count == 0 && _serverHealth == "error")
+                            throw new IOException(_projectStatus ?? "rust-analyzer could not load the Cargo project");
+                        return items;
+                    }
+                    catch (RustAnalyzerResponseException ex) when (ex.Code == -32802 || ex.Code == -32801 || ex.Code == -32800)
+                    {
+                        if (attempt >= 2) return null;
+                        await Task.Delay(150, cancellation).ConfigureAwait(false);
                     }
                 }
-                finally { _completionGate.Release(); }
             }
 
             private object[] WorkspaceFolders()
@@ -379,7 +387,7 @@ namespace Core.DirFiles
                 try
                 {
                     // Finish a frame even if a keystroke cancels the request mid-write.
-                    Stream stream = _process.StandardInput.BaseStream;
+                    Stream stream = _input;
                     await stream.WriteAsync(header, _shutdown).ConfigureAwait(false);
                     await stream.WriteAsync(payload, _shutdown).ConfigureAwait(false);
                     await stream.FlushAsync(_shutdown).ConfigureAwait(false);
@@ -426,8 +434,11 @@ namespace Core.DirFiles
                                 _projectStatus = RustJsonString(status, "message");
                                 lock (_stateLock)
                                 {
-                                    if (status.TryGetProperty("quiescent", out JsonElement quiet) && quiet.ValueKind == JsonValueKind.True) _ready.TrySetResult(true);
-                                    else if (_ready.Task.IsCompleted) _ready = NewReadySignal();
+                                    if (status.TryGetProperty("quiescent", out JsonElement quiet) && quiet.ValueKind == JsonValueKind.True)
+                                    {
+                                        _ready.TrySetResult(true);
+                                        _diagnosticsRefreshPending = true;
+                                    }
                                 }
                             }
                         }
@@ -458,6 +469,9 @@ namespace Core.DirFiles
                         break;
                     case "client/registerCapability":
                     case "window/workDoneProgress/create": break;
+                    case "workspace/diagnostic/refresh":
+                        lock (_stateLock) _diagnosticsRefreshPending = true;
+                        break;
                     case "workspace/applyEdit": result = new { applied = false, failureReason = "xte applies completion edits only" }; break;
                     default: return SendAsync(new { jsonrpc = "2.0", id, error = new { code = -32601, message = "Method not supported" } }, _shutdown);
                 }

@@ -9,9 +9,10 @@ namespace Core.DirFiles
 {
     public sealed partial class TermXTEditor
     {
-        private const int RustDiagnosticDelayMs = 900;
+        private const int RustDiagnosticDelayMs = 300;
         private bool _rustDiagnosticsPending;
         private bool _rustDiagnosticsSavePending;
+        private bool _rustDiagnosticsTaskIncludesSave;
         private DateTime _rustDiagnosticsReadyUtc;
         private Task<string> _rustDiagnosticsTask;
         private CancellationTokenSource _rustDiagnosticsCancellation;
@@ -21,7 +22,7 @@ namespace Core.DirFiles
         {
             CancelRustDiagnostics();
             _rustDiagnosticsPending = _syntax == TermXTEditorSyntax.Rust;
-            _rustDiagnosticsSavePending = false;
+            if (!_rustDiagnosticsPending) _rustDiagnosticsSavePending = false;
             _rustDiagnosticsReadyUtc = delay ? DateTime.UtcNow.AddMilliseconds(RustDiagnosticDelayMs) : DateTime.MinValue;
             _rustDiagnosticsStatus = _rustDiagnosticsPending ? "Checking Rust code..." : null;
             if (_rustDiagnosticsPending) ClearDiagnostics();
@@ -33,6 +34,9 @@ namespace Core.DirFiles
             var cancellation = _rustDiagnosticsCancellation;
             _rustDiagnosticsTask = null;
             _rustDiagnosticsCancellation = null;
+            if (_rustDiagnosticsTaskIncludesSave && task != null && !task.IsCompleted)
+                _rustDiagnosticsSavePending = true;
+            _rustDiagnosticsTaskIncludesSave = false;
             if (cancellation == null) return;
             cancellation.Cancel();
             _ = task.ContinueWith(_ => cancellation.Dispose(), CancellationToken.None,
@@ -43,11 +47,14 @@ namespace Core.DirFiles
         {
             if (_syntax != TermXTEditorSyntax.Rust) return false;
             bool changed = TryApplyRustDiagnostics();
+            if (_rustAnalyzer?.TakeDiagnosticsRefresh() == true)
+                _rustDiagnosticsPending = true;
             string failure = _rustAnalyzer?.FailureMessage;
             if (_rustDiagnosticsTask != null && _rustDiagnosticsTask.IsCompleted)
             {
                 failure = _rustDiagnosticsTask.GetAwaiter().GetResult() ?? failure;
                 _rustDiagnosticsTask = null;
+                _rustDiagnosticsTaskIncludesSave = false;
                 _rustDiagnosticsCancellation.Dispose();
                 _rustDiagnosticsCancellation = null;
             }
@@ -81,6 +88,7 @@ namespace Core.DirFiles
             _rustDiagnosticsCancellation = cancellation;
             _rustDiagnosticsPending = false;
             _rustDiagnosticsSavePending = false;
+            _rustDiagnosticsTaskIncludesSave = saved;
             _rustDiagnosticsTask = Task.Run(async () =>
             {
                 try
@@ -115,6 +123,7 @@ namespace Core.DirFiles
         {
             if (_messageDetailsActive && _messageDetailsShowsDiagnostics)
             {
+                SetMessageDetailsDiagnostics(resetSelection: false);
                 _messageDetailsText = _diagnostics.Count == 0
                     ? _rustDiagnosticsStatus ?? "No errors or warnings" : BuildDiagnosticsDetails();
                 _messageDetailsSeverity = HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, null)
@@ -180,8 +189,20 @@ namespace Core.DirFiles
             private RustDiagnosticResult _latestDiagnostics;
             private bool _supportsDiagnosticRequests;
             private List<EditorDiagnostic> _compilerDiagnostics = new List<EditorDiagnostic>();
+            private List<EditorDiagnostic> _nativeDiagnostics = new List<EditorDiagnostic>();
+            private bool _diagnosticsRefreshPending;
 
             public string FailureMessage { get { return _failure?.Message; } }
+
+            public bool TakeDiagnosticsRefresh()
+            {
+                lock (_stateLock)
+                {
+                    bool pending = _diagnosticsRefreshPending;
+                    _diagnosticsRefreshPending = false;
+                    return pending;
+                }
+            }
 
             public RustDiagnosticResult TakeDiagnostics()
             {
@@ -207,8 +228,24 @@ namespace Core.DirFiles
                     // Each notification replaces the complete set, including an empty
                     // set when an error has been fixed. Never retain a JsonDocument view.
                     _compilerDiagnostics = ParseRustAnalyzerDiagnostics(items, _documentText, compilerOnly: true);
-                    PublishDiagnosticsSnapshot(ParseRustAnalyzerDiagnostics(items, _documentText, compilerOnly: false));
+                    if (_supportsDiagnosticRequests)
+                        PublishCombinedDiagnostics();
+                    else
+                        PublishDiagnosticsSnapshot(ParseRustAnalyzerDiagnostics(items, _documentText, compilerOnly: false));
                 }
+            }
+
+            private void PublishCombinedDiagnostics()
+            {
+                var diagnostics = new List<EditorDiagnostic>(_nativeDiagnostics);
+                var seen = new HashSet<(int, int, int, string, string, EditorDiagnosticSeverity)>();
+                foreach (EditorDiagnostic diagnostic in diagnostics)
+                    seen.Add((diagnostic.LineIndex, diagnostic.StartColumn, diagnostic.EndColumn,
+                        diagnostic.Code, diagnostic.Description, diagnostic.Severity));
+                foreach (EditorDiagnostic diagnostic in _compilerDiagnostics)
+                    if (seen.Add((diagnostic.LineIndex, diagnostic.StartColumn, diagnostic.EndColumn,
+                        diagnostic.Code, diagnostic.Description, diagnostic.Severity))) diagnostics.Add(diagnostic);
+                PublishDiagnosticsSnapshot(diagnostics);
             }
 
             private void PublishDiagnosticsSnapshot(List<EditorDiagnostic> diagnostics)
@@ -222,49 +259,58 @@ namespace Core.DirFiles
 
             public async Task UpdateDiagnosticsAsync(string path, string source, int version, bool saved, CancellationToken cancellation)
             {
-                await _completionGate.WaitAsync(cancellation).ConfigureAwait(false);
-                try
+                string uri = await SynchronizeDocumentAsync(path, source, version, cancellation).ConfigureAwait(false);
+                if (saved) await NotifyAsync("textDocument/didSave", new { textDocument = new { uri } }, _shutdown).ConfigureAwait(false);
+                if (!_supportsDiagnosticRequests) return;
+                // Diagnostic requests must not hold the document gate while the
+                // server works: completion and newer edits can proceed independently.
+                for (int attempt = 0; ; attempt++)
                 {
-                    string uri = await SynchronizeDocumentAsync(path, source, version, cancellation).ConfigureAwait(false);
-                    if (saved) await NotifyAsync("textDocument/didSave", new { textDocument = new { uri } }, _shutdown).ConfigureAwait(false);
-                    if (!_supportsDiagnosticRequests) return;
-                    Task ready;
-                    lock (_stateLock) ready = _ready.Task;
-                    await ready.WaitAsync(TimeSpan.FromSeconds(90), cancellation).ConfigureAwait(false);
-                    // Push notifications omit unchanged diagnostic sets. Request a
-                    // fresh native result after each edit, even if only whitespace
-                    // changed, and retain the compiler diagnostics delivered by push.
-                    for (int attempt = 0; ; attempt++)
+                    cancellation.ThrowIfCancellationRequested();
+                    try
                     {
-                        try
+                        JsonElement report = await RequestAsync("textDocument/diagnostic",
+                            new { textDocument = new { uri }, identifier = "rust-analyzer" }, cancellation).ConfigureAwait(false);
+                        if (report.TryGetProperty("items", out JsonElement items))
                         {
-                            JsonElement report = await RequestAsync("textDocument/diagnostic",
-                                new { textDocument = new { uri }, identifier = "rust-analyzer" }, cancellation).ConfigureAwait(false);
-                            if (report.TryGetProperty("items", out JsonElement items))
+                            var diagnostics = ParseRustAnalyzerDiagnostics(items, source, compilerOnly: false);
+                            lock (_stateLock)
                             {
-                                var diagnostics = ParseRustAnalyzerDiagnostics(items, source, compilerOnly: false);
-                                lock (_stateLock)
-                                {
-                                    diagnostics.AddRange(_compilerDiagnostics);
-                                    PublishDiagnosticsSnapshot(diagnostics);
-                                }
+                                if (cancellation.IsCancellationRequested || _documentUri != uri ||
+                                    _documentText != source || _documentEditorVersion != version) return;
+                                _nativeDiagnostics = diagnostics;
+                                PublishCombinedDiagnostics();
                             }
+                        }
+                        return;
+                    }
+                    catch (RustAnalyzerResponseException ex) when (ex.Code == -32802 || ex.Code == -32801 || ex.Code == -32800)
+                    {
+                        // ServerCancelled (-32802) is normal while Rust loads or
+                        // edits invalidate analysis. Retry without restarting it.
+                        if (attempt >= 2)
+                        {
+                            lock (_stateLock) _diagnosticsRefreshPending = true;
                             return;
                         }
-                        catch (RustAnalyzerResponseException ex) when ((ex.Code == -32801 || ex.Code == -32800) && attempt < 2)
-                        {
-                            await Task.Delay(150, cancellation).ConfigureAwait(false);
-                        }
+                        await Task.Delay(150, cancellation).ConfigureAwait(false);
                     }
                 }
-                finally { _completionGate.Release(); }
             }
 
-            // Called only under _completionGate, so completion cannot overwrite a
-            // newer diagnostic snapshot with an older didChange notification.
             private async Task<string> SynchronizeDocumentAsync(string path, string source, int editorVersion, CancellationToken cancellation)
             {
                 await _initialization.Value.WaitAsync(cancellation).ConfigureAwait(false);
+                await _documentGate.WaitAsync(cancellation).ConfigureAwait(false);
+                try
+                {
+                    return await SendDocumentChangesAsync(path, source, editorVersion, cancellation).ConfigureAwait(false);
+                }
+                finally { _documentGate.Release(); }
+            }
+
+            private async Task<string> SendDocumentChangesAsync(string path, string source, int editorVersion, CancellationToken cancellation)
+            {
                 cancellation.ThrowIfCancellationRequested();
                 if (_failure != null) throw new IOException("rust-analyzer connection closed", _failure);
                 string uri = new Uri(System.IO.Path.GetFullPath(path)).AbsoluteUri;
@@ -274,12 +320,18 @@ namespace Core.DirFiles
                 lock (_stateLock)
                 {
                     previousUri = _documentUri;
+                    if (previousUri == uri && editorVersion < _documentEditorVersion)
+                        throw new OperationCanceledException("A newer Rust document is already synchronized", cancellation);
                     changed = previousUri != uri || _documentText != source || _documentEditorVersion != editorVersion;
                     if (changed)
                     {
                         _documentVersion++;
                         _latestDiagnostics = null;
-                        _compilerDiagnostics.Clear();
+                        // Compiler diagnostics describe the saved project. The server
+                        // may omit an unchanged set after the next check, so retain it
+                        // until a replacement push arrives (including an empty set).
+                        if (previousUri != uri) _compilerDiagnostics.Clear();
+                        _nativeDiagnostics.Clear();
                     }
                     version = _documentVersion;
                     _documentUri = uri;

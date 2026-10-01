@@ -619,7 +619,7 @@ Example:
 	                xte -new <script.xt>        : Create a template and open it.
 	                Detects disk-side changes when returning to the editor; use :e! to reload or :w! to overwrite.
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
-	                Shows editor diagnostics with red error and yellow warning notifications; press F2 for the complete scrollable list.
+	                Shows editor diagnostics with red error and yellow warning notifications; press F2 for the complete list. Use Up/Down to select, PgUp/PgDn or the mouse wheel to scroll, and Enter to jump to the selected line. F2/Esc closes the list.
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
 	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
@@ -628,7 +628,7 @@ Example:
 	                With rust-analyzer, dot completion resolves variables, fields, function results, indexed values, and method chains in Cargo projects and standalone .rs files. Save a new standalone file once to enable analysis.
 	                Cargo completion includes dependency paths, imported/re-exported types, aliases, fields, and trait methods using the unsaved buffer. Declare dependencies in Cargo.toml.
 	                Setup: install Rust and run rustup component add rust-analyzer rust-src. xte discovers tools on PATH, rustup installations, and the VS Code Rust Analyzer extension. XTE_RUST_ANALYZER can select a server executable.
-	                Rust errors and warnings use the same line markers, header counts, F2 list, and :next-error / :next-warning navigation as C#. rust-analyzer checks the unsaved buffer after a short typing pause; Cargo projects also run cargo check on save. Standalone .rs files receive rust-analyzer diagnostics after their first save.
+	                Rust errors and warnings use the same line markers, header counts, F2 list, and :next-error / :next-warning navigation as C#. rust-analyzer checks the unsaved buffer after a short typing pause, including undeclared values (E0425); Cargo projects also run cargo check on save. Live semantic checks enable rust-analyzer's experimental diagnostics. Standalone .rs files receive rust-analyzer diagnostics after their first save.
 	                Project loading runs in the background. Built-in suggestions remain available while analysis loads; the status bar reports loading or setup failures when dot completion has no immediate suggestions.
 	                Ctrl+Space opens suggestions; arrows select, Enter/Tab accepts, and Esc closes the popup.
 	                In C# buffers, use :nuget <package> to add the latest stable package, or :nuget list packages, :nuget add <package> [version], :nuget remove <package>, and :nuget restore to manage package usage.

@@ -1055,6 +1055,7 @@ namespace Core.DirFiles
             {
                 case ConsoleKey.F2:
                 case ConsoleKey.Escape:
+                case ConsoleKey.Enter:
                 case ConsoleKey.UpArrow:
                 case ConsoleKey.DownArrow:
                 case ConsoleKey.PageUp:
@@ -1753,12 +1754,10 @@ namespace Core.DirFiles
             int panelHeight = Math.Max(3, height - 4);
             int contentWidth = MessageDetailsContentWidth(width);
             int contentRows = MessageDetailsContentRows(height);
-            List<string> lines = WrapMessageText(_messageDetailsText, contentWidth);
-            List<int> diagnosticLineColors = _messageDetailsShowsDiagnostics
-                ? DiagnosticDetailsLineColors(lines)
-                : new List<int>();
+            List<string> lines = BuildMessageDetailsRows(contentWidth, out List<int> diagnosticIndexes);
             int maxOffset = Math.Max(0, lines.Count - contentRows);
             _messageDetailsScrollOffset = ClampValue(_messageDetailsScrollOffset, 0, maxOffset);
+            EnsureDiagnosticDetailsSelectionVisible(diagnosticIndexes, contentRows, revealStart: false);
 
             bool error = _messageDetailsSeverity == EditorNotificationSeverity.Error;
             int accent = error ? CError : CWarning;
@@ -1775,18 +1774,22 @@ namespace Core.DirFiles
             {
                 int lineIndex = _messageDetailsScrollOffset + row;
                 string line = lineIndex < lines.Count ? lines[lineIndex] : string.Empty;
-                string content = " " + Clip(line, contentWidth);
-                int foreground = _messageDetailsShowsDiagnostics && lineIndex < diagnosticLineColors.Count
-                    ? diagnosticLineColors[lineIndex]
+                int diagnosticIndex = lineIndex < diagnosticIndexes.Count ? diagnosticIndexes[lineIndex] : -1;
+                bool selected = diagnosticIndex >= 0 && diagnosticIndex == _messageDetailsSelectedIndex;
+                string content = (selected ? "> " : "  ") + Clip(line, contentWidth);
+                int foreground = diagnosticIndex >= 0
+                    ? (_messageDetailsDiagnosticItems[diagnosticIndex].Severity == EditorDiagnosticSeverity.Error ? CError : CWarning)
                     : CNormal;
                 _frame.Append(At(panelLeft, panelTop + 1 + row))
-                    .Append(B(236)).Append(F(foreground))
+                    .Append(B(selected ? CSelectionBg : 236)).Append(F(selected ? CSelectionFg : foreground))
                     .Append(Clip(content, panelWidth).PadRight(panelWidth)).Append(Reset);
             }
 
             int firstVisible = lines.Count == 0 ? 0 : _messageDetailsScrollOffset + 1;
             int lastVisible = Math.Min(lines.Count, _messageDetailsScrollOffset + contentRows);
-            string footer = " ↑↓/PgUp/PgDn scroll | F2/Esc close | " +
+            string footer = (_messageDetailsDiagnosticItems.Count > 0
+                ? " ↑↓ select | PgUp/PgDn scroll | Enter go | F2/Esc close | "
+                : " ↑↓/PgUp/PgDn scroll | F2/Esc close | ") +
                 firstVisible + "-" + lastVisible + "/" + lines.Count;
             _frame.Append(At(panelLeft, panelTop + panelHeight - 1))
                 .Append(B(238)).Append(F(250))
@@ -2093,6 +2096,7 @@ namespace Core.DirFiles
             _messageDetailsSeverity = severity;
             _messageDetailsShowsDiagnostics = diagnosticsList;
             _messageDetailsScrollOffset = 0;
+            SetMessageDetailsDiagnostics(resetSelection: true);
             _messageDetailsActive = true;
             DismissCompletion();
         }
@@ -2103,15 +2107,16 @@ namespace Core.DirFiles
             {
                 case ConsoleKey.F2:
                 case ConsoleKey.Escape:
-                    _messageDetailsActive = false;
-                    _lastWidth = -1;
-                    _lastHeight = -1;
+                    CloseMessageDetails();
+                    return;
+                case ConsoleKey.Enter:
+                    JumpToMessageDiagnostic();
                     return;
                 case ConsoleKey.UpArrow:
-                    ScrollMessageDetails(-1);
+                    if (!SelectMessageDiagnostic(_messageDetailsSelectedIndex - 1)) ScrollMessageDetails(-1);
                     return;
                 case ConsoleKey.DownArrow:
-                    ScrollMessageDetails(1);
+                    if (!SelectMessageDiagnostic(_messageDetailsSelectedIndex + 1)) ScrollMessageDetails(1);
                     return;
                 case ConsoleKey.PageUp:
                     ScrollMessageDetails(-MessageDetailsContentRows(WindowSize().height));
@@ -2121,13 +2126,13 @@ namespace Core.DirFiles
                     return;
                 case ConsoleKey.Home:
                     _messageDetailsScrollOffset = 0;
+                    SelectMessageDiagnostic(0);
                     return;
                 case ConsoleKey.End:
                 {
                     (int width, int height) = WindowSize();
-                    int lineCount = WrapMessageText(
-                        _messageDetailsText,
-                        MessageDetailsContentWidth(width)).Count;
+                    int lineCount = BuildMessageDetailsRows(MessageDetailsContentWidth(width), out _).Count;
+                    _messageDetailsSelectedIndex = _messageDetailsDiagnosticItems.Count - 1;
                     _messageDetailsScrollOffset = Math.Max(
                         0,
                         lineCount - MessageDetailsContentRows(height));
@@ -2139,14 +2144,13 @@ namespace Core.DirFiles
         private void ScrollMessageDetails(int rowDelta)
         {
             (int width, int height) = WindowSize();
-            int lineCount = WrapMessageText(
-                _messageDetailsText,
-                MessageDetailsContentWidth(width)).Count;
+            int lineCount = BuildMessageDetailsRows(MessageDetailsContentWidth(width), out List<int> diagnosticIndexes).Count;
             int maxOffset = Math.Max(0, lineCount - MessageDetailsContentRows(height));
             _messageDetailsScrollOffset = ClampValue(
                 _messageDetailsScrollOffset + rowDelta,
                 0,
                 maxOffset);
+            SelectVisibleMessageDiagnostic(diagnosticIndexes, MessageDetailsContentRows(height));
         }
 
         private bool TryBuildMessageDetails(
@@ -2207,7 +2211,6 @@ namespace Core.DirFiles
         private string BuildDiagnosticsDetails()
         {
             int count = _diagnostics.Count;
-            int ordinalWidth = Math.Max(1, count.ToString(CultureInfo.InvariantCulture).Length);
             var builder = new StringBuilder();
 
             for (int i = 0; i < count; i++)
@@ -2215,15 +2218,7 @@ namespace Core.DirFiles
                 if (i > 0)
                     builder.AppendLine();
 
-                EditorDiagnostic diagnostic = _diagnostics[i];
-                builder.Append('[')
-                    .Append(DiagnosticSeverityName(diagnostic.Severity).ToUpperInvariant())
-                    .Append("] ")
-                    .Append((i + 1).ToString(CultureInfo.InvariantCulture).PadLeft(ordinalWidth))
-                    .Append('/')
-                    .Append(count.ToString(CultureInfo.InvariantCulture))
-                    .Append("  ")
-                    .Append(FormatDiagnosticListLocation(diagnostic));
+                builder.Append(FormatDiagnosticDetailsEntry(_diagnostics[i], i, count));
             }
 
             return builder.ToString();
@@ -4994,16 +4989,19 @@ namespace Core.DirFiles
                 ? FirstDiagnosticIndexAfter(_cursorLine, severity)
                 : LastDiagnosticIndexBefore(_cursorLine, severity);
 
-            EditorDiagnostic diagnostic = _diagnostics[index];
+            MoveCursorToDiagnostic(_diagnostics[index], DiagnosticOrdinal(index, severity), diagnosticCount);
+        }
+
+        private void MoveCursorToDiagnostic(EditorDiagnostic diagnostic, int ordinal, int diagnosticCount)
+        {
             ResetVerticalCursorColumn();
-            _cursorLine = diagnostic.LineIndex;
+            _cursorLine = ClampValue(diagnostic.LineIndex, 0, _lines.Count - 1);
             _cursorCol = Math.Min(CurrentLine().Length, Math.Max(0, diagnostic.StartColumn));
             _pendingDelete = false;
             _insertUndoStarted = false;
             ClearSelection();
             ClampCursor();
 
-            int ordinal = DiagnosticOrdinal(index, severity);
             Status(
                 FormatDiagnosticCounter(diagnostic, ordinal, diagnosticCount),
                 error: diagnostic.Severity == EditorDiagnosticSeverity.Error,
