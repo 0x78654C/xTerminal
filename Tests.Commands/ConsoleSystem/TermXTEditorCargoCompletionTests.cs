@@ -301,6 +301,7 @@ public partial class TermXTEditorSyntaxTests
 
     private static void SetRustProjectSource(TermXTEditor editor, string marked)
     {
+        marked = marked.Replace("\r\n", "\n");
         int position = marked.IndexOf("$$", StringComparison.Ordinal);
         string source = marked.Remove(position, 2);
         Lines(editor).Clear();

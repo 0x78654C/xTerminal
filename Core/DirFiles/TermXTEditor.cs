@@ -622,7 +622,7 @@ namespace Core.DirFiles
         private int _lastHeight = -1;
         private bool _pendingDelete;
         private string _commandText = string.Empty;
-        private string _searchText = string.Empty;
+        private readonly SearchTextInput _searchInput = new SearchTextInput();
         private string _lastSearch = string.Empty;
         private string _status = "NORMAL";
         private DateTime _statusUntil = DateTime.MinValue;
@@ -921,6 +921,9 @@ namespace Core.DirFiles
 
         private bool CheckDiagnosticsOnIdle()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+                return CheckRustDiagnosticsOnIdle();
+
             if (TryApplyCSharpDiagnostics())
                 return true;
 
@@ -1052,6 +1055,7 @@ namespace Core.DirFiles
             {
                 case ConsoleKey.F2:
                 case ConsoleKey.Escape:
+                case ConsoleKey.Enter:
                 case ConsoleKey.UpArrow:
                 case ConsoleKey.DownArrow:
                 case ConsoleKey.PageUp:
@@ -1466,6 +1470,7 @@ namespace Core.DirFiles
         private void InvalidateDiagnosticsCache(bool delayCSharpSemanticDiagnostics)
         {
             CancelCSharpDiagnostics();
+            InvalidateRustDiagnostics(delayCSharpSemanticDiagnostics);
             if (_syntax == TermXTEditorSyntax.CSharp)
             {
                 _csharpSemanticDiagnosticsPending = true;
@@ -1506,6 +1511,7 @@ namespace Core.DirFiles
         {
             // Publish once per frame so header counts and line markers use the same results.
             TryApplyCSharpDiagnostics();
+            TryApplyRustDiagnostics();
             (int width, int height) = WindowSize();
 
             if (width != _lastWidth || height != _lastHeight)
@@ -1748,12 +1754,10 @@ namespace Core.DirFiles
             int panelHeight = Math.Max(3, height - 4);
             int contentWidth = MessageDetailsContentWidth(width);
             int contentRows = MessageDetailsContentRows(height);
-            List<string> lines = WrapMessageText(_messageDetailsText, contentWidth);
-            List<int> diagnosticLineColors = _messageDetailsShowsDiagnostics
-                ? DiagnosticDetailsLineColors(lines)
-                : new List<int>();
+            List<string> lines = BuildMessageDetailsRows(contentWidth, out List<int> diagnosticIndexes);
             int maxOffset = Math.Max(0, lines.Count - contentRows);
             _messageDetailsScrollOffset = ClampValue(_messageDetailsScrollOffset, 0, maxOffset);
+            EnsureDiagnosticDetailsSelectionVisible(diagnosticIndexes, contentRows, revealStart: false);
 
             bool error = _messageDetailsSeverity == EditorNotificationSeverity.Error;
             int accent = error ? CError : CWarning;
@@ -1770,18 +1774,22 @@ namespace Core.DirFiles
             {
                 int lineIndex = _messageDetailsScrollOffset + row;
                 string line = lineIndex < lines.Count ? lines[lineIndex] : string.Empty;
-                string content = " " + Clip(line, contentWidth);
-                int foreground = _messageDetailsShowsDiagnostics && lineIndex < diagnosticLineColors.Count
-                    ? diagnosticLineColors[lineIndex]
+                int diagnosticIndex = lineIndex < diagnosticIndexes.Count ? diagnosticIndexes[lineIndex] : -1;
+                bool selected = diagnosticIndex >= 0 && diagnosticIndex == _messageDetailsSelectedIndex;
+                string content = (selected ? "> " : "  ") + Clip(line, contentWidth);
+                int foreground = diagnosticIndex >= 0
+                    ? (_messageDetailsDiagnosticItems[diagnosticIndex].Severity == EditorDiagnosticSeverity.Error ? CError : CWarning)
                     : CNormal;
                 _frame.Append(At(panelLeft, panelTop + 1 + row))
-                    .Append(B(236)).Append(F(foreground))
+                    .Append(B(selected ? CSelectionBg : 236)).Append(F(selected ? CSelectionFg : foreground))
                     .Append(Clip(content, panelWidth).PadRight(panelWidth)).Append(Reset);
             }
 
             int firstVisible = lines.Count == 0 ? 0 : _messageDetailsScrollOffset + 1;
             int lastVisible = Math.Min(lines.Count, _messageDetailsScrollOffset + contentRows);
-            string footer = " ↑↓/PgUp/PgDn scroll | F2/Esc close | " +
+            string footer = (_messageDetailsDiagnosticItems.Count > 0
+                ? " ↑↓ select | PgUp/PgDn scroll | Enter go | F2/Esc close | "
+                : " ↑↓/PgUp/PgDn scroll | F2/Esc close | ") +
                 firstVisible + "-" + lastVisible + "/" + lines.Count;
             _frame.Append(At(panelLeft, panelTop + panelHeight - 1))
                 .Append(B(238)).Append(F(250))
@@ -1885,7 +1893,8 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Search)
             {
-                _frame.Append(F(CSearch)).Append("/").Append(Clip(_searchText, width - 1)).Append(Reset).Append(ClearEol);
+                _frame.Append(F(CSearch)).Append("/")
+                    .Append(_searchInput.VisibleText(Math.Max(1, width - 1), out _)).Append(Reset).Append(ClearEol);
                 return;
             }
 
@@ -1921,8 +1930,10 @@ namespace Core.DirFiles
             }
             else if (_mode == Mode.Search)
             {
-                y = Math.Max(0, Console.WindowHeight - 1);
-                x = Math.Min(Console.WindowWidth - 1, _searchText.Length + 1);
+                (int width, int height) = WindowSize();
+                y = Math.Max(0, height - 1);
+                _searchInput.VisibleText(Math.Max(1, width - 1), out int searchColumn);
+                x = Math.Min(width - 1, searchColumn + 1);
             }
             else
             {
@@ -1959,6 +1970,18 @@ namespace Core.DirFiles
             if (key.Key == ConsoleKey.F2)
             {
                 OpenMessageDetails();
+                return;
+            }
+
+            // Search keys belong to the prompt. Document shortcuts must not move
+            // or modify the source while the user is editing the search term.
+            if (_mode == Mode.Search)
+            {
+                if (key.Key == ConsoleKey.V && (key.Modifiers & ConsoleModifiers.Control) != 0 &&
+                    (key.Modifiers & ConsoleModifiers.Alt) == 0)
+                    PasteFromClipboard();
+                else
+                    HandleSearchKey(key);
                 return;
             }
 
@@ -2064,9 +2087,6 @@ namespace Core.DirFiles
                 case Mode.Command:
                     HandleCommandKey(key);
                     break;
-                case Mode.Search:
-                    HandleSearchKey(key);
-                    break;
                 default:
                     HandleNormalKey(key);
                     break;
@@ -2088,6 +2108,7 @@ namespace Core.DirFiles
             _messageDetailsSeverity = severity;
             _messageDetailsShowsDiagnostics = diagnosticsList;
             _messageDetailsScrollOffset = 0;
+            SetMessageDetailsDiagnostics(resetSelection: true);
             _messageDetailsActive = true;
             DismissCompletion();
         }
@@ -2098,15 +2119,16 @@ namespace Core.DirFiles
             {
                 case ConsoleKey.F2:
                 case ConsoleKey.Escape:
-                    _messageDetailsActive = false;
-                    _lastWidth = -1;
-                    _lastHeight = -1;
+                    CloseMessageDetails();
+                    return;
+                case ConsoleKey.Enter:
+                    JumpToMessageDiagnostic();
                     return;
                 case ConsoleKey.UpArrow:
-                    ScrollMessageDetails(-1);
+                    if (!SelectMessageDiagnostic(_messageDetailsSelectedIndex - 1)) ScrollMessageDetails(-1);
                     return;
                 case ConsoleKey.DownArrow:
-                    ScrollMessageDetails(1);
+                    if (!SelectMessageDiagnostic(_messageDetailsSelectedIndex + 1)) ScrollMessageDetails(1);
                     return;
                 case ConsoleKey.PageUp:
                     ScrollMessageDetails(-MessageDetailsContentRows(WindowSize().height));
@@ -2116,13 +2138,13 @@ namespace Core.DirFiles
                     return;
                 case ConsoleKey.Home:
                     _messageDetailsScrollOffset = 0;
+                    SelectMessageDiagnostic(0);
                     return;
                 case ConsoleKey.End:
                 {
                     (int width, int height) = WindowSize();
-                    int lineCount = WrapMessageText(
-                        _messageDetailsText,
-                        MessageDetailsContentWidth(width)).Count;
+                    int lineCount = BuildMessageDetailsRows(MessageDetailsContentWidth(width), out _).Count;
+                    _messageDetailsSelectedIndex = _messageDetailsDiagnosticItems.Count - 1;
                     _messageDetailsScrollOffset = Math.Max(
                         0,
                         lineCount - MessageDetailsContentRows(height));
@@ -2134,14 +2156,13 @@ namespace Core.DirFiles
         private void ScrollMessageDetails(int rowDelta)
         {
             (int width, int height) = WindowSize();
-            int lineCount = WrapMessageText(
-                _messageDetailsText,
-                MessageDetailsContentWidth(width)).Count;
+            int lineCount = BuildMessageDetailsRows(MessageDetailsContentWidth(width), out List<int> diagnosticIndexes).Count;
             int maxOffset = Math.Max(0, lineCount - MessageDetailsContentRows(height));
             _messageDetailsScrollOffset = ClampValue(
                 _messageDetailsScrollOffset + rowDelta,
                 0,
                 maxOffset);
+            SelectVisibleMessageDiagnostic(diagnosticIndexes, MessageDetailsContentRows(height));
         }
 
         private bool TryBuildMessageDetails(
@@ -2162,6 +2183,13 @@ namespace Core.DirFiles
                 severity = HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, null)
                     ? EditorNotificationSeverity.Error
                     : EditorNotificationSeverity.Warning;
+                return true;
+            }
+
+            if (_syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null)
+            {
+                message = _rustDiagnosticsStatus;
+                diagnosticsList = true;
                 return true;
             }
 
@@ -2195,7 +2223,6 @@ namespace Core.DirFiles
         private string BuildDiagnosticsDetails()
         {
             int count = _diagnostics.Count;
-            int ordinalWidth = Math.Max(1, count.ToString(CultureInfo.InvariantCulture).Length);
             var builder = new StringBuilder();
 
             for (int i = 0; i < count; i++)
@@ -2203,15 +2230,7 @@ namespace Core.DirFiles
                 if (i > 0)
                     builder.AppendLine();
 
-                EditorDiagnostic diagnostic = _diagnostics[i];
-                builder.Append('[')
-                    .Append(DiagnosticSeverityName(diagnostic.Severity).ToUpperInvariant())
-                    .Append("] ")
-                    .Append((i + 1).ToString(CultureInfo.InvariantCulture).PadLeft(ordinalWidth))
-                    .Append('/')
-                    .Append(count.ToString(CultureInfo.InvariantCulture))
-                    .Append("  ")
-                    .Append(FormatDiagnosticListLocation(diagnostic));
+                builder.Append(FormatDiagnosticDetailsEntry(_diagnostics[i], i, count));
             }
 
             return builder.ToString();
@@ -2427,7 +2446,7 @@ namespace Core.DirFiles
                     break;
                 case '/':
                     _mode = Mode.Search;
-                    _searchText = string.Empty;
+                    _searchInput.Clear();
                     break;
                 case 'n':
                     SearchNext();
@@ -2548,32 +2567,30 @@ namespace Core.DirFiles
 
         private void HandleSearchKey(ConsoleKeyInfo key)
         {
+            if (_searchInput.HandleEditingKey(key)) return;
             switch (key.Key)
             {
                 case ConsoleKey.Escape:
                     _mode = Mode.Normal;
-                    _searchText = string.Empty;
+                    _searchInput.Clear();
                     Status("Search cancelled");
                     break;
                 case ConsoleKey.Enter:
                 {
-                    bool repeatLastSearch = string.IsNullOrWhiteSpace(_searchText);
-                    string queryText = repeatLastSearch ? _lastSearch : _searchText;
+                    bool repeatLastSearch = string.IsNullOrWhiteSpace(_searchInput.Text);
+                    string queryText = repeatLastSearch ? _lastSearch : _searchInput.Text;
                     if (!repeatLastSearch)
-                        _lastSearch = _searchText;
+                        _lastSearch = _searchInput.Text;
 
                     FindNext(queryText, startAfterCursor: repeatLastSearch);
-                    _searchText = string.Empty;
+                    _searchInput.Clear();
                     _mode = Mode.Normal;
                     break;
                 }
-                case ConsoleKey.Backspace:
-                    if (_searchText.Length > 0)
-                        _searchText = _searchText.Substring(0, _searchText.Length - 1);
-                    break;
                 default:
-                    if (TryGetInputText(key, out string searchText))
-                        TryAppendLimitedText(ref _searchText, searchText, MaxSearchTextLength, "Search");
+                    if (((key.Modifiers & ConsoleModifiers.Control) == 0 || (key.Modifiers & ConsoleModifiers.Alt) != 0) &&
+                        TryGetInputText(key, out string searchText))
+                        InsertSearchText(searchText);
                     break;
             }
         }
@@ -4932,7 +4949,8 @@ namespace Core.DirFiles
 
             if (diagnosticCount == 0)
             {
-                string message = NoDiagnosticsMessage(severity);
+                string message = _syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null
+                    ? _rustDiagnosticsStatus : NoDiagnosticsMessage(severity);
                 Status(message);
                 BottomStatus(message + " in " + SyntaxDisplayName(_syntax));
                 return;
@@ -4970,7 +4988,8 @@ namespace Core.DirFiles
 
             if (diagnosticCount == 0)
             {
-                string message = NoDiagnosticsMessage(severity);
+                string message = _syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null
+                    ? _rustDiagnosticsStatus : NoDiagnosticsMessage(severity);
                 Status(message);
                 BottomStatus(message + " in " + SyntaxDisplayName(_syntax));
                 return;
@@ -4980,16 +4999,19 @@ namespace Core.DirFiles
                 ? FirstDiagnosticIndexAfter(_cursorLine, severity)
                 : LastDiagnosticIndexBefore(_cursorLine, severity);
 
-            EditorDiagnostic diagnostic = _diagnostics[index];
+            MoveCursorToDiagnostic(_diagnostics[index], DiagnosticOrdinal(index, severity), diagnosticCount);
+        }
+
+        private void MoveCursorToDiagnostic(EditorDiagnostic diagnostic, int ordinal, int diagnosticCount)
+        {
             ResetVerticalCursorColumn();
-            _cursorLine = diagnostic.LineIndex;
+            _cursorLine = ClampValue(diagnostic.LineIndex, 0, _lines.Count - 1);
             _cursorCol = Math.Min(CurrentLine().Length, Math.Max(0, diagnostic.StartColumn));
             _pendingDelete = false;
             _insertUndoStarted = false;
             ClearSelection();
             ClampCursor();
 
-            int ordinal = DiagnosticOrdinal(index, severity);
             Status(
                 FormatDiagnosticCounter(diagnostic, ordinal, diagnosticCount),
                 error: diagnostic.Severity == EditorDiagnosticSeverity.Error,
@@ -5716,6 +5738,13 @@ namespace Core.DirFiles
                 _externalChangePending = false;
                 _nextExternalChangeCheckUtc = DateTime.UtcNow.AddMilliseconds(ExternalChangeCheckIntervalMs);
                 _insertUndoStarted = false;
+                if (_syntax == TermXTEditorSyntax.Rust)
+                {
+                    CancelRustDiagnostics();
+                    _rustDiagnosticsPending = true;
+                    _rustDiagnosticsSavePending = true;
+                    _rustDiagnosticsReadyUtc = DateTime.MinValue;
+                }
                 Status("Saved current data");
                 return true;
             }
@@ -6380,7 +6409,7 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Search)
             {
-                TryAppendLimitedText(ref _searchText, ToSingleLine(text), MaxSearchTextLength, "Search");
+                InsertSearchText(ToSingleLine(text));
                 return;
             }
 
@@ -7378,6 +7407,9 @@ namespace Core.DirFiles
                     " | next " + FormatDiagnosticLocation(_diagnostics[0]);
             }
 
+            if (_syntax == TermXTEditorSyntax.Rust && _rustDiagnosticsStatus != null)
+                return ModifiedPrefix() + _rustDiagnosticsStatus;
+
             if (_dirty)
                 return "modified";
 
@@ -7417,6 +7449,11 @@ namespace Core.DirFiles
 
         private void EnsureDiagnostics()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+            {
+                TryApplyRustDiagnostics();
+                return;
+            }
             if (_csharpDiagnosticsTask != null)
             {
                 // Explicit diagnostic commands may wait for the current analysis. Rendering
@@ -7443,7 +7480,7 @@ namespace Core.DirFiles
 
         private void EnsureDiagnosticsForRender()
         {
-            if (_syntax == TermXTEditorSyntax.CSharp)
+            if (_syntax == TermXTEditorSyntax.CSharp || _syntax == TermXTEditorSyntax.Rust)
                 return;
 
             if (!_diagnosticsCacheDirty)
@@ -7479,6 +7516,12 @@ namespace Core.DirFiles
 
         private void EnsureFullDiagnostics()
         {
+            if (_syntax == TermXTEditorSyntax.Rust)
+            {
+                _rustDiagnosticsReadyUtc = DateTime.MinValue;
+                CheckRustDiagnosticsOnIdle();
+                return;
+            }
             if (_syntax == TermXTEditorSyntax.CSharp && _csharpSemanticDiagnosticsPending)
             {
                 _csharpSemanticDiagnosticsReadyUtc = DateTime.MinValue;
@@ -11784,7 +11827,7 @@ namespace Core.DirFiles
 
             private static string ReadSearchTerm(int left, int top, int width)
             {
-                var term = new StringBuilder();
+                var term = new SearchTextInput();
                 int inputWidth = Math.Max(1, width);
 
                 while (true)
@@ -11794,32 +11837,25 @@ namespace Core.DirFiles
                     switch (key.Key)
                     {
                         case ConsoleKey.Enter:
-                            return term.ToString();
+                            return term.Text;
                         case ConsoleKey.Escape:
                             return null;
-                        case ConsoleKey.Backspace:
-                            if (term.Length == 0)
-                                return null;
-
-                            term.Remove(term.Length - 1, 1);
-                            RenderSearchTermInput(term.ToString(), left, top, inputWidth);
-                            break;
                         default:
-                            if (!char.IsControl(key.KeyChar))
+                            if (key.Key == ConsoleKey.Backspace && term.Text.Length == 0) return null;
+                            if (term.HandleEditingKey(key) ||
+                                (!char.IsControl(key.KeyChar) && term.TryInsert(key.KeyChar.ToString(), MaxSearchTextLength)))
                             {
-                                term.Append(key.KeyChar);
-                                RenderSearchTermInput(term.ToString(), left, top, inputWidth);
+                                RenderSearchTermInput(term, left, top, inputWidth);
                             }
                             break;
                     }
                 }
             }
 
-            private static void RenderSearchTermInput(string term, int left, int top, int width)
+            private static void RenderSearchTermInput(SearchTextInput term, int left, int top, int width)
             {
-                string visible = term.Length > width ? term.Substring(term.Length - width) : term;
-                Console.Write(At(left, top) + Clip(visible, width).PadRight(width));
-                int cursorOffset = Math.Min(visible.Length, Math.Max(0, width - 1));
+                string visible = term.VisibleText(width, out int cursorOffset);
+                Console.Write(At(left, top) + visible.PadRight(width));
                 Console.Write(At(left + cursorOffset, top));
             }
 
