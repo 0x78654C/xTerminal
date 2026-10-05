@@ -105,7 +105,7 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
         {
             var outMessage = "Unknown signature.";
             var extLines = File.ReadAllLines(extFileName);
-            var hexFile = HexDump.GetHex(filePath);
+            var hexFile = HexDump.GetHex(filePath).Replace("  ", " ");
             var fileInfo = new FileInfo(filePath);
             var nameExt = fileInfo.Extension.Replace(".", string.Empty);
             var isExtFound = false;
@@ -116,7 +116,7 @@ Hex signature list is based on https://en.wikipedia.org/wiki/List_of_file_signat
                 var ext = line.Split('|')[1];
                 var description = line.Split('|')[2];
 
-                if (!check || (!_isIterated && !ext.Contains(nameExt))) continue;
+                if (!check || (!_isIterated && !ext.Contains(nameExt.Trim()))) continue;
                 isExtFound = true;
                 outMessage = extOnly
                     ? ext
