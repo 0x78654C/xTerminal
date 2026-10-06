@@ -376,6 +376,26 @@ namespace Core
             _keyActions["Tab"] = () =>
             {
                 GlobalVariables.tabPressCount++;
+                // Autosuggestion for command parameters.
+                if (GlobalVariables.tabPressCount == 1)
+                {
+                    var candidate = _text.ToString();
+                    var splitConsoleInput = candidate.Split(" ");
+                    if (splitConsoleInput.Count() > 0)
+                    {
+                        var lastParam = splitConsoleInput[splitConsoleInput.Count() - 1];
+                        if (lastParam.StartsWith("-"))
+                        {
+                            MoveCursorEnd();
+                            bool isListed = false;
+                            AutoSuggestionCommands.CommandSuggestion(candidate,lastParam, out isListed);
+                            if (isListed)
+                                GlobalVariables.tabPressCount = 0;
+                        }
+                    }
+                }
+
+                // Autosuggestion for directories and files.
                 if (GlobalVariables.tabPressCount == 2)
                 {
                     MoveCursorEnd();
@@ -390,7 +410,7 @@ namespace Core
                     candidate = candidate.Trim('\u0018');
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "cd", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "odir", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "ls", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "ls", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "hex", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "./", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, _multiParam, "ccs", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
@@ -459,7 +479,7 @@ namespace Core
                             command = $"{getCommand} {outCompletion}";
                         _multiParam = "";
                         _cursorPos += command.Length - _text.Length;
-                        _text.Clear();  
+                        _text.Clear();
                         _text.Append(command);
                         _cursorLimit = _text.Length;
                         Console2.Write(_text.ToString());
