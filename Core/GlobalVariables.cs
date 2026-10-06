@@ -49,9 +49,9 @@ namespace Core
         public static bool eventCancelKey = false;
         public static bool autoSuggestion = false;
         public static bool aliasRunFlag = false;
-        public static List<string> aliasInParameter= new List<string>();
+        public static List<string> aliasInParameter = new List<string>();
         public static bool eventKeyFlagX = false;
-        public static readonly string magicNunmbers= Application.StartupPath + "ext_list.txt";
+        public static readonly string magicNunmbers = Application.StartupPath + "ext_list.txt";
         public static bool isPipeCommand = false;
         public static string pipeCmdOutput { get; set; }
         public static bool isPipeVar = false;
@@ -61,7 +61,8 @@ namespace Core
         public static string successColorOutput = "Gray";
         public static CompressionLevel compressionLevel = CompressionLevel.Fastest;
         public static int lengthPS1 = 0;
-        public enum TypeSuggestions {
+        public enum TypeSuggestions
+        {
             File = 1,
             Directory = 2,
             All = 3
@@ -70,8 +71,20 @@ namespace Core
         public static bool isErrorCommand = false;
         public static string bgProcessListFile = terminalWorkDirectory + "\\bgPids.db";
         public static string workingDirectory { get; set; }
-        public static bool isNewVersion { get; set; } = false;  
+        public static bool isNewVersion { get; set; } = false;
         public static string versionNew { get; set; } = string.Empty;
         public static string releaseBody { get; set; } = string.Empty;
+
+
+        //----------------------- Commands parameters --------------------------------------
+        public static List<string> ls_p = new List<string>() { "ls", "-h", "-d", "-f", "-s", "-c", "-cf", "-cd", "-hl", "-o", "-ct", "-la", "-dup", "-n" };
+        public static List<string> cd_p = new List<string>() { "cd", "-h", "-t", "-l", "-s", "-so", "-sa", "-sao", "-sm", "-smo", "-lc", "-lfc", "-con" };
+        public static Dictionary<string, List<string>> masterParamCommands =
+            new Dictionary<string, List<string>>
+            {
+                { "ls", ls_p },
+                { "cd", cd_p }
+            };
+
     }
 }
