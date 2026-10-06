@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace Core.Commands
 {
     [SupportedOSPlatform("Windows")]
     public class AutoSuggestionCommands
     {
-
+        private static List<string> s_listParamsSuggested = new();
         /// <summary>
         /// Output sugestion for a file or directory name in current directory.
         /// </summary>
@@ -43,6 +45,40 @@ namespace Core.Commands
                 }
             }
             catch { }
+        }
+
+        /// <summary>
+        /// Autocomplete command parameters.
+        /// </summary>
+        /// <param name="consoleInput"></param>
+        public static void CommandSuggestion(string consoleInput,string lastParam, out bool isComplete)
+        {
+            isComplete = false;
+            if (string.IsNullOrEmpty(consoleInput))
+                return;
+
+            var splitConsoleInput = consoleInput.Split(" ");
+     
+            var command = splitConsoleInput[0];
+            if (lastParam.StartsWith("-"))
+            {
+                var listParams = GlobalVariables.masterParamCommands;
+                foreach (var paramList in listParams)
+                {
+                    if (paramList.Key == command)
+                    {
+                        var isAlreadySuggested = s_listParamsSuggested.Any(p => p == lastParam);
+                        var suggest = paramList.Value.Where(p => p.StartsWith(lastParam) && !isAlreadySuggested).First();
+                        isComplete = true;
+                        s_listParamsSuggested.Add(suggest);
+                        Console.SetCursorPosition(0, consoleInput.Length - lastParam.Length);
+                        SendKeys.SendWait($"{command} {suggest}");
+                        if (s_listParamsSuggested.Count == paramList.Value.Count)
+                            s_listParamsSuggested.Clear();
+                        break; 
+                    }
+                }
+            }
         }
     }
 }
