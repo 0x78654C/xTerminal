@@ -27,19 +27,19 @@ namespace Commands.TerminalCommands.ConsoleSystem
             new() { WriteIndented = true };
 
         private static readonly string s_helpMessage = @"Usage of chain command:
-    chain create <name> ""cmd1"" ""cmd2"" ...  : Create a named command chain.
-    chain run    <name>                        : Execute the chain sequentially.
-    chain add    <name> ""cmd""                : Append a command to an existing chain.
-    chain show   <name>                        : Show the steps of a chain.
-    chain list                                 : List all saved chains.
-    chain del    <name>                        : Delete a chain.
+    chain -create <name> ""cmd1"" ""cmd2"" ...  : Create a named command chain.
+    chain -run    <name>                        : Execute the chain sequentially.
+    chain -add    <name> ""cmd""                : Append a command to an existing chain.
+    chain -show   <name>                        : Show the steps of a chain.
+    chain -list                                 : List all saved chains.
+    chain -del    <name>                        : Delete a chain.
     chain -h                                   : Display this help message.
 
 Examples:
-    chain create deploy ""ls"" ""time"" ""sinfo""
-    chain run deploy
-    chain add deploy ""pcinfo""
-    chain show deploy
+    chain -create deploy ""ls"" ""time"" ""sinfo""
+    chain -run deploy
+    chain -add deploy ""pcinfo""
+    chain -show deploy
 ";
 
         public void Execute(string args)
@@ -56,12 +56,12 @@ Examples:
 
                 switch (sub)
                 {
-                    case "create": CreateChain(param); break;
-                    case "run":    RunChain(param);    break;
-                    case "add":    AddToChain(param);  break;
-                    case "show":   ShowChain(param);   break;
-                    case "list":   ListChains();       break;
-                    case "del":    DeleteChain(param); break;
+                    case "-create": CreateChain(param); break;
+                    case "-run":    RunChain(param);    break;
+                    case "-add":    AddToChain(param);  break;
+                    case "-show":   ShowChain(param);   break;
+                    case "-list":   ListChains();       break;
+                    case "-del":    DeleteChain(param); break;
                     default:
                         FileSystem.ErrorWriteLine($"Unknown sub-command '{sub}'. Use 'chain -h' for help.");
                         GlobalVariables.isErrorCommand = true;
@@ -101,7 +101,7 @@ Examples:
             string[] nameParts = param.Split(' ', 2);
             if (nameParts.Length < 2)
             {
-                FileSystem.ErrorWriteLine("Usage: chain create <name> \"cmd1\" \"cmd2\" ...");
+                FileSystem.ErrorWriteLine("Usage: chain -create <name> \"cmd1\" \"cmd2\" ...");
                 return;
             }
             string name = nameParts[0];
@@ -121,7 +121,7 @@ Examples:
 
         private static void RunChain(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: chain run <name>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: chain -run <name>"); return; }
             var data = Load();
             if (!data.TryGetValue(name, out var chain))
             {
@@ -247,7 +247,7 @@ Examples:
         private static void AddToChain(string param)
         {
             string[] nameParts = param.Split(' ', 2);
-            if (nameParts.Length < 2) { FileSystem.ErrorWriteLine("Usage: chain add <name> \"cmd\""); return; }
+            if (nameParts.Length < 2) { FileSystem.ErrorWriteLine("Usage: chain -add <name> \"cmd\""); return; }
             string name     = nameParts[0];
             string cmdToAdd = nameParts[1].Trim().Trim('"');
 
@@ -265,7 +265,7 @@ Examples:
 
         private static void ShowChain(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: chain show <name>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: chain -show <name>"); return; }
             var data = Load();
             if (!data.TryGetValue(name, out var chain))
             {
@@ -336,7 +336,7 @@ Examples:
 
         private static void DeleteChain(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: chain del <name>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: chain -del <name>"); return; }
             var data = Load();
             if (!data.Remove(name))
             {
