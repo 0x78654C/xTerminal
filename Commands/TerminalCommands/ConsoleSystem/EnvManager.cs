@@ -23,13 +23,13 @@ namespace Commands.TerminalCommands.ConsoleSystem
         private static readonly string s_helpMessage = @"Usage of env command:
     env                                     : List all variables across Process, User and System.
     env -t <user|system|process>            : List variables for the specified scope.
-    env [-t <scope>] get <NAME>             : Get a variable's value.
-    env [-t <scope>] set <NAME> <VALUE>     : Set (overwrite) a variable.
-    env [-t <scope>] del <NAME>             : Delete a variable.
-    env [-t <scope>] addval <NAME> <VALUE>  : Append an entry (semicolon-separated list).
-    env [-t <scope>] delval <NAME> <VALUE>  : Remove an entry (semicolon-separated list).
-    env [-t <scope>] export <file>          : Export variables to a .env file.
-    env [-t <scope>] load <file>            : Load variables from a .env file.
+    env [-t <scope>] -get <NAME>             : Get a variable's value.
+    env [-t <scope>] -set <NAME> <VALUE>     : Set (overwrite) a variable.
+    env [-t <scope>] -del <NAME>             : Delete a variable.
+    env [-t <scope>] -addval <NAME> <VALUE>  : Append an entry (semicolon-separated list).
+    env [-t <scope>] -delval <NAME> <VALUE>  : Remove an entry (semicolon-separated list).
+    env [-t <scope>] -export <file>          : Export variables to a .env file.
+    env [-t <scope>] -load <file>            : Load variables from a .env file.
     env -h                                  : Display this help message.
 
 Note: 'system' scope requires elevated (Administrator) privileges to write.
@@ -37,13 +37,13 @@ Note: 'system' scope requires elevated (Administrator) privileges to write.
 Examples:
     env
     env -t user
-    env -t system get PATH
-    env -t user set MY_VAR hello
-    env -t user addval PATH C:\MyTool\bin
-    env -t user delval PATH C:\OldTool\bin
-    env -t system del LEGACY_VAR
-    env load .env
-    env -t user export snapshot.env
+    env -t system -get PATH
+    env -t user -set MY_VAR hello
+    env -t user -addval PATH C:\MyTool\bin
+    env -t user -delval PATH C:\OldTool\bin
+    env -t system -del LEGACY_VAR
+    env -load .env
+    env -t user -export snapshot.env
 ";
 
         public void Execute(string args)
@@ -72,13 +72,13 @@ Examples:
 
                 switch (sub)
                 {
-                    case "get":    GetVar(param.Trim(), target);    break;
-                    case "set":    SetVar(param, target);            break;
-                    case "del":    DelVar(param.Trim(), target);     break;
-                    case "addval": AddVal(param, target);            break;
-                    case "delval": DelVal(param, target);            break;
-                    case "load":   LoadEnv(param.Trim(), target);    break;
-                    case "export": ExportEnv(param.Trim(), target);  break;
+                    case "-get":    GetVar(param.Trim(), target);    break;
+                    case "-set":    SetVar(param, target);            break;
+                    case "-del":    DelVar(param.Trim(), target);     break;
+                    case "-addval": AddVal(param, target);            break;
+                    case "-delval": DelVal(param, target);            break;
+                    case "-load":   LoadEnv(param.Trim(), target);    break;
+                    case "-export": ExportEnv(param.Trim(), target);  break;
                     default:
                         FileSystem.ErrorWriteLine($"Unknown sub-command '{sub}'. Use 'env -h' for help.");
                         GlobalVariables.isErrorCommand = true;
@@ -134,7 +134,7 @@ Examples:
 
         private static void GetVar(string name, EnvironmentVariableTarget target)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: env get <NAME>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: env -get <NAME>"); return; }
             string val = Environment.GetEnvironmentVariable(name, target);
             if (val == null)
                 FileSystem.ErrorWriteLine($"[{TargetLabel(target)}] Variable '{name}' not found.");
@@ -151,7 +151,7 @@ Examples:
             string[] kv = param.Split(' ', 2);
             if (kv.Length < 2 || string.IsNullOrWhiteSpace(kv[0]))
             {
-                FileSystem.ErrorWriteLine("Usage: env set <NAME> <VALUE>");
+                FileSystem.ErrorWriteLine("Usage: env -set <NAME> <VALUE>");
                 return;
             }
             Environment.SetEnvironmentVariable(kv[0], kv[1], target);
@@ -160,7 +160,7 @@ Examples:
 
         private static void DelVar(string name, EnvironmentVariableTarget target)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: env del <NAME>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: env -del <NAME>"); return; }
             if (Environment.GetEnvironmentVariable(name, target) == null)
             {
                 FileSystem.ErrorWriteLine($"[{TargetLabel(target)}] Variable '{name}' not found.");
@@ -175,7 +175,7 @@ Examples:
             string[] kv = param.Split(' ', 2);
             if (kv.Length < 2 || string.IsNullOrWhiteSpace(kv[0]) || string.IsNullOrWhiteSpace(kv[1]))
             {
-                FileSystem.ErrorWriteLine("Usage: env addval <NAME> <VALUE>");
+                FileSystem.ErrorWriteLine("Usage: env -addval <NAME> <VALUE>");
                 return;
             }
             string name    = kv[0].Trim();
@@ -199,7 +199,7 @@ Examples:
             string[] kv = param.Split(' ', 2);
             if (kv.Length < 2 || string.IsNullOrWhiteSpace(kv[0]) || string.IsNullOrWhiteSpace(kv[1]))
             {
-                FileSystem.ErrorWriteLine("Usage: env delval <NAME> <VALUE>");
+                FileSystem.ErrorWriteLine("Usage: env -delval <NAME> <VALUE>");
                 return;
             }
             string name    = kv[0].Trim();
