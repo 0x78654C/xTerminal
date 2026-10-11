@@ -9,18 +9,31 @@ using Xunit;
 namespace Tests.Commands.ConsoleSystem;
 
 [SupportedOSPlatform("Windows")]
+[Collection("TermXT interpreter")]
 public sealed class AutoSuggestionCommandsTests : IDisposable
 {
     private readonly int _savedTabPressCount = GlobalVariables.tabPressCount;
+    private readonly string _savedCurrentDirectory = GlobalVariables.currentDirectory;
+    private readonly string _savedAliasFile = GlobalVariables.aliasFile;
+    private readonly string _tempDirectory = Path.Combine(Path.GetTempPath(), "xt_completion_" + Guid.NewGuid().ToString("N"));
+    private readonly string _completionDirectory;
 
     public AutoSuggestionCommandsTests()
     {
         GlobalVariables.tabPressCount = 0;
+        _completionDirectory = Path.Combine(_tempDirectory, "files");
+        Directory.CreateDirectory(_completionDirectory);
+        GlobalVariables.currentDirectory = Path.Combine(_tempDirectory, "current-directory.txt");
+        File.WriteAllText(GlobalVariables.currentDirectory, _completionDirectory);
+        GlobalVariables.aliasFile = Path.Combine(_tempDirectory, "aliases.json");
     }
 
     public void Dispose()
     {
         GlobalVariables.tabPressCount = _savedTabPressCount;
+        GlobalVariables.currentDirectory = _savedCurrentDirectory;
+        GlobalVariables.aliasFile = _savedAliasFile;
+        Directory.Delete(_tempDirectory, true);
     }
 
     [Theory]
@@ -172,6 +185,140 @@ public sealed class AutoSuggestionCommandsTests : IDisposable
         AssertInput(handler, console, "ls -dup");
     }
 
+    [Theory]
+    [InlineData("xte -raw someFi", "someFile.txt", "xte -raw someFile.txt")]
+    [InlineData("xte -raw   someFi", "someFile.txt", "xte -raw   someFile.txt")]
+    [InlineData("xte -syntax text -raw someFi", "someFile.txt", "xte -syntax text -raw someFile.txt")]
+    [InlineData("xte -raw ", "someFile.txt", "xte -raw someFile.txt")]
+    [InlineData("xte someFi", "someFile.txt", "xte someFile.txt")]
+    [InlineData("xte", "someFile.txt", "xte someFile.txt")]
+    [InlineData("cat -o output.txt someFi", "someFile.txt", "cat -o output.txt someFile.txt")]
+    [InlineData("xte -raw \"some Fi", "some File.txt", "xte -raw \"some File.txt\"")]
+    [InlineData("xte -raw some Fi", "some File.txt", "xte -raw some File.txt")]
+    public void DoubleTab_CompletesFileAfterParameters(string input, string fileName, string expected)
+    {
+        File.WriteAllText(Path.Combine(_completionDirectory, fileName), "test");
+        var console = new TestConsole();
+        var handler = new KeyHandler(console, null, null);
+        Type(handler, input);
+
+        Press(handler, ConsoleKey.Tab);
+        AssertInput(handler, console, input);
+        Press(handler, ConsoleKey.Tab);
+
+        AssertInput(handler, console, expected);
+    }
+
+    [Theory]
+    [InlineData("xte -raw someDir", "xte -raw someDirectory\\")]
+    [InlineData("ls -d someDir", "ls -d someDirectory\\")]
+    [InlineData("snap save someDir", "snap save someDirectory\\")]
+    public void DoubleTab_CompletesDirectoryAfterParameters(string input, string expected)
+    {
+        Directory.CreateDirectory(Path.Combine(_completionDirectory, "someDirectory"));
+        var console = new TestConsole();
+        var handler = new KeyHandler(console, null, null);
+        Type(handler, input);
+
+        Press(handler, ConsoleKey.Tab);
+        Press(handler, ConsoleKey.Tab);
+
+        AssertInput(handler, console, expected);
+    }
+
+    [Theory]
+    [InlineData("someDirectory\\someFi", "someDirectory\\someFile.txt")]
+    [InlineData("someDirectory/someFi", "someDirectory/someFile.txt")]
+    public void DoubleTab_CompletesNestedPathAfterParameters(string path, string expected)
+    {
+        Directory.CreateDirectory(Path.Combine(_completionDirectory, "someDirectory"));
+        File.WriteAllText(Path.Combine(_completionDirectory, "someDirectory", "someFile.txt"), "test");
+        var console = new TestConsole();
+        var handler = new KeyHandler(console, null, null);
+        Type(handler, "xte -raw " + path);
+
+        Press(handler, ConsoleKey.Tab);
+        Press(handler, ConsoleKey.Tab);
+
+        AssertInput(handler, console, "xte -raw " + expected);
+    }
+
+    [Fact]
+    public void DoubleTab_CompletesAbsolutePathAfterParameters()
+    {
+        File.WriteAllText(Path.Combine(_completionDirectory, "someFile.txt"), "test");
+        var console = new TestConsole();
+        var handler = new KeyHandler(console, null, null);
+        Type(handler, "xte -raw " + Path.Combine(_completionDirectory, "someFi"));
+
+        Press(handler, ConsoleKey.Tab);
+        Press(handler, ConsoleKey.Tab);
+
+        AssertInput(handler, console, "xte -raw " + Path.Combine(_completionDirectory, "someFile.txt"));
+    }
+
+    [Fact]
+    public void DoubleTab_CompletesFileAfterCompletingParameter()
+    {
+        File.WriteAllText(Path.Combine(_completionDirectory, "someFile.txt"), "test");
+        var console = new TestConsole();
+        var handler = new KeyHandler(console, null, null);
+        Type(handler, "xte -r");
+        Press(handler, ConsoleKey.Tab);
+        Type(handler, " someFi");
+
+        Press(handler, ConsoleKey.Tab);
+        AssertInput(handler, console, "xte -raw someFi");
+        Press(handler, ConsoleKey.Tab);
+
+        AssertInput(handler, console, "xte -raw someFile.txt");
+    }
+
+    [Fact]
+    public void DoubleTab_CompletesAliasPathAfterParameters()
+    {
+        File.WriteAllText(GlobalVariables.aliasFile, "[{\"CommandName\":\"myeditor\",\"Command\":\"xte %1\"}]");
+        File.WriteAllText(Path.Combine(_completionDirectory, "someFile.txt"), "test");
+        var console = new TestConsole();
+        var handler = new KeyHandler(console, null, null);
+        Type(handler, "myeditor -raw someFi");
+
+        Press(handler, ConsoleKey.Tab);
+        Press(handler, ConsoleKey.Tab);
+
+        AssertInput(handler, console, "myeditor -raw someFile.txt");
+    }
+
+    [Fact]
+    public void DoubleTab_WithoutMatchingPathLeavesInputUnchanged()
+    {
+        var console = new TestConsole();
+        var handler = new KeyHandler(console, null, null);
+        Type(handler, "xte -raw missing\\someFi");
+
+        for (int i = 0; i < 4; i++)
+            Press(handler, ConsoleKey.Tab);
+
+        AssertInput(handler, console, "xte -raw missing\\someFi");
+    }
+
+    [Theory]
+    [InlineData("xte -raw ", "")]
+    [InlineData("xte -raw some", "some")]
+    public void GetPathSuggestions_IncludesAllMatchingFilesAndDirectoriesAfterParameter(string input, string pathPrefix)
+    {
+        Directory.CreateDirectory(Path.Combine(_completionDirectory, "someDirectory"));
+        File.WriteAllText(Path.Combine(_completionDirectory, "someFile.txt"), "test");
+        File.WriteAllText(Path.Combine(_completionDirectory, "someOtherFile.txt"), "test");
+
+        var suggestions = AutoSuggestionCommands.GetPathSuggestions(input, "xte", _completionDirectory,
+            GlobalVariables.TypeSuggestions.All, out int pathStart);
+
+        suggestions.Should().Equal("someDirectory\\", "someFile.txt", "someOtherFile.txt");
+        input.Substring(pathStart).Should().Be(pathPrefix);
+        input.Substring(0, pathStart).Should().Be("xte -raw ");
+    }
+
     private static void Type(KeyHandler handler, string text)
     {
         foreach (char character in text)
@@ -186,7 +333,7 @@ public sealed class AutoSuggestionCommandsTests : IDisposable
     private static void AssertInput(KeyHandler handler, TestConsole console, string expected)
     {
         handler.Text.Should().Be(expected);
-        console.Text.Should().Be(TestConsole.Prompt + expected);
+        console.Text.Should().Be((TestConsole.Prompt + expected).TrimEnd(' '));
         (console.CursorTop * console.BufferWidth + console.CursorLeft)
             .Should().Be(TestConsole.Prompt.Length + expected.Length);
     }
