@@ -33,7 +33,8 @@ namespace Core.DirFiles
         Cpp,
         Rust,
         JavaScript,
-        Python
+        Python,
+        PlainText
     }
 
     [SupportedOSPlatform("windows")]
@@ -683,9 +684,15 @@ namespace Core.DirFiles
         }
 
         public TermXTEditor(string path, TermXTEditorSyntax syntax)
+            : this(path, syntax, openAsText: false)
         {
-            _path = Path.GetFullPath(path);
-            _syntax = syntax;
+        }
+
+        public TermXTEditor(string path, TermXTEditorSyntax syntax, bool openAsText)
+        {
+            _path = ResolveEditorOpenPath(Path.GetFullPath(path), openAsText);
+            _syntax = openAsText ? TermXTEditorSyntax.PlainText :
+                CSharpProjectWorkspace.IsWorkspacePath(path) ? TermXTEditorSyntax.CSharp : syntax;
             LoadFile();
         }
 
@@ -748,6 +755,10 @@ namespace Core.DirFiles
 
             switch (value.Trim().ToLowerInvariant())
             {
+                case "text":
+                case "plain":
+                    syntax = TermXTEditorSyntax.PlainText;
+                    return true;
                 case "xt":
                 case "termxt":
                 case "xtermxt":
@@ -799,6 +810,8 @@ namespace Core.DirFiles
         {
             switch (syntax)
             {
+                case TermXTEditorSyntax.PlainText:
+                    return "Text";
                 case TermXTEditorSyntax.CSharp:
                     return "C#";
                 case TermXTEditorSyntax.C:
@@ -936,10 +949,11 @@ namespace Core.DirFiles
             // Snapshot on the input thread; the worker must never read mutable editor state.
             string path = _path;
             string documentText = BuildDocumentText();
+            string workspacePath = _csharpWorkspacePath;
             var cancellation = new CancellationTokenSource();
             _csharpDiagnosticsCancellation = cancellation;
             _csharpDiagnosticsTask = Task.Run(
-                () => AnalyzeCSharpDiagnostics(path, documentText, cancellation.Token),
+                () => AnalyzeCSharpDiagnostics(path, documentText, cancellation.Token, _csharpWorkspace, workspacePath),
                 cancellation.Token);
             return false;
         }
@@ -1312,6 +1326,8 @@ namespace Core.DirFiles
 
         private void LoadFile()
         {
+            CancelCSharpDiagnostics();
+            _csharpWorkspace.Invalidate();
             if (!TryReadEditorLines(_path, out string[] loadedLines, out string error))
                 throw new IOException(error);
 
@@ -2777,7 +2793,7 @@ namespace Core.DirFiles
             try
             {
                 SourceCodeKind sourceKind = GetCSharpSourceKind();
-                CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
+                CSharpParseOptions parseOptions = GetCSharpParseOptions(sourceKind);
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
                 int position = GetDocumentPosition(_cursorLine, cursorCol);
                 return IsCSharpDeclarationNameCompletionSuppressed(syntaxTree, position);
@@ -3151,7 +3167,7 @@ namespace Core.DirFiles
 
         private bool IsCSharpCompletionContext()
         {
-            if (_syntax == TermXTEditorSyntax.Rust)
+            if (_syntax == TermXTEditorSyntax.Rust || _syntax == TermXTEditorSyntax.PlainText)
                 return false;
 
             if (_syntax == TermXTEditorSyntax.CSharp)
@@ -3499,7 +3515,7 @@ namespace Core.DirFiles
             try
             {
                 SourceCodeKind sourceKind = GetCSharpSourceKind();
-                CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
+                CSharpParseOptions parseOptions = GetCSharpParseOptions(sourceKind);
                 int position = GetDocumentPosition(_cursorLine, _cursorCol);
                 string documentText = BuildDocumentText();
                 if (prefix.Length == 0)
@@ -3616,7 +3632,7 @@ namespace Core.DirFiles
             try
             {
                 SourceCodeKind sourceKind = GetCSharpSourceKind();
-                CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
+                CSharpParseOptions parseOptions = GetCSharpParseOptions(sourceKind);
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(BuildDocumentText(), parseOptions, _path);
                 CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind);
 
@@ -3860,6 +3876,11 @@ namespace Core.DirFiles
 
         private CSharpCompilation CreateCSharpCompilation(SyntaxTree syntaxTree, SourceCodeKind sourceKind)
         {
+            if (sourceKind == SourceCodeKind.Regular)
+            {
+                var snapshot = GetCSharpProjectSnapshot();
+                if (snapshot != null) return snapshot.WithActiveTree(syntaxTree, BuildDocumentText());
+            }
             return CreateCSharpCompilation(syntaxTree, sourceKind, _path, BuildDocumentText());
         }
 
@@ -4240,6 +4261,7 @@ namespace Core.DirFiles
             HashSet<string> labels)
         {
             AddCSharpDocumentIdentifierCompletions(items, labels, prefix);
+            AddCSharpProjectCompletions(prefix, items, labels);
 
             HashSet<string> importedNamespaces = GetCSharpImportedNamespaces();
             foreach (string name in s_csharpBclIdentifiers)
@@ -4731,6 +4753,9 @@ namespace Core.DirFiles
                 return;
 
             if (TryExecuteNuGetCommand(command))
+                return;
+
+            if (TryExecuteProjectCommand(command))
                 return;
 
             switch (command.ToLowerInvariant())
@@ -5702,7 +5727,7 @@ namespace Core.DirFiles
             string value = command.Length > prefix.Length ? command.Substring(prefix.Length).Trim() : string.Empty;
             if (!TryParseSyntax(value, out TermXTEditorSyntax syntax))
             {
-                Status("Unknown syntax. Use :syntax xt, cs, c, cpp, rust, js, or py.", error: true);
+                Status("Unknown syntax. Use :syntax xt, cs, c, cpp, rust, js, py, or text.", error: true);
                 _mode = Mode.Normal;
                 return true;
             }
@@ -5804,6 +5829,11 @@ namespace Core.DirFiles
 
         private void OpenExplorerFile(string path)
         {
+            OpenEditorFile(path, openAsText: false);
+        }
+
+        private void OpenEditorFile(string path, bool openAsText)
+        {
             string fullPath;
             try
             {
@@ -5831,8 +5861,8 @@ namespace Core.DirFiles
             try
             {
                 StopRustAnalyzer();
-                _path = fullPath;
-                _syntax = DetectSyntaxFromPath(_path);
+                _path = ResolveEditorOpenPath(fullPath, openAsText);
+                _syntax = openAsText ? TermXTEditorSyntax.PlainText : DetectSyntaxFromPath(_path);
                 LoadFile();
                 Status("Opened " + Path.GetFileName(_path));
                 BottomStatus(_path);
@@ -7533,13 +7563,15 @@ namespace Core.DirFiles
 
         private void CollectCSharpDiagnostics()
         {
-            ApplyCSharpDiagnostics(AnalyzeCSharpDiagnostics(_path, BuildDocumentText(), CancellationToken.None));
+            ApplyCSharpDiagnostics(AnalyzeCSharpDiagnostics(_path, BuildDocumentText(), CancellationToken.None, _csharpWorkspace, _csharpWorkspacePath));
         }
 
         private static CSharpDiagnosticResult AnalyzeCSharpDiagnostics(
             string path,
             string documentText,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            CSharpProjectWorkspace workspace,
+            string workspacePath)
         {
             try
             {
@@ -7547,12 +7579,15 @@ namespace Core.DirFiles
                 SourceCodeKind sourceKind = string.Equals(Path.GetExtension(path), ".csx", StringComparison.OrdinalIgnoreCase)
                     ? SourceCodeKind.Script
                     : SourceCodeKind.Regular;
-                CSharpParseOptions parseOptions = CreateCSharpParseOptions(sourceKind);
+                var snapshot = workspace.GetSnapshot(path, workspacePath, cancellationToken);
+                CSharpParseOptions parseOptions = snapshot?.ParseOptions ?? CreateCSharpParseOptions(sourceKind);
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
                     documentText, parseOptions, path, cancellationToken: cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
-                CSharpCompilation compilation = CreateCSharpCompilation(syntaxTree, sourceKind, path, documentText);
-                return new CSharpDiagnosticResult(compilation.GetDiagnostics(cancellationToken), null);
+                CSharpCompilation compilation = snapshot?.WithActiveTree(syntaxTree, documentText) ??
+                    CreateCSharpCompilation(syntaxTree, sourceKind, path, documentText);
+                // Other files have different line numbers; only mark diagnostics in this buffer.
+                return new CSharpDiagnosticResult(compilation.GetSemanticModel(syntaxTree).GetDiagnostics(cancellationToken: cancellationToken), null);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -8065,6 +8100,8 @@ namespace Core.DirFiles
         {
             switch (_syntax)
             {
+                case TermXTEditorSyntax.PlainText:
+                    return new List<Token> { new Token(0, line.Length, CNormal) };
                 case TermXTEditorSyntax.CSharp:
                     return TokenizeCSharp(line, IsCSharpLineInBlockComment(lineIndex));
                 case TermXTEditorSyntax.C:

@@ -616,6 +616,9 @@ Example:
                      end
     xte       -- Built-in Vim-style TermXT code editor with syntax highlighting.
 	                xte <script.xt>             : Open a TermXT script.
+	                xte <solution.sln|.slnx>    : Open a C# solution (Program.cs or the first source file).
+	                xte <project.csproj>        : Open a C# project; e opens the explorer at its directory.
+	                xte -raw <file>             : Edit the file itself as plain text, including .sln, .slnx, and .csproj files.
 	                xte -new <script.xt>        : Create a template and open it.
 	                Detects disk-side changes when returning to the editor; use :e! to reload or :w! to overwrite.
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
@@ -623,6 +626,10 @@ Example:
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
 	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
+	                Opening a .cs file automatically finds its owning project, including linked files listed by a nearby solution. Completion and diagnostics include other project classes, project references, implicit/global usings, compile exclusions, and restored NuGet compile assemblies, using the unsaved buffer for the active file.
+	                Use :e <path> to open another file, .csproj, .sln, or .slnx; :project (or :project reload) shows the owning project and refreshes its sources and references. External source changes are also picked up by new completion requests after a short cache interval.
+	                Use :e -raw <path> to edit a solution/project file directly, or :project edit to edit the current solution (when explicitly opened) or owning project. Save with :w as usual; plain-text mode suppresses language diagnostics and completion.
+	                C# project discovery reads ordinary SDK/legacy project items in Debug/AnyCPU and uses the first target framework. It does not execute custom MSBuild imports, targets, or source generators. Restore project packages with dotnet restore; use :project afterwards. The :nuget commands below manage source-file package directives, not .csproj PackageReference items.
 	                In Rust buffers (.rs or -syntax rust), suggestions open after two characters, '::', or '.'.
 	                Rust suggests keywords, macros, names from the current file, local fields/methods, and common standard-library paths/members without installing a Rust toolchain.
 	                With rust-analyzer, dot completion resolves variables, fields, function results, indexed values, and method chains in Cargo projects and standalone .rs files. Save a new standalone file once to enable analysis.

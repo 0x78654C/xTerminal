@@ -169,7 +169,7 @@ namespace Core
         public static List<string> xcel_p = new List<string>() { "xcel", "-h" };
         public static List<string> xclip_p = new List<string>() { "xclip", "-h" };
         public static List<string> xt_p = new List<string>() { "xt", "-h", "-p", "-new", "-edit", "-check", "-ver"};
-        public static List<string> xte_p = new List<string>() { "xte", "-h", "-new", "-syntax" };
+        public static List<string> xte_p = new List<string>() { "xte", "-h", "-new", "-syntax","-raw" };
         public static List<string> xup_p = new List<string>() { "xup", "-h", "-e", "-d", "-s", "-c" };
         public static List<string> zip_p = new List<string>() { "zip", "-h", "-n", "-list", "-x", "-c" };
 
