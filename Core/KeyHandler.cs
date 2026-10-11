@@ -375,27 +375,34 @@ namespace Core
             _keyActions["Insert"] = NullVoid;
             _keyActions["Tab"] = () =>
             {
-                GlobalVariables.tabPressCount++;
-                // Autosuggestion for command parameters.
-                if (GlobalVariables.tabPressCount == 1)
+                if (IsInAutoCompleteMode())
                 {
-                    var candidate = _text.ToString();
-                    var splitConsoleInput = candidate.Split(" ");
-                    if (splitConsoleInput.Count() > 0)
-                    {
-                        var lastParam = splitConsoleInput[splitConsoleInput.Count() - 1];
-                        if (lastParam.StartsWith("-"))
-                        {
-                            MoveCursorEnd();
-                            bool isListed = false;
-                            AutoSuggestionCommands.CommandSuggestion(candidate,lastParam, out isListed);
-                            if (isListed)
-                                GlobalVariables.tabPressCount = 0;
-                        }
-                    }
+                    NextAutoComplete();
+                    return;
+                }
+
+                // Keep the original matches while Tab cycles, replacing only the last argument.
+                var input = _text.ToString();
+                var lastParam = input.Substring(input.LastIndexOf(' ') + 1);
+                var parameters = AutoSuggestionCommands.CommandSuggestion(input, lastParam);
+                if (parameters.Length > 0)
+                {
+                    GlobalVariables.tabPressCount = 0;
+                    MoveCursorEnd();
+                    _completionStart = input.Length - lastParam.Length;
+                    _completions = parameters;
+                    StartAutoComplete();
+                    return;
+                }
+
+                if (lastParam.StartsWith("-", StringComparison.Ordinal))
+                {
+                    GlobalVariables.tabPressCount = 0;
+                    return;
                 }
 
                 // Autosuggestion for directories and files.
+                GlobalVariables.tabPressCount++;
                 if (GlobalVariables.tabPressCount == 2)
                 {
                     MoveCursorEnd();
