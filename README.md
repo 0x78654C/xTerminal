@@ -279,27 +279,27 @@ Example:
     env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
                    env                                     : List all variables across Process, User and System sections.
                    env -t <user|system|process>            : List variables for the specified scope only.
-                   env [-t <scope>] get <NAME>             : Get a variable's value.
-                   env [-t <scope>] set <NAME> <VALUE>     : Set (overwrite) a variable.
-                   env [-t <scope>] del <NAME>             : Delete a variable.
-                   env [-t <scope>] addval <NAME> <VALUE>  : Append an entry to a semicolon-separated variable (e.g. PATH).
-                   env [-t <scope>] delval <NAME> <VALUE>  : Remove an entry from a semicolon-separated variable.
-                   env [-t <scope>] load <file>            : Load variables from a .env file.
-                   env [-t <scope>] export <file>          : Export variables to a .env file.
+                   env [-t <scope>] -get <NAME>             : Get a variable's value.
+                   env [-t <scope>] -set <NAME> <VALUE>     : Set (overwrite) a variable.
+                   env [-t <scope>] -del <NAME>             : Delete a variable.
+                   env [-t <scope>] -addval <NAME> <VALUE>  : Append an entry to a semicolon-separated variable (e.g. PATH).
+                   env [-t <scope>] -delval <NAME> <VALUE>  : Remove an entry from a semicolon-separated variable.
+                   env [-t <scope>] -load <file>            : Load variables from a .env file.
+                   env [-t <scope>] -export <file>          : Export variables to a .env file.
                    Note: 'system' scope requires elevated (Administrator) privileges to write.
-                   Example: env -t user addval PATH C:\MyTool\bin
-                   Example: env -t system get PATH
+                   Example: env -t user -addval PATH C:\MyTool\bin
+                   Example: env -t system -get PATH
     watch     -- Re-run a command at a fixed interval and refresh its output. Use -h for additional help.
                    watch -n <seconds> <command>  : Run command every N seconds (default: 2).
                    watch -c <command>            : Clear screen between runs.
                    Press Q or Esc to quit.
                    Example: watch -n 5 "plist"
     note      -- Persistent terminal notepad. Use -h for additional help.
-                   note add <text>   : Add a new note.
-                   note list         : List all saved notes with index.
-                   note del <index>  : Delete note at given index.
-                   note clear        : Delete all notes.
-                   Example: note add Remember to update the config
+                   note -add <text>   : Add a new note.
+                   note -list         : List all saved notes with index.
+                   note -del <index>  : Delete note at given index.
+                   note -clear        : Delete all notes.
+                   Example: note -add Remember to update the config
     fsmon     -- Real-time file system monitor. Use -h for additional help.
                    fsmon [path]                    : Monitor the current (or given) directory for changes.
                    fsmon -r [path]                 : Monitor recursively including all sub-directories.
@@ -325,13 +325,13 @@ Example:
                    ctx del  <name>   : Delete a saved context.
                    Example: ctx save myproject
     chain     -- Create and run named command chains. Use -h for additional help.
-                   chain create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
-                   chain run    <name>                       : Execute all commands in the chain sequentially.
-                   chain add    <name> <command>             : Append a command to an existing chain.
-                   chain show   <name>                       : Display commands in a chain.
-                   chain list                                : List all saved chains.
-                   chain del    <name>                       : Delete a chain.
-                   Example: chain create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build".
+                   chain -create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
+                   chain -run    <name>                       : Execute all commands in the chain sequentially.
+                   chain -add    <name> <command>             : Append a command to an existing chain.
+                   chain -show   <name>                       : Display commands in a chain.
+                   chain -list                                : List all saved chains.
+                   chain -del    <name>                       : Delete a chain.
+                   Example: chain -create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build".
     uninstall -- Uninstall installed applications. Use -h for additional help.
                    uninstall -list                  : List installed applications.
                    uninstall -list <filter>         : List installed applications matching filter text.
