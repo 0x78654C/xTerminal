@@ -30,6 +30,8 @@ namespace Core.Commands
             if (suggestions.Length == 1)
             {
                 addedCompletion = prefix + suggestions[0];
+                if(addedCompletion.EndsWith("\\"))
+                    addedCompletion = addedCompletion.Substring(0, addedCompletion.Length - 1);
                 return;
             }
 
