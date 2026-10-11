@@ -437,7 +437,7 @@ namespace Core
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "hash", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "fsmon", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "xt", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
-                    AutoSuggestionCommands.FileDirSuggestion(candidate, "xte", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "xte", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "snap", currentDirectory, GlobalVariables.TypeSuggestions.Directory, ref outCompletion);
                     var aliasCommands = AliasCommands(GlobalVariables.aliasFile);
 
