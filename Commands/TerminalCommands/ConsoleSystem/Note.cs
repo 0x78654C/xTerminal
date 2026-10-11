@@ -25,16 +25,16 @@ namespace Commands.TerminalCommands.ConsoleSystem
             new() { WriteIndented = true };
 
         private static readonly string s_helpMessage = @"Usage of note command:
-    note add ""<text>""  : Add a new note.
-    note list           : List all saved notes.
-    note del <id>       : Delete a note by its ID.
-    note clear          : Delete all notes.
+    note -add ""<text>""  : Add a new note.
+    note -list           : List all saved notes.
+    note -del <id>       : Delete a note by its ID.
+    note -clear          : Delete all notes.
     note -h             : Display this help message.
 
 Examples:
-    note add ""fix the login bug before Friday""
-    note list
-    note del 2
+    note -add ""fix the login bug before Friday""
+    note -list
+    note -del 2
 ";
 
         public void Execute(string args)
@@ -51,13 +51,13 @@ Examples:
 
                 switch (sub)
                 {
-                    case "add":
+                    case "-add":
                         AddNote(param);
                         break;
-                    case "list":
+                    case "-list":
                         ListNotes();
                         break;
-                    case "del":
+                    case "-del":
                         if (int.TryParse(param, out int id))
                             DeleteNote(id);
                         else
@@ -66,7 +66,7 @@ Examples:
                             GlobalVariables.isErrorCommand = true;
                         }
                         break;
-                    case "clear":
+                    case "-clear":
                         ClearNotes();
                         break;
                     default:
@@ -91,6 +91,10 @@ Examples:
             public string CreatedAt { get; set; }
         }
 
+        /// <summary>
+        /// Load notes.
+        /// </summary>
+        /// <returns></returns>
         private static List<NoteEntry> Load()
         {
             if (!File.Exists(s_noteFile)) return new();
@@ -98,11 +102,19 @@ Examples:
                        File.ReadAllText(s_noteFile)) ?? new();
         }
 
+        /// <summary>
+        /// Save notes.
+        /// </summary>
+        /// <param name="notes"></param>
         private static void Save(List<NoteEntry> notes) =>
             File.WriteAllText(s_noteFile, JsonSerializer.Serialize(notes, s_jsonOpts));
 
         // ── Operations ────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Add a note.
+        /// </summary>
+        /// <param name="text"></param>
         private static void AddNote(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -122,6 +134,9 @@ Examples:
             FileSystem.SuccessWriteLine($"Note #{nextId} added.");
         }
 
+        /// <summary>
+        /// List notes.
+        /// </summary>
         private static void ListNotes()
         {
             var notes = Load();
@@ -141,6 +156,10 @@ Examples:
                     notes.Select(n => $"[{n.Id}] {n.CreatedAt}  {n.Text}"));
         }
 
+        /// <summary>
+        /// Delete notes.
+        /// </summary>
+        /// <param name="id"></param>
         private static void DeleteNote(int id)
         {
             var notes  = Load();
@@ -155,6 +174,9 @@ Examples:
             FileSystem.SuccessWriteLine($"Note #{id} deleted.");
         }
 
+        /// <summary>
+        /// Clear notes.
+        /// </summary>
         private static void ClearNotes()
         {
             Save(new List<NoteEntry>());
