@@ -2,14 +2,12 @@
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Windows.Forms;
-using System.Collections.Generic;
 
 namespace Core.Commands
 {
     [SupportedOSPlatform("Windows")]
     public class AutoSuggestionCommands
     {
-        private static List<string> s_listParamsSuggested = new();
         /// <summary>
         /// Output sugestion for a file or directory name in current directory.
         /// </summary>
@@ -48,37 +46,25 @@ namespace Core.Commands
         }
 
         /// <summary>
-        /// Autocomplete command parameters.
+        /// Get the command parameters that match the current argument prefix.
         /// </summary>
-        /// <param name="consoleInput"></param>
-        public static void CommandSuggestion(string consoleInput,string lastParam, out bool isComplete)
+        /// <param name="consoleInput">Input from the console.</param>
+        /// <param name="lastParam">Argument prefix to complete.</param>
+        public static string[] CommandSuggestion(string consoleInput, string lastParam)
         {
-            isComplete = false;
-            if (string.IsNullOrEmpty(consoleInput))
-                return;
+            if (string.IsNullOrWhiteSpace(consoleInput) || string.IsNullOrWhiteSpace(lastParam))
+                return Array.Empty<string>();
 
-            var splitConsoleInput = consoleInput.Split(" ");
-     
-            var command = splitConsoleInput[0];
-            if (lastParam.StartsWith("-"))
-            {
-                var listParams = GlobalVariables.masterParamCommands;
-                foreach (var paramList in listParams)
-                {
-                    if (paramList.Key == command)
-                    {
-                        var isAlreadySuggested = s_listParamsSuggested.Any(p => p == lastParam);
-                        var suggest = paramList.Value.Where(p => p.StartsWith(lastParam) && !isAlreadySuggested).First();
-                        isComplete = true;
-                        s_listParamsSuggested.Add(suggest);
-                        Console.SetCursorPosition(0, consoleInput.Length - lastParam.Length);
-                        SendKeys.SendWait($"{command} {suggest}");
-                        if (s_listParamsSuggested.Count == paramList.Value.Count)
-                            s_listParamsSuggested.Clear();
-                        break; 
-                    }
-                }
-            }
+            var splitConsoleInput = consoleInput.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (splitConsoleInput.Length < 2 ||
+                !GlobalVariables.masterParamCommands.TryGetValue(splitConsoleInput[0], out var parameters))
+                return Array.Empty<string>();
+
+            // The first entry is the command itself, not an argument.
+            return parameters.Skip(1)
+                .Where(parameter => parameter.StartsWith(lastParam, StringComparison.Ordinal))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
         }
     }
 }
