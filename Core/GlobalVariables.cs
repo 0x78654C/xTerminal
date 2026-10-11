@@ -135,7 +135,7 @@ namespace Core
         public static List<string> mkdir_p = new List<string>() { "mkdir", "-h" };
         public static List<string> mkfile_p = new List<string>() { "mkfile", "-h" };
         public static List<string> mv_p = new List<string>() { "mv", "-h", "-o" };
-        public static List<string> note_p = new List<string>() { "note", "-h", "add", "list", "del", "clear" };
+        public static List<string> note_p = new List<string>() { "note", "-h", "-add", "-list", "-del", "-clear" };
         public static List<string> nt_p = new List<string>() { "nt", "-h", "-u" };
         public static List<string> odir_p = new List<string>() { "odir", "-h" };
         public static List<string> pcinfo_p = new List<string>() { "pcinfo" };

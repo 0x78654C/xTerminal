@@ -46,7 +46,7 @@ public class SecurityRegressionTests
         Assert.DoesNotContain(firstSecret, sanitized);
         if (secondSecret != null)
             Assert.DoesNotContain(secondSecret, sanitized);
-        Assert.Contains("[REDACTED]", sanitized);
+        Assert.Contains("[SECRET]", sanitized);
     }
 
     [Fact]

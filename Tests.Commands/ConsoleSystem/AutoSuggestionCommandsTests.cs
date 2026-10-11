@@ -27,7 +27,7 @@ public sealed class AutoSuggestionCommandsTests : IDisposable
     [InlineData("ls -cf", "-cf", "-cf")]
     [InlineData("wget --n", "--n", "--noping")]
     [InlineData("ctx li", "li", "list")]
-    [InlineData("note a", "a", "add")]
+    [InlineData("note -a", "-a", "-add")]
     [InlineData("  hash   -sha2", "-sha2", "-sha256")]
     public void CommandSuggestion_ReturnsMatchingParameter(string input, string prefix, string expected)
     {
@@ -82,6 +82,7 @@ public sealed class AutoSuggestionCommandsTests : IDisposable
     [Theory]
     [InlineData("wget --n", "wget --noping")]
     [InlineData("ctx li", "ctx list")]
+    [InlineData("note -a", "note -add")]
     [InlineData("hash -sha2", "hash -sha256")]
     public void Tab_SingleMatchRemainsStableOnRepeatedTabs(string input, string expected)
     {
