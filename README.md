@@ -279,27 +279,27 @@ Example:
     env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
                    env                                     : List all variables across Process, User and System sections.
                    env -t <user|system|process>            : List variables for the specified scope only.
-                   env [-t <scope>] get <NAME>             : Get a variable's value.
-                   env [-t <scope>] set <NAME> <VALUE>     : Set (overwrite) a variable.
-                   env [-t <scope>] del <NAME>             : Delete a variable.
-                   env [-t <scope>] addval <NAME> <VALUE>  : Append an entry to a semicolon-separated variable (e.g. PATH).
-                   env [-t <scope>] delval <NAME> <VALUE>  : Remove an entry from a semicolon-separated variable.
-                   env [-t <scope>] load <file>            : Load variables from a .env file.
-                   env [-t <scope>] export <file>          : Export variables to a .env file.
+                   env [-t <scope>] -get <NAME>             : Get a variable's value.
+                   env [-t <scope>] -set <NAME> <VALUE>     : Set (overwrite) a variable.
+                   env [-t <scope>] -del <NAME>             : Delete a variable.
+                   env [-t <scope>] -addval <NAME> <VALUE>  : Append an entry to a semicolon-separated variable (e.g. PATH).
+                   env [-t <scope>] -delval <NAME> <VALUE>  : Remove an entry from a semicolon-separated variable.
+                   env [-t <scope>] -load <file>            : Load variables from a .env file.
+                   env [-t <scope>] -export <file>          : Export variables to a .env file.
                    Note: 'system' scope requires elevated (Administrator) privileges to write.
-                   Example: env -t user addval PATH C:\MyTool\bin
-                   Example: env -t system get PATH
+                   Example: env -t user -addval PATH C:\MyTool\bin
+                   Example: env -t system -get PATH
     watch     -- Re-run a command at a fixed interval and refresh its output. Use -h for additional help.
                    watch -n <seconds> <command>  : Run command every N seconds (default: 2).
                    watch -c <command>            : Clear screen between runs.
                    Press Q or Esc to quit.
                    Example: watch -n 5 "plist"
     note      -- Persistent terminal notepad. Use -h for additional help.
-                   note add <text>   : Add a new note.
-                   note list         : List all saved notes with index.
-                   note del <index>  : Delete note at given index.
-                   note clear        : Delete all notes.
-                   Example: note add Remember to update the config
+                   note -add <text>   : Add a new note.
+                   note -list         : List all saved notes with index.
+                   note -del <index>  : Delete note at given index.
+                   note -clear        : Delete all notes.
+                   Example: note -add Remember to update the config
     fsmon     -- Real-time file system monitor. Use -h for additional help.
                    fsmon [path]                    : Monitor the current (or given) directory for changes.
                    fsmon -r [path]                 : Monitor recursively including all sub-directories.
@@ -325,13 +325,13 @@ Example:
                    ctx del  <name>   : Delete a saved context.
                    Example: ctx save myproject
     chain     -- Create and run named command chains. Use -h for additional help.
-                   chain create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
-                   chain run    <name>                       : Execute all commands in the chain sequentially.
-                   chain add    <name> <command>             : Append a command to an existing chain.
-                   chain show   <name>                       : Display commands in a chain.
-                   chain list                                : List all saved chains.
-                   chain del    <name>                       : Delete a chain.
-                   Example: chain create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build".
+                   chain -create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
+                   chain -run    <name>                       : Execute all commands in the chain sequentially.
+                   chain -add    <name> <command>             : Append a command to an existing chain.
+                   chain -show   <name>                       : Display commands in a chain.
+                   chain -list                                : List all saved chains.
+                   chain -del    <name>                       : Delete a chain.
+                   Example: chain -create deploy "ctx save pre ; cd src ; bench -n 3 dotnet build".
     uninstall -- Uninstall installed applications. Use -h for additional help.
                    uninstall -list                  : List installed applications.
                    uninstall -list <filter>         : List installed applications matching filter text.
@@ -616,6 +616,9 @@ Example:
                      end
     xte       -- Built-in Vim-style TermXT code editor with syntax highlighting.
 	                xte <script.xt>             : Open a TermXT script.
+	                xte <solution.sln|.slnx>    : Open a C# solution (Program.cs or the first source file).
+	                xte <project.csproj>        : Open a C# project; e opens the explorer at its directory.
+	                xte -raw <file>             : Edit the file itself as plain text, including .sln, .slnx, and .csproj files.
 	                xte -new <script.xt>        : Create a template and open it.
 	                Detects disk-side changes when returning to the editor; use :e! to reload or :w! to overwrite.
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
@@ -623,6 +626,10 @@ Example:
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
 	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
+	                Opening a .cs file automatically finds its owning project, including linked files listed by a nearby solution. Completion and diagnostics include other project classes, project references, implicit/global usings, compile exclusions, and restored NuGet compile assemblies, using the unsaved buffer for the active file.
+	                Use :e <path> to open another file, .csproj, .sln, or .slnx; :project (or :project reload) shows the owning project and refreshes its sources and references. External source changes are also picked up by new completion requests after a short cache interval.
+	                Use :e -raw <path> to edit a solution/project file directly, or :project edit to edit the current solution (when explicitly opened) or owning project. Save with :w as usual; plain-text mode suppresses language diagnostics and completion.
+	                C# project discovery reads ordinary SDK/legacy project items in Debug/AnyCPU and uses the first target framework. It does not execute custom MSBuild imports, targets, or source generators. Restore project packages with dotnet restore; use :project afterwards. The :nuget commands below manage source-file package directives, not .csproj PackageReference items.
 	                In Rust buffers (.rs or -syntax rust), suggestions open after two characters, '::', or '.'.
 	                Rust suggests keywords, macros, names from the current file, local fields/methods, and common standard-library paths/members without installing a Rust toolchain.
 	                With rust-analyzer, dot completion resolves variables, fields, function results, indexed values, and method chains in Cargo projects and standalone .rs files. Save a new standalone file once to enable analysis.

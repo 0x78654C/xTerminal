@@ -30,6 +30,60 @@ namespace Core.SystemTools
 
 
         /// <summary>
+        /// Find paths without changing the console or sending keyboard input.
+        /// </summary>
+        public static string[] GetFileDirSuggestions(string pathPrefix, string currentDirectory, GlobalVariables.TypeSuggestions typeSuggestions)
+        {
+            try
+            {
+                int separator = pathPrefix.LastIndexOfAny(new[] { '\\', '/' });
+                string parent = pathPrefix.Substring(0, separator + 1);
+                string name = pathPrefix.Substring(separator + 1);
+                string directory = Path.GetFullPath(Path.Combine(currentDirectory, parent));
+                char directorySeparator = separator < 0 ? Path.DirectorySeparatorChar : pathPrefix[separator];
+                var directories = typeSuggestions == GlobalVariables.TypeSuggestions.File
+                    ? Enumerable.Empty<string>()
+                    : Directory.EnumerateDirectories(directory)
+                        .Select(path => Path.GetFileName(path))
+                        .Where(path => path.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+                        .Select(path => parent + path + directorySeparator);
+                var files = typeSuggestions == GlobalVariables.TypeSuggestions.Directory
+                    ? Enumerable.Empty<string>()
+                    : Directory.EnumerateFiles(directory)
+                        .Select(path => Path.GetFileName(path))
+                        .Where(path => path.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+                        .Select(path => parent + path);
+
+                return directories.OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+                    .Concat(files.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+                    .ToArray();
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException ||
+                ex is ArgumentException || ex is NotSupportedException)
+            {
+                return Array.Empty<string>();
+            }
+        }
+
+        public static void DisplayFileDirSuggestions(string[] suggestions)
+        {
+            Console.WriteLine();
+            for (int i = 0; i < suggestions.Length; i++)
+            {
+                string suggestion = suggestions[i];
+                string display = suggestion.PadRight(PadLenghtCheck(suggestion.Length), ' ');
+                if (suggestion.TrimEnd('"').EndsWith('\\') || suggestion.TrimEnd('"').EndsWith('/'))
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, display);
+                else
+                    Console.Write(display);
+
+                if ((i + 1) % 5 == 0)
+                    Console.WriteLine();
+            }
+            SendKeys.SendWait("{ENTER}");
+        }
+
+        /// <summary>
         /// Directories sugestion by first letters.
         /// </summary>
         /// <param name="startChar">Start letters.</param>

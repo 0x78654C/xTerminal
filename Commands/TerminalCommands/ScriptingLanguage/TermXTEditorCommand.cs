@@ -16,6 +16,9 @@ namespace Commands.TerminalCommands.ScriptingLanguage
         private static readonly string s_helpMessage = @"Usage of xte command:
     xte                         : Open an untitled buffer in the current directory.
     xte <file>                  : Open a file in the built-in Vim-style editor.
+    xte <solution.sln|.slnx>    : Open a C# solution and its first source file (Program.cs preferred).
+    xte <project.csproj>        : Open a C# project with project-aware IntelliSense.
+    xte -raw <file>             : Edit the file itself as plain text, including .sln/.slnx/.csproj.
     xte -new <file>             : Create a template and open it.
     xte -syntax xt <file>       : Use TermXT script syntax highlighting.
     xte -syntax cs <file>       : Use C# syntax highlighting.
@@ -34,13 +37,16 @@ Inside the editor:
     Search      : Enter finds, empty Enter repeats the previous search.
     Insert mode : TermXT/C#/Rust IntelliSense opens automatically; Ctrl+Space opens suggestions, arrows select, Enter/Tab accepts, Esc closes suggestions or returns to normal mode.
                   TermXT suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
+                  C# files automatically load their owning project, custom classes, project references, and restored package assemblies.
                   Rust suggests keywords, macros, current-file names, and common standard-library paths/members after :: or .; no Rust toolchain required.
                   With rust-analyzer, dot completion resolves variables, call results, and chains in Cargo projects and saved standalone .rs files.
                   Cargo dependencies, imported types, fields, and trait methods are resolved from Cargo.toml and the unsaved code.
                   Setup: rustup component add rust-analyzer rust-src. xte discovers PATH/rustup/VS Code tools; XTE_RUST_ANALYZER selects a server.
                   Ctrl+D duplicates line, Ctrl+X cuts selection/line, Ctrl+Z undo, Ctrl+Y redo.
     Commands    : :e explorer, :w save, :w! overwrite changed disk file, :e! reload, :q quit, :q! quit without saving, :wq save and quit.
-                  :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py switch highlight.
+                  :e <path> opens a file/project/solution; :project shows and reloads the current C# project context.
+                  :e -raw <path> edits the file itself; :project edit edits the current solution or project file.
+                  :42 or :goto 42 go to line, :syntax xt|cs|c|cpp|rust|js|py|text switch highlight.
                   :errors/:warnings show diagnostics, :next-error/:prev-error and :next-warning/:prev-warning jump between .xt/.cs diagnostics.
                   :nuget <package> adds latest stable. :nuget list packages, add <package> [version], remove, and restore manage C# package usage.
 ";
@@ -130,6 +136,11 @@ if __name__ == ""__main__"":
 
         internal static void OpenFromArguments(string rest, string currentDir)
         {
+            CreateEditorFromArguments(rest, currentDir).Run();
+        }
+
+        internal static TermXTEditor CreateEditorFromArguments(string rest, string currentDir)
+        {
             EditorArguments options = ParseEditorArguments(rest);
             string targetArg = options.Target;
             TermXTEditorSyntax syntax = options.SyntaxSpecified
@@ -137,11 +148,18 @@ if __name__ == ""__main__"":
                 : TermXTEditorSyntax.TermXt;
 
             if (string.IsNullOrWhiteSpace(targetArg))
-                targetArg = DefaultUntitledFileName(syntax);
+                targetArg = options.OpenAsText ? "untitled.txt" : DefaultUntitledFileName(syntax);
 
             string target = FileSystem.SanitizePath(TrimMatchingQuotes(targetArg), currentDir);
             if (!options.SyntaxSpecified)
                 syntax = TermXTEditor.DetectSyntaxFromPath(target);
+            if (options.OpenAsText)
+                syntax = TermXTEditorSyntax.PlainText;
+
+            string extension = Path.GetExtension(target);
+            if (options.CreateTemplate && (extension.Equals(".sln", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase) || extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("-new creates source files. Open an existing C# project or solution without -new.");
 
             if (options.CreateTemplate && !File.Exists(target))
             {
@@ -154,14 +172,15 @@ if __name__ == ""__main__"":
                     TemplateForSyntax(syntax).Replace("{DATE}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
             }
 
-            var editor = new TermXTEditor(target, syntax);
-            editor.Run();
+            return new TermXTEditor(target, syntax, options.OpenAsText);
         }
 
         private static string DefaultUntitledFileName(TermXTEditorSyntax syntax)
         {
             switch (syntax)
             {
+                case TermXTEditorSyntax.PlainText:
+                    return "untitled.txt";
                 case TermXTEditorSyntax.CSharp:
                     return "untitled.cs";
                 case TermXTEditorSyntax.C:
@@ -195,10 +214,16 @@ if __name__ == ""__main__"":
                     continue;
                 }
 
+                if (string.Equals(token, "-raw", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.OpenAsText = true;
+                    continue;
+                }
+
                 if (IsSyntaxOption(token))
                 {
                     if (i + 1 >= tokens.Count)
-                        throw new ArgumentException("Missing syntax value. Use xt, cs, c, cpp, rust, js, or py.");
+                        throw new ArgumentException("Missing syntax value. Use xt, cs, c, cpp, rust, js, py, or text.");
 
                     options.SetSyntax(ParseSyntax(tokens[++i]));
                     continue;
@@ -241,13 +266,15 @@ if __name__ == ""__main__"":
             if (TermXTEditor.TryParseSyntax(value, out TermXTEditorSyntax syntax))
                 return syntax;
 
-            throw new ArgumentException("Unknown syntax '" + value + "'. Use xt, cs, c, cpp, rust, js, or py.");
+            throw new ArgumentException("Unknown syntax '" + value + "'. Use xt, cs, c, cpp, rust, js, py, or text.");
         }
 
         private static string TemplateForSyntax(TermXTEditorSyntax syntax)
         {
             switch (syntax)
             {
+                case TermXTEditorSyntax.PlainText:
+                    return string.Empty;
                 case TermXTEditorSyntax.CSharp:
                     return s_csharpTemplate;
                 case TermXTEditorSyntax.C:
@@ -316,6 +343,7 @@ if __name__ == ""__main__"":
         private sealed class EditorArguments
         {
             public bool CreateTemplate { get; set; }
+            public bool OpenAsText { get; set; }
             public bool SyntaxSpecified { get; private set; }
             public TermXTEditorSyntax Syntax { get; private set; }
             public string Target { get; set; }
