@@ -622,8 +622,8 @@ namespace Core.DirFiles
         private int _lastWidth = -1;
         private int _lastHeight = -1;
         private bool _pendingDelete;
-        private string _commandText = string.Empty;
-        private readonly SearchTextInput _searchInput = new SearchTextInput();
+        private readonly PromptTextInput _commandInput = new PromptTextInput();
+        private readonly PromptTextInput _searchInput = new PromptTextInput();
         private string _lastSearch = string.Empty;
         private string _status = "NORMAL";
         private DateTime _statusUntil = DateTime.MinValue;
@@ -1903,7 +1903,8 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Command)
             {
-                _frame.Append(F(CSearch)).Append(":").Append(Clip(_commandText, width - 1)).Append(Reset).Append(ClearEol);
+                _frame.Append(F(CSearch)).Append(":")
+                    .Append(_commandInput.VisibleText(Math.Max(1, width - 1), out _)).Append(Reset).Append(ClearEol);
                 return;
             }
 
@@ -1941,8 +1942,10 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Command)
             {
-                y = Math.Max(0, Console.WindowHeight - 1);
-                x = Math.Min(Console.WindowWidth - 1, _commandText.Length + 1);
+                (int width, int height) = WindowSize();
+                y = Math.Max(0, height - 1);
+                _commandInput.VisibleText(Math.Max(1, width - 1), out int commandColumn);
+                x = Math.Min(width - 1, commandColumn + 1);
             }
             else if (_mode == Mode.Search)
             {
@@ -1975,7 +1978,10 @@ namespace Core.DirFiles
 
         private void HandleKey(ConsoleKeyInfo key)
         {
-            _keepCursorInView = true;
+            // Opening and editing a command must preserve a viewport scrolled
+            // away from the document caret, including while typing :e!.
+            if (_mode != Mode.Command && !(_mode == Mode.Normal && key.KeyChar == ':'))
+                _keepCursorInView = true;
 
             if (_messageDetailsActive)
             {
@@ -1989,13 +1995,14 @@ namespace Core.DirFiles
                 return;
             }
 
-            // Search keys belong to the prompt. Document shortcuts must not move
-            // or modify the source while the user is editing the search term.
-            if (_mode == Mode.Search)
+            // Prompt keys must not trigger document navigation or editing shortcuts.
+            if (_mode == Mode.Search || _mode == Mode.Command)
             {
                 if (key.Key == ConsoleKey.V && (key.Modifiers & ConsoleModifiers.Control) != 0 &&
                     (key.Modifiers & ConsoleModifiers.Alt) == 0)
                     PasteFromClipboard();
+                else if (_mode == Mode.Command)
+                    HandleCommandKey(key);
                 else
                     HandleSearchKey(key);
                 return;
@@ -2099,9 +2106,6 @@ namespace Core.DirFiles
             {
                 case Mode.Insert:
                     HandleInsertKey(key);
-                    break;
-                case Mode.Command:
-                    HandleCommandKey(key);
                     break;
                 default:
                     HandleNormalKey(key);
@@ -2458,7 +2462,7 @@ namespace Core.DirFiles
                     break;
                 case ':':
                     _mode = Mode.Command;
-                    _commandText = string.Empty;
+                    _commandInput.Clear();
                     break;
                 case '/':
                     _mode = Mode.Search;
@@ -2557,26 +2561,25 @@ namespace Core.DirFiles
 
         private void HandleCommandKey(ConsoleKeyInfo key)
         {
+            if (_commandInput.HandleEditingKey(key)) return;
             switch (key.Key)
             {
                 case ConsoleKey.Escape:
                     _mode = Mode.Normal;
-                    _commandText = string.Empty;
+                    _commandInput.Clear();
                     Status("NORMAL");
                     break;
                 case ConsoleKey.Enter:
-                    ExecuteEditorCommand(_commandText.Trim());
-                    _commandText = string.Empty;
+                    _keepCursorInView = true;
+                    ExecuteEditorCommand(_commandInput.Text.Trim());
+                    _commandInput.Clear();
                     if (_running && _mode == Mode.Command)
                         _mode = Mode.Normal;
                     break;
-                case ConsoleKey.Backspace:
-                    if (_commandText.Length > 0)
-                        _commandText = _commandText.Substring(0, _commandText.Length - 1);
-                    break;
                 default:
-                    if (TryGetInputText(key, out string commandText))
-                        TryAppendLimitedText(ref _commandText, commandText, MaxCommandTextLength, "Command");
+                    if (((key.Modifiers & ConsoleModifiers.Control) == 0 || (key.Modifiers & ConsoleModifiers.Alt) != 0) &&
+                        TryGetInputText(key, out string commandText))
+                        InsertCommandText(commandText);
                     break;
             }
         }
@@ -4875,9 +4878,21 @@ namespace Core.DirFiles
 
         private bool TryReloadFile()
         {
+            int cursorLine = _cursorLine;
+            int cursorCol = _cursorCol;
+            int verticalCursorCol = _verticalCursorCol;
+            int scrollTop = _scrollTop;
+            int scrollLeft = _scrollLeft;
+            _keepCursorInView = false;
             try
             {
                 LoadFile();
+                _cursorLine = cursorLine;
+                _cursorCol = cursorCol;
+                _verticalCursorCol = verticalCursorCol;
+                _scrollTop = scrollTop;
+                _scrollLeft = scrollLeft;
+                ClampCursor();
                 Status("Reloaded");
                 return true;
             }
@@ -6433,7 +6448,7 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Command)
             {
-                TryAppendLimitedText(ref _commandText, ToSingleLine(text), MaxCommandTextLength, "Command");
+                InsertCommandText(ToSingleLine(text));
                 return;
             }
 
@@ -6466,23 +6481,6 @@ namespace Core.DirFiles
             }
 
             Status("Pasted");
-        }
-
-        private bool TryAppendLimitedText(ref string target, string text, int maxLength, string label)
-        {
-            text = EscapeText(text);
-            if (string.IsNullOrEmpty(text))
-                return true;
-
-            if (target.Length + text.Length > maxLength)
-            {
-                Status(label + " text limit reached", error: true);
-                BottomStatus(label + " text is limited to " + maxLength + " characters.", error: true);
-                return false;
-            }
-
-            target += text;
-            return true;
         }
 
         private bool TryValidatePasteText(string text, out string error)
@@ -11864,7 +11862,7 @@ namespace Core.DirFiles
 
             private static string ReadSearchTerm(int left, int top, int width)
             {
-                var term = new SearchTextInput();
+                var term = new PromptTextInput();
                 int inputWidth = Math.Max(1, width);
 
                 while (true)
@@ -11889,7 +11887,7 @@ namespace Core.DirFiles
                 }
             }
 
-            private static void RenderSearchTermInput(SearchTextInput term, int left, int top, int width)
+            private static void RenderSearchTermInput(PromptTextInput term, int left, int top, int width)
             {
                 string visible = term.VisibleText(width, out int cursorOffset);
                 Console.Write(At(left, top) + visible.PadRight(width));

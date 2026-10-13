@@ -4,6 +4,13 @@ namespace Core.DirFiles
 {
     public sealed partial class TermXTEditor
     {
+        private void InsertCommandText(string text)
+        {
+            if (_commandInput.TryInsert(text, MaxCommandTextLength)) return;
+            Status("Command text limit reached", error: true);
+            BottomStatus("Command text is limited to " + MaxCommandTextLength + " characters.", error: true);
+        }
+
         private void InsertSearchText(string text)
         {
             if (_searchInput.TryInsert(text, MaxSearchTextLength)) return;
@@ -11,9 +18,9 @@ namespace Core.DirFiles
             BottomStatus("Search text is limited to " + MaxSearchTextLength + " characters.", error: true);
         }
 
-        // Both the document search and file-search prompts edit at a caret and
+        // Command, document search, and file-search prompts edit at a caret and
         // scroll their text horizontally to keep that caret visible.
-        private sealed class SearchTextInput
+        private sealed class PromptTextInput
         {
             public string Text { get; private set; } = string.Empty;
             public int Cursor { get; private set; }
