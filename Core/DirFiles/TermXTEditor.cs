@@ -862,6 +862,7 @@ namespace Core.DirFiles
             {
                 CancelCSharpDiagnostics();
                 StopRustAnalyzer();
+                StopClangd();
                 try
                 {
                     Console.Write(Reset + ShowCursor + NormalScreen);
@@ -924,6 +925,9 @@ namespace Core.DirFiles
                     return false;
 
                 if (CheckRustCompletionOnIdle())
+                    return false;
+
+                if (CheckCppCompletionOnIdle())
                     return false;
 
                 Thread.Sleep(30);
@@ -1458,6 +1462,8 @@ namespace Core.DirFiles
         {
             _rustDocumentVersion++;
             CancelRustProjectCompletion();
+            _cppDocumentVersion++;
+            CancelCppCompletion();
             _wrapCacheDirty = true;
             InvalidateDiagnosticsCache(delayCSharpSemanticDiagnostics);
             InvalidateSyntaxLineStateCaches();
@@ -2038,7 +2044,9 @@ namespace Core.DirFiles
             {
                 if (key.Key == ConsoleKey.Spacebar && _mode == Mode.Insert)
                 {
-                    if (_syntax == TermXTEditorSyntax.Rust)
+                    if (IsCppCompletionContext())
+                        RefreshCppCompletion(manual: true);
+                    else if (_syntax == TermXTEditorSyntax.Rust)
                         RefreshRustCompletion(manual: true);
                     else if (IsTermXtCompletionContext())
                         RefreshTermXtCompletion(manual: true);
@@ -2675,6 +2683,12 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterText(string text)
         {
+            if (IsCppCompletionContext())
+            {
+                RefreshCppCompletion(manual: false);
+                return;
+            }
+
             if (_syntax == TermXTEditorSyntax.Rust)
             {
                 RefreshRustCompletion(manual: false);
@@ -2702,6 +2716,12 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterEdit()
         {
+            if (IsCppCompletionContext())
+            {
+                RefreshCppCompletion(manual: false);
+                return;
+            }
+
             if (_syntax == TermXTEditorSyntax.Rust)
             {
                 RefreshRustCompletion(manual: false);
@@ -3170,13 +3190,10 @@ namespace Core.DirFiles
 
         private bool IsCSharpCompletionContext()
         {
-            if (_syntax == TermXTEditorSyntax.Rust || _syntax == TermXTEditorSyntax.PlainText)
-                return false;
-
-            if (_syntax == TermXTEditorSyntax.CSharp)
-                return true;
-
-            return LooksLikeCSharpCompletionBuffer();
+            // Only TermXT supports embedded C#. C/C++ also use struct, class,
+            // namespace and using, so those words cannot override their syntax.
+            return _syntax == TermXTEditorSyntax.CSharp ||
+                (_syntax == TermXTEditorSyntax.TermXt && LooksLikeCSharpCompletionBuffer());
         }
 
         private bool LooksLikeCSharpCompletionBuffer()
@@ -3420,10 +3437,15 @@ namespace Core.DirFiles
             CompletionItem item = _completionItems[_completionSelectedIndex];
             string replacement = item.InsertionText;
 
-            if (_syntax == TermXTEditorSyntax.Rust && item.RustEditStart >= 0)
+            if (item.TextEditStart >= 0)
             {
-                start = item.RustEditStart;
-                end = item.RustEditEnd;
+                start = item.TextEditStart;
+                end = item.TextEditEnd;
+            }
+            else if (IsCppCompletionContext())
+            {
+                while (end < line.Length && IsCSharpWordPart(line[end]))
+                    end++;
             }
             else if (_syntax == TermXTEditorSyntax.Rust)
             {
@@ -3468,6 +3490,8 @@ namespace Core.DirFiles
         private void DismissCompletion()
         {
             CancelRustProjectCompletion();
+            CancelCppCompletion();
+            _cppCompletionManual = false;
             _rustCompletionManual = false;
             _termXtCompletionKind = TermXtCompletionKind.None;
             _termXtCompletionManual = false;
@@ -5748,6 +5772,7 @@ namespace Core.DirFiles
             }
 
             StopRustAnalyzer();
+            StopClangd();
             _syntax = syntax;
             DismissCompletion();
             InvalidateSyntaxStateCache();
@@ -5876,6 +5901,7 @@ namespace Core.DirFiles
             try
             {
                 StopRustAnalyzer();
+                StopClangd();
                 _path = ResolveEditorOpenPath(fullPath, openAsText);
                 _syntax = openAsText ? TermXTEditorSyntax.PlainText : DetectSyntaxFromPath(_path);
                 LoadFile();
@@ -12458,8 +12484,8 @@ namespace Core.DirFiles
 
             public string Label { get; private set; }
             public string FilterText { get; set; }
-            public int RustEditStart { get; set; } = -1;
-            public int RustEditEnd { get; set; } = -1;
+            public int TextEditStart { get; set; } = -1;
+            public int TextEditEnd { get; set; } = -1;
             public string InsertionText { get; private set; }
             public string Kind { get; private set; }
             public string Detail { get; private set; }
