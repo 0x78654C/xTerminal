@@ -318,12 +318,12 @@ Example:
                    bench -n <count> <command>  : Run command N times and show min/avg/max/total timings.
                    Example: bench -n 10 "ls -s"
     ctx       -- Save and restore named terminal contexts (working directory + env vars). Use -h for additional help.
-                   ctx save <name>   : Save current directory and environment snapshot.
-                   ctx load <name>   : Restore a saved context.
-                   ctx list          : List all saved contexts.
-                   ctx show <name>   : Display a context without applying it.
-                   ctx del  <name>   : Delete a saved context.
-                   Example: ctx save myproject
+                   ctx -save <name>   : Save current directory and environment snapshot.
+                   ctx -load <name>   : Restore a saved context.
+                   ctx -list          : List all saved contexts.
+                   ctx -show <name>   : Display a context without applying it.
+                   ctx -del  <name>   : Delete a saved context.
+                   Example: ctx -save myproject
     chain     -- Create and run named command chains. Use -h for additional help.
                    chain -create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
                    chain -run    <name>                       : Execute all commands in the chain sequentially.

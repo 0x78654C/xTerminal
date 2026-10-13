@@ -27,18 +27,18 @@ namespace Commands.TerminalCommands.ConsoleSystem
             new() { WriteIndented = true };
 
         private static readonly string s_helpMessage = @"Usage of ctx command:
-    ctx save <name>   : Save current directory and env vars as a named context.
-    ctx load <name>   : Restore a saved context (cwd + env vars).
-    ctx list          : List all saved contexts.
-    ctx show <name>   : Show details of a saved context.
-    ctx del  <name>   : Delete a saved context.
+    ctx -save <name>   : Save current directory and env vars as a named context.
+    ctx -load <name>   : Restore a saved context (cwd + env vars).
+    ctx -list          : List all saved contexts.
+    ctx -show <name>   : Show details of a saved context.
+    ctx -del  <name>   : Delete a saved context.
     ctx -h            : Display this help message.
 
 Examples:
-    ctx save work
-    ctx save homelab
-    ctx list
-    ctx load work
+    ctx -save work
+    ctx -save homelab
+    ctx -list
+    ctx -load work
 ";
 
         public void Execute(string args)
@@ -55,11 +55,11 @@ Examples:
 
                 switch (sub)
                 {
-                    case "save": SaveCtx(param);   break;
-                    case "load": LoadCtx(param);   break;
-                    case "list": ListCtx();        break;
-                    case "show": ShowCtx(param);   break;
-                    case "del":  DeleteCtx(param); break;
+                    case "-save": SaveCtx(param);   break;
+                    case "-load": LoadCtx(param);   break;
+                    case "-list": ListCtx();        break;
+                    case "-show": ShowCtx(param);   break;
+                    case "-del":  DeleteCtx(param); break;
                     default:
                         FileSystem.ErrorWriteLine($"Unknown sub-command '{sub}'. Use 'ctx -h' for help.");
                         GlobalVariables.isErrorCommand = true;
@@ -97,7 +97,7 @@ Examples:
 
         private static void SaveCtx(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx save <name>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx -save <name>"); return; }
 
             string cwd     = File.ReadAllText(GlobalVariables.currentDirectory);
             var    envVars = new Dictionary<string, string>();
@@ -118,7 +118,7 @@ Examples:
 
         private static void LoadCtx(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx load <name>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx -load <name>"); return; }
             var data = Load();
             if (!data.TryGetValue(name, out var ctx))
             {
@@ -150,7 +150,7 @@ Examples:
 
         private static void ShowCtx(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx show <name>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx -show <name>"); return; }
             var data = Load();
             if (!data.TryGetValue(name, out var ctx))
             {
@@ -243,7 +243,7 @@ Examples:
 
         private static void DeleteCtx(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx del <name>"); return; }
+            if (string.IsNullOrWhiteSpace(name)) { FileSystem.ErrorWriteLine("Usage: ctx -del <name>"); return; }
             var data = Load();
             if (!data.Remove(name))
             {
