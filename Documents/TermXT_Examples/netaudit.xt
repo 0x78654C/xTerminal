@@ -131,7 +131,7 @@ each host in {targets}
     append {log_file} ""
     append {log_file} "  ── Pinging {host} ──"
     try
-        capture ping_out = ping {host}
+        capture ping_out = ping {host} -t 1
         append {log_file} "{ping_out}"
         if {ping_out} contains Reply
             set reachable_count = eval {reachable_count} + 1
