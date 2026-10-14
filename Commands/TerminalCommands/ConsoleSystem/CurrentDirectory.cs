@@ -104,6 +104,8 @@ namespace Commands.TerminalCommands.ConsoleSystem
                                 dirCssensitive = dirCssensitive.Replace("\\\\", "\\");
                                 dirCssensitive = FileDirManager.GetExactDirectoryName(dirInfo);
                             }
+                            if(!dirCssensitive.EndsWith("\\"))
+                                dirCssensitive = dirCssensitive + "\\";
                             File.WriteAllText(GlobalVariables.currentDirectory, dirCssensitive);
                             return;
                         }
