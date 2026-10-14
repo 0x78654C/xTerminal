@@ -256,10 +256,14 @@ double quotes separates pipeline stages. Quoted pipes remain part of an argument
 Inside `try`, the first failed script operation, command failure flag or thrown
 exception stops that block and enters `catch`. Later pipeline stages also stop
 after a failure. `{error}` is `true` on entry to the handler and
-`{error_message}` describes the failure. If the handler succeeds, execution
-continues after `end` with `{error}` set to `false`. A handler failure propagates
+`{error_message}` describes the failure, including its source line in the form
+`[xt line 7] message`. Line numbers are 1-based, count blank lines and comments,
+and point to the failing statement even inside a function or nested block.
+If the handler succeeds, execution continues after `end` with `{error}` set to
+`false`. A handler failure propagates
 to an enclosing handler. A `try` without a `catch` propagates a failure to an
-enclosing handler, or leaves the error state set when no handler exists.
+enclosing handler, or displays the error and leaves the error state set when no
+handler exists.
 
 Starting a `try` clears the previous error state. Successful commands and file
 operations clear it as well. Simple statements such as `print` do not clear a

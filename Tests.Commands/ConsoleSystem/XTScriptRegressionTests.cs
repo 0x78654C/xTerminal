@@ -147,7 +147,7 @@ public partial class XTScriptTests
     {
         string output = RunScript(CreateScript("try", "try", "call first_missing", "catch",
             "call second_missing", "end", "print wrong", "catch", "print outer:{error_message}", "end"));
-        output.Should().Contain("outer:Function 'second_missing' not found.").And.NotContain("wrong");
+        output.Should().Contain("outer:[xt line 5] Function 'second_missing' not found.").And.NotContain("wrong");
     }
 
     [Fact]
@@ -213,7 +213,7 @@ public partial class XTScriptTests
     {
         string condition = new string('(', 130) + "true" + new string(')', 130);
         RunScript(CreateScript("try", $"if {condition}", "print wrong", "end", "catch",
-            "print {error_message}", "end")).Should().Be("Condition nesting is too deep.");
+            "print {error_message}", "end")).Should().Be("[xt line 2] Condition nesting is too deep.");
     }
 
     [Theory]
