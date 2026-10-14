@@ -318,12 +318,12 @@ Example:
                    bench -n <count> <command>  : Run command N times and show min/avg/max/total timings.
                    Example: bench -n 10 "ls -s"
     ctx       -- Save and restore named terminal contexts (working directory + env vars). Use -h for additional help.
-                   ctx save <name>   : Save current directory and environment snapshot.
-                   ctx load <name>   : Restore a saved context.
-                   ctx list          : List all saved contexts.
-                   ctx show <name>   : Display a context without applying it.
-                   ctx del  <name>   : Delete a saved context.
-                   Example: ctx save myproject
+                   ctx -save <name>   : Save current directory and environment snapshot.
+                   ctx -load <name>   : Restore a saved context.
+                   ctx -list          : List all saved contexts.
+                   ctx -show <name>   : Display a context without applying it.
+                   ctx -del  <name>   : Delete a saved context.
+                   Example: ctx -save myproject
     chain     -- Create and run named command chains. Use -h for additional help.
                    chain -create <name> <cmd1 ; cmd2 ; ...>  : Create a named chain of commands.
                    chain -run    <name>                       : Execute all commands in the chain sequentially.
@@ -624,12 +624,17 @@ Example:
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
 	                Shows editor diagnostics with red error and yellow warning notifications; press F2 for the complete list. Use Up/Down to select, PgUp/PgDn or the mouse wheel to scroll, and Enter to jump to the selected line. F2/Esc closes the list.
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
-	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
+	                In TermXT buffers, IntelliSense suggests keywords, set expressions, conditions, functions after call, variables inside {braces} or after lines:, and terminal commands after run/capture and pipes.
+	                TermXT errors and warnings update from unsaved edits, with gutter markers, header counts, and an F2 list; select an entry and press Enter to jump to its location.
+	                Checks cover block structure, conditions, function calls, and constant arguments/expressions. Warnings flag undeclared variables, ignored assignments/arguments, ineffective waits, and likely keyword typos.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
 	                Opening a .cs file automatically finds its owning project, including linked files listed by a nearby solution. Completion and diagnostics include other project classes, project references, implicit/global usings, compile exclusions, and restored NuGet compile assemblies, using the unsaved buffer for the active file.
 	                Use :e <path> to open another file, .csproj, .sln, or .slnx; :project (or :project reload) shows the owning project and refreshes its sources and references. External source changes are also picked up by new completion requests after a short cache interval.
 	                Use :e -raw <path> to edit a solution/project file directly, or :project edit to edit the current solution (when explicitly opened) or owning project. Save with :w as usual; plain-text mode suppresses language diagnostics and completion.
 	                C# project discovery reads ordinary SDK/legacy project items in Debug/AnyCPU and uses the first target framework. It does not execute custom MSBuild imports, targets, or source generators. Restore project packages with dotnet restore; use :project afterwards. The :nuget commands below manage source-file package directives, not .csproj PackageReference items.
+	                In C/C++ buffers, suggestions open after two characters, '.', '->', or '::'; explicit C/C++ syntax never uses the C# completion heuristic.
+	                Basic keywords, standard-library names, and current-file names work without extra tools. With clangd installed, completion resolves fields, methods, namespaces, templates, headers, and project symbols using unsaved code.
+	                xte finds clangd on PATH and in LLVM/Visual Studio installations; XTE_CLANGD can select a server executable. clangd reads compile_commands.json or compile_flags.txt for project include paths, defines, and language options. Use :syntax cpp (or xte -syntax cpp) for C++ .h files.
 	                In Rust buffers (.rs or -syntax rust), suggestions open after two characters, '::', or '.'.
 	                Rust suggests keywords, macros, names from the current file, local fields/methods, and common standard-library paths/members without installing a Rust toolchain.
 	                With rust-analyzer, dot completion resolves variables, fields, function results, indexed values, and method chains in Cargo projects and standalone .rs files. Save a new standalone file once to enable analysis.
@@ -776,9 +781,9 @@ For that we use following command:
 
 TermXT is the xTerminal scripting language. It runs `.xt` files and can execute any xTerminal command, capture command output, use variables, branch, loop, call functions, and read/write files.
 
-Current manual (TermXT 1.0.2): [Documents/TermXT_Scripting_Language_User_Manual.md](Documents/TermXT_Scripting_Language_User_Manual.md)
+Current manual (TermXT 1.0.3): [Documents/TermXT_Scripting_Language_User_Manual.md](Documents/TermXT_Scripting_Language_User_Manual.md)
 
-PDF edition: [TermXT Scripting Language User Manual v1.0.2](Documents/TermXT_Scripting_Language_User_Manual_v1.0.2.pdf)
+PDF edition: [TermXT Scripting Language User Manual v1.0.3](Documents/TermXT_Scripting_Language_User_Manual_v1.0.3.pdf)
 
 ### Running Scripts
 

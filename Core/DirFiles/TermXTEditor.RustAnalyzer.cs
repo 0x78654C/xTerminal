@@ -511,6 +511,11 @@ namespace Core.DirFiles
 
         private static List<CompletionItem> ParseRustAnalyzerCompletions(JsonElement result, string line, int lineNumber, int column)
         {
+            return ParseLanguageServerCompletions(result, line, lineNumber, column, "Rust / rust-analyzer");
+        }
+
+        private static List<CompletionItem> ParseLanguageServerCompletions(JsonElement result, string line, int lineNumber, int column, string defaultDetail)
+        {
             var completions = new List<CompletionItem>();
             if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("items", out JsonElement list)) result = list;
             if (result.ValueKind != JsonValueKind.Array) return completions;
@@ -535,14 +540,14 @@ namespace Core.DirFiles
                     insertion = RustJsonString(edit, "newText");
                 }
                 if (string.IsNullOrEmpty(insertion) || insertion.IndexOfAny(new[] { '\r', '\n', '\t', '\x1b' }) >= 0) continue;
-                string detail = RustJsonString(item, "detail") ?? "Rust / rust-analyzer";
+                string detail = RustJsonString(item, "detail") ?? defaultDetail;
                 if (item.TryGetProperty("labelDetails", out JsonElement labelDetails))
                     detail = (RustJsonString(labelDetails, "detail") + " " + RustJsonString(labelDetails, "description") + " " + detail).Trim();
                 int kind = item.TryGetProperty("kind", out JsonElement kindValue) ? kindValue.GetInt32() : 1;
                 completions.Add(new CompletionItem(label, insertion, RustLspCompletionKind(kind), detail, completions.Count)
                 {
                     FilterText = RustJsonString(item, "filterText") ?? label,
-                    RustEditStart = start, RustEditEnd = end
+                    TextEditStart = start, TextEditEnd = end
                 });
             }
             return completions;

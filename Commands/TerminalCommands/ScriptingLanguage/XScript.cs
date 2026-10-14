@@ -23,7 +23,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
         private static readonly Version s_version = new(1, 0, 2);
         public string Name => "xt";
 
-        private static readonly string s_helpMessage = @"Usage of xt command:
+        private static readonly string s_helpMessage = @"Usage of xt (TermXT language v1.0.3) command:
     xt <script.xt>              : Run a TermXT Script file.
     xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
     xt -h                       : Display this help message.
@@ -77,7 +77,7 @@ Built-in variables:
     {argc}   : Number of arguments in the current script or function call.
     {result} : Return value from last function call.
     {error}  : Set to ""true"" when last command failed.
-    {error_message} : Error message from last caught exception.
+    {error_message} : Last error message, including its script line number.
 
 Examples:
     xt deploy.xt
@@ -266,6 +266,14 @@ print ""Done!""
 
         private sealed class ScriptEngine
         {
+            private sealed class ScriptException : Exception
+            {
+                public bool Reported { get; set; }
+
+                public ScriptException(int lineNumber, string message, Exception innerException = null)
+                    : base($"[line {lineNumber}] {message}", innerException) { }
+            }
+
             private readonly string[] _lines;
             private readonly Dictionary<string, string> _vars = new(StringComparer.OrdinalIgnoreCase);
             private readonly Dictionary<string, (int Start, int End)> _funcs = new(StringComparer.OrdinalIgnoreCase);
@@ -316,35 +324,44 @@ print ""Done!""
                         continue;
                     }
 
-                    string line = Interpolate(raw);
-                    string keyword = TermXtSyntax.Keyword(line);
-
-                    switch (keyword)
+                    int lineNumber = _pc + 1;
+                    try
                     {
-                        case "set": ExecSet(line); _pc++; break;
-                        case "print": ExecPrint(raw); _pc++; break;
-                        case "run": ExecRun(line); _pc++; break;
-                        case "capture": ExecCapture(line); _pc++; break;
-                        case "input": ExecInput(line); _pc++; break;
-                        case "read": ExecRead(line); _pc++; break;
-                        case "wait": ExecWait(line); _pc++; break;
-                        case "write": ExecFileWrite(raw, append: false); _pc++; break;
-                        case "append": ExecFileWrite(raw, append: true); _pc++; break;
-                        case "exit": _stopRequested = true; break;
-                        case "break": _breakRequested = true; _pc++; break;
-                        case "continue": _continueRequested = true; _pc++; break;
-                        case "return": ExecReturn(line); break;
-                        case "if": ExecIf(end); break;
-                        case "loop": ExecuteLoop(ExecLoop, end); break;
-                        case "while": ExecuteLoop(ExecWhile, end); break;
-                        case "each": ExecuteLoop(ExecEach, end); break;
-                        case "call": ExecCall(raw); _pc++; break;
-                        case "try": ExecTry(end); break;
-                        case "func": SkipBlock(); break;
-                        default:
-                            ExecRun("run " + line);
-                            _pc++;
-                            break;
+                        string line = Interpolate(raw);
+                        string keyword = TermXtSyntax.Keyword(line);
+
+                        switch (keyword)
+                        {
+                            case "set": ExecSet(line); _pc++; break;
+                            case "print": ExecPrint(raw); _pc++; break;
+                            case "run": ExecRun(line); _pc++; break;
+                            case "capture": ExecCapture(line); _pc++; break;
+                            case "input": ExecInput(line); _pc++; break;
+                            case "read": ExecRead(line); _pc++; break;
+                            case "wait": ExecWait(line); _pc++; break;
+                            case "write": ExecFileWrite(raw, append: false); _pc++; break;
+                            case "append": ExecFileWrite(raw, append: true); _pc++; break;
+                            case "exit": _stopRequested = true; break;
+                            case "break": _breakRequested = true; _pc++; break;
+                            case "continue": _continueRequested = true; _pc++; break;
+                            case "return": ExecReturn(line); break;
+                            case "if": ExecIf(end); break;
+                            case "loop": ExecuteLoop(ExecLoop, end); break;
+                            case "while": ExecuteLoop(ExecWhile, end); break;
+                            case "each": ExecuteLoop(ExecEach, end); break;
+                            case "call": ExecCall(raw); _pc++; break;
+                            case "try": ExecTry(end); break;
+                            case "func": SkipBlock(); break;
+                            default:
+                                ExecRun("run " + line);
+                                _pc++;
+                                break;
+                        }
+                    }
+                    catch (Exception ex) when (ex is not ScriptException)
+                    {
+                        // Attach the location before a function restores its caller's program counter.
+                        throw new ScriptException(lineNumber, ex.Message, ex);
                     }
                 }
             }
@@ -692,7 +709,7 @@ print ""Done!""
                     }
                     else
                     {
-                        if (EvalCondition(bCond))
+                        if (EvalConditionAtLine(bCond, bLine))
                         {
                             ExecuteBlock(bodyStart, bodyEnd);
                             executed = true;
@@ -732,6 +749,16 @@ print ""Done!""
                     i++;
                 }
                 return i;
+            }
+
+            private bool EvalConditionAtLine(string condition, int lineIndex)
+            {
+                try { return EvalCondition(condition); }
+                catch (Exception ex) when (ex is not ScriptException)
+                {
+                    // An elif or a repeated while condition has its own source location.
+                    throw new ScriptException(lineIndex + 1, ex.Message, ex);
+                }
             }
 
             private bool EvalCondition(string condition, int depth = 0)
@@ -799,35 +826,7 @@ print ""Done!""
 
             private static (int Index, string Operator) FindConditionOperator(string condition, string[] operators)
             {
-                bool quoted = false;
-                int nesting = 0;
-                (int, string) found = (-1, null);
-                for (int i = 0; i < condition.Length; i++)
-                {
-                    char ch = condition[i];
-                    if (ch == '"') { quoted = !quoted; continue; }
-                    if (quoted) continue;
-                    if (ch == '(') { nesting++; continue; }
-                    if (ch == ')')
-                    {
-                        if (--nesting < 0) throw new FormatException("Unmatched ')' in condition.");
-                        continue;
-                    }
-                    if (nesting != 0 || found.Item1 >= 0) continue;
-                    foreach (string op in operators)
-                    {
-                        if (i + op.Length > condition.Length ||
-                            !condition.AsSpan(i, op.Length).Equals(op.AsSpan(), StringComparison.OrdinalIgnoreCase)) continue;
-                        if (char.IsLetter(op[0]) &&
-                            (i == 0 || !char.IsWhiteSpace(condition[i - 1]) ||
-                             i + op.Length == condition.Length || !char.IsWhiteSpace(condition[i + op.Length]))) continue;
-                        found = (i, op);
-                        break;
-                    }
-                }
-                if (quoted) throw new FormatException("Unclosed double quote in condition.");
-                if (nesting != 0) throw new FormatException("Unclosed '(' in condition.");
-                return found;
+                return TermXtSyntax.FindConditionOperator(condition, operators);
             }
 
             // ── Loop N / end ─────────────────────────────────────────────────
@@ -897,7 +896,7 @@ print ""Done!""
                     string condRaw = _lines[condLine].Trim();
                     string condStr = condRaw.Length > 5 ? condRaw[5..].Trim() : "";
 
-                    if (!EvalCondition(condStr))
+                    if (!EvalConditionAtLine(condStr, condLine))
                         break;
 
                     _vars["i"] = iter.ToString();
@@ -1108,29 +1107,32 @@ print ""Done!""
                 GlobalVariables.isErrorCommand = false;
                 _vars["error"] = "false";
                 _vars["error_message"] = "";
-                bool failed = false;
+                ScriptException failure = null;
 
                 _tryDepth++;
                 try
                 {
                     ExecuteBlock(tryBodyStart, tryBodyEnd);
                 }
-                catch (Exception ex)
+                catch (ScriptException ex)
                 {
-                    failed = true;
+                    failure = ex;
                     GlobalVariables.isErrorCommand = true;
                     _vars["error"] = "true";
                     _vars["error_message"] = ex.Message;
                 }
                 finally { _tryDepth--; }
 
-                if (failed && catchBodyStart >= 0)
+                if (failure != null && catchBodyStart >= 0)
                 {
                     GlobalVariables.isErrorCommand = false;
                     ExecuteBlock(catchBodyStart, catchBodyEnd);
                 }
-                else if (failed && _tryDepth > 0)
-                    throw new InvalidOperationException(_vars["error_message"]);
+                else if (failure != null)
+                {
+                    if (_tryDepth > 0) throw failure;
+                    if (!failure.Reported) ReportError(failure);
+                }
 
                 _vars["error"] = GlobalVariables.isErrorCommand ? "true" : "false";
                 _pc = endLine + 1;
@@ -1163,12 +1165,18 @@ print ""Done!""
 
             private void PrintError(int lineNum, string msg)
             {
+                var error = new ScriptException(lineNum, msg);
                 GlobalVariables.isErrorCommand = true;
                 _vars["error"] = "true";
-                _vars["error_message"] = msg;
-                FileSystem.ColorConsoleText(ConsoleColor.Red, $"  [xt line {lineNum}] ");
-                Console.WriteLine(msg);
-                if (_tryDepth > 0) throw new InvalidOperationException(msg);
+                _vars["error_message"] = error.Message;
+                ReportError(error);
+                if (_tryDepth > 0) throw error;
+            }
+
+            private static void ReportError(ScriptException error)
+            {
+                FileSystem.ColorConsoleText(ConsoleColor.Red, $"  {error.Message}{Environment.NewLine}");
+                error.Reported = true;
             }
 
             /// <summary>

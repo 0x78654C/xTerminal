@@ -35,9 +35,12 @@ Inside the editor:
     Normal mode : h/j/k/l or arrows move, e opens file explorer, i or Insert enters insert, dd delete line, / search, n or F3 search next.
     Explorer    : Starts from xTerminal current directory and uses fxp controls. Enter opens the selected file in xte.
     Search      : Enter finds, empty Enter repeats the previous search.
-    Insert mode : TermXT/C#/Rust IntelliSense opens automatically; Ctrl+Space opens suggestions, arrows select, Enter/Tab accepts, Esc closes suggestions or returns to normal mode.
-                  TermXT suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
+    Insert mode : TermXT/C#/C/C++/Rust IntelliSense opens automatically; Ctrl+Space opens suggestions, arrows select, Enter/Tab accepts, Esc closes suggestions or returns to normal mode.
+                  TermXT suggests keywords, set expressions, conditions, functions after call, variables inside {braces} or after lines:, and terminal commands after run/capture and pipes.
+                  TermXT checks the unsaved script for syntax/argument errors and warns about undeclared variables, ignored assignments/arguments, ineffective waits, and likely keyword typos.
                   C# files automatically load their owning project, custom classes, project references, and restored package assemblies.
+                  C/C++ suggests keywords and current-file names; clangd resolves members after ., ->, and ::, plus headers and project symbols using unsaved code.
+                  xte discovers clangd on PATH and in LLVM/Visual Studio installations; XTE_CLANGD selects a server. Project flags come from compile_commands.json or compile_flags.txt.
                   Rust suggests keywords, macros, current-file names, and common standard-library paths/members after :: or .; no Rust toolchain required.
                   With rust-analyzer, dot completion resolves variables, call results, and chains in Cargo projects and saved standalone .rs files.
                   Cargo dependencies, imported types, fields, and trait methods are resolved from Cargo.toml and the unsaved code.
@@ -172,7 +175,7 @@ if __name__ == ""__main__"":
                     TemplateForSyntax(syntax).Replace("{DATE}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
             }
 
-            return new TermXTEditor(target, syntax, options.OpenAsText);
+            return new TermXTEditor(target, syntax, options.OpenAsText, CommandRepository.GetCommandNames());
         }
 
         private static string DefaultUntitledFileName(TermXTEditorSyntax syntax)

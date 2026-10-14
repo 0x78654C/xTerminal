@@ -222,7 +222,7 @@ public partial class TermXTEditorSyntaxTests
                 var items = (IEnumerable)typeof(TermXTEditor).GetField("_completionItems", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(editor)!;
                 items.Cast<object>().Should().Contain(item =>
                     (string)item.GetType().GetProperty("FilterText")!.GetValue(item)! == expected &&
-                    (int)item.GetType().GetProperty("RustEditStart")!.GetValue(item)! >= 0);
+                    (int)item.GetType().GetProperty("TextEditStart")!.GetValue(item)! >= 0);
             }
             File.ReadAllText(path).Should().Be("fn main() {}\n", "completion must use the unsaved buffer without saving it");
             InvokePrivate(editor, "ExecuteEditorCommand", "syntax py");
@@ -292,7 +292,7 @@ public partial class TermXTEditorSyntaxTests
         var items = (IEnumerable)typeof(TermXTEditor).GetField("_completionItems", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(editor)!;
         items.Cast<object>().Should().Contain(item =>
             (string)item.GetType().GetProperty("FilterText")!.GetValue(item)! == expected &&
-            (int)item.GetType().GetProperty("RustEditStart")!.GetValue(item)! >= 0, status);
+            (int)item.GetType().GetProperty("TextEditStart")!.GetValue(item)! >= 0, status);
         var frame = GetPrivateField<System.Text.StringBuilder>(editor, "_frame");
         frame.Clear();
         InvokePrivate(editor, "RenderCompletionPopup", 2, 5, 20, 100, 105);

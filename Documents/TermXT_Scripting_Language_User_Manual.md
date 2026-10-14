@@ -1,11 +1,12 @@
 # TermXT scripting language user manual
 
-Current version: **1.0.2**.
+Current version: **1.0.3**.
 
 TermXT runs `.xt` scripts inside xTerminal. A script can use variables,
 conditions, loops, functions, file operations and xTerminal commands.
-This is the current manual. The [1.0.0 PDF](TermXT_Scripting_Language_User_Manual_v1.0.0.pdf)
-is retained as an older reference.
+This edition covers runtime error locations and live editor diagnostics.
+The [1.0.2 PDF](TermXT_Scripting_Language_User_Manual_v1.0.2.pdf) and
+[1.0.0 PDF](TermXT_Scripting_Language_User_Manual_v1.0.0.pdf) remain available as older references.
 
 ## Running and checking scripts
 
@@ -25,17 +26,22 @@ Scripts are checked for structural errors before execution. `-check` checks
 without executing commands and reports failure through xTerminal's command error
 state. Structural checks include unmatched blocks, invalid branch ordering,
 missing assignments, empty variable names, duplicate functions and misplaced
-`break`, `continue` or `return`. The editor uses the same structural checks and
-also provides function-call diagnostics and keyword suggestions.
+`break`, `continue` or `return`. Each diagnostic uses `Line N: message`.
+Any structural error prevents execution and produces a `Script not executed`
+summary. These checks happen before the script runs, so a `try/catch` inside
+the script cannot handle them.
 
 A successful check does not guarantee that expressions, commands or file paths
-will succeed at runtime.
+will succeed at runtime. The editor adds live errors and warnings beyond the
+structural checks performed by `xt -check`.
 
 ### Editor suggestions
 
 In `xte script.xt`, enter insert mode with `i` or `Insert`. IntelliSense suggests
 TermXT keywords after two characters, built-in functions at the start of a `set`
-value, and declared functions after `call `. Typing `{` opens variable suggestions,
+value, condition operators, and declared functions after `call `. Terminal command
+suggestions are available after `run`, in `capture` assignments and after pipes.
+Typing `{` opens variable suggestions,
 including inside quoted text. These include built-in variables and names declared
 by `set`, `input`, `read`, `capture` and `each`. Variables are also suggested after
 `lines:` in an `each` loop. Suggestions ignore case and comments.
@@ -44,6 +50,81 @@ Use **Ctrl+Space** to open suggestions manually, **Up/Down** to select an item,
 and **Enter** or **Tab** to accept it. Variable completion supplies the closing
 `}` or reuses an existing one. **Esc** closes the popup; press it again to return
 to normal mode. The popup shows usage hints beside each suggestion.
+
+## Editor diagnostics and line display
+
+Open a script with `xte script.xt` or `xt -edit script.xt`. Errors and warnings
+update as you edit, including unsaved changes. Save with `:w` before running
+`xt -check script.xt` or `xt script.xt`, which read the file on disk.
+
+The left gutter displays source line numbers. A red `!` marks a line with an
+error; a yellow `?` marks a warning. If a line has both, the error marker takes
+priority. Wrapped continuation rows show `+` rather than a new source line
+number. Wrapping therefore does not change the line numbers in diagnostics.
+The header shows counts such as `[E:1] [W:1]`.
+
+Press **F2** for the complete diagnostic list. Entries identify severity,
+source line and column, a diagnostic code when available, and a description.
+For example, `L3:C8 XT1003` means line 3, column 8, diagnostic XT1003.
+Both positions are 1-based. Use **Up/Down** to select, **PgUp/PgDn** or the
+mouse wheel to scroll, and **Enter** to jump to the selected location.
+**F2** or **Esc** closes the list. Fixed issues disappear from the markers,
+counts and open list as the buffer updates.
+
+In normal mode, type `:` followed by a command and press **Enter**:
+
+| Command | Action |
+| --- | --- |
+| `:errors` | Show a summary of errors. |
+| `:warnings` | Show a summary of warnings. |
+| `:next-error` | Jump to the next error. |
+| `:next-warning` | Jump to the next warning. |
+
+### Errors and warnings
+
+Structural errors use the shared block and statement checks. The editor also
+reports these additional diagnostics:
+
+| Code | Meaning |
+| --- | --- |
+| `XT1001` | Invalid condition syntax, such as an unclosed quote or parenthesis, or a missing operand. |
+| `XT1002` | Invalid `each` syntax or a numeric range endpoint outside the 32-bit integer range. |
+| `XT1003` | Missing or unknown function name, or malformed quoted arguments to `call`. |
+| `XT1004` | A constant `loop` count is not a positive 32-bit integer. |
+| `XT1005` | An invalid constant `eval`, `substr` or `replace` expression. |
+| `XT1006` | Missing or malformed arguments to `write` or `append`. |
+| `XT2001` | A referenced variable has no declaration in the script. |
+| `XT2002` | Assignment to `DATE`, `TIME` or `CWD`; interpolation computes these values dynamically. |
+| `XT2003` | Trailing arguments ignored by a keyword such as `end`, `try`, `catch` or `exit`. |
+| `XT2004` | A constant `wait` value has no effect; use a positive integer number of milliseconds. |
+| `XT2005` | A likely misspelled TermXT keyword. |
+
+`XT1001` through `XT1006` are errors; `XT2001` through `XT2005` are advisory
+warnings. The editor does not execute commands or resolve every runtime value.
+Checks that need a constant value are deferred when that value contains a
+variable placeholder. An undeclared-variable warning does not change the
+runtime rule that unknown placeholders remain literal text. A likely keyword
+typo is a warning because an ordinary line can be an external command.
+
+### Reading a diagnostic
+
+This intentionally incorrect script produces one warning and one error:
+
+```text
+set name = Ada
+  print "{nmae}"
+  call missing
+```
+
+The header shows `[E:1] [W:1]`. The F2 list includes:
+
+```text
+[WARNING] 1/2  L2:C10 XT2001: Variable 'nmae' has no declaration in this script.
+[ERROR] 2/2  L3:C8 XT1003: Function 'missing' not found.
+```
+
+Change `{nmae}` to `{name}` and define the requested function or call an existing
+one. Select an entry and press **Enter** to move directly to the affected text.
 
 ## Arguments and variables
 
@@ -88,8 +169,8 @@ comments. Blank lines are ignored. Comments occupy their own lines.
 | `{CWD}` | Current xTerminal working directory. |
 | `{i}` | Current loop iteration, starting at 1. Nested loops restore the outer counter. |
 | `{result}` | Most recent return value; cleared when entering a function call. |
-| `{error}` | `true` following a failed operation; `false` after a successful command or file operation, or a handled `try/catch`. |
-| `{error_message}` | Most recent error message; available inside `catch`. |
+| `{error}` | `true` following a failed operation and on entry to `catch`; `false` after a successful command or file operation, or a successfully handled `try/catch`. |
+| `{error_message}` | Most recent runtime error, including `[line N]`; available inside `catch` and after a reported error that allows execution to continue. |
 
 `DATE`, `TIME` and `CWD` are evaluated when used. Interpolation is a single pass:
 placeholder-shaped text inside a substituted value is not expanded again.
@@ -253,18 +334,74 @@ standard output, trimming its surrounding whitespace. A single `|` outside
 double quotes separates pipeline stages. Quoted pipes remain part of an argument;
 `||` is not split into pipeline stages.
 
+### Handling failures
+
 Inside `try`, the first failed script operation, command failure flag or thrown
 exception stops that block and enters `catch`. Later pipeline stages also stop
 after a failure. `{error}` is `true` on entry to the handler and
-`{error_message}` describes the failure. If the handler succeeds, execution
-continues after `end` with `{error}` set to `false`. A handler failure propagates
-to an enclosing handler. A `try` without a `catch` propagates a failure to an
-enclosing handler, or leaves the error state set when no handler exists.
+`{error_message}` describes the failure, including its source line in the form
+`[line 7] message`.
+If the handler succeeds, execution continues after `end` with `{error}` set to
+`false`. A handler failure propagates to an enclosing handler and identifies
+the new failing line inside `catch`. A `try` without a `catch` propagates a
+failure to an enclosing handler. If no handler exists, it reports the error
+once, skips the remaining try body and continues after `end` with the error
+state set.
 
 Starting a `try` clears the previous error state. Successful commands and file
 operations clear it as well. Simple statements such as `print` do not clear a
-previous failure. Outside `try`, reported script errors set `{error}` and the
-xTerminal command error flag; unhandled exceptions stop execution.
+previous failure. A successful handler resets `{error}` at its end, but does
+not necessarily clear `{error_message}`: a handler that only prints the message
+leaves it available. A successful command or file operation, or a new `try`,
+clears the message. Save it to another variable before those operations if needed.
+
+Outside `try`, reported script errors set `{error}` and the xTerminal command
+error flag and may allow the next statement to run. For example, failed `eval`
+reports an error and supplies `0`. Unhandled exceptions, such as a failed file
+write or malformed runtime condition, stop execution. Use `try/catch` when
+later statements must be skipped after either kind of failure.
+
+### Runtime line numbers
+
+Runtime errors include `[line N]` in the console message and in
+`{error_message}`. Numbers refer to the 1-based source line in the `.xt` file,
+including blank lines and comments. They identify the failing statement inside
+a function or nested block, even after control returns to a caller. A failing
+`elif` or a repeated `while` condition points to that condition's own line.
+The runtime prefix is `[line N]`; structural checks use `Line N:` and the editor
+uses locations such as `L3:C8`.
+
+For `run`, bare commands and `capture`, a command failure flag produces
+`[line N] Command failed: command text`. A thrown exception carries its own
+message with the same line prefix. A failed pipeline points to the script line
+that invoked the pipeline, and later stages are skipped.
+
+Save this example exactly as shown. The blank second line counts:
+
+```text
+# Error location demo
+
+try
+    call missing
+    print "This line is skipped"
+catch
+    print "Caught: {error_message}"
+end
+print "After catch: {error}"
+```
+
+With no function named `missing`, the output is:
+
+```text
+  [line 4] Function 'missing' not found.
+Caught: [line 4] Function 'missing' not found.
+After catch: false
+```
+
+The first line is the interpreter's report. The second is explicitly printed
+by the handler, so seeing the same location there is expected. Propagating an
+already reported failure through a `try` without `catch` does not add another
+automatic report. The editor also flags this deliberate missing call as XT1003.
 
 ## Input and files
 
@@ -283,10 +420,10 @@ after the supplied text. `write "empty line.txt" ""` writes one empty line. Pare
 directories must already exist. File-write text supports interpolation and
 escape sequences in the script literal; substituted file contents are preserved.
 
-## Examples and changes in 1.0.2
+## Examples and changes in 1.0.3
 
 The [example directory](TermXT_Examples/) contains `greet.xt`, `countdown.xt`,
-`portcheck.xt`, `sysreport.xt`, `netaudit.xt`, and the new
+`portcheck.xt`, `sysreport.xt`, `netaudit.xt`, and
 [`language_features.xt`](TermXT_Examples/language_features.xt).
 
 ```text
@@ -297,8 +434,30 @@ This local demo creates `TermXT demo output.txt` in the current directory and
 demonstrates optional arguments, functions, compact/grouped conditions, quoted
 paths and recovery from a deliberate arithmetic error.
 
-Version 1.0.2 adds `{argc}`, grouped conditions and compact symbolic condition
-operators. It fixes quoted logical text crashes, `not` precedence, repeated
+### New in 1.0.3
+
+Runtime error messages now carry `[line N]` in console output and
+`{error_message}`. Locations are preserved through functions, loops, nested
+handlers and re-evaluated conditions. Errors in a handler identify the handler's
+failing line. A `try` without a handler keeps the original location and avoids
+reporting the same failure twice automatically.
+
+The editor now displays live TermXT errors and warnings from unsaved changes,
+with source line markers, header counts and a navigable F2 list. It checks
+conditions, function calls and constant expressions/arguments, and warns about
+undeclared variables, ignored assignments or arguments, ineffective waits and
+likely keyword typos. Suggestions also cover conditions and terminal commands.
+
+When updating scripts that log `{error_message}`, remember that the value
+includes the source line prefix. Save the message before a successful command
+or file operation clears it. Use F2 to inspect live issues, then save and run
+`xt -check` before execution. A successful structural check does not include
+all of the editor's additional diagnostics.
+
+### Earlier changes in 1.0.2
+
+Version 1.0.2 added `{argc}`, grouped conditions and compact symbolic condition
+operators. It fixed quoted logical text crashes, `not` precedence, repeated
 condition interpolation, tab-separated keywords, quoted `-p` parsing, function
 argument leakage, exception cleanup, stale return values at call entry, missed
 `try/catch` failures, quoted file paths, nested iteration counters and integer

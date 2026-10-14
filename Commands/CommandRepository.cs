@@ -25,6 +25,11 @@ namespace Commands
 
         private static readonly List<string> s_shellCommands = new List<string>() { "logoff", "lock", "sleep", "+", "exit" };
 
+        public static IEnumerable<string> GetCommandNames()
+        {
+            return s_terminalCommands.Keys.Concat(s_shellCommands).Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
         public static ITerminalCommand GetCommand(string[] args)
         {
             if (args == null || args.Length == 0)

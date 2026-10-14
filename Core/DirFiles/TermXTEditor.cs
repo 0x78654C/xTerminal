@@ -622,8 +622,8 @@ namespace Core.DirFiles
         private int _lastWidth = -1;
         private int _lastHeight = -1;
         private bool _pendingDelete;
-        private string _commandText = string.Empty;
-        private readonly SearchTextInput _searchInput = new SearchTextInput();
+        private readonly PromptTextInput _commandInput = new PromptTextInput();
+        private readonly PromptTextInput _searchInput = new PromptTextInput();
         private string _lastSearch = string.Empty;
         private string _status = "NORMAL";
         private DateTime _statusUntil = DateTime.MinValue;
@@ -689,7 +689,15 @@ namespace Core.DirFiles
         }
 
         public TermXTEditor(string path, TermXTEditorSyntax syntax, bool openAsText)
+            : this(path, syntax, openAsText, null)
         {
+        }
+
+        public TermXTEditor(string path, TermXTEditorSyntax syntax, bool openAsText, IEnumerable<string> commandNames)
+        {
+            if (commandNames != null)
+                foreach (string name in commandNames)
+                    if (!string.IsNullOrWhiteSpace(name)) _termXtCommandNames.Add(name);
             _path = ResolveEditorOpenPath(Path.GetFullPath(path), openAsText);
             _syntax = openAsText ? TermXTEditorSyntax.PlainText :
                 CSharpProjectWorkspace.IsWorkspacePath(path) ? TermXTEditorSyntax.CSharp : syntax;
@@ -862,6 +870,7 @@ namespace Core.DirFiles
             {
                 CancelCSharpDiagnostics();
                 StopRustAnalyzer();
+                StopClangd();
                 try
                 {
                     Console.Write(Reset + ShowCursor + NormalScreen);
@@ -924,6 +933,9 @@ namespace Core.DirFiles
                     return false;
 
                 if (CheckRustCompletionOnIdle())
+                    return false;
+
+                if (CheckCppCompletionOnIdle())
                     return false;
 
                 Thread.Sleep(30);
@@ -1458,6 +1470,8 @@ namespace Core.DirFiles
         {
             _rustDocumentVersion++;
             CancelRustProjectCompletion();
+            _cppDocumentVersion++;
+            CancelCppCompletion();
             _wrapCacheDirty = true;
             InvalidateDiagnosticsCache(delayCSharpSemanticDiagnostics);
             InvalidateSyntaxLineStateCaches();
@@ -1903,7 +1917,8 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Command)
             {
-                _frame.Append(F(CSearch)).Append(":").Append(Clip(_commandText, width - 1)).Append(Reset).Append(ClearEol);
+                _frame.Append(F(CSearch)).Append(":")
+                    .Append(_commandInput.VisibleText(Math.Max(1, width - 1), out _)).Append(Reset).Append(ClearEol);
                 return;
             }
 
@@ -1941,8 +1956,10 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Command)
             {
-                y = Math.Max(0, Console.WindowHeight - 1);
-                x = Math.Min(Console.WindowWidth - 1, _commandText.Length + 1);
+                (int width, int height) = WindowSize();
+                y = Math.Max(0, height - 1);
+                _commandInput.VisibleText(Math.Max(1, width - 1), out int commandColumn);
+                x = Math.Min(width - 1, commandColumn + 1);
             }
             else if (_mode == Mode.Search)
             {
@@ -1975,7 +1992,10 @@ namespace Core.DirFiles
 
         private void HandleKey(ConsoleKeyInfo key)
         {
-            _keepCursorInView = true;
+            // Opening and editing a command must preserve a viewport scrolled
+            // away from the document caret, including while typing :e!.
+            if (_mode != Mode.Command && !(_mode == Mode.Normal && key.KeyChar == ':'))
+                _keepCursorInView = true;
 
             if (_messageDetailsActive)
             {
@@ -1989,13 +2009,14 @@ namespace Core.DirFiles
                 return;
             }
 
-            // Search keys belong to the prompt. Document shortcuts must not move
-            // or modify the source while the user is editing the search term.
-            if (_mode == Mode.Search)
+            // Prompt keys must not trigger document navigation or editing shortcuts.
+            if (_mode == Mode.Search || _mode == Mode.Command)
             {
                 if (key.Key == ConsoleKey.V && (key.Modifiers & ConsoleModifiers.Control) != 0 &&
                     (key.Modifiers & ConsoleModifiers.Alt) == 0)
                     PasteFromClipboard();
+                else if (_mode == Mode.Command)
+                    HandleCommandKey(key);
                 else
                     HandleSearchKey(key);
                 return;
@@ -2031,7 +2052,9 @@ namespace Core.DirFiles
             {
                 if (key.Key == ConsoleKey.Spacebar && _mode == Mode.Insert)
                 {
-                    if (_syntax == TermXTEditorSyntax.Rust)
+                    if (IsCppCompletionContext())
+                        RefreshCppCompletion(manual: true);
+                    else if (_syntax == TermXTEditorSyntax.Rust)
                         RefreshRustCompletion(manual: true);
                     else if (IsTermXtCompletionContext())
                         RefreshTermXtCompletion(manual: true);
@@ -2099,9 +2122,6 @@ namespace Core.DirFiles
             {
                 case Mode.Insert:
                     HandleInsertKey(key);
-                    break;
-                case Mode.Command:
-                    HandleCommandKey(key);
                     break;
                 default:
                     HandleNormalKey(key);
@@ -2458,7 +2478,7 @@ namespace Core.DirFiles
                     break;
                 case ':':
                     _mode = Mode.Command;
-                    _commandText = string.Empty;
+                    _commandInput.Clear();
                     break;
                 case '/':
                     _mode = Mode.Search;
@@ -2557,26 +2577,25 @@ namespace Core.DirFiles
 
         private void HandleCommandKey(ConsoleKeyInfo key)
         {
+            if (_commandInput.HandleEditingKey(key)) return;
             switch (key.Key)
             {
                 case ConsoleKey.Escape:
                     _mode = Mode.Normal;
-                    _commandText = string.Empty;
+                    _commandInput.Clear();
                     Status("NORMAL");
                     break;
                 case ConsoleKey.Enter:
-                    ExecuteEditorCommand(_commandText.Trim());
-                    _commandText = string.Empty;
+                    _keepCursorInView = true;
+                    ExecuteEditorCommand(_commandInput.Text.Trim());
+                    _commandInput.Clear();
                     if (_running && _mode == Mode.Command)
                         _mode = Mode.Normal;
                     break;
-                case ConsoleKey.Backspace:
-                    if (_commandText.Length > 0)
-                        _commandText = _commandText.Substring(0, _commandText.Length - 1);
-                    break;
                 default:
-                    if (TryGetInputText(key, out string commandText))
-                        TryAppendLimitedText(ref _commandText, commandText, MaxCommandTextLength, "Command");
+                    if (((key.Modifiers & ConsoleModifiers.Control) == 0 || (key.Modifiers & ConsoleModifiers.Alt) != 0) &&
+                        TryGetInputText(key, out string commandText))
+                        InsertCommandText(commandText);
                     break;
             }
         }
@@ -2672,6 +2691,12 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterText(string text)
         {
+            if (IsCppCompletionContext())
+            {
+                RefreshCppCompletion(manual: false);
+                return;
+            }
+
             if (_syntax == TermXTEditorSyntax.Rust)
             {
                 RefreshRustCompletion(manual: false);
@@ -2699,6 +2724,12 @@ namespace Core.DirFiles
 
         private void RefreshCompletionAfterEdit()
         {
+            if (IsCppCompletionContext())
+            {
+                RefreshCppCompletion(manual: false);
+                return;
+            }
+
             if (_syntax == TermXTEditorSyntax.Rust)
             {
                 RefreshRustCompletion(manual: false);
@@ -3167,13 +3198,10 @@ namespace Core.DirFiles
 
         private bool IsCSharpCompletionContext()
         {
-            if (_syntax == TermXTEditorSyntax.Rust || _syntax == TermXTEditorSyntax.PlainText)
-                return false;
-
-            if (_syntax == TermXTEditorSyntax.CSharp)
-                return true;
-
-            return LooksLikeCSharpCompletionBuffer();
+            // Only TermXT supports embedded C#. C/C++ also use struct, class,
+            // namespace and using, so those words cannot override their syntax.
+            return _syntax == TermXTEditorSyntax.CSharp ||
+                (_syntax == TermXTEditorSyntax.TermXt && !HasTermXtStatements() && LooksLikeCSharpCompletionBuffer());
         }
 
         private bool LooksLikeCSharpCompletionBuffer()
@@ -3417,10 +3445,15 @@ namespace Core.DirFiles
             CompletionItem item = _completionItems[_completionSelectedIndex];
             string replacement = item.InsertionText;
 
-            if (_syntax == TermXTEditorSyntax.Rust && item.RustEditStart >= 0)
+            if (item.TextEditStart >= 0)
             {
-                start = item.RustEditStart;
-                end = item.RustEditEnd;
+                start = item.TextEditStart;
+                end = item.TextEditEnd;
+            }
+            else if (IsCppCompletionContext())
+            {
+                while (end < line.Length && IsCSharpWordPart(line[end]))
+                    end++;
             }
             else if (_syntax == TermXTEditorSyntax.Rust)
             {
@@ -3465,6 +3498,8 @@ namespace Core.DirFiles
         private void DismissCompletion()
         {
             CancelRustProjectCompletion();
+            CancelCppCompletion();
+            _cppCompletionManual = false;
             _rustCompletionManual = false;
             _termXtCompletionKind = TermXtCompletionKind.None;
             _termXtCompletionManual = false;
@@ -4875,9 +4910,21 @@ namespace Core.DirFiles
 
         private bool TryReloadFile()
         {
+            int cursorLine = _cursorLine;
+            int cursorCol = _cursorCol;
+            int verticalCursorCol = _verticalCursorCol;
+            int scrollTop = _scrollTop;
+            int scrollLeft = _scrollLeft;
+            _keepCursorInView = false;
             try
             {
                 LoadFile();
+                _cursorLine = cursorLine;
+                _cursorCol = cursorCol;
+                _verticalCursorCol = verticalCursorCol;
+                _scrollTop = scrollTop;
+                _scrollLeft = scrollLeft;
+                ClampCursor();
                 Status("Reloaded");
                 return true;
             }
@@ -5733,6 +5780,7 @@ namespace Core.DirFiles
             }
 
             StopRustAnalyzer();
+            StopClangd();
             _syntax = syntax;
             DismissCompletion();
             InvalidateSyntaxStateCache();
@@ -5861,6 +5909,7 @@ namespace Core.DirFiles
             try
             {
                 StopRustAnalyzer();
+                StopClangd();
                 _path = ResolveEditorOpenPath(fullPath, openAsText);
                 _syntax = openAsText ? TermXTEditorSyntax.PlainText : DetectSyntaxFromPath(_path);
                 LoadFile();
@@ -6433,7 +6482,7 @@ namespace Core.DirFiles
 
             if (_mode == Mode.Command)
             {
-                TryAppendLimitedText(ref _commandText, ToSingleLine(text), MaxCommandTextLength, "Command");
+                InsertCommandText(ToSingleLine(text));
                 return;
             }
 
@@ -6466,23 +6515,6 @@ namespace Core.DirFiles
             }
 
             Status("Pasted");
-        }
-
-        private bool TryAppendLimitedText(ref string target, string text, int maxLength, string label)
-        {
-            text = EscapeText(text);
-            if (string.IsNullOrEmpty(text))
-                return true;
-
-            if (target.Length + text.Length > maxLength)
-            {
-                Status(label + " text limit reached", error: true);
-                BottomStatus(label + " text is limited to " + maxLength + " characters.", error: true);
-                return false;
-            }
-
-            target += text;
-            return true;
         }
 
         private bool TryValidatePasteText(string text, out string error)
@@ -7535,6 +7567,14 @@ namespace Core.DirFiles
 
             _diagnostics.Sort(CompareDiagnostics);
             _diagnosticsCacheDirty = false;
+            if (_messageDetailsActive && _messageDetailsShowsDiagnostics)
+            {
+                SetMessageDetailsDiagnostics(resetSelection: false);
+                _messageDetailsText = _diagnostics.Count == 0 ? "No errors or warnings" : BuildDiagnosticsDetails();
+                _messageDetailsSeverity = HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, null)
+                    ? EditorNotificationSeverity.Error : _diagnostics.Count > 0
+                    ? EditorNotificationSeverity.Warning : EditorNotificationSeverity.Normal;
+            }
         }
 
         private void ClearDiagnostics()
@@ -7673,24 +7713,6 @@ namespace Core.DirFiles
             AddDiagnostic(lineIndex, startColumn, endColumn, diagnostic.Id, description, severity);
         }
 
-        private void CollectTermXtDiagnostics()
-        {
-            foreach (var diagnostic in TermXtSyntax.Validate(_lines))
-                AddDiagnostic(diagnostic.Line - 1, string.Empty, diagnostic.Message);
-
-            HashSet<string> functionNames = CollectTermXtFunctionNames();
-            for (int i = 0; i < _lines.Count; i++)
-            {
-                string line = _lines[i].Trim();
-                if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal)) continue;
-                string keyword = TermXtSyntax.Keyword(line);
-                if (keyword == "call") ValidateTermXtCall(i, line, functionNames);
-                else if (TrySuggestTermXtKeyword(keyword, line, functionNames, out string suggestedKeyword))
-                    AddDiagnostic(i, string.Empty, "Unknown TermXT keyword '" + keyword +
-                        "'. Did you mean '" + suggestedKeyword + "'?");
-            }
-        }
-
         private HashSet<string> CollectTermXtFunctionNames()
         {
             var functionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -7710,22 +7732,6 @@ namespace Core.DirFiles
             }
 
             return functionNames;
-        }
-
-        private void ValidateTermXtCall(int lineIndex, string line, HashSet<string> functionNames)
-        {
-            string functionName = SecondWord(line);
-            if (string.IsNullOrWhiteSpace(functionName))
-            {
-                AddDiagnostic(lineIndex, string.Empty, "'call' missing function name.");
-                return;
-            }
-
-            if (functionName.IndexOf('{') >= 0 || functionName.IndexOf('}') >= 0)
-                return;
-
-            if (!functionNames.Contains(functionName))
-                AddDiagnostic(lineIndex, string.Empty, "Function '" + functionName + "' not found.");
         }
 
         private void AddDiagnostic(int lineIndex, string code, string description)
@@ -7917,7 +7923,7 @@ namespace Core.DirFiles
             if (!string.Equals(FirstWord(line), "func", StringComparison.OrdinalIgnoreCase))
                 return string.Empty;
 
-            return SecondWord(line);
+            return line.Substring(4).Trim();
         }
 
         private static bool TrySuggestTermXtKeyword(
@@ -11864,7 +11870,7 @@ namespace Core.DirFiles
 
             private static string ReadSearchTerm(int left, int top, int width)
             {
-                var term = new SearchTextInput();
+                var term = new PromptTextInput();
                 int inputWidth = Math.Max(1, width);
 
                 while (true)
@@ -11889,7 +11895,7 @@ namespace Core.DirFiles
                 }
             }
 
-            private static void RenderSearchTermInput(SearchTextInput term, int left, int top, int width)
+            private static void RenderSearchTermInput(PromptTextInput term, int left, int top, int width)
             {
                 string visible = term.VisibleText(width, out int cursorOffset);
                 Console.Write(At(left, top) + visible.PadRight(width));
@@ -12460,8 +12466,8 @@ namespace Core.DirFiles
 
             public string Label { get; private set; }
             public string FilterText { get; set; }
-            public int RustEditStart { get; set; } = -1;
-            public int RustEditEnd { get; set; } = -1;
+            public int TextEditStart { get; set; } = -1;
+            public int TextEditEnd { get; set; } = -1;
             public string InsertionText { get; private set; }
             public string Kind { get; private set; }
             public string Detail { get; private set; }

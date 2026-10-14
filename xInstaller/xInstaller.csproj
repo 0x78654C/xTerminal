@@ -5,12 +5,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <ApplicationIcon>xterminal2.ico</ApplicationIcon>
+    <ApplicationIcon>installer.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="xterminal2.ico" />
+    <Content Include="installer.ico" />
     <Content Include="app.manifest" />
     <Content Include="..\media\xterminal_logo.png" Link="media\xterminal_logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

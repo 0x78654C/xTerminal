@@ -131,7 +131,7 @@ each host in {targets}
     append {log_file} ""
     append {log_file} "  ── Pinging {host} ──"
     try
-        capture ping_out = ping {host}
+        capture ping_out = ping {host} -t 1
         append {log_file} "{ping_out}"
         if {ping_out} contains Reply
             set reachable_count = eval {reachable_count} + 1
@@ -191,7 +191,7 @@ each port in {scan_ports}
     try
         capture port_result = cport {scan_host} -p {port}
         set port_upper = upper {port_result}
-        if {port_upper} contains "| OPEN
+        if {port_upper} contains "| OPEN"
             set open_ports = eval {open_ports} + 1
             print ""    Port {port} : 🟢 OPEN""
             append {log_file} "    Port {port} : OPEN"
