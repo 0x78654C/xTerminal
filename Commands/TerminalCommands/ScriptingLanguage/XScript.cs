@@ -23,7 +23,7 @@ namespace Commands.TerminalCommands.ScriptingLanguage
         private static readonly Version s_version = new(1, 0, 2);
         public string Name => "xt";
 
-        private static readonly string s_helpMessage = @"Usage of xt command:
+        private static readonly string s_helpMessage = @"Usage of xt (TermXT language v1.0.3) command:
     xt <script.xt>              : Run a TermXT Script file.
     xt <script.xt> -p <args>    : Run with parameters ({1}, {2}... in script).
     xt -h                       : Display this help message.
