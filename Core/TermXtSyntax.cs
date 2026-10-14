@@ -64,6 +64,75 @@ namespace Core
             return -1;
         }
 
+        public static (int Index, string Operator) FindConditionOperator(string condition, string[] operators)
+        {
+            bool quoted = false;
+            int nesting = 0;
+            (int, string) found = (-1, null);
+            for (int i = 0; i < condition.Length; i++)
+            {
+                char ch = condition[i];
+                if (ch == '"') { quoted = !quoted; continue; }
+                if (quoted) continue;
+                if (ch == '(') { nesting++; continue; }
+                if (ch == ')')
+                {
+                    if (--nesting < 0) throw new FormatException("Unmatched ')' in condition.");
+                    continue;
+                }
+                if (nesting != 0 || found.Item1 >= 0) continue;
+                foreach (string op in operators)
+                {
+                    if (i + op.Length > condition.Length ||
+                        !condition.AsSpan(i, op.Length).Equals(op.AsSpan(), StringComparison.OrdinalIgnoreCase)) continue;
+                    if (char.IsLetter(op[0]) &&
+                        (i == 0 || !char.IsWhiteSpace(condition[i - 1]) ||
+                         i + op.Length == condition.Length || !char.IsWhiteSpace(condition[i + op.Length]))) continue;
+                    found = (i, op);
+                    break;
+                }
+            }
+            if (quoted) throw new FormatException("Unclosed double quote in condition.");
+            if (nesting != 0) throw new FormatException("Unclosed '(' in condition.");
+            return found;
+        }
+
+        // Inspect both branches without interpolation or evaluation. Runtime values
+        // and short-circuiting must never execute commands during editor analysis.
+        public static void ValidateCondition(string condition, int depth = 0)
+        {
+            if (depth > 128) throw new FormatException("Condition nesting is too deep.");
+            condition = condition.Trim();
+            foreach (string logical in new[] { "||", "&&" })
+            {
+                var (index, _) = FindConditionOperator(condition, new[] { logical });
+                if (index < 0) continue;
+                string left = condition[..index].Trim();
+                string right = condition[(index + 2)..].Trim();
+                if (left.Length == 0 || right.Length == 0)
+                    throw new FormatException($"'{logical}' requires two conditions.");
+                ValidateCondition(left, depth + 1);
+                ValidateCondition(right, depth + 1);
+                return;
+            }
+            if (condition.StartsWith("not", StringComparison.OrdinalIgnoreCase) &&
+                (condition.Length == 3 || char.IsWhiteSpace(condition[3]) || condition[3] == '('))
+            {
+                if (condition.Length == 3) throw new FormatException("'not' requires a condition.");
+                ValidateCondition(condition[3..], depth + 1);
+                return;
+            }
+            if (condition.StartsWith('(') && condition.EndsWith(')'))
+            {
+                ValidateCondition(condition[1..^1], depth + 1);
+                return;
+            }
+            var (opStart, op) = FindConditionOperator(condition,
+                new[] { "==", "!=", ">=", "<=", ">", "<", "contains", "startswith", "endswith" });
+            if (opStart >= 0 && (condition[..opStart].Trim().Length == 0 || condition[(opStart + op.Length)..].Trim().Length == 0))
+                throw new FormatException($"'{op}' requires two operands.");
+        }
+
         public static List<(int Line, string Message)> Validate(IReadOnlyList<string> lines)
         {
             var errors = new List<(int, string)>();

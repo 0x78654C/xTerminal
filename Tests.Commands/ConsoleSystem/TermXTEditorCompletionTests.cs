@@ -194,11 +194,86 @@ public partial class TermXTEditorSyntaxTests
         GetPrivateField<bool>(editor, "_completionActive").Should().BeFalse();
     }
 
-    private static TermXTEditor TermXtEditorAtMarker(string markedText)
+    [Theory]
+    [InlineData("run pi$$", "ping", "run ping")]
+    [InlineData("capture result = pi$$", "ping", "capture result = ping")]
+    [InlineData("run ls | ca$$", "cat", "run ls | cat")]
+    [InlineData("capture result = ls | ca$$", "cat", "capture result = ls | cat")]
+    [InlineData("run custom-$$tool --flag", "custom-tool", "run custom-tool --flag")]
+    [InlineData("run pi$$|cat", "ping", "run ping|cat")]
+    [InlineData("pi$$", "ping", "ping")]
+    public void TermXtCompletion_TerminalCommandsUseTheCommandAndPipelineContext(string marked, string label, string expected)
+    {
+        var editor = TermXtEditorAtMarker(marked, new[] { "ping", "cat", "custom-tool" });
+        InvokePrivate(editor, "RefreshCompletionAfterEdit");
+        var items = ActiveCSharpCompletions(editor);
+        items.Should().Contain(item => item.Label == label && item.Kind == "command");
+        SetPrivateField(editor, "_completionSelectedIndex", items.FindIndex(item => item.Label == label));
+        InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('\t', ConsoleKey.Tab, false, false, false));
+        Lines(editor).Should().Equal(expected);
+    }
+
+    [Theory]
+    [InlineData("run ping ca$$")]
+    [InlineData("run echo \"a | ca$$\"")]
+    [InlineData("run echo \"|\" ca$$")]
+    [InlineData("capture ca$$")]
+    [InlineData("run ping || ca$$")]
+    public void TermXtCompletion_CommandNamesDoNotReplaceArgumentsOrQuotedText(string marked)
+    {
+        var editor = TermXtEditorAtMarker(marked, new[] { "cat" });
+        InvokePrivate(editor, "RefreshCompletionAfterEdit");
+        GetPrivateField<bool>(editor, "_completionActive").Should().BeFalse();
+    }
+
+    [Fact]
+    public void TermXtCompletion_EditorFactorySuppliesRealTerminalCommands()
+    {
+        var factory = typeof(global::Commands.TerminalCommands.ScriptingLanguage.TermXTEditorCommand).GetMethod(
+            "CreateEditorFromArguments", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        var editor = (TermXTEditor)factory.Invoke(null, new object[] { Guid.NewGuid() + ".xt", Path.GetTempPath() })!;
+        SetPrivateEnumField(editor, "_mode", "Insert");
+        foreach (char c in "run pi")
+            InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo(c, ConsoleKey.NoName, false, false, false));
+        ActiveCSharpCompletions(editor).Should().Contain(item => item.Label == "ping" && item.Kind == "command");
+    }
+
+    [Theory]
+    [InlineData("if tr$$", "true")]
+    [InlineData("while fa$$", "false")]
+    [InlineData("if {argc} > 0 $$", "&&")]
+    [InlineData("if {argc} > 0 $$", "||")]
+    public void TermXtCompletion_ConditionsOfferRuntimeSupportedOperatorsAndLiterals(string marked, string label)
+    {
+        var editor = TermXtEditorAtMarker(marked);
+        InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('\0', ConsoleKey.Spacebar, false, false, true));
+        ActiveCSharpCompletions(editor).Should().Contain(item => item.Label == label);
+    }
+
+    [Fact]
+    public void TermXtCompletion_FunctionNamesWithSpacesAreQuotedOnAcceptance()
+    {
+        var editor = TermXtEditorAtMarker("func greet user\nend\ncall gr$$");
+        InvokePrivate(editor, "RefreshCompletionAfterEdit");
+        ActiveCSharpCompletions(editor).Should().ContainSingle().Which.Label.Should().Be("greet user");
+        InvokePrivate(editor, "HandleKey", new ConsoleKeyInfo('\t', ConsoleKey.Tab, false, false, false));
+        Lines(editor)[2].Should().Be("call \"greet user\"");
+    }
+
+    [Fact]
+    public void TermXtCompletion_TermXtStatementsTakePriorityOverCSharpLookingExternalCommands()
+    {
+        var editor = TermXtEditorAtMarker("namespace tools\nset name = user\npr$$");
+        InvokePrivate<bool>(editor, "IsCSharpCompletionContext").Should().BeFalse();
+        InvokePrivate(editor, "RefreshCompletionAfterEdit");
+        ActiveCSharpCompletions(editor).Should().Contain(item => item.Label == "print");
+    }
+
+    private static TermXTEditor TermXtEditorAtMarker(string markedText, IEnumerable<string>? commands = null)
     {
         int marker = markedText.IndexOf("$$", StringComparison.Ordinal);
         marker.Should().BeGreaterThanOrEqualTo(0);
-        var editor = new TermXTEditor(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xt"));
+        var editor = new TermXTEditor(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xt"), TermXTEditorSyntax.TermXt, false, commands);
         string text = markedText.Remove(marker, 2);
         Lines(editor).Clear();
         Lines(editor).AddRange(text.Split('\n'));

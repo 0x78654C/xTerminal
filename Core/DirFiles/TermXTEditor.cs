@@ -689,7 +689,15 @@ namespace Core.DirFiles
         }
 
         public TermXTEditor(string path, TermXTEditorSyntax syntax, bool openAsText)
+            : this(path, syntax, openAsText, null)
         {
+        }
+
+        public TermXTEditor(string path, TermXTEditorSyntax syntax, bool openAsText, IEnumerable<string> commandNames)
+        {
+            if (commandNames != null)
+                foreach (string name in commandNames)
+                    if (!string.IsNullOrWhiteSpace(name)) _termXtCommandNames.Add(name);
             _path = ResolveEditorOpenPath(Path.GetFullPath(path), openAsText);
             _syntax = openAsText ? TermXTEditorSyntax.PlainText :
                 CSharpProjectWorkspace.IsWorkspacePath(path) ? TermXTEditorSyntax.CSharp : syntax;
@@ -3193,7 +3201,7 @@ namespace Core.DirFiles
             // Only TermXT supports embedded C#. C/C++ also use struct, class,
             // namespace and using, so those words cannot override their syntax.
             return _syntax == TermXTEditorSyntax.CSharp ||
-                (_syntax == TermXTEditorSyntax.TermXt && LooksLikeCSharpCompletionBuffer());
+                (_syntax == TermXTEditorSyntax.TermXt && !HasTermXtStatements() && LooksLikeCSharpCompletionBuffer());
         }
 
         private bool LooksLikeCSharpCompletionBuffer()
@@ -7559,6 +7567,14 @@ namespace Core.DirFiles
 
             _diagnostics.Sort(CompareDiagnostics);
             _diagnosticsCacheDirty = false;
+            if (_messageDetailsActive && _messageDetailsShowsDiagnostics)
+            {
+                SetMessageDetailsDiagnostics(resetSelection: false);
+                _messageDetailsText = _diagnostics.Count == 0 ? "No errors or warnings" : BuildDiagnosticsDetails();
+                _messageDetailsSeverity = HasDiagnosticSeverity(EditorDiagnosticSeverity.Error, null)
+                    ? EditorNotificationSeverity.Error : _diagnostics.Count > 0
+                    ? EditorNotificationSeverity.Warning : EditorNotificationSeverity.Normal;
+            }
         }
 
         private void ClearDiagnostics()
@@ -7697,24 +7713,6 @@ namespace Core.DirFiles
             AddDiagnostic(lineIndex, startColumn, endColumn, diagnostic.Id, description, severity);
         }
 
-        private void CollectTermXtDiagnostics()
-        {
-            foreach (var diagnostic in TermXtSyntax.Validate(_lines))
-                AddDiagnostic(diagnostic.Line - 1, string.Empty, diagnostic.Message);
-
-            HashSet<string> functionNames = CollectTermXtFunctionNames();
-            for (int i = 0; i < _lines.Count; i++)
-            {
-                string line = _lines[i].Trim();
-                if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal)) continue;
-                string keyword = TermXtSyntax.Keyword(line);
-                if (keyword == "call") ValidateTermXtCall(i, line, functionNames);
-                else if (TrySuggestTermXtKeyword(keyword, line, functionNames, out string suggestedKeyword))
-                    AddDiagnostic(i, string.Empty, "Unknown TermXT keyword '" + keyword +
-                        "'. Did you mean '" + suggestedKeyword + "'?");
-            }
-        }
-
         private HashSet<string> CollectTermXtFunctionNames()
         {
             var functionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -7734,22 +7732,6 @@ namespace Core.DirFiles
             }
 
             return functionNames;
-        }
-
-        private void ValidateTermXtCall(int lineIndex, string line, HashSet<string> functionNames)
-        {
-            string functionName = SecondWord(line);
-            if (string.IsNullOrWhiteSpace(functionName))
-            {
-                AddDiagnostic(lineIndex, string.Empty, "'call' missing function name.");
-                return;
-            }
-
-            if (functionName.IndexOf('{') >= 0 || functionName.IndexOf('}') >= 0)
-                return;
-
-            if (!functionNames.Contains(functionName))
-                AddDiagnostic(lineIndex, string.Empty, "Function '" + functionName + "' not found.");
         }
 
         private void AddDiagnostic(int lineIndex, string code, string description)
@@ -7941,7 +7923,7 @@ namespace Core.DirFiles
             if (!string.Equals(FirstWord(line), "func", StringComparison.OrdinalIgnoreCase))
                 return string.Empty;
 
-            return SecondWord(line);
+            return line.Substring(4).Trim();
         }
 
         private static bool TrySuggestTermXtKeyword(

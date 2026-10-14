@@ -16,11 +16,13 @@ namespace Core.DirFiles
             LinesVariable,
             EachIn,
             EachSource,
-            Condition
+            Condition,
+            Command
         }
 
         private TermXtCompletionKind _termXtCompletionKind;
         private bool _termXtCompletionManual;
+        private readonly HashSet<string> _termXtCommandNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private static readonly Dictionary<string, string> s_termXtCompletionDetails =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -61,7 +63,11 @@ namespace Core.DirFiles
                 ["not"] = "negate a condition",
                 ["contains"] = "<text> contains <value>",
                 ["startswith"] = "<text> startswith <prefix>",
-                ["endswith"] = "<text> endswith <suffix>"
+                ["endswith"] = "<text> endswith <suffix>",
+                ["true"] = "true condition",
+                ["false"] = "false condition",
+                ["&&"] = "both conditions must be true",
+                ["||"] = "either condition may be true"
             };
 
         private static readonly Dictionary<string, string> s_termXtBuiltinVariables =
@@ -84,6 +90,20 @@ namespace Core.DirFiles
             return _syntax == TermXTEditorSyntax.TermXt && !IsCSharpCompletionContext();
         }
 
+        private bool HasTermXtStatements()
+        {
+            foreach (string source in _lines)
+            {
+                switch (FirstWord(source.TrimStart()).ToLowerInvariant())
+                {
+                    case "set": case "print": case "run": case "capture": case "input":
+                    case "read": case "write": case "append": case "wait": case "loop":
+                    case "each": case "func": case "call": case "elif": case "end": return true;
+                }
+            }
+            return false;
+        }
+
         private bool RefreshTermXtCompletion(bool manual)
         {
             if (_mode != Mode.Insert || !TryGetTermXtCompletionContext(
@@ -97,7 +117,8 @@ namespace Core.DirFiles
                 _completionStartLine == _cursorLine && _completionStartCol == startColumn;
             manual |= reuse && _termXtCompletionManual;
             bool immediate = kind == TermXtCompletionKind.Variable ||
-                kind == TermXtCompletionKind.LinesVariable || kind == TermXtCompletionKind.Function;
+                kind == TermXtCompletionKind.LinesVariable || kind == TermXtCompletionKind.Function ||
+                kind == TermXtCompletionKind.Command;
             if (!manual && !immediate && prefix.Length < 2)
             {
                 DismissCompletion();
@@ -204,6 +225,15 @@ namespace Core.DirFiles
                 return true;
             }
 
+            int commandTextStart = command == "run" ? argumentStart :
+                command == "capture" ? line.IndexOf('=', commandEnd) + 1 : -1;
+            if (commandTextStart > 0 && commandTextStart <= _cursorCol &&
+                TryGetTermXtCommandPrefix(line, commandTextStart, _cursorCol, out startColumn, out prefix))
+            {
+                kind = TermXtCompletionKind.Command;
+                return true;
+            }
+
             string beforePrefix = line.Substring(argumentStart, Math.Max(0, startColumn - argumentStart)).Trim();
             if (command == "each")
             {
@@ -240,7 +270,16 @@ namespace Core.DirFiles
             {
                 case TermXtCompletionKind.Keyword:
                     foreach (string keyword in s_termXtLineKeywords)
+                    {
                         AddTermXtWordCompletion(items, keyword, "keyword");
+                        labels.Add(keyword);
+                    }
+                    foreach (string command in _termXtCommandNames)
+                        if (labels.Add(command)) items.Add(new CompletionItem(command, command, "command", "xTerminal command", 10));
+                    break;
+                case TermXtCompletionKind.Command:
+                    foreach (string command in _termXtCommandNames)
+                        items.Add(new CompletionItem(command, command, "command", "xTerminal command: " + command, 0));
                     break;
                 case TermXtCompletionKind.Expression:
                     foreach (string function in s_functionKeywords)
@@ -253,12 +292,13 @@ namespace Core.DirFiles
                     AddTermXtWordCompletion(items, "lines:", "source");
                     break;
                 case TermXtCompletionKind.Condition:
-                    foreach (string word in new[] { "not", "contains", "startswith", "endswith" })
+                    foreach (string word in new[] { "not", "contains", "startswith", "endswith", "&&", "||", "true", "false" })
                         AddTermXtWordCompletion(items, word, "operator");
                     break;
                 case TermXtCompletionKind.Function:
                     foreach (string name in CollectTermXtFunctionNames())
-                        items.Add(new CompletionItem(name, name, "function", "call " + name + " [arguments]", 0));
+                        items.Add(new CompletionItem(name, name.IndexOfAny(new[] { ' ', '\t' }) >= 0 ? "\"" + name + "\"" : name,
+                            "function", "call " + name + " [arguments]", 0));
                     break;
                 case TermXtCompletionKind.Variable:
                 case TermXtCompletionKind.LinesVariable:
@@ -273,23 +313,10 @@ namespace Core.DirFiles
                         labels.Add(name);
                         items.Add(new CompletionItem(name, name, "variable", "argument " + name, 20));
                     }
-                    for (int i = 0; i < _lines.Count; i++)
+                    foreach (var variable in CollectTermXtDeclaredVariables())
                     {
-                        string line = _lines[i].Trim();
-                        string command = FirstWord(line).ToLowerInvariant();
-                        string name = string.Empty;
-                        if (command == "set" || command == "input" || command == "read" || command == "capture")
-                        {
-                            int equals = line.IndexOf('=');
-                            if (equals > command.Length)
-                                name = line.Substring(command.Length, equals - command.Length).Trim();
-                        }
-                        else if (command == "each")
-                        {
-                            name = SecondWord(line);
-                        }
-                        if (IsTermXtVariableName(name) && labels.Add(name))
-                            items.Add(new CompletionItem(name, name, "variable", command + " - line " + (i + 1), 0));
+                        if (labels.Add(variable.Key))
+                            items.Add(new CompletionItem(variable.Key, variable.Key, "variable", variable.Value, 0));
                     }
                     break;
             }
@@ -303,9 +330,47 @@ namespace Core.DirFiles
 
         private static bool IsTermXtCompletionPart(char c, TermXtCompletionKind kind)
         {
-            return kind == TermXtCompletionKind.Function
+            if (kind == TermXtCompletionKind.Command && c == '|') return false;
+            return kind == TermXtCompletionKind.Function || kind == TermXtCompletionKind.Command
                 ? !char.IsWhiteSpace(c) && c != '"' && c != '{' && c != '}'
                 : IsTermXtVariablePart(c);
+        }
+
+        private static bool TryGetTermXtCommandPrefix(string line, int start, int cursor, out int startColumn, out string prefix)
+        {
+            bool quoted = false;
+            for (int i = start; i < cursor; i++)
+            {
+                if (line[i] == '"') quoted = !quoted;
+                if (!quoted && line[i] == '|' && (i == 0 || line[i - 1] != '|') &&
+                    (i + 1 >= line.Length || line[i + 1] != '|')) start = i + 1;
+            }
+            while (start < cursor && char.IsWhiteSpace(line[start])) start++;
+            startColumn = start;
+            prefix = line.Substring(start, cursor - start);
+            foreach (char c in prefix)
+                if (!IsTermXtCompletionPart(c, TermXtCompletionKind.Command)) return false;
+            return !quoted;
+        }
+
+        private Dictionary<string, string> CollectTermXtDeclaredVariables()
+        {
+            var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < _lines.Count; i++)
+            {
+                string line = _lines[i].Trim();
+                string command = FirstWord(line).ToLowerInvariant();
+                string name = string.Empty;
+                if (command == "set" || command == "input" || command == "read" || command == "capture")
+                {
+                    int equals = line.IndexOf('=');
+                    if (equals > command.Length) name = line.Substring(command.Length, equals - command.Length).Trim();
+                }
+                else if (command == "each") name = SecondWord(line);
+                if (IsTermXtVariableName(name) && !variables.ContainsKey(name))
+                    variables.Add(name, command + " - line " + (i + 1));
+            }
+            return variables;
         }
 
         private static bool IsTermXtVariableName(string name)

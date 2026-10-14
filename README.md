@@ -624,7 +624,9 @@ Example:
 	                Supports TermXT, C#, C, C++, Rust, JavaScript, and Python syntax.
 	                Shows editor diagnostics with red error and yellow warning notifications; press F2 for the complete list. Use Up/Down to select, PgUp/PgDn or the mouse wheel to scroll, and Enter to jump to the selected line. F2/Esc closes the list.
 	                Use :errors, :warnings, :next-error, and :next-warning to inspect or navigate diagnostics by severity.
-	                In TermXT buffers, IntelliSense suggests keywords, set expressions, functions after call, and variables inside {braces} or after lines:.
+	                In TermXT buffers, IntelliSense suggests keywords, set expressions, conditions, functions after call, variables inside {braces} or after lines:, and terminal commands after run/capture and pipes.
+	                TermXT errors and warnings update from unsaved edits, with gutter markers, header counts, and an F2 list; select an entry and press Enter to jump to its location.
+	                Checks cover block structure, conditions, function calls, and constant arguments/expressions. Warnings flag undeclared variables, ignored assignments/arguments, ineffective waits, and likely keyword typos.
 	                In C# buffers, IntelliSense opens automatically while typing and after '.', with member suggestions resolved from declared/imported symbols.
 	                Opening a .cs file automatically finds its owning project, including linked files listed by a nearby solution. Completion and diagnostics include other project classes, project references, implicit/global usings, compile exclusions, and restored NuGet compile assemblies, using the unsaved buffer for the active file.
 	                Use :e <path> to open another file, .csproj, .sln, or .slnx; :project (or :project reload) shows the owning project and refreshes its sources and references. External source changes are also picked up by new completion requests after a short cache interval.

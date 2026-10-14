@@ -826,35 +826,7 @@ print ""Done!""
 
             private static (int Index, string Operator) FindConditionOperator(string condition, string[] operators)
             {
-                bool quoted = false;
-                int nesting = 0;
-                (int, string) found = (-1, null);
-                for (int i = 0; i < condition.Length; i++)
-                {
-                    char ch = condition[i];
-                    if (ch == '"') { quoted = !quoted; continue; }
-                    if (quoted) continue;
-                    if (ch == '(') { nesting++; continue; }
-                    if (ch == ')')
-                    {
-                        if (--nesting < 0) throw new FormatException("Unmatched ')' in condition.");
-                        continue;
-                    }
-                    if (nesting != 0 || found.Item1 >= 0) continue;
-                    foreach (string op in operators)
-                    {
-                        if (i + op.Length > condition.Length ||
-                            !condition.AsSpan(i, op.Length).Equals(op.AsSpan(), StringComparison.OrdinalIgnoreCase)) continue;
-                        if (char.IsLetter(op[0]) &&
-                            (i == 0 || !char.IsWhiteSpace(condition[i - 1]) ||
-                             i + op.Length == condition.Length || !char.IsWhiteSpace(condition[i + op.Length]))) continue;
-                        found = (i, op);
-                        break;
-                    }
-                }
-                if (quoted) throw new FormatException("Unclosed double quote in condition.");
-                if (nesting != 0) throw new FormatException("Unclosed '(' in condition.");
-                return found;
+                return TermXtSyntax.FindConditionOperator(condition, operators);
             }
 
             // ── Loop N / end ─────────────────────────────────────────────────

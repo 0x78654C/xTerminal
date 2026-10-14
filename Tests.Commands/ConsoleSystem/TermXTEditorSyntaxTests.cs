@@ -1782,7 +1782,7 @@ public partial class TermXTEditorSyntaxTests
             GetPrivateField<bool>(editor, "_messageDetailsShowsDiagnostics").Should().BeTrue();
             GetPrivateField<string>(editor, "_messageDetailsText").Should().Be(
                 "[ERROR] 1/3  L1:C1: 'break' outside of a loop." + Environment.NewLine +
-                "[ERROR] 2/3  L2:C1: Function 'missing' not found." + Environment.NewLine +
+                "[ERROR] 2/3  L2:C6 XT1003: Function 'missing' not found." + Environment.NewLine +
                 "[ERROR] 3/3  L3:C1: 'return' outside of a function.");
         }
         finally
