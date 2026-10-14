@@ -60,6 +60,9 @@ STYLES = {
     'section': ParagraphStyle('section', fontName=BOLD, fontSize=17, leading=21,
                               textColor=BLUE, spaceBefore=17, spaceAfter=10,
                               keepWithNext=True),
+    'subsection': ParagraphStyle('subsection', fontName=BOLD, fontSize=12, leading=16,
+                                 textColor=BLUE, spaceBefore=12, spaceAfter=7,
+                                 keepWithNext=True),
     'code': ParagraphStyle('code', fontName=CODE, fontSize=8.5, leading=11.7,
                            textColor=INK),
     'table': ParagraphStyle('table', fontName=BODY, fontSize=9.1, leading=12.5,
@@ -146,7 +149,11 @@ def build(source, output, version):
 
     def flush():
         if paragraph:
-            story.append(Paragraph(inline(' '.join(paragraph)), STYLES['body']))
+            text = ' '.join(paragraph)
+            item = Paragraph(inline(text), STYLES['body'])
+            if text.endswith(':'):
+                item.keepWithNext = True
+            story.append(item)
             paragraph.clear()
 
     while index < len(lines):
@@ -171,6 +178,9 @@ def build(source, output, version):
                 story.append(PageBreak())
                 contents_added = True
             story.append(Paragraph(inline(line[3:]), STYLES['section']))
+        elif line.startswith('### '):
+            flush()
+            story.append(Paragraph(inline(line[4:]), STYLES['subsection']))
         elif line.startswith('```'):
             flush()
             code = []
@@ -239,18 +249,23 @@ def build(source, output, version):
 def verify(output, version):
     import pymupdf
 
-    review = DOCUMENTS.parent / '.codex-build' / 'termxt-pdf-review'
+    review = DOCUMENTS.parent / 'tmp' / 'pdfs' / f'termxt-v{version}'
     review.mkdir(parents=True, exist_ok=True)
-    original = DOCUMENTS / 'TermXT_Scripting_Language_User_Manual_v1.0.0.pdf'
+    original = DOCUMENTS / 'TermXT_Scripting_Language_User_Manual_v1.0.2.pdf'
     if original.exists():
         with pymupdf.open(original) as old:
             print(f'Older PDF: {len(old)} pages; {old[0].get_text()[:160]!r}')
             old[0].get_pixmap(matrix=pymupdf.Matrix(1, 1)).save(str(review / 'original-cover.png'))
     with pymupdf.open(output) as pdf:
         full_text = '\n'.join(page.get_text() for page in pdf)
-        for required in [version, '{argc}', 'Conditions', 'Functions', '128', 'language_features.xt']:
+        for required in [version, '{argc}', 'Conditions', 'Functions', '128', 'language_features.xt',
+                         'Editor diagnostics and line display', '[line 4]', 'L2:C10',
+                         'XT1001', 'XT1006', 'XT2001', 'XT2005', ':next-error', ':next-warning']:
             if required not in full_text:
                 raise RuntimeError(f'Missing expected PDF text: {required}')
+        for obsolete in ['[xt line', 'Current version: 1.0.2', '### ']:
+            if obsolete in full_text:
+                raise RuntimeError(f'Obsolete or unrendered PDF text: {obsolete}')
         for page in pdf:
             if not page.get_text().strip():
                 raise RuntimeError(f'Blank page: {page.number + 1}')

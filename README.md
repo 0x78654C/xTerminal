@@ -781,9 +781,9 @@ For that we use following command:
 
 TermXT is the xTerminal scripting language. It runs `.xt` files and can execute any xTerminal command, capture command output, use variables, branch, loop, call functions, and read/write files.
 
-Current manual (TermXT 1.0.2): [Documents/TermXT_Scripting_Language_User_Manual.md](Documents/TermXT_Scripting_Language_User_Manual.md)
+Current manual (TermXT 1.0.3): [Documents/TermXT_Scripting_Language_User_Manual.md](Documents/TermXT_Scripting_Language_User_Manual.md)
 
-PDF edition: [TermXT Scripting Language User Manual v1.0.2](Documents/TermXT_Scripting_Language_User_Manual_v1.0.2.pdf)
+PDF edition: [TermXT Scripting Language User Manual v1.0.3](Documents/TermXT_Scripting_Language_User_Manual_v1.0.3.pdf)
 
 ### Running Scripts
 
