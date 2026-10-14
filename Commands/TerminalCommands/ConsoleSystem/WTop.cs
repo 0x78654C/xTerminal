@@ -32,9 +32,11 @@ Inside the wtop command:
 Tree view sorts sibling processes together. Search reveals matches in collapsed branches.
 K kills only the selected process, including in tree view.
 
-System and service accounts are also shown when running as a normal user.
+System and registered service accounts are also shown when running as a normal user.
 USER ending in * is the service's configured logon account when its process owner cannot be read.
-Some protected process owners still require administrator privileges; unavailable owners show —.
+Worker processes without their own service entry cannot use that fallback, even when they run as
+NETWORK SERVICE or LOCAL SERVICE. If Windows denies access to their owner, USER shows —.
+Run xTerminal as administrator to read those owners; a parent's account is not proof of a worker's account.
 ";
 
         public void Execute(string arg)

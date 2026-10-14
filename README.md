@@ -272,9 +272,10 @@ Example:
                     N   : Sort processes by name.
                  Tree view sorts siblings together; search reveals matches in collapsed branches.
                  K kills only the selected process, including in tree view.
-                 System and service accounts are also shown in normal-user mode.
+                 System and registered service accounts are also shown in normal-user mode.
                  USER ending in * is a service's configured logon account when its process owner cannot be read.
-                 Some protected owners still require administrator privileges; unavailable owners show —.
+                 Workers without their own service entry (including some NETWORK SERVICE/LOCAL SERVICE processes)
+                 still require administrator privileges if Windows denies owner access; unavailable owners show —.
     ssh       -- (Wrapper for built in) SSH, or Secure Shell, is a network protocol that provides a secure, encrypted way for computers to communicate over an unsecured network
     env       -- Manage environment variables across Process, User and System scopes. Use -h for additional help.
                    env                                     : List all variables across Process, User and System sections.
@@ -307,8 +308,10 @@ Example:
                    fsmon -r -l <logfile> [path]     : Recursive monitoring with logging.
                    fsmon -r [path] -l <logfile>     : Flags can appear in any order, before or after the path.
                    Displays timestamp, event type (CREATED/DELETED/MODIFIED/RENAMED), actor user and path.
-                   User shown from Security Event Log when elevated + Object Access auditing is enabled,
-                   otherwise falls back to the file ACL owner.
+                   User/process matched from Security Event Log when elevated + File System auditing
+                   and write/delete auditing entries on the monitored folder are configured (see fsmon -h).
+                   Otherwise shows labelled file, cached or parent ownership; these do not identify the actor.
+                   Short-lived/deleted files can use cached or parent ownership. Audit matching can delay output by one second.
                    Press Q or Esc to quit.
                    Examples:
                    fsmon -r C:\Projects\myapp

@@ -1,10 +1,8 @@
 using Core;
 using System;
-using System.Collections.Concurrent;
-using System.Diagnostics.Eventing.Reader;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
-using System.Security.Principal;
 using System.Text;
 using System.Threading;
 
@@ -39,23 +37,28 @@ Examples:
     fsmon -r C:\Users\<username>\Downloads -l C:\Users\<username>\audit.log
     fsmon C:\Windows\Temp
 
-Attention: For best user information that made the operation, enable File System auditing for the monitored directory (and subdirs if -r) with these steps:
+User information:
+    Audit records identify the account and process that accessed the file.
+    [owner], [cached owner] and [parent owner] are ownership fallbacks, not actors.
+    Short-lived files may only have a parent owner available; unknown means no identity could be read.
+    Audit matching is best effort and can delay display by up to one second.
+
+For actor information, run elevated and enable File System auditing:
 1. Open Local Security Policy (secpol.msc).
 2. Navigate to Security Settings → Local Policies → Audit Policy.
-3. Enable Audit object access' for Success and/or Failure.
+3. Enable 'Audit object access' for Success.
 
 or enable it via command line with these steps:
 1. Open an elevated command prompt.
-2. Run: auditpol /set /subcategory:""File System"" /success:enable /failure:enable
+2. Run: auditpol /set /subcategory:""File System"" /success:enable
 
+Also configure the monitored folder: Properties > Security > Advanced > Auditing.
+Add a Success auditing entry for the users to monitor, with write/delete permissions.
+Apply it to this folder, subfolders and files when monitoring recursively.
+Enabling the audit policy alone does not create file access records.
 
 Press Q or Esc to quit.
 ";
-
-        // Cache actor identity for files that are about to be deleted.
-        // Changed/Created events fire before Delete, so we stash the actor
-        // while the file still exists and the security log entry is fresh.
-        private static readonly ConcurrentDictionary<string, string> s_actorCache = new(StringComparer.OrdinalIgnoreCase);
 
         public void Execute(string args)
         {
@@ -114,8 +117,7 @@ Press Q or Esc to quit.
                     return;
                 }
 
-                s_actorCache.Clear();
-                RunMonitor(watchPath, recursive, logFile);
+                RunMonitor(Path.GetFullPath(watchPath), recursive, logFile == null ? null : Path.GetFullPath(logFile));
             }
             catch (Exception ex)
             {
@@ -126,8 +128,6 @@ Press Q or Esc to quit.
 
         private static void RunMonitor(string path, bool recursive, string? logFile)
         {
-            bool secLog = CheckSecurityLogAccess();
-
             // Open log file stream if requested.
             StreamWriter? logWriter = null;
             if (logFile != null)
@@ -149,16 +149,20 @@ Press Q or Esc to quit.
 
             try
             {
+                using var identities = new FsMonIdentityResolver(path, recursive);
+                identities.Start();
                 Console.WriteLine();
                 FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  Monitoring : ");
                 Console.WriteLine(path);
                 FileSystem.ColorConsoleText(ConsoleColor.DarkGray, $"  Recursive  : {recursive}   Press Q to quit\n");
                 FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  User source: ");
-                if (secLog)
-                    FileSystem.ColorConsoleText(ConsoleColor.Green, "Security Event Log\n");
+                if (identities.SecurityLogAvailable)
+                    FileSystem.ColorConsoleText(ConsoleColor.Green, "Security Event Log when audited; ownership fallback otherwise\n");
                 else
                     FileSystem.ColorConsoleText(ConsoleColor.DarkYellow,
-                        "file owner (run elevated + enable Object Access auditing for actor tracking)\n");
+                        "ownership fallback (see fsmon -h for audit setup)\n");
+                FileSystem.ColorConsoleText(ConsoleColor.DarkGray,
+                    "  [owner]/[cached owner]/[parent owner] identify owners, not the user making the change.\n");
                 if (logFile != null)
                 {
                     FileSystem.ColorConsoleText(ConsoleColor.Cyan, "  Log file   : ");
@@ -169,24 +173,61 @@ Press Q or Esc to quit.
                     logWriter.WriteLine($"  fsmon session started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                     logWriter.WriteLine($"  Monitoring : {path}");
                     logWriter.WriteLine($"  Recursive  : {recursive}");
+                    logWriter.WriteLine("  User: audit actor when available; [owner]/[cached owner]/[parent owner] are ownership fallbacks.");
                     logWriter.WriteLine(new string('─', 80));
                 }
                 Console.WriteLine(new string('─', 80));
 
-                using var preDeleteWatcher = new FileSystemWatcher(path)
-                {
-                    IncludeSubdirectories = recursive,
-                    EnableRaisingEvents   = false,
-                    NotifyFilter          = NotifyFilters.Attributes | NotifyFilters.Security | NotifyFilters.LastAccess,
-                    InternalBufferSize    = 65536
-                };
+                const int pendingLimit = 8192;
+                var pending = new Queue<PendingChange>();
+                var pendingLock = new object();
+                bool accepting = true;
+                int overflowed = 0;
 
-                preDeleteWatcher.Changed += (_, e) =>
+                void Enqueue(FileSystemEventArgs e)
                 {
-                    string actor = GetActor(e.FullPath);
-                    if (actor != "—")
-                        s_actorCache[e.FullPath] = actor;
-                };
+                    // Logging inside the watched tree must not generate an endless
+                    // stream of events caused by fsmon's own log writes.
+                    if (string.Equals(e.FullPath, logFile, StringComparison.OrdinalIgnoreCase)) return;
+                    DateTime observed = DateTime.UtcNow;
+                    long readyAt = Environment.TickCount64 + (identities.SecurityLogAvailable ? 1000 : 0);
+                    string? oldPath = (e as RenamedEventArgs)?.OldFullPath;
+                    lock (pendingLock)
+                    {
+                        if (!accepting) return;
+                        if (pending.Count >= pendingLimit)
+                        {
+                            Interlocked.Exchange(ref overflowed, 1);
+                            return;
+                        }
+                        string fallback = identities.CaptureFallback(e.FullPath, e.ChangeType, oldPath);
+                        pending.Enqueue(new PendingChange(e.ChangeType, e.FullPath, oldPath, observed, readyAt, fallback));
+                    }
+                }
+
+                void Drain(bool flush)
+                {
+                    // Bound each batch to keep Q/Esc responsive under heavy load.
+                    for (int i = 0; flush || i < 256; i++)
+                    {
+                        PendingChange change;
+                        lock (pendingLock)
+                        {
+                            if (pending.Count == 0 || (!flush && pending.Peek().ReadyAt > Environment.TickCount64)) return;
+                            change = pending.Dequeue();
+                        }
+                        string actor = identities.Resolve(change.Path, change.Type, change.ObservedUtc, change.Fallback, change.OldPath);
+                        var (label, color) = change.Type switch
+                        {
+                            WatcherChangeTypes.Created => ("CREATED ", ConsoleColor.Green),
+                            WatcherChangeTypes.Deleted => ("DELETED ", ConsoleColor.Red),
+                            WatcherChangeTypes.Renamed => ("RENAMED ", ConsoleColor.Cyan),
+                            _ => ("MODIFIED", ConsoleColor.Yellow)
+                        };
+                        string detail = change.OldPath == null ? change.Path : $"{change.OldPath}  →  {change.Path}";
+                        Print(label, color, detail, actor, logWriter, change.ObservedUtc.ToLocalTime());
+                    }
+                }
 
                 using var watcher = new FileSystemWatcher(path)
                 {
@@ -197,60 +238,43 @@ Press Q or Esc to quit.
                     InternalBufferSize    = 65536
                 };
 
-                watcher.Created += (_, e) =>
-                {
-                    string actor = GetActor(e.FullPath);
-                    Print("CREATED ", ConsoleColor.Green, e.FullPath, actor, logWriter);
-                    if (actor != "—") s_actorCache[e.FullPath] = actor;
-                };
-                watcher.Changed += (_, e) =>
-                {
-                    string actor = GetActor(e.FullPath);
-                    Print("MODIFIED", ConsoleColor.Yellow, e.FullPath, actor, logWriter);
-                    if (actor != "—") s_actorCache[e.FullPath] = actor;
-                };
-                watcher.Deleted += (_, e) =>
-                {
-                    string actor;
-                    if (s_actorCache.TryRemove(e.FullPath, out string? cached) && cached != "—")
-                    {
-                        actor = cached;
-                    }
-                    else
-                    {
-                        Thread.Sleep(500);
-                        actor = TryQuerySecurityLog(e.FullPath) ?? "—";
-                    }
-                    Print("DELETED ", ConsoleColor.Red, e.FullPath, actor, logWriter);
-                };
-                watcher.Renamed += (_, e) =>
-                {
-                    if (s_actorCache.TryRemove(e.OldFullPath, out string? old))
-                        s_actorCache[e.FullPath] = old;
-
-                    Print("RENAMED ", ConsoleColor.Cyan,
-                        $"{e.OldName}  →  {e.Name}", GetActor(e.FullPath), logWriter);
-                };
+                watcher.Created += (_, e) => Enqueue(e);
+                watcher.Changed += (_, e) => Enqueue(e);
+                watcher.Deleted += (_, e) => Enqueue(e);
+                watcher.Renamed += (_, e) => Enqueue(e);
                 watcher.Error += (_, e) =>
                 {
                     if (e.GetException() is InternalBufferOverflowException)
-                        Print("OVERFLOW", ConsoleColor.Magenta,
-                            "Event buffer overflowed — some events may be lost", "—", logWriter);
+                        Interlocked.Exchange(ref overflowed, 1);
                 };
 
-                preDeleteWatcher.EnableRaisingEvents = true;
                 watcher.EnableRaisingEvents = true;
 
-                while (true)
+                try
                 {
-                    Thread.Sleep(100);
-                    if (Console.KeyAvailable)
+                    while (true)
                     {
-                        var key = Console.ReadKey(intercept: true);
-                        if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape)
-                            break;
+                        Thread.Sleep(50);
+                        Drain(flush: false);
+                        if (Interlocked.Exchange(ref overflowed, 0) != 0)
+                            Print("OVERFLOW", ConsoleColor.Magenta,
+                                "Event buffer overflowed — some events may be lost", "unknown", logWriter, DateTime.Now);
+                        if (Console.KeyAvailable)
+                        {
+                            var key = Console.ReadKey(intercept: true);
+                            if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape) break;
+                        }
                     }
                 }
+                finally
+                {
+                    watcher.EnableRaisingEvents = false;
+                    lock (pendingLock) accepting = false;
+                }
+
+                // Callbacks no longer write to the console or log. Drain accepted
+                // notifications before the footer and before disposing the writer.
+                Drain(flush: true);
 
                 // Write session footer to log file.
                 logWriter?.WriteLine(new string('─', 80));
@@ -263,97 +287,25 @@ Press Q or Esc to quit.
             }
         }
 
-        // Cached once per monitor session — avoids repeated privilege checks.
-        private static bool? s_secLogAvailable;
-
-        private static bool CheckSecurityLogAccess()
-        {
-            if (s_secLogAvailable.HasValue) return s_secLogAvailable.Value;
-            try
-            {
-                var q = new EventLogQuery("Security", PathType.LogName, "*[System[EventID=4663]]")
-                { ReverseDirection = true };
-                using var r = new EventLogReader(q);
-                r.ReadEvent();
-                s_secLogAvailable = true;
-            }
-            catch { s_secLogAvailable = false; }
-            return s_secLogAvailable.Value;
-        }
-
-        // Queries Security Event Log for the most recent event touching this file.
-        // EventID 4663 = Object Access, 4656 = Handle Request (fires on open-with-delete).
-        private static string? TryQuerySecurityLog(string path)
-        {
-            if (!CheckSecurityLogAccess()) return null;
-            try
-            {
-                string file = Path.GetFileName(path).Replace("'", "''");
-
-                string xPath =
-                    $"*[System[(EventID=4663 or EventID=4656) and " +
-                    $"TimeCreated[timediff(@SystemTime) <= 15000]]" +
-                    $" and EventData[Data[@Name='ObjectName'][contains(.,'{file}')]]]";
-
-                var logQuery = new EventLogQuery("Security", PathType.LogName, xPath)
-                { ReverseDirection = true };
-                using var reader = new EventLogReader(logQuery);
-                using var ev = reader.ReadEvent();
-                if (ev == null) return null;
-
-                string? user    = ev.Properties[1].Value?.ToString();
-                string? domain  = ev.Properties[2].Value?.ToString();
-                string? process = ev.Properties.Count > 11
-                    ? ev.Properties[11].Value?.ToString() : null;
-
-                if (string.IsNullOrEmpty(user) || user == "-") return null;
-
-                string identity = (string.IsNullOrEmpty(domain) || domain == "-")
-                    ? user : $"{domain}\\{user}";
-
-                if (!string.IsNullOrEmpty(process) && process != "-")
-                    identity += $" ({Path.GetFileName(process)})";
-
-                return identity;
-            }
-            catch { return null; }
-        }
-
-        private static string GetOwner(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                    return new FileInfo(path).GetAccessControl()
-                                            .GetOwner(typeof(NTAccount))?.ToString() ?? "—";
-                if (Directory.Exists(path))
-                    return new DirectoryInfo(path).GetAccessControl()
-                                                  .GetOwner(typeof(NTAccount))?.ToString() ?? "—";
-            }
-            catch { }
-            return "—";
-        }
-
-        // Preferred: Security log actor; fallback: ACL owner.
-        private static string GetActor(string path)
-            => TryQuerySecurityLog(path) ?? GetOwner(path);
+        private sealed record PendingChange(WatcherChangeTypes Type, string Path, string? OldPath,
+            DateTime ObservedUtc, long ReadyAt, string Fallback);
 
         private static readonly object s_lock = new();
 
-        private static void Print(string type, ConsoleColor color, string detail, string actor, StreamWriter? logWriter)
+        private static void Print(string type, ConsoleColor color, string detail, string actor, StreamWriter? logWriter, DateTime observed)
         {
-            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string timestamp = observed.ToString("yyyy-MM-dd HH:mm:ss");
 
             lock (s_lock)
             {
                 // Console output (coloured).
-                FileSystem.ColorConsoleText(ConsoleColor.DarkGray, $"  {DateTime.Now:HH:mm:ss}  ");
+                FileSystem.ColorConsoleText(ConsoleColor.DarkGray, $"  {observed:HH:mm:ss}  ");
                 FileSystem.ColorConsoleText(color,                  $"{type}  ");
-                FileSystem.ColorConsoleText(ConsoleColor.DarkCyan,  $"{actor,-32}");
+                FileSystem.ColorConsoleText(ConsoleColor.DarkCyan,  $"{actor,-32}  ");
                 Console.WriteLine(detail);
 
                 // Log file output (plain text).
-                logWriter?.WriteLine($"  {timestamp}  {type}  {actor,-32}{detail}");
+                logWriter?.WriteLine($"  {timestamp}  {type}  {actor,-32}  {detail}");
             }
         }
     }
