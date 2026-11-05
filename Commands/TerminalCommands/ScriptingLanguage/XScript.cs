@@ -1185,25 +1185,7 @@ print ""Done!""
             /// </summary>
             private static string[] SplitPipes(string cmdLine)
             {
-                var segments = new List<string>();
-                int segStart = 0;
-                bool quoted = false;
-                for (int i = 0; i < cmdLine.Length; i++)
-                {
-                    if (cmdLine[i] == '"') quoted = !quoted;
-                    if (!quoted && cmdLine[i] == '|')
-                    {
-                        if (i + 1 < cmdLine.Length && cmdLine[i + 1] == '|')
-                        {
-                            i++; // skip ||
-                            continue;
-                        }
-                        segments.Add(cmdLine[segStart..i]);
-                        segStart = i + 1;
-                    }
-                }
-                segments.Add(cmdLine[segStart..]);
-                return segments.ToArray();
+                return FileSystem.SplitPipeline(cmdLine);
             }
 
             /// <summary>

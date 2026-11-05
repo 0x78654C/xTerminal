@@ -190,10 +190,10 @@ namespace Shell
                     }
 
                     // Pipe line command execution.
-                    if (command.Contains("|") && !command.Contains("||") && !command.EndsWith("&"))
+                    var commandSplit = FileSystem.SplitPipeline(command);
+                    if (commandSplit.Length > 1 && !FileSystem.CommandParser(command).Contains("||") && !command.EndsWith("&"))
                     {
                         GlobalVariables.isPipeCommand = true;
-                        var commandSplit = command.Split('|');
                         GlobalVariables.pipeCmdCount = commandSplit.Count() - 1;
                         GlobalVariables.pipeCmdCountTemp = GlobalVariables.pipeCmdCount;
                         var count = 0;
@@ -210,8 +210,8 @@ namespace Shell
                     // Run command in background.
                     else if (command.EndsWith("&"))
                     {
-                        var commandSplit = command.Split("&")[0];
-                        var cmdExecute = commandSplit.Trim();
+                        var backgroundCommand = command.Split("&")[0];
+                        var cmdExecute = backgroundCommand.Trim();
                         c = Commands.CommandRepository.GetCommand(cmdExecute);
                         var bgCommands = new BGCommands();
                         bgCommands.Command = cmdExecute;
@@ -300,24 +300,8 @@ namespace Shell
 
             // Regex pattern to match &&, ||, and ;
 
-            string pattern = @"(\&\&|\|\||;)";
-
-            // Split while keeping delimiters
-            //var parts = new List<string>();
             var parts = FileSystem.CommandParser(command);
-            var multiSysmbols = new List<string>();
-            MatchCollection matches = Regex.Matches(command, pattern);
-            var tokens = Regex.Split(command, pattern);
-            int i = 0;
-            foreach (string token in tokens)
-            {
-                //if (!string.IsNullOrWhiteSpace(token))
-                //    parts.Add(token.Trim());
-
-                if (i < matches.Count)
-                    multiSysmbols.Add(matches[i].Value);  // Add delimiter
-                i++;
-            }
+            var multiSysmbols = parts.Where(part => part == "&&" || part == "||" || part == ";").ToList();
 
             int j = 0;
 

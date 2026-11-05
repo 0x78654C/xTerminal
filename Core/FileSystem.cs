@@ -687,10 +687,30 @@ namespace Core
         }
 
         /// <summary>
-        /// Parse command string into parts based on delimiters and between quotes.
+        /// Split pipeline stages while preserving quoted patterns and logical OR operators.
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
+        public static string[] SplitPipeline(string command)
+        {
+            var tokens = CommandParser(command);
+            if (!tokens.Contains("|")) return new[] { command };
+            var stages = new List<string>();
+            var current = new List<string>();
+            foreach (string token in tokens)
+            {
+                if (token == "|")
+                {
+                    stages.Add(string.Join(" ", current));
+                    current.Clear();
+                }
+                else current.Add(token);
+            }
+            stages.Add(string.Join(" ", current));
+            return stages.ToArray();
+        }
+
+        /// <summary>Parse commands and delimiters, keeping quoted text intact.</summary>
         public static List<string> CommandParser(string command)
         {
             var parts = new List<string>();

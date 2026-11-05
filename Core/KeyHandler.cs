@@ -429,6 +429,7 @@ namespace Core
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "md5", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "sort", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "cat", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
+                    AutoSuggestionCommands.FileDirSuggestion(candidate, "grep", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "xcel", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "ln", currentDirectory, GlobalVariables.TypeSuggestions.All, ref outCompletion);
                     AutoSuggestionCommands.FileDirSuggestion(candidate, "exif", currentDirectory, GlobalVariables.TypeSuggestions.File, ref outCompletion);
