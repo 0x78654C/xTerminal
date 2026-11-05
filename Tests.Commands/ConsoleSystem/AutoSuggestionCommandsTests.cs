@@ -39,6 +39,7 @@ public sealed class AutoSuggestionCommandsTests : IDisposable
     [Theory]
     [InlineData("ls -cf", "-cf", "-cf")]
     [InlineData("wget --n", "--n", "--noping")]
+    [InlineData("grep --line-n", "--line-n", "--line-number")]
     [InlineData("ctx li", "li", "list")]
     [InlineData("note -a", "-a", "-add")]
     [InlineData("  hash   -sha2", "-sha2", "-sha256")]
@@ -193,6 +194,7 @@ public sealed class AutoSuggestionCommandsTests : IDisposable
     [InlineData("xte someFi", "someFile.txt", "xte someFile.txt")]
     [InlineData("xte", "someFile.txt", "xte someFile.txt")]
     [InlineData("cat -o output.txt someFi", "someFile.txt", "cat -o output.txt someFile.txt")]
+    [InlineData("grep -n error someFi", "someFile.txt", "grep -n error someFile.txt")]
     [InlineData("xte -raw \"some Fi", "some File.txt", "xte -raw \"some File.txt\"")]
     [InlineData("xte -raw some Fi", "some File.txt", "xte -raw some File.txt")]
     public void DoubleTab_CompletesFileAfterParameters(string input, string fileName, string expected)

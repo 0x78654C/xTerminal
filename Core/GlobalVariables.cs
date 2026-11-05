@@ -118,6 +118,7 @@ namespace Core
         public static List<string> fsmon_p = new List<string>() { "fsmon", "-h", "-r", "-l" };
         public static List<string> fw_p = new List<string>() { "fw", "-h", "-list", "-in", "-out", "-add", "-del", "-en", "-dis", "-n", "-p", "-pf", "-di", "-a", "-lP", "-rP", "-lA", "-rA", "-pr", "-de", "-e" };
         public static List<string> fxp_p = new List<string>() { "fxp", "-h", "--help" };
+        public static List<string> grep_p = new List<string>() { "grep", "--help", "-i", "-v", "-n", "-r", "-F", "-E", "-w", "-x", "-e", "-f", "-c", "-l", "-L", "-o", "-q", "-s", "-H", "-h", "-m", "-A", "-B", "-C", "--ignore-case", "--invert-match", "--line-number", "--recursive", "--fixed-strings", "--extended-regexp", "--word-regexp", "--line-regexp", "--regexp", "--file", "--count", "--files-with-matches", "--files-without-match", "--only-matching", "--quiet", "--silent", "--no-messages", "--with-filename", "--no-filename", "--max-count", "--after-context", "--before-context", "--context", "--" };
         public static List<string> hash_p = new List<string>() { "hash", "-h", "-sha256", "-sha512" };
         public static List<string> help_p = new List<string>() { "help" };
         public static List<string> hex_p = new List<string>() { "hex", "-h", "-o" };
@@ -215,6 +216,7 @@ namespace Core
                 { "fsmon", fsmon_p },
                 { "fw", fw_p },
                 { "fxp", fxp_p },
+                { "grep", grep_p },
                 { "hash", hash_p },
                 { "help", help_p },
                 { "hex", hex_p },
