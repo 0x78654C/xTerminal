@@ -76,6 +76,7 @@ This is the full list of commands that can be used in xTerminal:
 
     ---------------------- File System ---------------------
     cat       -- Displays the content of a file. Use -h for additional parameters.
+    grep      -- Searches text files or piped text for matching lines. Use --help for options.
     mkdir     -- Creates a directory in the current place.
     mkfile    -- Creates a file in the current place.
     fcopy     -- Copies a file with CRC checksum control. Use -h for additional parameters.

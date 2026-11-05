@@ -347,6 +347,21 @@ Example:
                    xup -c : Checks for updates and displays the result.
 
     ---------------------- File System ---------------------
+    grep      -- Searches text files or piped text for matching lines. Use --help for all options.
+                  grep -in error app.log                : Case-insensitive search with line numbers.
+                  grep -rn -F TODO .                    : Recursively search for literal text.
+                  grep -E 'error|warning' *.log          : Search files using a regular expression.
+                  grep -n -C2 'failed request' 'app.log' : Include two lines of surrounding context.
+                  cat app.log | grep error | grep -v debug
+                  grep error app.log | tee matches.txt
+                 Supports -w/-x (whole word/line), -c (counts), -l/-L (file lists), -o (matching parts),
+                 -q (quiet), -m N (limit per file), -e PATTERN/-f FILE (multiple patterns),
+                 -A/-B/-C N (context), and -H/-h (show/hide filenames). Combine flags, e.g. -inv.
+                 Use -- before a pattern starting with '-'. Use --help for help; -h hides filenames.
+                 Regex syntax is .NET (also used by -E), not GNU basic regex. Searches text as UTF-8
+                 with BOM detection; * and ? expand in filenames. Recursion skips discovered links
+                 and junctions. Ctrl+X cancels. No match sets the shell's failure flag for &&/||.
+
     cat       -- Displays the content of a file. Use -h for additional parameters.
                    -h   : Displays this message.
                    -t   : Displays first N lines from a file.
